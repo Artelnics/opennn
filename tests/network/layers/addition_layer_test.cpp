@@ -1,0 +1,190 @@
+#include "tests/pch.h"
+#include "tests/numerical_derivatives.h"
+
+#include "opennn/core/tensor_types.h"
+#include "opennn/network/layers/addition_layer.h"
+#include "opennn/network/layers/dense_layer.h"
+#include "opennn/network/layers/flatten_layer.h"
+#include "opennn/dataset/tabular_dataset.h"
+#include "opennn/network/network.h"
+#include "opennn/training_strategy/loss.h"
+
+using namespace opennn;
+
+TEST(AdditionLayerTest, DefaultConstructor)
+{
+    Addition addition_layer;
+
+    EXPECT_EQ(addition_layer.get_name(), "Addition");
+    EXPECT_EQ(addition_layer.get_sources_number(), 2);
+}
+
+TEST(AdditionLayerTest, GeneralConstructor)
+{
+    const Shape input_shape{4, 3};
+
+    Addition addition_layer(input_shape, "residual_add", 3);
+
+    EXPECT_EQ(addition_layer.get_name(), "Addition");
+    EXPECT_EQ(addition_layer.get_label(), "residual_add");
+    EXPECT_EQ(addition_layer.get_sources_number(), 3);
+    EXPECT_EQ(addition_layer.get_input_shape(), input_shape);
+    EXPECT_EQ(addition_layer.get_output_shape(), input_shape);
+}
+
+TEST(AdditionLayerTest, OutputShapeMatchesInputShapeRank3)
+{
+    const Shape input_shape{5, 5, 8};
+
+    Addition addition_layer(input_shape);
+
+    EXPECT_EQ(addition_layer.get_output_shape(), input_shape);
+    EXPECT_EQ(addition_layer.get_output_shape().size(), 5 * 5 * 8);
+}
+
+TEST(AdditionLayerTest, BackwardSpecsCountMatchesInputsNumber)
+{
+    const Index batch_size = 7;
+    const Index inputs_number = 3;
+
+    Addition addition_layer(Shape{4, 2}, "", inputs_number);
+
+    const vector<TensorSpec> backward_specs = addition_layer.get_backward_specs(batch_size);
+
+    EXPECT_EQ(ssize(backward_specs), inputs_number);
+
+    for (const TensorSpec& spec : backward_specs)
+    {
+        const Shape& shape = spec.shape;
+        ASSERT_EQ(shape.get_rank(), 3);
+        EXPECT_EQ(shape[0], batch_size);
+        EXPECT_EQ(shape[1], 4);
+        EXPECT_EQ(shape[2], 2);
+    }
+}
+
+TEST(AdditionLayerTest, ForwardPropagateSumsTwoInputs)
+{
+    const Index batch_size = 2;
+    const Index rows = 3;
+    const Index cols = 2;
+    const Index sample_size = rows * cols;
+    const Index total = batch_size * sample_size;
+
+    Network network;
+    network.add_layer(make_unique<Addition>(Shape{rows, cols}, "add", 2),
+                             {-1, -2});
+    network.compile();
+
+    Tensor3 input_a(batch_size, rows, cols);
+    Tensor3 input_b(batch_size, rows, cols);
+
+    for (Index i = 0; i < total; ++i)
+    {
+        input_a.data()[i] = float(i);
+        input_b.data()[i] = float(2 * i + 1);
+    }
+
+    ForwardPropagation forward_propagation(batch_size, &network);
+
+    vector<TensorView> input_views = {
+        TensorView(input_a.data(), {batch_size, rows, cols}),
+        TensorView(input_b.data(), {batch_size, rows, cols})
+    };
+
+    network.forward_propagate(input_views, forward_propagation, ForwardPropagationMode::Inference);
+
+    const TensorView output_view = forward_propagation.get_outputs();
+
+    ASSERT_EQ(output_view.get_shape().get_rank(), 3);
+    EXPECT_EQ(output_view.get_shape()[0], batch_size);
+    EXPECT_EQ(output_view.get_shape()[1], rows);
+    EXPECT_EQ(output_view.get_shape()[2], cols);
+    EXPECT_EQ(output_view.size(), total);
+
+    const float* output_data = output_view.as<type>();
+
+    for (Index i = 0; i < total; ++i)
+        EXPECT_NEAR(output_data[i], input_a.data()[i] + input_b.data()[i], 1.0e-5f);
+}
+
+TEST(AdditionLayerTest, ForwardPropagateSumsThreeInputs)
+{
+    const Index batch_size = 2;
+    const Index rows = 2;
+    const Index cols = 2;
+    const Index sample_size = rows * cols;
+    const Index total = batch_size * sample_size;
+
+    Network network;
+    network.add_layer(make_unique<Addition>(Shape{rows, cols}, "add3", 3),
+                             {-1, -2, -3});
+    network.compile();
+
+    Tensor3 input_a(batch_size, rows, cols);
+    Tensor3 input_b(batch_size, rows, cols);
+    Tensor3 input_c(batch_size, rows, cols);
+    input_a.setConstant(1.0f);
+    input_b.setConstant(2.0f);
+    input_c.setConstant(4.0f);
+
+    ForwardPropagation forward_propagation(batch_size, &network);
+
+    vector<TensorView> input_views = {
+        TensorView(input_a.data(), {batch_size, rows, cols}),
+        TensorView(input_b.data(), {batch_size, rows, cols}),
+        TensorView(input_c.data(), {batch_size, rows, cols})
+    };
+
+    network.forward_propagate(input_views, forward_propagation, ForwardPropagationMode::Inference);
+
+    const TensorView output_view = forward_propagation.get_outputs();
+
+    ASSERT_EQ(output_view.size(), total);
+
+    const float* output_data = output_view.as<type>();
+
+    for (Index i = 0; i < total; ++i)
+        EXPECT_NEAR(output_data[i], 7.0f, 1.0e-5f);
+}
+
+TEST(AdditionLayerTest, ResidualBackwardGradientMatchesNumerical)
+{
+    const Index samples_number = 5;
+    const Index sequence_length = 3;
+    const Index embedding_dimension = 4;
+
+    const Shape input_shape{sequence_length, embedding_dimension};
+    const Index targets_number = 2;
+
+    TabularDataset dataset(samples_number, input_shape, {targets_number});
+    dataset.set_data_random();
+    dataset.set_sample_roles("Training");
+
+    Network network;
+
+    const Index dense_index = network.add_layer(make_unique<opennn::Dense>(input_shape, Shape{embedding_dimension}, "Identity"),
+                                                       {-1});
+
+    const Index addition_index = network.add_layer(make_unique<Addition>(input_shape, "residual_add", 2),
+                                                          {dense_index, -1});
+
+    network.add_layer(make_unique<Flatten>(network.get_layer(addition_index)->get_output_shape()),
+                             {addition_index});
+
+    network.add_layer(make_unique<opennn::Dense>(network.get_output_shape(), Shape{targets_number}, "Identity"));
+
+    network.compile();
+    network.set_parameters_random();
+
+    Loss loss(&network, &dataset);
+    loss.set_error(Loss::Error::MeanSquaredError);
+
+    const type error = calculate_numerical_error(loss);
+    EXPECT_GE(error, 0);
+
+    const VectorR gradient = calculate_gradient(loss);
+    const VectorR numerical_gradient = calculate_numerical_gradient(loss);
+
+    EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(1.0e-3));
+}

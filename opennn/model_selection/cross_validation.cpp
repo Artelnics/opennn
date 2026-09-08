@@ -14,7 +14,7 @@
 #include <set>
 
 #include "opennn/dataset/dataset.h"
-#include "opennn/neural_network/neural_network.h"
+#include "opennn/network/network.h"
 #include "opennn/training_strategy/optimizer.h"
 #include "opennn/training_strategy/training_strategy.h"
 
@@ -86,7 +86,7 @@ vector<vector<Index>> build_fold_partition(TrainingStrategy* training_strategy, 
 FoldEvaluation evaluate_folds(TrainingStrategy* training_strategy, const vector<vector<Index>>& fold_partition)
 {
     Dataset* dataset = training_strategy->get_dataset();
-    NeuralNetwork* neural_network = training_strategy->get_loss()->get_neural_network();
+    Network* network = training_strategy->get_loss()->get_network();
     const Index k = ssize(fold_partition);
 
     vector<Index> development;
@@ -109,7 +109,7 @@ FoldEvaluation evaluate_folds(TrainingStrategy* training_strategy, const vector<
 
         FoldScope scope(*dataset, training_indices, validation_indices);
 
-        neural_network->set_parameters_random();
+        network->set_parameters_random();
         const TrainingResult training_results = training_strategy->train();
 
         float validation_error = training_results.get_validation_error();
@@ -138,7 +138,7 @@ FoldEvaluation evaluate_folds(TrainingStrategy* training_strategy, const vector<
 void refit_final_model_on_development(TrainingStrategy* training_strategy, Index folds_number, Index folds_seed)
 {
     Dataset* dataset = training_strategy->get_dataset();
-    NeuralNetwork* neural_network = training_strategy->get_loss()->get_neural_network();
+    Network* network = training_strategy->get_loss()->get_network();
     Optimizer* optimizer = training_strategy->get_optimization_algorithm();
 
     const Index final_epochs = evaluate_folds(training_strategy, build_fold_partition(training_strategy, folds_number, folds_seed)).epochs;
@@ -153,7 +153,7 @@ void refit_final_model_on_development(TrainingStrategy* training_strategy, Index
     ScopeExit epochs_cleanup([optimizer, saved_epochs] { optimizer->set_maximum_epochs(saved_epochs); });
 
     FoldScope scope(*dataset, development, {});
-    neural_network->set_parameters_random();
+    network->set_parameters_random();
     training_strategy->train();
 }
 

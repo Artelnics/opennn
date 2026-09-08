@@ -32,19 +32,19 @@
 #include "opennn/core/variable.h"
 #include "opennn/dataset/batch.h"
 #include "opennn/dataset/dataset.h"
-#include "opennn/neural_network/back_propagation.h"
-#include "opennn/neural_network/forward_propagation.h"
-#include "opennn/neural_network/neural_network.h"
-#include "opennn/neural_network/layers/tokenizer_layer.h"
-#include "opennn/neural_network/operators/dropout_operator.h"
-#include "opennn/neural_network/operators/tokenizer_operator.h"
+#include "opennn/network/back_propagation.h"
+#include "opennn/network/forward_propagation.h"
+#include "opennn/network/network.h"
+#include "opennn/network/layers/tokenizer_layer.h"
+#include "opennn/network/operators/dropout_operator.h"
+#include "opennn/network/operators/tokenizer_operator.h"
 #include "opennn/training_strategy/kernel_optimizers.cuh"
 #include "opennn/training_strategy/loss.h"
 
 namespace opennn
 {
 
-static Index recurrent_graph_group_size(const NeuralNetwork*, Index batch_size)
+static Index recurrent_graph_group_size(const Network*, Index batch_size)
 {
     constexpr Index maximum_group_size = 8;
     const Index fallback = batch_size <= 64 ? Index(1) : Index(2);
@@ -86,10 +86,10 @@ static void clip_gradient_norm_device(Buffer&, Buffer&, Index, float)
 namespace
 {
 
-FeatureScalingEndpoint* find_scaling_endpoint(NeuralNetwork& neural_network,
+FeatureScalingEndpoint* find_scaling_endpoint(Network& network,
                                               VariableRole role)
 {
-    for (const unique_ptr<Layer>& layer : neural_network.get_layers())
+    for (const unique_ptr<Layer>& layer : network.get_layers())
         if (auto* endpoint = dynamic_cast<FeatureScalingEndpoint*>(layer.get());
             endpoint && endpoint->get_scaling_role() == role)
             return endpoint;
@@ -223,13 +223,13 @@ void Optimizer::configure_for_task(NetworkTask task)
 
 bool Optimizer::uses_joint_gradient_arena() const noexcept
 {
-    const NeuralNetwork* const neural_network =
-        loss ? loss->get_neural_network() : nullptr;
+    const Network* const network =
+        loss ? loss->get_network() : nullptr;
 
     return joint_gradient_arena
         && gradient_clip_norm <= 0.0f
-        && neural_network
-        && neural_network->is_gpu();
+        && network
+        && network->is_gpu();
 }
 
 void Optimizer::to_JSON(JsonWriter& printer) const
@@ -260,14 +260,14 @@ void Optimizer::load(const filesystem::path& file_name)
 
 void Optimizer::setup_batch_pools(BatchPools& pools,
                                   Dataset& dataset,
-                                  NeuralNetwork& neural_network,
+                                  Network& network,
                                   Index training_batch_size,
                                   Index validation_batch_size,
                                   bool has_validation,
                                   TrainingSession& training_session)
 {
-    const int pool_size = get_batch_pool_size(neural_network);
-    const auto& config = neural_network.get_config();
+    const int pool_size = get_batch_pool_size(network);
+    const auto& config = network.get_config();
 
     auto fill_pool = [&](ThreadSafeQueue<Batch*>& queue,
                          vector<unique_ptr<Batch>>& pool,
@@ -283,7 +283,7 @@ void Optimizer::setup_batch_pools(BatchPools& pools,
 
     const bool validation_reuses_training_pool =
         has_validation && validation_batch_size == training_batch_size;
-    const bool training_prefetch_only = neural_network.is_gpu()
+    const bool training_prefetch_only = network.is_gpu()
                                      && device::is_cuda_build()
                                      && !validation_reuses_training_pool;
 
@@ -292,7 +292,7 @@ void Optimizer::setup_batch_pools(BatchPools& pools,
               training_batch_size,
               training_prefetch_only);
 
-    if (neural_network.is_gpu() && device::is_cuda_build())
+    if (network.is_gpu() && device::is_cuda_build())
     {
         training_session.pipelines[0].slots[0] = make_unique<Batch>(training_batch_size, &dataset, config);
 
@@ -302,7 +302,7 @@ void Optimizer::setup_batch_pools(BatchPools& pools,
                 ? dataset.get_samples_number(SampleRole::Training) / training_batch_size
                 : 0;
             const Index graph_group_size = recurrent_graph_group_size(
-                &neural_network, training_batch_size);
+                &network, training_batch_size);
             const bool grouped_batches =
                 training_batches >= graph_group_size
                 && (dataset.uses_device_residency()
@@ -412,12 +412,12 @@ unique_ptr<BatchPrefetchSession> Optimizer::start_batch_prefetch(
 const int Optimizer::default_workers_number =
     int(max(1LL, env_int_or("OPENNN_BATCH_WORKERS", 2)));
 
-int Optimizer::get_batch_pool_size(const NeuralNetwork& neural_network) const
+int Optimizer::get_batch_pool_size(const Network& network) const
 {
 
     if (batch_pool_size_override > 0)
         return max(1, batch_pool_size_override);
-    return neural_network.is_gpu()
+    return network.is_gpu()
         ? max(workers_number + 1, 3)
         : 1;
 }
@@ -428,11 +428,11 @@ Index Optimizer::get_maximum_batch_size() const
              "Optimizer::get_maximum_batch_size: loss is not set.");
 
     const Dataset* dataset = loss->get_dataset();
-    const NeuralNetwork* neural_network = loss->get_neural_network();
+    const Network* network = loss->get_network();
 
     throw_if(!dataset,
              "Optimizer::get_maximum_batch_size: dataset is not set.");
-    throw_if(!neural_network,
+    throw_if(!network,
              "Optimizer::get_maximum_batch_size: neural network is not set.");
 
     const Index training_samples_number =
@@ -443,7 +443,7 @@ Index Optimizer::get_maximum_batch_size() const
     const Index validation_samples_number =
         dataset->get_samples_number(SampleRole::Validation);
 
-    const bool on_gpu = neural_network->is_gpu();
+    const bool on_gpu = network->is_gpu();
 
     Index available_bytes;
 
@@ -482,17 +482,17 @@ Index Optimizer::get_maximum_batch_size() const
     }
 
     const double memory_fraction =
-        neural_network->has_recurrent_layers() ? 0.6 : 0.8;
+        network->has_recurrent_layers() ? 0.6 : 0.8;
 
     const Index budget = Index(double(available_bytes) * memory_fraction);
 
-    const Index parameters_number = neural_network->get_parameters_number();
+    const Index parameters_number = network->get_parameters_number();
     const Index parameters_size =
-        get_aligned_size(neural_network->get_parameter_specs());
+        get_aligned_size(network->get_parameter_specs());
     const Index slot_size = get_aligned_size(parameters_number);
 
     const bool bf16_train =
-        neural_network->get_training_type() == Type::BF16;
+        network->get_training_type() == Type::BF16;
 
     const bool bf16_input =
         bf16_train && dataset->supports_bf16_inputs();
@@ -503,7 +503,7 @@ Index Optimizer::get_maximum_batch_size() const
         && !dataset->uses_device_residency();
 
     Index fixed_bytes =
-        (neural_network->get_states_size()
+        (network->get_states_size()
          + 2 * parameters_size
          + 2 * slot_size) * Index(sizeof(float));
 
@@ -520,10 +520,10 @@ Index Optimizer::get_maximum_batch_size() const
     const Shape input_shape = dataset->get_shape(VariableRole::Input);
     const Shape target_shape = dataset->get_shape(VariableRole::Target);
     const Shape decoder_shape = dataset->get_shape(VariableRole::Decoder);
-    const Shape output_shape = neural_network->get_output_shape();
+    const Shape output_shape = network->get_output_shape();
 
     const Type compute_dtype = bf16_train ? Type::BF16 : Type::FP32;
-    const Index batch_copies = on_gpu ? 1 : get_batch_pool_size(*neural_network);
+    const Index batch_copies = on_gpu ? 1 : get_batch_pool_size(*network);
 
     const auto batch_data_bytes = [&](const Index batch)
     {
@@ -548,8 +548,8 @@ Index Optimizer::get_maximum_batch_size() const
         if(batch <= 0) return Index(0);
 
         Index bytes =
-            get_aligned_bytes(neural_network->get_forward_specs(batch))
-            + get_aligned_bytes(neural_network->get_backward_specs(batch))
+            get_aligned_bytes(network->get_forward_specs(batch))
+            + get_aligned_bytes(network->get_backward_specs(batch))
             + batch_data_bytes(batch);
 
         if(!output_shape.empty())
@@ -602,21 +602,21 @@ void Optimizer::set_names()
     const vector<Variable> input_variables = dataset->get_variables(VariableRole::Input);
     const vector<Variable> target_variables = dataset->get_variables(VariableRole::Target);
 
-    NeuralNetwork* neural_network = loss->get_neural_network();
+    Network* network = loss->get_network();
 
-    neural_network->set_input_variables(input_variables);
-    neural_network->set_output_variables(target_variables);
+    network->set_input_variables(input_variables);
+    network->set_output_variables(target_variables);
 }
 
 void Optimizer::prepare_training_artifacts()
 {
     Dataset* const dataset = loss->get_dataset();
-    NeuralNetwork* const neural_network = loss->get_neural_network();
+    Network* const network = loss->get_network();
 
     const auto prepare_endpoint = [&](VariableRole role)
     {
         FeatureScalingEndpoint* const endpoint =
-            find_scaling_endpoint(*neural_network, role);
+            find_scaling_endpoint(*network, role);
         if (!endpoint) return;
 
         const FeatureScaling requested = endpoint->get_feature_scaling();
@@ -627,7 +627,7 @@ void Optimizer::prepare_training_artifacts()
     prepare_endpoint(VariableRole::Input);
     prepare_endpoint(VariableRole::Target);
 
-    for (const unique_ptr<Layer>& layer : neural_network->get_layers())
+    for (const unique_ptr<Layer>& layer : network->get_layers())
     {
         auto* const tokenizer_layer = dynamic_cast<Tokenizer*>(layer.get());
         if (!tokenizer_layer) continue;
@@ -650,21 +650,21 @@ void Optimizer::warmup_device_training(
     ThreadSafeQueue<Batch*>* validation_empty_queue,
     const vector<vector<Index>>* validation_batches)
 {
-    NeuralNetwork* neural_network = loss ? loss->get_neural_network() : nullptr;
+    Network* network = loss ? loss->get_network() : nullptr;
 
     if(!device::is_cuda_build()
-       || !neural_network
-       || !neural_network->is_gpu()
+       || !network
+       || !network->is_gpu()
        || training_batches.empty())
         return;
 
     const cudaStream_t stream = device::get_compute_stream();
 
     const Index parameters_bytes =
-        neural_network->get_parameters_buffer_size() * Index(sizeof(float));
+        network->get_parameters_buffer_size() * Index(sizeof(float));
 
     const Index states_bytes =
-        neural_network->get_states_buffer_size() * Index(sizeof(float));
+        network->get_states_buffer_size() * Index(sizeof(float));
 
     Buffer parameters_snapshot{Device::CPU};
     Buffer states_snapshot{Device::CPU};
@@ -674,7 +674,7 @@ void Optimizer::warmup_device_training(
         parameters_snapshot.resize_bytes(parameters_bytes, Device::CPU);
 
         device::copy_async(parameters_snapshot.data(),
-                           neural_network->get_parameters_data(),
+                           network->get_parameters_data(),
                            parameters_bytes,
                            device::CopyKind::DeviceToHost,
                            stream);
@@ -685,7 +685,7 @@ void Optimizer::warmup_device_training(
         states_snapshot.resize_bytes(states_bytes, Device::CPU);
 
         device::copy_async(states_snapshot.data(),
-                           neural_network->get_states_data(),
+                           network->get_states_data(),
                            states_bytes,
                            device::CopyKind::DeviceToHost,
                            stream);
@@ -695,18 +695,18 @@ void Optimizer::warmup_device_training(
     {
         if(parameters_bytes > 0)
         {
-            device::copy_async(neural_network->get_parameters_data(),
+            device::copy_async(network->get_parameters_data(),
                                parameters_snapshot.data(),
                                parameters_bytes,
                                device::CopyKind::HostToDevice,
                                stream);
 
-            neural_network->cast_parameters_to_bf16();
+            network->cast_parameters_to_bf16();
         }
 
         if(states_bytes > 0)
         {
-            device::copy_async(neural_network->get_states_data(),
+            device::copy_async(network->get_states_data(),
                                states_snapshot.data(),
                                states_bytes,
                                device::CopyKind::HostToDevice,
@@ -716,12 +716,12 @@ void Optimizer::warmup_device_training(
         device::synchronize(stream);
 
         setup_optimizer_data(optimizer_data,
-                             neural_network->get_parameters_buffer_size(),
-                             neural_network->get_device());
+                             network->get_parameters_buffer_size(),
+                             network->get_device());
     };
 
     const Index warmup_group_size = recurrent_graph_group_size(
-        neural_network, training_context.forward.batch_size);
+        network, training_context.forward.batch_size);
     const Index full_batches = training_batches.back().size() == training_batches.front().size()
         ? Index(training_batches.size())
         : Index(training_batches.size() - 1);
@@ -732,8 +732,8 @@ void Optimizer::warmup_device_training(
     if (training_batches.size() > 1
         && training_batches.back().size() != training_batches.front().size())
         training_warmup_batch.push_back(training_batches.back());
-    const function<void(NeuralNetwork*)> saved_post_batch_callback = post_batch_callback;
-    if (post_batch_callback) post_batch_callback = [](NeuralNetwork*) {};
+    const function<void(Network*)> saved_post_batch_callback = post_batch_callback;
+    if (post_batch_callback) post_batch_callback = [](Network*) {};
 
     ScopeExit warmup_cleanup([&]
     {
@@ -802,10 +802,10 @@ void Optimizer::display_epoch_results(const Index epoch,
 
 bool Optimizer::network_has_active_dropout() const
 {
-    const NeuralNetwork* neural_network = loss ? loss->get_neural_network() : nullptr;
-    if (!neural_network) return false;
+    const Network* network = loss ? loss->get_network() : nullptr;
+    if (!network) return false;
 
-    for (const auto& layer : neural_network->get_layers())
+    for (const auto& layer : network->get_layers())
         for (const Operator* op : layer->get_operators())
         {
             const auto* dropout = dynamic_cast<const DropoutOperator*>(op);
@@ -820,13 +820,13 @@ TrainingResult Optimizer::train()
     TrainingResult results(maximum_epochs + 1);
     cuda_graph_capture_failed = false;
 
-    if (!loss || !loss->get_neural_network() || !loss->get_dataset())
+    if (!loss || !loss->get_network() || !loss->get_dataset())
         return results;
 
-    NeuralNetwork* neural_network = loss->get_neural_network();
-    neural_network->warn_if_stale_configuration();
+    Network* network = loss->get_network();
+    network->warn_if_stale_configuration();
 
-    const bool on_gpu = neural_network->is_gpu();
+    const bool on_gpu = network->is_gpu();
 
     if (display) logging::info() << "Training with " << get_display_name()
                      << (on_gpu ? " CUDA" : "") << "...\n";
@@ -879,7 +879,7 @@ TrainingResult Optimizer::train()
 
     setup_batch_pools(batch_pools,
                       *dataset,
-                      *neural_network,
+                      *network,
                       training_batch_size,
                       validation_batch_size,
                       has_validation,
@@ -899,7 +899,7 @@ TrainingResult Optimizer::train()
     if (has_validation)
     {
         validation_forward_propagation = make_unique<ForwardPropagation>();
-        validation_forward_propagation->set(validation_batch_size, neural_network,
+        validation_forward_propagation->set(validation_batch_size, network,
                                             &training_forward_propagation.arena,
                                             ForwardPropagationMode::Inference,
                                             loss_inference_policy(*loss),
@@ -911,8 +911,8 @@ TrainingResult Optimizer::train()
     setup_device_training();
     ScopeExit device_cleanup([this] { teardown_device_training(); });
 
-    const Index parameters_buffer_size = neural_network->get_parameters_buffer_size();
-    const Device device = neural_network->get_device();
+    const Index parameters_buffer_size = network->get_parameters_buffer_size();
+    const Device device = network->get_device();
 
     float training_error = 0.0f;
     float training_accuracy = 0.0f;
@@ -1033,7 +1033,7 @@ TrainingResult Optimizer::train()
                 validation_accuracy = validation_evaluation_result.accuracy;
                 results.validation_error_history(epoch) = validation_error;
 
-                update_best_parameters(neural_network, validation_error, epoch,
+                update_best_parameters(network, validation_error, epoch,
                                        validation_failures, best_model);
 
                 if (on_gpu) device::synchronize(device::get_compute_stream());
@@ -1048,7 +1048,7 @@ TrainingResult Optimizer::train()
                                   has_validation, val_fresh, is_token_cross_entropy, elapsed_time);
 
             if (post_epoch_callback)
-                post_epoch_callback(epoch, training_error, validation_error, neural_network);
+                post_epoch_callback(epoch, training_error, validation_error, network);
 
             if (check_stopping_condition(results, epoch, elapsed_time,
                                          results.training_error_history(epoch),
@@ -1067,7 +1067,7 @@ TrainingResult Optimizer::train()
     teardown_device_training();
     device_cleanup.release();
 
-    restore_best_parameters(neural_network, results, best_model);
+    restore_best_parameters(network, results, best_model);
 
     if (display) results.print();
 
@@ -1079,9 +1079,9 @@ void Optimizer::prepare_full_batch_training(FullBatchContext& context, const cha
     if (display) logging::info() << banner << "\n";
 
     Dataset* dataset = loss->get_dataset();
-    NeuralNetwork* neural_network = loss->get_neural_network();
+    Network* network = loss->get_network();
 
-    context.neural_network = neural_network;
+    context.network = network;
     context.training_samples_number = dataset->get_samples_number(SampleRole::Training);
     context.validation_samples_number = dataset->get_samples_number(SampleRole::Validation);
 
@@ -1096,25 +1096,25 @@ void Optimizer::prepare_full_batch_training(FullBatchContext& context, const cha
 
     context.training_batch = make_unique<Batch>(context.training_samples_number,
                                                 dataset,
-                                                neural_network->get_config());
+                                                network->get_config());
     context.training_batch->fill(training_sample_indices, features, FillMode::Training);
 
     context.validation_batch = make_unique<Batch>(context.validation_samples_number,
                                                   dataset,
-                                                  neural_network->get_config());
+                                                  network->get_config());
     context.validation_batch->fill(validation_sample_indices, features, FillMode::Validation);
 
     context.training_forward_propagation =
         make_unique<ForwardPropagation>(
             context.training_samples_number,
-            neural_network,
+            network,
             ForwardPropagationMode::Training,
             InferenceShapePolicy{},
             true);
 
     if (context.validation_samples_number > 0)
         context.validation_forward_propagation =
-            make_unique<ForwardPropagation>(context.validation_samples_number, neural_network,
+            make_unique<ForwardPropagation>(context.validation_samples_number, network,
                                             ForwardPropagationMode::Inference,
                                             loss_inference_policy(*loss),
                                             true);
@@ -1126,7 +1126,7 @@ TrainingResult Optimizer::train_full_batch(FullBatchContext& context, const Full
 {
     TrainingResult results(maximum_epochs + 1);
 
-    NeuralNetwork* neural_network = context.neural_network;
+    Network* network = context.network;
     const bool has_validation = context.validation_forward_propagation != nullptr;
 
     Index validation_failures = 0;
@@ -1145,7 +1145,7 @@ TrainingResult Optimizer::train_full_batch(FullBatchContext& context, const Full
     {
         if (should_display(epoch)) logging::info() << "Epoch: " << epoch << "\n";
 
-        neural_network->forward_propagate(context.training_batch->get_inputs(),
+        network->forward_propagate(context.training_batch->get_inputs(),
                                           *context.training_forward_propagation,
                                           ForwardPropagationMode::Training);
 
@@ -1157,7 +1157,7 @@ TrainingResult Optimizer::train_full_batch(FullBatchContext& context, const Full
 
         if (has_validation)
         {
-            neural_network->forward_propagate(context.validation_batch->get_inputs(),
+            network->forward_propagate(context.validation_batch->get_inputs(),
                                               *context.validation_forward_propagation,
                                               ForwardPropagationMode::Inference);
 
@@ -1165,7 +1165,7 @@ TrainingResult Optimizer::train_full_batch(FullBatchContext& context, const Full
 
             results.validation_error_history(epoch) = validation_error;
 
-            update_best_parameters(neural_network, validation_error, epoch,
+            update_best_parameters(network, validation_error, epoch,
                                    validation_failures, best_model);
         }
 
@@ -1199,7 +1199,7 @@ TrainingResult Optimizer::train_full_batch(FullBatchContext& context, const Full
         if (hooks.post_step) hooks.post_step();
     }
 
-    restore_best_parameters(neural_network, results, best_model);
+    restore_best_parameters(network, results, best_model);
 
     if (display) results.print();
 
@@ -1248,7 +1248,7 @@ bool Optimizer::check_stopping_condition(TrainingResult& results,
     return true;
 }
 
-void Optimizer::update_best_parameters(NeuralNetwork* neural_network,
+void Optimizer::update_best_parameters(Network* network,
                                        float validation_error,
                                        Index epoch,
                                        Index& validation_failures,
@@ -1273,8 +1273,8 @@ void Optimizer::update_best_parameters(NeuralNetwork* neural_network,
         post_best_callback(epoch, validation_error);
 
     const tuple<vector<float>&, const float*, Index> snapshots[] = {
-        {best_model.parameters, neural_network->get_parameters_data(), neural_network->get_parameters_buffer_size()},
-        {best_model.states,     neural_network->get_states_data(),     neural_network->get_states_buffer_size()}
+        {best_model.parameters, network->get_parameters_data(), network->get_parameters_buffer_size()},
+        {best_model.states,     network->get_states_data(),     network->get_states_buffer_size()}
     };
 
     for (const auto& [destination, source, size] : snapshots)
@@ -1285,7 +1285,7 @@ void Optimizer::update_best_parameters(NeuralNetwork* neural_network,
             destination.resize(size);
 
         const size_t bytes = size_t(size) * sizeof(float);
-        if (neural_network->is_gpu() && device::is_cuda_build())
+        if (network->is_gpu() && device::is_cuda_build())
         {
             const cudaStream_t stream = device::get_compute_stream();
             device::copy_async(destination.data(), source, Index(bytes),
@@ -1297,24 +1297,24 @@ void Optimizer::update_best_parameters(NeuralNetwork* neural_network,
     }
 }
 
-void Optimizer::restore_best_parameters(NeuralNetwork* neural_network,
+void Optimizer::restore_best_parameters(Network* network,
                                         TrainingResult& results,
                                         const BestModelSnapshot& best_model)
 {
     if (!restore_best
         || best_model.parameters.empty()
-        || Index(best_model.parameters.size()) != neural_network->get_parameters_buffer_size())
+        || Index(best_model.parameters.size()) != network->get_parameters_buffer_size())
         return;
 
     if (display)
         logging::info() << "Restoring best parameters and states from epoch " << best_model.epoch
              << " (validation error " << best_model.validation_error << ")\n";
 
-    neural_network->set_parameters(Map<const VectorR>(best_model.parameters.data(),
+    network->set_parameters(Map<const VectorR>(best_model.parameters.data(),
                                                        Index(best_model.parameters.size())));
 
     if (!best_model.states.empty())
-        neural_network->set_states(Map<const VectorR>(best_model.states.data(),
+        network->set_states(Map<const VectorR>(best_model.states.data(),
                                                       Index(best_model.states.size())));
 
     results.restored_epoch = best_model.epoch;
@@ -1350,22 +1350,22 @@ void Optimizer::read_common_json(const Json* root_element)
 
 void Optimizer::setup_device_training()
 {
-    NeuralNetwork* neural_network = loss->get_neural_network();
-    if (!neural_network->is_gpu()) return;
+    Network* network = loss->get_network();
+    if (!network->is_gpu()) return;
 
-    neural_network->copy_parameters_device();
-    neural_network->copy_states_device();
+    network->copy_parameters_device();
+    network->copy_states_device();
 }
 
 void Optimizer::teardown_device_training()
 {
-    NeuralNetwork* neural_network = loss->get_neural_network();
-    if (!neural_network->is_gpu()) return;
+    Network* network = loss->get_network();
+    if (!network->is_gpu()) return;
 
     device::synchronize(device::get_compute_stream());
 
-    neural_network->copy_parameters_host();
-    neural_network->copy_states_host();
+    network->copy_parameters_host();
+    network->copy_states_host();
 }
 
 void Optimizer::prefetch_batch(Batch& batch)
@@ -1431,7 +1431,7 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
     const vector<vector<Index>>& batches,
     const FeatureSelection& features)
 {
-    NeuralNetwork* neural_network = loss->get_neural_network();
+    Network* network = loss->get_network();
     const Index batches_number = Index(batches.size());
     const bool tracks_accuracy = loss->get_error() == Loss::Error::CrossEntropy3d;
 
@@ -1492,7 +1492,7 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
 
     const auto run_compute_step = [&](Batch& slot)
     {
-        neural_network->forward_propagate(slot.get_inputs(),
+        network->forward_propagate(slot.get_inputs(),
                                           forward_propagation, ForwardPropagationMode::Training);
         if (!loss->back_propagate_device_metrics(slot,
                                                  forward_propagation, back_propagation,
@@ -1544,7 +1544,7 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
     const bool resident_gather =
         loss->get_dataset()->can_device_gather(*training_session.fixed_batch(), features);
 
-    const Index M = recurrent_graph_group_size(neural_network,
+    const Index M = recurrent_graph_group_size(network,
                                                 forward_propagation.batch_size);
     Batch* host_batch = nullptr;
 
@@ -1734,7 +1734,7 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
                 if (post_batch_callback)
                 {
                     device::synchronize(compute);
-                    post_batch_callback(neural_network);
+                    post_batch_callback(network);
                 }
 
                 if (host_batch)
@@ -1911,7 +1911,7 @@ Loss::EvaluationResult Optimizer::train_epoch(
     ForwardPropagation& forward_propagation = main_context.forward;
     BackPropagation& back_propagation = main_context.backward;
 
-    NeuralNetwork* neural_network = loss->get_neural_network();
+    Network* network = loss->get_network();
     const Index all_batches_number = Index(batches.size());
 
     if(all_batches_number == 0) return epoch_result;
@@ -1922,7 +1922,7 @@ Loss::EvaluationResult Optimizer::train_epoch(
     const Index batches_number = split.number();
 
     const bool tracks_accuracy = loss->get_error() == Loss::Error::CrossEntropy3d;
-    const bool on_gpu = neural_network->is_gpu();
+    const bool on_gpu = network->is_gpu();
     const bool use_graph_batches = training_session.cuda_graph_capture_allowed
         && training_session.has_graph_batches();
 
@@ -1939,10 +1939,10 @@ Loss::EvaluationResult Optimizer::train_epoch(
 
     const auto finalize_epoch = [&](Loss::EvaluationResult& result)
     {
-        const TensorView parameters(neural_network->get_parameters_data(),
-                                    {neural_network->get_parameters_buffer_size()},
+        const TensorView parameters(network->get_parameters_data(),
+                                    {network->get_parameters_buffer_size()},
                                     Type::FP32,
-                                    neural_network->get_device());
+                                    network->get_device());
 
         back_propagation.metrics.regularization = loss->calculate_regularization(parameters);
         back_propagation.metrics.loss_value = result.error + back_propagation.metrics.regularization;
@@ -1960,7 +1960,7 @@ Loss::EvaluationResult Optimizer::train_epoch(
         if (!tail.context || tail.size != tail_size)
         {
             tail.batch = make_unique<Batch>(tail_size, loss->get_dataset(),
-                                            neural_network->get_config());
+                                            network->get_config());
             tail.context = make_unique<TrainingContext>(
                 tail_size, *loss, true, &main_context,
                 main_context.backward.has_joint_gradient_arena());
@@ -1994,7 +1994,7 @@ Loss::EvaluationResult Optimizer::train_epoch(
 
             const auto run_tail_step = [&](UpdateMode update_mode)
             {
-                neural_network->forward_propagate(batch.get_inputs(),
+                network->forward_propagate(batch.get_inputs(),
                                                   tail_forward_propagation,
                                                   ForwardPropagationMode::Training);
                 if (!loss->back_propagate_device_metrics(
@@ -2043,7 +2043,7 @@ Loss::EvaluationResult Optimizer::train_epoch(
         }
         else
         {
-            neural_network->forward_propagate(batch.get_inputs(),
+            network->forward_propagate(batch.get_inputs(),
                                               tail_forward_propagation,
                                               ForwardPropagationMode::Training);
             loss->back_propagate(batch,
@@ -2060,7 +2060,7 @@ Loss::EvaluationResult Optimizer::train_epoch(
         }
 
         if(post_batch_callback)
-            post_batch_callback(neural_network);
+            post_batch_callback(network);
 
         if(on_gpu)
             device::synchronize(device::get_compute_stream());
@@ -2098,7 +2098,7 @@ Loss::EvaluationResult Optimizer::train_epoch(
 
             {
                 PROFILE_SCOPE("step:fwd_total");
-                neural_network->forward_propagate(batch->get_inputs(),
+                network->forward_propagate(batch->get_inputs(),
                                                   forward_propagation,
                                                   ForwardPropagationMode::Training);
             }
@@ -2122,7 +2122,7 @@ Loss::EvaluationResult Optimizer::train_epoch(
             }
 
             if(post_batch_callback)
-                post_batch_callback(neural_network);
+                post_batch_callback(network);
         }
 
         empty_queue.push(batch);
@@ -2167,7 +2167,7 @@ Loss::EvaluationResult Optimizer::train_epoch(
         &features,
         FillMode::Training,
         true,
-        neural_network->has_recurrent_layers(),
+        network->has_recurrent_layers(),
         &training_session,
         training_session.fixed_batch(),
         profile_this ? &worker_profile : nullptr,
@@ -2178,7 +2178,7 @@ Loss::EvaluationResult Optimizer::train_epoch(
     {
         {
             PROFILE_SCOPE("step:fwd_total");
-            neural_network->forward_propagate(batch.get_inputs(),
+            network->forward_propagate(batch.get_inputs(),
                                               forward_propagation,
                                               ForwardPropagationMode::Training);
         }
@@ -2224,7 +2224,7 @@ Loss::EvaluationResult Optimizer::train_epoch(
         }
 
         if(post_batch_callback)
-            post_batch_callback(neural_network);
+            post_batch_callback(network);
     };
 
     if(batches_number > 0)
@@ -2264,7 +2264,7 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
 {
     Loss::EvaluationResult epoch_result;
 
-    NeuralNetwork* neural_network = loss->get_neural_network();
+    Network* network = loss->get_network();
     const Index all_batches_number = Index(batches.size());
 
     if(all_batches_number == 0) return epoch_result;
@@ -2275,7 +2275,7 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
     const Index batches_number = split.number();
 
     const bool tracks_accuracy = loss->get_error() == Loss::Error::CrossEntropy3d;
-    const bool on_gpu = neural_network->is_gpu();
+    const bool on_gpu = network->is_gpu();
 
     const auto evaluate_tail = [&]
     {
@@ -2285,7 +2285,7 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
         const vector<Index>& sample_indices = batches.back();
         const Index tail_size = Index(sample_indices.size());
 
-        Batch batch(tail_size, loss->get_dataset(), neural_network->get_config());
+        Batch batch(tail_size, loss->get_dataset(), network->get_config());
         batch.fill(sample_indices, features, FillMode::Validation);
 
         if(on_gpu)
@@ -2296,11 +2296,11 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
 
         ForwardPropagation tail_forward_propagation(
             tail_size,
-            neural_network,
+            network,
             ForwardPropagationMode::Inference,
             loss_inference_policy(*loss),
             true);
-        neural_network->forward_propagate(batch.get_inputs(),
+        network->forward_propagate(batch.get_inputs(),
                                           tail_forward_propagation,
                                           ForwardPropagationMode::Inference);
         result = loss->calculate_error(batch, tail_forward_propagation);
@@ -2332,7 +2332,7 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
         {
             batch->fill(epoch_batches[size_t(iteration)], features, FillMode::Validation);
 
-            neural_network->forward_propagate(batch->get_inputs(),
+            network->forward_propagate(batch->get_inputs(),
                                               forward_propagation,
                                               ForwardPropagationMode::Inference);
 
@@ -2367,7 +2367,7 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
         &features,
         FillMode::Validation,
         true,
-        neural_network->has_recurrent_layers(),
+        network->has_recurrent_layers(),
         &training_session,
         nullptr,
         nullptr,
@@ -2376,7 +2376,7 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
 
     context.step = [&](Batch& batch, Loss::EvaluationResult& result)
     {
-        neural_network->forward_propagate(batch.get_inputs(),
+        network->forward_propagate(batch.get_inputs(),
                                           forward_propagation,
                                           ForwardPropagationMode::Inference);
 

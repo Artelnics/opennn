@@ -13,19 +13,19 @@ TEST(WeightedSquaredErrorTest, DefaultConstructor)
 {
     Loss loss;
 
-    EXPECT_EQ(loss.get_neural_network() == nullptr, true);
+    EXPECT_EQ(loss.get_network() == nullptr, true);
     EXPECT_EQ(loss.get_dataset() == nullptr, true);
 }
 
 TEST(WeightedSquaredErrorTest, GeneralConstructor)
 {
-    NeuralNetwork neural_network;
+    Network network;
     TabularDataset dataset;
 
-    Loss loss(&neural_network, &dataset);
+    Loss loss(&network, &dataset);
     loss.set_error(Loss::Error::WeightedSquaredError);
 
-    EXPECT_EQ(loss.get_neural_network() != nullptr, true);
+    EXPECT_EQ(loss.get_network() != nullptr, true);
     EXPECT_EQ(loss.get_dataset() != nullptr, true);
 }
 
@@ -39,9 +39,9 @@ TEST(WeightedSquaredErrorTest, BackPropagate)
     TabularDataset data_set(samples_number, { inputs_number }, { outputs_number });
     data_set.set_data_binary_classification();
 
-    ClassificationNetwork neural_network({ inputs_number }, { neurons_number }, { outputs_number });
+    ClassificationNetwork network({ inputs_number }, { neurons_number }, { outputs_number });
 
-    Loss loss(&neural_network, &data_set);
+    Loss loss(&network, &data_set);
     loss.set_error(Loss::Error::WeightedSquaredError);
 
     const VectorR analytical_gradient = calculate_gradient(loss);

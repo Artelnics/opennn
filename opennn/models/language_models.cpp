@@ -12,34 +12,34 @@
 
 #include "opennn/core/io_utilities.h"
 #include "opennn/core/string_utilities.h"
-#include "opennn/neural_network/layers/activation_layer.h"
-#include "opennn/neural_network/layers/addition_layer.h"
-#include "opennn/neural_network/layers/clamping_layer.h"
-#include "opennn/neural_network/layers/c2psa_layer.h"
-#include "opennn/neural_network/layers/concatenation_layer.h"
-#include "opennn/neural_network/layers/convolutional_layer.h"
-#include "opennn/neural_network/layers/dense_layer.h"
-#include "opennn/neural_network/layers/detection_layer.h"
-#include "opennn/neural_network/layers/detection_v8_layer.h"
-#include "opennn/neural_network/layers/embedding_layer.h"
-#include "opennn/neural_network/layers/flatten_layer.h"
-#include "opennn/neural_network/layers/grouped_query_attention_layer.h"
-#include "opennn/neural_network/layers/long_short_term_memory_layer.h"
-#include "opennn/neural_network/layers/multihead_attention_layer.h"
-#include "opennn/neural_network/layers/non_max_suppression_layer.h"
-#include "opennn/neural_network/layers/normalization_layer_3d.h"
-#include "opennn/neural_network/layers/pooling_layer.h"
-#include "opennn/neural_network/layers/pooling_layer_3d.h"
-#include "opennn/neural_network/layers/recurrent_layer.h"
-#include "opennn/neural_network/layers/scaling_layer.h"
-#include "opennn/neural_network/layers/tokenizer_layer.h"
-#include "opennn/neural_network/layers/unscaling_layer.h"
-#include "opennn/neural_network/layers/upsampling_layer.h"
+#include "opennn/network/layers/activation_layer.h"
+#include "opennn/network/layers/addition_layer.h"
+#include "opennn/network/layers/clamping_layer.h"
+#include "opennn/network/layers/c2psa_layer.h"
+#include "opennn/network/layers/concatenation_layer.h"
+#include "opennn/network/layers/convolutional_layer.h"
+#include "opennn/network/layers/dense_layer.h"
+#include "opennn/network/layers/detection_layer.h"
+#include "opennn/network/layers/detection_v8_layer.h"
+#include "opennn/network/layers/embedding_layer.h"
+#include "opennn/network/layers/flatten_layer.h"
+#include "opennn/network/layers/grouped_query_attention_layer.h"
+#include "opennn/network/layers/long_short_term_memory_layer.h"
+#include "opennn/network/layers/multihead_attention_layer.h"
+#include "opennn/network/layers/non_max_suppression_layer.h"
+#include "opennn/network/layers/normalization_layer_3d.h"
+#include "opennn/network/layers/pooling_layer.h"
+#include "opennn/network/layers/pooling_layer_3d.h"
+#include "opennn/network/layers/recurrent_layer.h"
+#include "opennn/network/layers/scaling_layer.h"
+#include "opennn/network/layers/tokenizer_layer.h"
+#include "opennn/network/layers/unscaling_layer.h"
+#include "opennn/network/layers/upsampling_layer.h"
 
 namespace opennn
 {
 
-static void recompile_if_specs_changed(NeuralNetwork& network,
+static void recompile_if_specs_changed(Network& network,
                                        const vector<vector<TensorSpec>>& forward_before,
                                        const vector<vector<TensorSpec>>& backward_before)
 {
@@ -60,7 +60,7 @@ static void recompile_if_specs_changed(NeuralNetwork& network,
         network.set_parameters(parameters_snapshot);
 }
 
-static void finalize_build(NeuralNetwork& network)
+static void finalize_build(Network& network)
 {
     network.compile();
     network.set_parameters_glorot();
@@ -72,7 +72,7 @@ TextClassificationNetwork::TextClassificationNetwork(const Shape& input_shape,
                                                      const Shape& complexity_dimensions,
                                                      const Shape& output_shape,
                                                      PoolingMethod pooling_method)
-    : NeuralNetwork(NetworkTask::TextClassification)
+    : Network(NetworkTask::TextClassification)
 {
     throw_if(input_shape.get_rank() < 3,
              "TextClassificationNetwork: the input shape must be "
@@ -119,7 +119,7 @@ TextClassificationNetwork::TextClassificationNetwork(const Shape& input_shape,
     finalize_build(*this);
 }
 
-static Index add_residual_and_norm(NeuralNetwork& network,
+static Index add_residual_and_norm(Network& network,
                                    const Shape& shape,
                                    const string& norm_label,
                                    Index left_index, Index right_index)
@@ -129,7 +129,7 @@ static Index add_residual_and_norm(NeuralNetwork& network,
     return network.add_layer(std::move(norm), {left_index, right_index});
 }
 
-static Index add_feed_forward(NeuralNetwork& network,
+static Index add_feed_forward(Network& network,
                               const Shape& input_shape, Index ff_dim,
                               const string& internal_label,
                               const string& external_label,
@@ -144,7 +144,7 @@ static Index add_feed_forward(NeuralNetwork& network,
 }
 
 Transformer::Transformer()
-    : NeuralNetwork(NetworkTask::LanguageModeling)
+    : Network(NetworkTask::LanguageModeling)
 {
 }
 
@@ -156,7 +156,7 @@ Transformer::Transformer(Index input_sequence_length,
                          Index heads_number,
                          Index feed_forward_dimension,
                          Index layers_number)
-    : NeuralNetwork(NetworkTask::LanguageModeling)
+    : Network(NetworkTask::LanguageModeling)
 {
     throw_if(input_sequence_length == 0 ||
              decoder_sequence_length == 0 ||
@@ -266,7 +266,7 @@ Transformer::Transformer(Index input_sequence_length,
 }
 
 template<typename Apply>
-static void apply_and_recompile(NeuralNetwork& network, Apply apply)
+static void apply_and_recompile(Network& network, Apply apply)
 {
     const auto forward_before = network.get_forward_specs(1);
     const auto backward_before = network.get_backward_specs(1);
@@ -277,7 +277,7 @@ static void apply_and_recompile(NeuralNetwork& network, Apply apply)
     recompile_if_specs_changed(network, forward_before, backward_before);
 }
 
-static void set_attention_and_dense_dropout(NeuralNetwork& network, float new_dropout_rate,
+static void set_attention_and_dense_dropout(Network& network, float new_dropout_rate,
                                             initializer_list<string_view> dense_prefixes)
 {
     apply_and_recompile(network, [&](Layer& layer)
@@ -307,7 +307,7 @@ void Transformer::set_attention_sdpa_min_sequence_length(Index new_threshold)
 }
 
 TextGenerationNetwork::TextGenerationNetwork()
-    : NeuralNetwork(NetworkTask::LanguageModeling)
+    : Network(NetworkTask::LanguageModeling)
 {
 }
 
@@ -321,7 +321,7 @@ TextGenerationNetwork::TextGenerationNetwork(Index sequence_length,
                                              bool scale_embedding,
                                              bool learned_positional,
                                              const string& feed_forward_activation)
-    : NeuralNetwork(NetworkTask::LanguageModeling)
+    : Network(NetworkTask::LanguageModeling)
 {
     throw_if(sequence_length == 0 ||
              vocabulary_size == 0 ||
@@ -414,7 +414,7 @@ TextGenerationNetwork::TextGenerationNetwork(Index sequence_length,
     finalize_build(*this);
 }
 
-static Index add_bert_encoder(NeuralNetwork& net,
+static Index add_bert_encoder(Network& net,
                               Index sequence_length,
                               Index vocabulary_size,
                               Index hidden_size,
@@ -491,7 +491,7 @@ BertForSequenceClassification::from_pretrained(
 }
 
 Bert::Bert()
-    : NeuralNetwork(NetworkTask::LanguageModeling)
+    : Network(NetworkTask::LanguageModeling)
 {
 }
 
@@ -502,7 +502,7 @@ Bert::Bert(Index sequence_length,
            Index intermediate_size,
            Index layers_number,
            Index type_vocabulary_size)
-    : NeuralNetwork(NetworkTask::LanguageModeling)
+    : Network(NetworkTask::LanguageModeling)
 {
     add_bert_encoder(*this, sequence_length, vocabulary_size, hidden_size, heads_number,
                      intermediate_size, layers_number, type_vocabulary_size);
@@ -599,7 +599,7 @@ unique_ptr<Qwen3> Qwen3::from_binary(
 }
 
 Qwen3::Qwen3()
-    : NeuralNetwork(NetworkTask::LanguageModeling)
+    : Network(NetworkTask::LanguageModeling)
 {
 }
 
@@ -613,7 +613,7 @@ Qwen3::Qwen3(Index sequence_length,
              Index intermediate_size,
              float rope_theta,
              float rms_epsilon)
-    : NeuralNetwork(NetworkTask::LanguageModeling)
+    : Network(NetworkTask::LanguageModeling)
 {
     build(sequence_length, vocabulary_size, hidden_size, layers_number,
           query_heads, key_value_heads, head_dimension, intermediate_size,
@@ -737,7 +737,7 @@ auto& get_tokenizer_layer(Network& network, const char* label,
 }
 
 Transformer::Transformer(const filesystem::path& path)
-    : NeuralNetwork(path, NetworkTask::LanguageModeling)
+    : Network(path, NetworkTask::LanguageModeling)
 {
 }
 
@@ -774,7 +774,7 @@ const vector<string>& Transformer::get_target_vocabulary() const
 }
 
 TextGenerationNetwork::TextGenerationNetwork(const filesystem::path& path)
-    : NeuralNetwork(path, NetworkTask::LanguageModeling)
+    : Network(path, NetworkTask::LanguageModeling)
 {
 }
 
@@ -889,7 +889,7 @@ MatrixR TextClassificationNetwork::calculate_text_outputs(
 }
 
 BertForSequenceClassification::BertForSequenceClassification()
-    : NeuralNetwork(NetworkTask::TextClassification)
+    : Network(NetworkTask::TextClassification)
 {
 }
 
@@ -901,7 +901,7 @@ BertForSequenceClassification::BertForSequenceClassification(Index sequence_leng
                                                              Index layers_number,
                                                              Index labels_number,
                                                              Index type_vocabulary_size)
-    : NeuralNetwork(NetworkTask::TextClassification)
+    : Network(NetworkTask::TextClassification)
 {
     throw_if(labels_number == 0, "BertForSequenceClassification: labels_number must be > 0.");
 

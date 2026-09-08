@@ -6,17 +6,17 @@
 
 #include <utility>
 
-#include "opennn/neural_network/layers/addition_layer.h"
-#include "opennn/neural_network/back_propagation.h"
+#include "opennn/network/layers/addition_layer.h"
+#include "opennn/network/back_propagation.h"
 #include "opennn/core/configuration.h"
-#include "opennn/neural_network/layers/convolutional_layer.h"
-#include "opennn/neural_network/layers/dense_layer.h"
-#include "opennn/neural_network/layers/flatten_layer.h"
-#include "opennn/neural_network/forward_propagation.h"
+#include "opennn/network/layers/convolutional_layer.h"
+#include "opennn/network/layers/dense_layer.h"
+#include "opennn/network/layers/flatten_layer.h"
+#include "opennn/network/forward_propagation.h"
 #include "opennn/training_strategy/loss.h"
 #include "opennn/core/memory_pool.h"
-#include "opennn/neural_network/neural_network.h"
-#include "opennn/neural_network/layers/scaling_layer.h"
+#include "opennn/network/network.h"
+#include "opennn/network/layers/scaling_layer.h"
 
 using namespace opennn;
 
@@ -164,7 +164,7 @@ TEST(BackPropagationMemoryTest, FanoutAccumulationReusesConsumerDelta)
     const Shape sequence_shape{2, 4};
     const Shape feature_shape{4};
 
-    NeuralNetwork network;
+    Network network;
     network.add_layer(make_unique<opennn::Dense>(sequence_shape, feature_shape, "Identity",
                                                  BatchNormalization::No, "stem"),
                       {-1});
@@ -222,7 +222,7 @@ TEST(ForwardPropagationMemoryTest, InferenceReusesResidualAndPassthroughOutputs)
     constexpr Index batch = 3;
     const Shape sequence_shape{2, 4};
 
-    NeuralNetwork network;
+    Network network;
     network.add_layer(make_unique<opennn::Dense>(sequence_shape, Shape{4}, "Tanh",
                                                  BatchNormalization::No, "stem"),
                       {-1});
@@ -280,7 +280,7 @@ TEST(ForwardPropagationMemoryTest, InferenceReusesResidualAndPassthroughOutputs)
 
 TEST(ForwardPropagationMemoryTest, SameLayerAuxiliariesNeverAlias)
 {
-    NeuralNetwork network;
+    Network network;
     auto gated = make_unique<opennn::Dense>(Shape{2, 4}, Shape{8}, "Identity",
                                             BatchNormalization::No, "gated");
     gated->set_gated(true);
@@ -307,7 +307,7 @@ TEST(ForwardPropagationMemoryTest, TrainingRecomputeScratchUsesFutureActivations
     constexpr Index batch = 2;
     const Shape feature_shape{4, 4, 4};
 
-    NeuralNetwork network;
+    Network network;
     network.add_layer(make_unique<Convolutional>(
                           Shape{4, 4, 2}, Shape{1, 1, 2, 4}, "Identity",
                           Shape{1, 1}, "Same", BatchNormalization::Yes, "conv_1"),
@@ -347,7 +347,7 @@ TEST(ForwardPropagationMemoryTest, RecomputeOverlayUsesLifetimesAcrossLayerTypes
     constexpr Index batch = 2;
     const Shape feature_shape{4, 4, 4};
 
-    NeuralNetwork network;
+    Network network;
     network.add_layer(make_unique<Convolutional>(
                           Shape{4, 4, 2}, Shape{1, 1, 2, 4}, "Identity",
                           Shape{1, 1}, "Same", BatchNormalization::Yes, "conv_1"),
@@ -376,7 +376,7 @@ TEST(ForwardPropagationMemoryTest, TrainingDoesNotAllocateSkippedLeadingScaling)
     constexpr Index batch = 3;
     const Shape feature_shape{4};
 
-    NeuralNetwork network;
+    Network network;
     network.add_layer(make_unique<Scaling>(feature_shape), {-1});
     network.add_layer(make_unique<opennn::Dense>(
                           feature_shape, Shape{2}, "Identity",
@@ -412,7 +412,7 @@ TEST(ForwardPropagationMemoryTest, TrainingReusesProjectionResidualOutput)
     const Shape input_shape{4, 4, 2};
     const Shape stage_shape{4, 4, 8};
 
-    NeuralNetwork network;
+    Network network;
     network.add_layer(make_unique<Convolutional>(
                           input_shape, Shape{1, 1, 2, 4}, "ReLU",
                           Shape{1, 1}, "Same", BatchNormalization::Yes, "stem"),
@@ -453,7 +453,7 @@ TEST(ForwardPropagationMemoryTest, TrainingReusesProjectionResidualOutput)
 
 TEST(ForwardPropagationMemoryTest, InferenceLayoutRejectsTraining)
 {
-    NeuralNetwork network;
+    Network network;
     network.add_layer(make_unique<opennn::Dense>(Shape{4}, Shape{2}, "Identity"),
                       {-1});
     network.compile();

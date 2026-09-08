@@ -5,8 +5,8 @@
 #include "opennn/training_strategy/training_strategy.h"
 #include "opennn/dataset/dataset.h"
 #include "opennn/dataset/tabular_dataset.h"
-#include "opennn/neural_network/layers/dense_layer.h"
-#include "opennn/neural_network/neural_network.h"
+#include "opennn/network/layers/dense_layer.h"
+#include "opennn/network/network.h"
 
 using namespace opennn;
 
@@ -28,10 +28,10 @@ TEST(GrowingInputsTest, InputSelection)
     dataset.set_data_random();
     dataset.split_samples_random();
 
-    NeuralNetwork neural_network;
-    neural_network.add_layer(make_unique<opennn::Dense>(Shape{2}, Shape{1}));
+    Network network;
+    network.add_layer(make_unique<opennn::Dense>(Shape{2}, Shape{1}));
 
-    TrainingStrategy training_strategy(&neural_network, &dataset);
+    TrainingStrategy training_strategy(&network, &dataset);
 
     GrowingInputs growing_inputs(&training_strategy);
     growing_inputs.set_display(false);
@@ -56,10 +56,10 @@ TEST(GrowingInputsTest, InputSelectionKnownResult)
     dataset.set_data(data);
     dataset.split_samples_random();
 
-    NeuralNetwork neural_network;
-    neural_network.add_layer(make_unique<opennn::Dense>(Shape{1}, Shape{1}));
+    Network network;
+    network.add_layer(make_unique<opennn::Dense>(Shape{1}, Shape{1}));
 
-    TrainingStrategy training_strategy(&neural_network, &dataset);
+    TrainingStrategy training_strategy(&network, &dataset);
 
     GrowingInputs growing_inputs(&training_strategy);
     growing_inputs.set_display(false);
@@ -88,9 +88,9 @@ TEST(GrowingInputsTest, CrossValidationKeepsPersistentRoles)
 
     const vector<SampleRole> roles_before = dataset.get_sample_roles();
 
-    NeuralNetwork neural_network;
-    neural_network.add_layer(make_unique<opennn::Dense>(Shape{1}, Shape{1}));
-    TrainingStrategy training_strategy(&neural_network, &dataset);
+    Network network;
+    network.add_layer(make_unique<opennn::Dense>(Shape{1}, Shape{1}));
+    TrainingStrategy training_strategy(&network, &dataset);
 
     GrowingInputs growing_inputs(&training_strategy);
     growing_inputs.set_display(false);

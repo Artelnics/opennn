@@ -9,8 +9,8 @@
 
 #include "opennn/dataset/batch.h"
 #include "opennn/dataset/dataset.h"
-#include "opennn/neural_network/back_propagation.h"
-#include "opennn/neural_network/forward_propagation.h"
+#include "opennn/network/back_propagation.h"
+#include "opennn/network/forward_propagation.h"
 #include "opennn/training_strategy/loss.h"
 
 namespace opennn
@@ -73,9 +73,9 @@ void QuasiNewtonMethod::update_full_batch_parameters(const Batch& batch,
                                                      BackPropagation& back_propagation,
                                                      OptimizerData& optimization_data)
 {
-    NeuralNetwork* neural_network = loss->get_neural_network();
+    Network* network = loss->get_network();
 
-    VectorMap parameters = neural_network->get_parameters_map();
+    VectorMap parameters = network->get_parameters_map();
     VectorMap gradient = back_propagation.gradient.as_vector();
 
     VectorMap old_parameters = optimization_data.views[OldParameters].as_vector();
@@ -161,10 +161,10 @@ void QuasiNewtonMethod::update_full_batch_parameters(const Batch& batch,
 
 TrainingResult QuasiNewtonMethod::train()
 {
-    NeuralNetwork* neural_network = loss->get_neural_network();
-    neural_network->warn_if_stale_configuration();
+    Network* network = loss->get_network();
+    network->warn_if_stale_configuration();
 
-    throw_if(neural_network->is_gpu(),
+    throw_if(network->is_gpu(),
              "QuasiNewtonMethod does not support GPU training: "
              "its update path maps device pointers as host memory. "
              "Use AdaptiveMomentEstimation or StochasticGradientDescent on GPU.");
@@ -174,7 +174,7 @@ TrainingResult QuasiNewtonMethod::train()
 
     BackPropagation training_back_propagation(context.training_samples_number, *loss);
 
-    const Index parameters_number = neural_network->get_parameters_buffer_size();
+    const Index parameters_number = network->get_parameters_buffer_size();
 
     OptimizerData optimization_data;
 
@@ -197,7 +197,7 @@ TrainingResult QuasiNewtonMethod::train()
 
         line_search.reset(parameters_number);
 
-        optimization_data.views[OldParameters].as_vector() = neural_network->get_parameters_map();
+        optimization_data.views[OldParameters].as_vector() = network->get_parameters_map();
 
         optimization_data.views[InverseHessian].as_matrix().setIdentity();
         optimization_data.views[OldInverseHessian].as_matrix().setIdentity();
@@ -209,7 +209,7 @@ TrainingResult QuasiNewtonMethod::train()
                              *context.training_forward_propagation,
                              training_back_propagation);
 
-        NeuralNetwork* const network = loss->get_neural_network();
+        Network* const network = loss->get_network();
 
         const TensorView parameters(network->get_parameters_data(),
                                     {network->get_parameters_buffer_size()},
@@ -267,7 +267,7 @@ pair<float, float> QuasiNewtonMethod::calculate_directional_point(
     BackPropagation& back_propagation,
     float current_loss)
 {
-    NeuralNetwork* neural_network = loss->get_neural_network();
+    Network* network = loss->get_network();
 
     float alpha = (line_search.initial > 0.0f)
         ? line_search.initial
@@ -277,7 +277,7 @@ pair<float, float> QuasiNewtonMethod::calculate_directional_point(
     const float previous_error = back_propagation.metrics.error;
     const float previous_regularization = back_propagation.metrics.regularization;
 
-    const VectorMap parameters = neural_network->get_parameters_map();
+    const VectorMap parameters = network->get_parameters_map();
     const VectorR& training_direction = line_search.direction;
     VectorR& potential_parameters = line_search.potential;
 
@@ -285,7 +285,7 @@ pair<float, float> QuasiNewtonMethod::calculate_directional_point(
     {
         potential_parameters = parameters + training_direction * alpha;
 
-        neural_network->forward_propagate(batch.get_inputs(), potential_parameters, forward_propagation);
+        network->forward_propagate(batch.get_inputs(), potential_parameters, forward_propagation);
         const Loss::EvaluationResult evaluation_result = loss->calculate_error(batch, forward_propagation);
         const float candidate_regularization = loss->calculate_regularization(potential_parameters);
         const float new_loss = evaluation_result.error + candidate_regularization;

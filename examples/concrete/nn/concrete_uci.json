@@ -1,5 +1,5 @@
 {
-  "NeuralNetwork": {
+  "Network": {
     "Inputs": {
       "InputsNumber": "8",
       "Input": [

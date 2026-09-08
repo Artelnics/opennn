@@ -10,7 +10,7 @@
 #include "opennn/core/io_utilities.h"
 #include "opennn/dataset/field_parsing.h"
 #include "opennn/core/string_utilities.h"
-#include "opennn/neural_network/operators/tokenizer_operator.h"
+#include "opennn/network/operators/tokenizer_operator.h"
 
 namespace opennn
 {

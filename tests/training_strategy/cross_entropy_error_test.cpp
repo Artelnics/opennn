@@ -6,12 +6,12 @@
 #include "opennn/training_strategy/loss.h"
 #include "opennn/core/tensor_types.h"
 #include "opennn/dataset/language_dataset.h"
-#include "opennn/neural_network/layers/dense_layer.h"
-#include "opennn/neural_network/layers/convolutional_layer.h"
-#include "opennn/neural_network/neural_network.h"
+#include "opennn/network/layers/dense_layer.h"
+#include "opennn/network/layers/convolutional_layer.h"
+#include "opennn/network/network.h"
 #include "opennn/dataset/batch.h"
-#include "opennn/neural_network/forward_propagation.h"
-#include "opennn/neural_network/back_propagation.h"
+#include "opennn/network/forward_propagation.h"
+#include "opennn/network/back_propagation.h"
 
 using namespace opennn;
 
@@ -19,7 +19,7 @@ TEST(CrossEntropyError2d, DefaultConstructor)
 {
     Loss loss;
 
-    EXPECT_TRUE(loss.get_neural_network() == nullptr);
+    EXPECT_TRUE(loss.get_network() == nullptr);
     EXPECT_TRUE(loss.get_dataset() == nullptr);
 }
 
@@ -37,13 +37,13 @@ TEST(CrossEntropyError2d, BackPropagate)
 
     dataset.set_sample_roles("Training");
 
-    NeuralNetwork neural_network;
-    neural_network.add_layer(make_unique<opennn::Dense>(Shape{ inputs_number }, Shape{ targets_number }, "Sigmoid"));
-    neural_network.compile();
+    Network network;
+    network.add_layer(make_unique<opennn::Dense>(Shape{ inputs_number }, Shape{ targets_number }, "Sigmoid"));
+    network.compile();
 
-    neural_network.set_parameters_random();
+    network.set_parameters_random();
 
-    Loss loss(&neural_network, &dataset);
+    Loss loss(&network, &dataset);
     loss.set_error(Loss::Error::CrossEntropy);
 
     const VectorR gradient = calculate_gradient(loss);
@@ -82,21 +82,21 @@ TEST(CrossEntropyError2d, CalculateError)
     dataset.set_variable_indices(input_features_indices, target_features_indices);
     dataset.set_sample_roles("Training");
 
-    NeuralNetwork neural_network;
-    neural_network.add_layer(make_unique<opennn::Dense>(Shape{ 3 }, Shape{ 1 }, "Sigmoid"));
-    neural_network.compile();
+    Network network;
+    network.add_layer(make_unique<opennn::Dense>(Shape{ 3 }, Shape{ 1 }, "Sigmoid"));
+    network.compile();
 
-    Loss loss(&neural_network, &dataset);
+    Loss loss(&network, &dataset);
     loss.set_error(Loss::Error::CrossEntropy);
 
-    Batch batch(5, &dataset, neural_network.get_config());
+    Batch batch(5, &dataset, network.get_config());
 
     const vector<Index> training_indices = dataset.get_sample_indices("Training");
     batch.fill(training_indices,
                FeatureSelection{input_features_indices, {}, target_features_indices});
 
-    ForwardPropagation forward_propagation(5, &neural_network);
-    neural_network.forward_propagate(batch.get_inputs(), forward_propagation, ForwardPropagationMode::Inference);
+    ForwardPropagation forward_propagation(5, &network);
+    network.forward_propagate(batch.get_inputs(), forward_propagation, ForwardPropagationMode::Inference);
 
     const type error = loss.calculate_error(batch, forward_propagation).error;
 
@@ -127,11 +127,11 @@ TEST(CrossEntropyError2d, get_name)
     dataset.set_variable_indices(input_features_indices, target_features_indices);
     dataset.set_sample_roles("Training");
 
-    NeuralNetwork neural_network;
-    neural_network.add_layer(make_unique<opennn::Dense>(Shape{ 2 }, Shape{ 2 }, "Sigmoid"));
-    neural_network.compile();
+    Network network;
+    network.add_layer(make_unique<opennn::Dense>(Shape{ 2 }, Shape{ 2 }, "Sigmoid"));
+    network.compile();
 
-    Loss loss(&neural_network, &dataset);
+    Loss loss(&network, &dataset);
     loss.set_error(Loss::Error::CrossEntropy);
 
     string name = loss.get_name();

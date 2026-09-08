@@ -37,7 +37,7 @@ def main() -> None:
     spec = importlib.util.spec_from_file_location("exported_model", model_path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    network = module.NeuralNetwork()
+    network = module.Network()
 
     max_diff = 0.0
     agree = 0

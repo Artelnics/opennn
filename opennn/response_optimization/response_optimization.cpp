@@ -11,8 +11,8 @@
 #include <Eigen/Cholesky>
 
 #include "opennn/registry.h"
-#include "opennn/neural_network/neural_network.h"
-#include "opennn/neural_network/layers/scaling_layer.h"
+#include "opennn/network/network.h"
+#include "opennn/network/layers/scaling_layer.h"
 #include "opennn/response_optimization/expression_evaluator.h"
 #include "opennn/core/random_utilities.h"
 #include "opennn/core/statistics.h"
@@ -21,9 +21,9 @@
 namespace opennn
 {
 
-ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network)
+ResponseOptimization::ResponseOptimization(Network* new_network)
 {
-    set(new_neural_network);
+    set(new_network);
 }
 
 
@@ -107,7 +107,7 @@ MatrixR ResponseOptimization::estimate_jacobian(const VectorR& input,
     vector<char> categorical_columns(size_t(input.size()), 0);
 
     for (const auto& [first_column, categories_number] :
-         get_categorical_blocks(neural_network->get_input_variables()))
+         get_categorical_blocks(network->get_input_variables()))
         fill_n(categorical_columns.begin() + first_column, categories_number, 1);
 
     VectorR probe = input;
@@ -130,7 +130,7 @@ MatrixR ResponseOptimization::estimate_jacobian(const VectorR& input,
 
         probe(j) = input(j) + step;
 
-        const VectorR probe_output = neural_network->calculate_outputs(probe.transpose()).row(0).transpose();
+        const VectorR probe_output = network->calculate_outputs(probe.transpose()).row(0).transpose();
 
         VectorR probe_values(values.size());
 
@@ -155,7 +155,7 @@ pair<VectorR, VectorR> ResponseOptimization::get_feasible_point(VectorR input,
 
     const auto evaluate = [&](const VectorR& point, VectorR& point_values, VectorR& point_residuals)
     {
-        const VectorR point_output = neural_network->calculate_outputs(point.transpose()).row(0).transpose();
+        const VectorR point_output = network->calculate_outputs(point.transpose()).row(0).transpose();
 
         for (Index i = 0; i < constraints_number; i++)
         {
@@ -260,15 +260,15 @@ pair<VectorR, VectorR> ResponseOptimization::get_feasible_point(VectorR input,
 }
 
 
-void ResponseOptimization::set(NeuralNetwork* new_neural_network)
+void ResponseOptimization::set(Network* new_network)
 {
-    neural_network = new_neural_network;
+    network = new_network;
 }
 
 
 void ResponseOptimization::add_objective(const string& expression, const Objective::Sense sense, const float value)
 {
-    objectives.push_back(Objective{compile_expression(expression, neural_network, "Objective"), sense, value});
+    objectives.push_back(Objective{compile_expression(expression, network, "Objective"), sense, value});
 }
 
 
@@ -284,7 +284,7 @@ void ResponseOptimization::add_constraint(const string& expression,
     throw_if(ranges::any_of(values, [](const float value) { return !isfinite(value); }),
              "Constraint on '" + expression + "' has a value that is not a finite number.");
 
-    Constraint constraint{compile_expression(expression, neural_network, "Constraint"), condition, values};
+    Constraint constraint{compile_expression(expression, network, "Constraint"), condition, values};
 
     if (condition == Condition::AllowedSet)
     {
@@ -342,9 +342,9 @@ MatrixR ResponseOptimization::perform_response_optimization()
 
 pair<VectorR, VectorR> ResponseOptimization::calculate_domain() const
 {
-    throw_if(!neural_network, "The neural network has not been set.");
+    throw_if(!network, "The neural network has not been set.");
 
-    const Scaling* scaling_layer = static_cast<const Scaling*>(neural_network->get_first(LayerType::Scaling));
+    const Scaling* scaling_layer = static_cast<const Scaling*>(network->get_first(LayerType::Scaling));
 
     throw_if(!scaling_layer, "The neural network has no scaling layer to take the input domain from.");
 
@@ -391,7 +391,7 @@ VectorR ResponseOptimization::calculate_random_input(const pair<VectorR, VectorR
     vector<float> block;
 
     for (const auto& [first_column, categories_number] :
-         get_categorical_blocks(neural_network->get_input_variables()))
+         get_categorical_blocks(network->get_input_variables()))
     {
         closed_categories.resize(size_t(categories_number));
 
@@ -413,7 +413,7 @@ VectorR ResponseOptimization::assign_categories(const VectorR& input) const
     VectorR point = input;
 
     for (const auto& [first_column, categories_number] :
-         get_categorical_blocks(neural_network->get_input_variables()))
+         get_categorical_blocks(network->get_input_variables()))
     {
         Index category = 0;
 

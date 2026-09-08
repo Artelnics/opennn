@@ -61,9 +61,9 @@ TEST(MeanAbsoluteErrorTest, BackPropagate)
     dataset.set_data(data);
     dataset.set_sample_roles("Training");
 
-    ApproximationNetwork neural_network({2}, {3}, {2});
+    ApproximationNetwork network({2}, {3}, {2});
 
-    Loss loss(&neural_network, &dataset);
+    Loss loss(&network, &dataset);
     loss.set_error(Loss::Error::MeanAbsoluteError);
 
     const VectorR gradient = calculate_gradient(loss);
@@ -84,15 +84,15 @@ TEST(MeanAbsoluteErrorTest, StringSelection)
 TEST(MeanAbsoluteErrorTest, TrainingStrategySerialization)
 {
     TabularDataset dataset(2, { 1 }, { 1 });
-    ApproximationNetwork neural_network({ 1 }, { 2 }, { 1 });
-    TrainingStrategy strategy(&neural_network, &dataset);
+    ApproximationNetwork network({ 1 }, { 2 }, { 1 });
+    TrainingStrategy strategy(&network, &dataset);
     strategy.set_loss("MeanAbsoluteError");
 
     const filesystem::path path =
         filesystem::temp_directory_path() / "opennn_mean_absolute_error.json";
     strategy.save(path);
 
-    TrainingStrategy loaded(&neural_network, &dataset);
+    TrainingStrategy loaded(&network, &dataset);
     loaded.load(path);
 
     ASSERT_NE(loaded.get_loss(), nullptr);

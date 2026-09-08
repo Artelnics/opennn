@@ -14,7 +14,7 @@
 #include "opennn/core/json.h"
 #include "opennn/core/string_utilities.h"
 #include "opennn/dataset/image_processing.h"
-#include "opennn/neural_network/detection_head.h"
+#include "opennn/network/detection_head.h"
 
 namespace opennn
 {

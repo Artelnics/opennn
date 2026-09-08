@@ -16,10 +16,10 @@
 #include "opennn/core/tensor_types.h"
 #include "opennn/dataset/batch.h"
 #include "opennn/dataset/dataset.h"
-#include "opennn/neural_network/back_propagation.h"
-#include "opennn/neural_network/detection_head.h"
-#include "opennn/neural_network/forward_propagation.h"
-#include "opennn/neural_network/neural_network.h"
+#include "opennn/network/back_propagation.h"
+#include "opennn/network/detection_head.h"
+#include "opennn/network/forward_propagation.h"
+#include "opennn/network/network.h"
 #include "opennn/training_strategy/error_functions.h"
 #include "opennn/training_strategy/kernel_losses.cuh"
 
@@ -186,11 +186,11 @@ GIoUResult yolo_loss_giou_grad(const float* pred, const float* gt)
     return r;
 }
 
-DetectionHeadMetadata get_detection_head_metadata(const NeuralNetwork& neural_network,
+DetectionHeadMetadata get_detection_head_metadata(const Network& network,
                                                   Index layer_index)
 {
     const auto* const head = dynamic_cast<const DetectionHeadEndpoint*>(
-        neural_network.get_layer(layer_index).get());
+        network.get_layer(layer_index).get());
     throw_if(!head, "YOLO loss requires detection-head endpoints.");
 
     const DetectionHeadMetadata metadata = head->get_detection_head_metadata();
@@ -203,19 +203,19 @@ DetectionHeadMetadata get_detection_head_metadata(const NeuralNetwork& neural_ne
     return metadata;
 }
 
-DetectionHeadMetadata get_loss_head_metadata(const NeuralNetwork& neural_network,
+DetectionHeadMetadata get_loss_head_metadata(const Network& network,
                                              const vector<Index>& detection_indices)
 {
     throw_if(detection_indices.empty(),
              "YOLO loss requires at least one detection-head endpoint.");
 
     const DetectionHeadMetadata first =
-        get_detection_head_metadata(neural_network, detection_indices.front());
+        get_detection_head_metadata(network, detection_indices.front());
 
     for (size_t i = 1; i < detection_indices.size(); ++i)
     {
         const DetectionHeadMetadata current =
-            get_detection_head_metadata(neural_network, detection_indices[i]);
+            get_detection_head_metadata(network, detection_indices[i]);
         throw_if(current.kind != first.kind
                  || current.classes_number != first.classes_number,
                  "YOLO detection heads must use the same kind and class count.");
@@ -434,7 +434,7 @@ vector<float> assemble_head_target(const float* tgt,
 }
 
 template <typename LayoutFn>
-void for_each_yolo_head_layout(const NeuralNetwork* nn,
+void for_each_yolo_head_layout(const Network* nn,
                                const vector<Index>& detection_indices,
                                LayoutFn&& fn)
 {
@@ -460,7 +460,7 @@ void for_each_yolo_head_layout(const NeuralNetwork* nn,
 
 template <typename HeadFn>
 void for_each_yolo_head(const ForwardPropagation& forward_propagation,
-                        const NeuralNetwork* nn,
+                        const Network* nn,
                         const vector<Index>& detection_indices,
                         const float* tgt,
                         Index batch_size,
@@ -492,7 +492,7 @@ void for_each_yolo_head(const ForwardPropagation& forward_propagation,
 
 Loss::EvaluationResult yolo_error_cpu_multi(const ForwardPropagation& forward_propagation,
                                             const TensorView& target_flat,
-                                            const NeuralNetwork* nn,
+                                            const Network* nn,
                                             const vector<Index>& detection_indices,
                                             const DetectionHeadMetadata& head,
                                             YoloLambdas lam)
@@ -518,7 +518,7 @@ Loss::EvaluationResult yolo_error_cpu_multi(const ForwardPropagation& forward_pr
 void yolo_gradient_cpu_multi(const ForwardPropagation& forward_propagation,
                              const TensorView& target_flat,
                              BackPropagation& back_propagation,
-                             const NeuralNetwork* nn,
+                             const Network* nn,
                              const vector<Index>& detection_indices,
                              const DetectionHeadMetadata& head,
                              YoloLambdas lam)
@@ -915,7 +915,7 @@ template<typename HeadFn>
 static void for_each_v8_head(const ForwardPropagation& forward_propagation,
                              const TensorView& target_flat,
                              BackPropagation* back_propagation,
-                             const NeuralNetwork* nn,
+                             const Network* nn,
                              const vector<Index>& detection_indices,
                              HeadFn&& fn)
 {
@@ -1008,7 +1008,7 @@ Index get_max_gt_boxes(const TensorView& target_flat, Index batch_size)
 
 Loss::EvaluationResult yolo_v8_error_multi(const ForwardPropagation& forward_propagation,
                                            const TensorView& target_flat,
-                                           const NeuralNetwork* nn,
+                                           const Network* nn,
                                            const vector<Index>& detection_indices,
                                            Index classes_number,
                                            YoloLambdas lam)
@@ -1032,7 +1032,7 @@ Loss::EvaluationResult yolo_v8_error_multi(const ForwardPropagation& forward_pro
 void yolo_v8_gradient_multi(const ForwardPropagation& forward_propagation,
                             const TensorView& target_flat,
                             BackPropagation& back_propagation,
-                            const NeuralNetwork* nn,
+                            const Network* nn,
                             const vector<Index>& detection_indices,
                             Index classes_number,
                             YoloLambdas lam)
@@ -1056,7 +1056,7 @@ void yolo_v8_gradient_multi(const ForwardPropagation& forward_propagation,
 
 template <typename HeadFn>
 void for_each_yolo_head_gpu(const ForwardPropagation& forward_propagation,
-                            const NeuralNetwork* nn,
+                            const Network* nn,
                             const vector<Index>& detection_indices,
                             const TensorView& target_flat,
                             Buffer& target_device,
@@ -1108,7 +1108,7 @@ void for_each_yolo_head_gpu(const ForwardPropagation& forward_propagation,
 
 void yolo_error_gpu_accumulate(const ForwardPropagation& forward_propagation,
                                const TensorView& target_flat,
-                               const NeuralNetwork* nn,
+                               const Network* nn,
                                const vector<Index>& detection_indices,
                                const DetectionHeadMetadata& head,
                                Buffer& target_device,
@@ -1136,7 +1136,7 @@ void yolo_error_gpu_accumulate(const ForwardPropagation& forward_propagation,
 
 Loss::EvaluationResult yolo_error_gpu_multi(const ForwardPropagation& forward_propagation,
                                             const TensorView& target_flat,
-                                            const NeuralNetwork* nn,
+                                            const Network* nn,
                                             const vector<Index>& detection_indices,
                                             const DetectionHeadMetadata& head,
                                             Buffer& target_device,
@@ -1162,7 +1162,7 @@ Loss::EvaluationResult yolo_error_gpu_multi(const ForwardPropagation& forward_pr
 void yolo_gradient_gpu_multi(const ForwardPropagation& forward_propagation,
                              const TensorView& target_flat,
                              BackPropagation& back_propagation,
-                             const NeuralNetwork* nn,
+                             const Network* nn,
                              const vector<Index>& detection_indices,
                              const DetectionHeadMetadata& head,
                              Buffer& target_device,
@@ -1194,14 +1194,14 @@ void yolo_gradient_gpu_multi(const ForwardPropagation& forward_propagation,
 }
 #endif
 
-Loss::Loss(NeuralNetwork* new_neural_network, Dataset* new_dataset)
+Loss::Loss(Network* new_network, Dataset* new_dataset)
 {
-    set(new_neural_network, new_dataset);
+    set(new_network, new_dataset);
 }
 
-void Loss::set(NeuralNetwork* new_neural_network, Dataset* new_dataset)
+void Loss::set(Network* new_network, Dataset* new_dataset)
 {
-    neural_network = new_neural_network;
+    network = new_network;
     dataset = new_dataset;
 
     set_error(Error::MeanSquaredError);
@@ -1210,10 +1210,10 @@ void Loss::set(NeuralNetwork* new_neural_network, Dataset* new_dataset)
 
 vector<Index> Loss::get_output_delta_layer_indices() const
 {
-    if (!neural_network || neural_network->get_layers_number() == 0)
+    if (!network || network->get_layers_number() == 0)
         return {};
 
-    const auto& layers = neural_network->get_layers();
+    const auto& layers = network->get_layers();
 
     if (error == Error::Yolo)
     {
@@ -1238,7 +1238,7 @@ vector<Index> Loss::get_output_delta_layer_indices() const
             return anchor_based_heads;
     }
 
-    return {neural_network->get_last_trainable_layer_index()};
+    return {network->get_last_trainable_layer_index()};
 }
 
 void Loss::set_normalization_coefficient()
@@ -1294,11 +1294,11 @@ void Loss::set_normalization_coefficient()
         normalization_coefficient = (mean_model_error < EPSILON) ? 1.0f : mean_model_error;
     }
 
-    if (error == Error::CrossEntropy && neural_network
+    if (error == Error::CrossEntropy && network
         && dataset->get_features_number(VariableRole::Target) > 1)
     {
-        const auto& layers = neural_network->get_layers();
-        const Index last_trainable = neural_network->get_last_trainable_layer_index();
+        const auto& layers = network->get_layers();
+        const Index last_trainable = network->get_last_trainable_layer_index();
         throw_if(layers[last_trainable]->get_output_activation() != ActivationFunction::Softmax,
                  "Cross-entropy error with multiple target features requires a softmax output layer.");
     }
@@ -1348,15 +1348,15 @@ Loss::EvaluationResult Loss::calculate_yolo(const ForwardPropagation& forward_pr
     const YoloLambdas lam{yolo_lambda_giou, yolo_lambda_dfl, yolo_lambda_noobj, yolo_lambda_class, yolo_focal_gamma, yolo_obj_focal_gamma};
     const vector<Index> detection_indices = get_output_delta_layer_indices();
     const DetectionHeadMetadata head =
-        get_loss_head_metadata(*neural_network, detection_indices);
+        get_loss_head_metadata(*network, detection_indices);
 
     if (head.is_anchor_free())
     {
         if (!is_gradient)
-            return yolo_v8_error_multi(forward_propagation, target, neural_network,
+            return yolo_v8_error_multi(forward_propagation, target, network,
                                        detection_indices, head.classes_number, lam);
         yolo_v8_gradient_multi(forward_propagation, target, *back_propagation,
-                               neural_network, detection_indices, head.classes_number, lam);
+                               network, detection_indices, head.classes_number, lam);
         return {};
     }
 
@@ -1366,22 +1366,22 @@ Loss::EvaluationResult Loss::calculate_yolo(const ForwardPropagation& forward_pr
     {
 
         if (!is_gradient)
-            return yolo_error_gpu_multi(forward_propagation, target, neural_network,
+            return yolo_error_gpu_multi(forward_propagation, target, network,
                                         detection_indices, head,
                                         forward_propagation.loss_target_workspace,
                                         forward_propagation.loss_workspace, lam);
         yolo_gradient_gpu_multi(forward_propagation, target, *back_propagation,
-                                neural_network, detection_indices, head,
+                                network, detection_indices, head,
                                 back_propagation->execution_workspace, lam);
         return {};
     }
 #endif
     if (!is_gradient)
-        return yolo_error_cpu_multi(forward_propagation, target, neural_network,
+        return yolo_error_cpu_multi(forward_propagation, target, network,
                                     detection_indices, head, lam);
 
     yolo_gradient_cpu_multi(forward_propagation, target, *back_propagation,
-                            neural_network, detection_indices, head, lam);
+                            network, detection_indices, head, lam);
     return {};
 }
 
@@ -1709,11 +1709,11 @@ bool Loss::output_delta_overwrites_outputs() const
     // batch-normalized Dense - which would then read p - y where it expected y, on GPU only
     // and with no error. backward_uses_forward_output() is that condition stated directly,
     // and it covers the gated and batch-norm cases an activation test would miss.
-    if (error != Error::CrossEntropy3d || !neural_network || !neural_network->is_gpu())
+    if (error != Error::CrossEntropy3d || !network || !network->is_gpu())
         return false;
 
-    const auto& layers = neural_network->get_layers();
-    return !layers[neural_network->get_last_trainable_layer_index()]->backward_uses_forward_output();
+    const auto& layers = network->get_layers();
+    return !layers[network->get_last_trainable_layer_index()]->backward_uses_forward_output();
 }
 
 void Loss::calculate_output_deltas(const Batch& batch, const ForwardPropagation& forward_propagation, BackPropagation& back_propagation) const
@@ -1751,7 +1751,7 @@ void Loss::calculate_output_deltas(const Batch& batch, const ForwardPropagation&
         break;
     case MinkowskiError:
         minkowski_error_gradient(input, target, minkowski_parameter, input_delta,
-                                 neural_network && neural_network->is_gpu());
+                                 network && network->is_gpu());
         break;
     case Yolo:
 #ifndef OPENNN_NO_VISION
@@ -1766,15 +1766,15 @@ void Loss::calculate_output_deltas(const Batch& batch, const ForwardPropagation&
 void Loss::back_propagate_layers(ForwardPropagation& forward_propagation,
                                  BackPropagation& back_propagation) const
 {
-    check_neural_network();
+    check_network();
 
-    const vector<unique_ptr<Layer>>& layers = neural_network->get_layers();
-    const size_t layers_number = neural_network->get_layers_number();
+    const vector<unique_ptr<Layer>>& layers = network->get_layers();
+    const size_t layers_number = network->get_layers_number();
 
     if (layers_number == 0) return;
 
-    const Index first_trainable_layer_index = neural_network->get_first_trainable_layer_index();
-    const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
+    const Index first_trainable_layer_index = network->get_first_trainable_layer_index();
+    const Index last_trainable_layer_index = network->get_last_trainable_layer_index();
 
     for (Index i = last_trainable_layer_index; i >= first_trainable_layer_index; i--)
     {
@@ -1854,24 +1854,24 @@ void Loss::add_regularization_gradient(const TensorView& gradient,
 {
     if (!has_regularization()) return;
 
-    check_neural_network();
+    check_network();
 
     const Device gradient_device = gradient.get_device();
 
-    if (gradient_device == Device::CUDA && neural_network->get_parameters_device() != Device::CUDA)
-        neural_network->copy_parameters_device();
-    else if (gradient_device == Device::CPU && neural_network->get_parameters_device() == Device::CUDA)
-        neural_network->copy_parameters_host();
+    if (gradient_device == Device::CUDA && network->get_parameters_device() != Device::CUDA)
+        network->copy_parameters_device();
+    else if (gradient_device == Device::CPU && network->get_parameters_device() == Device::CUDA)
+        network->copy_parameters_host();
 
     throw_if(parameter_offset < 0
              || parameter_offset + gradient.size()
-                    > neural_network->get_parameters_buffer_size(),
+                    > network->get_parameters_buffer_size(),
              "Loss::add_regularization_gradient: parameter range [{}, {}) "
              "exceeds the {}-element parameter buffer.",
              parameter_offset, parameter_offset + gradient.size(),
-             neural_network->get_parameters_buffer_size());
+             network->get_parameters_buffer_size());
 
-    const TensorView parameters(neural_network->get_parameters_data()
+    const TensorView parameters(network->get_parameters_data()
                                     + parameter_offset,
                                 { gradient.size() },
                                 Type::FP32,
@@ -1887,7 +1887,7 @@ void Loss::add_regularization_gradient(BackPropagation& back_propagation) const
 {
     if (!has_regularization()) return;
 
-    check_neural_network();
+    check_network();
 
     for(const BackPropagation::GradientSlice& slice :
         back_propagation.get_gradient_slices())

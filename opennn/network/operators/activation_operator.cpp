@@ -1,0 +1,110 @@
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   A C T I V A T I O N   O P E R A T O R   S O U R C E
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
+
+#include "opennn/network/operators/activation_operator.h"
+#include "opennn/core/json.h"
+#include "opennn/core/tensor_operations.h"
+#include "opennn/network/forward_propagation.h"
+#include "opennn/network/back_propagation.h"
+#include "opennn/core/profiler.h"
+
+namespace opennn
+{
+
+void ActivationOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, ForwardPropagationMode)
+{
+    PROFILE_SCOPE_NAMED(activation_timer, "op:activation_fwd");
+
+    TensorView& output = get_output(forward_propagation, layer);
+
+    if (output.empty() || forward_fused)
+        return;
+
+    // An unfused activation is pure streaming, so its bandwidth is the whole
+    // story. Every pass counted here is one a fused epilogue would not make:
+    // the copy when input and output are distinct slots, the read-modify-write
+    // of the activation itself, and the read plus write of the saved copy.
+    //
+    // Identity is the exception and has to be excluded rather than counted at
+    // zero cost by accident: activation_forward returns before touching the
+    // tensor, so charging it a pass reports traffic that never happened. Left
+    // in, it put this scope above the memory system's peak, since the bytes
+    // were fictional while the time was real.
+    double passes = activation_function == ActivationFunction::Identity ? 0.0 : 2.0;
+
+    if (input_slots.empty() || input_slots[0] != output_slots[0])
+    {
+        passes += 2.0;
+        copy(get_input(forward_propagation, layer), output);
+    }
+
+    activation_forward(output, activation_function);
+
+    if (saved_output_slot)
+    {
+
+        TensorView& saved = forward_propagation.slots[layer][*saved_output_slot];
+        if (!saved.empty())
+        {
+            passes += 2.0;
+            copy(output, saved);
+        }
+    }
+
+    if (profiler::is_enabled())
+        activation_timer.set_bytes(passes * double(output.size())
+                                          * double(type_bytes(output.get_type())));
+}
+
+void ActivationOperator::back_propagate(ForwardPropagation& forward_propagation, BackPropagation& back_propagation, size_t layer) const
+{
+    PROFILE_SCOPE("op:activation_bwd");
+
+    TensorView& output_delta = get_output_delta(back_propagation, layer);
+
+    const bool fused_by_consumer = backward_fused_by_consumer
+        && forward_propagation.drelu_fused_by_layer[layer] != 0;
+    if ((backward_fused || fused_by_consumer) && output_delta.is_cuda())
+        return;
+
+    const bool needs_input = activation_needs_input(activation_function);
+    const size_t read_slot = saved_output_slot.value_or(output_slots[0]);
+
+    const TensorView& outputs = needs_input
+        ? get_input(forward_propagation, layer)
+        : forward_propagation.slots[layer][read_slot];
+
+    if (!input_slots.empty() && input_slots[0] != output_slots[0])
+    {
+        TensorView& input_delta = get_input_delta(back_propagation, layer);
+        if (input_delta.empty()) return;
+        copy(output_delta, input_delta);
+        activation_backward(outputs, input_delta, activation_function);
+    }
+    else
+    {
+        activation_backward(outputs, output_delta, activation_function);
+    }
+}
+
+void ActivationOperator::to_JSON(JsonWriter& w) const
+{
+    add_json_field(w, "Activation", ActivationOperator::to_string(activation_function));
+}
+
+void ActivationOperator::from_JSON(const Json* parent)
+{
+    if (parent && parent->has("Activation"))
+        set_activation_function(read_json_string(parent, "Activation"));
+}
+
+}
+
+// OpenNN: Open Neural Networks Library.
+// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Licensed under the GNU Lesser General Public License v2.1 or later.

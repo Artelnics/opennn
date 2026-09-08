@@ -12,8 +12,8 @@
 #include "opennn/core/profiler.h"
 #include "opennn/dataset/batch.h"
 #include "opennn/dataset/dataset.h"
-#include "opennn/neural_network/back_propagation.h"
-#include "opennn/neural_network/forward_propagation.h"
+#include "opennn/network/back_propagation.h"
+#include "opennn/network/forward_propagation.h"
 #include "opennn/core/string_utilities.h"
 #include "opennn/training_strategy/kernel_optimizers.cuh"
 #include "opennn/training_strategy/loss.h"
@@ -153,7 +153,7 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
                                                  OptimizerData& optimization_data,
                                                  UpdateMode mode)
 {
-    NeuralNetwork* neural_network = loss->get_neural_network();
+    Network* network = loss->get_network();
 
     const bool has_graph_scalars =
         optimization_data.views.size() > size_t(GraphScalars)
@@ -163,7 +163,7 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
         back_propagation.get_gradient_slices();
 
     if (mode == UpdateMode::Capturable
-        || (has_graph_scalars && neural_network->is_gpu() && can_use_cuda_graph()))
+        || (has_graph_scalars && network->is_gpu() && can_use_cuda_graph()))
     {
 #ifdef OPENNN_HAS_CUDA
         clip_gradient_norm(back_propagation, gradient_clip_norm);
@@ -179,13 +179,13 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
             beta_1, beta_2, graph_base_learning_rate, EPSILON,
             graph_step, graph_learning_rate, graph_epsilon, stream);
 
-        float* const parameters = neural_network->get_parameters_data();
+        float* const parameters = network->get_parameters_data();
         const TensorView& first_moment = optimization_data.views[GradientMoment];
         const bool first_moment_bf16 = first_moment.is_bf16();
         float* const second_moment =
             optimization_data.views[SquareGradientMoment].as<float>();
         bfloat16* const mirror =
-            neural_network->get_parameters_bf16_mirror_data();
+            network->get_parameters_bf16_mirror_data();
 
         PROFILE_SCOPE_BYTES("optim:adam_update_capturable_cuda",
                             adam_bytes(gradient_slices, mirror != nullptr, first_moment_bf16));
@@ -223,16 +223,16 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
     const float bias_correction_1 = 1.0f - pow(beta_1, step);
     const float bias_correction_2 = 1.0f - pow(beta_2, step);
 
-    if (neural_network->is_gpu())
+    if (network->is_gpu())
     {
 #ifdef OPENNN_HAS_CUDA
-        float* const parameters = neural_network->get_parameters_data();
+        float* const parameters = network->get_parameters_data();
         const TensorView& first_moment = optimization_data.views[GradientMoment];
         const bool first_moment_bf16 = first_moment.is_bf16();
         float* const second_moment =
             optimization_data.views[SquareGradientMoment].as<float>();
         bfloat16* const mirror =
-            neural_network->get_parameters_bf16_mirror_data();
+            network->get_parameters_bf16_mirror_data();
 
         PROFILE_SCOPE_BYTES("optim:adam_update_cuda",
                             adam_bytes(gradient_slices, mirror != nullptr, first_moment_bf16));
@@ -257,7 +257,7 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
 #endif
     }
 
-    VectorMap parameters = neural_network->get_parameters_map();
+    VectorMap parameters = network->get_parameters_map();
 
     VectorMap gradient_exponential_decay = optimization_data.views[GradientMoment].as_vector();
     VectorMap square_gradient_exponential_decay = optimization_data.views[SquareGradientMoment].as_vector();

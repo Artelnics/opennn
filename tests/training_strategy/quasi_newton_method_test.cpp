@@ -5,8 +5,8 @@
 #include "opennn/dataset/dataset.h"
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/dataset/batch.h"
-#include "opennn/neural_network/forward_propagation.h"
-#include "opennn/neural_network/back_propagation.h"
+#include "opennn/network/forward_propagation.h"
+#include "opennn/network/back_propagation.h"
 #include "opennn/models/models.h"
 #include "opennn/training_strategy/loss.h"
 #include "opennn/training_strategy/quasi_newton_method.h"
@@ -98,17 +98,17 @@ TEST_F(QuasiNewtonMethodTest, BFGS_Update)
     dataset.set_data_random();
     dataset.set_sample_roles("Training");
 
-    ApproximationNetwork neural_network({ inputs_number }, {}, { outputs_number });
+    ApproximationNetwork network({ inputs_number }, {}, { outputs_number });
 
-    Loss loss(&neural_network, &dataset);
+    Loss loss(&network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);
     QuasiNewtonMethod quasi_newton_method(&loss);
 
-    neural_network.set_parameters_random();
+    network.set_parameters_random();
 
     const VectorR gradient = calculate_gradient(loss);
 
-    EXPECT_EQ(gradient.size(), neural_network.get_parameters_buffer_size());
+    EXPECT_EQ(gradient.size(), network.get_parameters_buffer_size());
 
     for (Index i = 0; i < gradient.size(); ++i)
         EXPECT_FALSE(isnan(gradient(i)));

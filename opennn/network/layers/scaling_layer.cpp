@@ -1,0 +1,509 @@
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   S C A L I N G   L A Y E R   C L A S S
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
+
+#include "opennn/network/layers/scaling_layer.h"
+
+#include "opennn/core/device_backend.h"
+#include "opennn/core/json.h"
+#include "opennn/core/scaling.h"
+#include "opennn/core/string_utilities.h"
+#include "opennn/core/tensor_operations.h"
+#include "opennn/network/back_propagation.h"
+#include "opennn/network/forward_propagation.h"
+#include "opennn/registry.h"
+#ifdef OPENNN_HAS_CUDA
+#include "opennn/network/layers/kernel_scaling.cuh"
+#endif
+
+namespace opennn
+{
+
+#ifdef OPENNN_HAS_CUDA
+
+static void scale_gpu(const TensorView& input,
+               const TensorView& minimums, const TensorView& maximums,
+               const TensorView& means, const TensorView& standard_deviations,
+               const TensorView& scalers,
+               float min_range, float max_range,
+               TensorView& output, bool inverse)
+{
+    const Index features = scalers.size();
+
+    visit_type_pair<Type::FP32, Type::BF16>(input.get_type(), output.get_type(), [&]<typename TIn, typename TOut>() {
+        scale_cuda<TIn, TOut>(output.size(), to_int(features),
+                              input.as<TIn>(),
+                              minimums.as_float(),
+                              maximums.as_float(),
+                              means.as_float(),
+                              standard_deviations.as_float(),
+                              scalers.as_float(),
+                              min_range, max_range,
+                              output.as<TOut>(),
+                              inverse);
+    });
+}
+
+#else
+
+OPENNN_CUDA_TEMPLATE_STUB(scale_gpu)
+
+#endif
+
+template<typename Column>
+static void scale_column_cpu(Column& column, ScalerMethod method,
+                             const Descriptives& descriptives,
+                             float min_range, float max_range)
+{
+    using enum ScalerMethod;
+
+    switch (method)
+    {
+    case MinimumMaximum:
+        if (descriptives.maximum - descriptives.minimum < EPSILON)
+            column.setZero();
+        else
+            column = scale_minimum_maximum_formula(column, descriptives, min_range, max_range);
+        break;
+    case MeanStandardDeviation:
+        if (descriptives.standard_deviation > EPSILON)
+            column = scale_mean_standard_deviation_formula(column, descriptives);
+        else
+            column.setZero();
+        break;
+    case StandardDeviation:
+        column *= descriptives.standard_deviation > EPSILON
+                ? 1.0f / descriptives.standard_deviation
+                : 0.0f;
+        break;
+    case Logarithm:
+        column = column.max(EPSILON).log();
+        break;
+    case ImageMinMax:
+        column /= 255.0f;
+        break;
+    case None:
+    default:
+        break;
+    }
+}
+
+template<typename Column>
+static void unscale_column_cpu(Column& column, ScalerMethod method,
+                               const Descriptives& descriptives,
+                               float min_range, float max_range)
+{
+    using enum ScalerMethod;
+
+    switch (method)
+    {
+    case MinimumMaximum:
+        throw_if(max_range - min_range < EPSILON, "The range values are not valid.");
+        if (descriptives.maximum - descriptives.minimum < EPSILON)
+            column.setConstant(descriptives.minimum);
+        else
+            column = unscale_minimum_maximum_formula(column, descriptives, min_range, max_range);
+        break;
+    case MeanStandardDeviation:
+        column = unscale_mean_standard_deviation_formula(column, descriptives);
+        break;
+    case StandardDeviation:
+        if (descriptives.standard_deviation > EPSILON)
+            column *= descriptives.standard_deviation;
+        else
+            column.setConstant(descriptives.mean);
+        break;
+    case Logarithm:
+        column = column.exp();
+        break;
+    case ImageMinMax:
+        column *= 255.0f;
+        break;
+    case None:
+    default:
+        break;
+    }
+}
+
+static void scale_cpu(const TensorView& input,
+               const TensorView& minimums, const TensorView& maximums,
+               const TensorView& means, const TensorView& standard_deviations,
+               const TensorView& scalers,
+               float min_range, float max_range,
+               TensorView& output, bool inverse)
+{
+    const Index features = scalers.size();
+    if (features == 0) { output.as_matrix().noalias() = input.as_matrix(); return; }
+
+    const MatrixMap input_matrix = input.as_flat_matrix();
+    const VectorMap minimums_vector = minimums.as_vector();
+    const VectorMap maximums_vector = maximums.as_vector();
+    const VectorMap means_vector  = means.as_vector();
+    const VectorMap standard_deviations_vector  = standard_deviations.as_vector();
+    const VectorMap scalers_vector   = scalers.as_vector();
+
+    MatrixMap output_matrix = output.as_flat_matrix();
+
+    output_matrix.noalias() = input_matrix;
+
+    const Index cols = output_matrix.cols();
+    for (Index col = 0; col < cols; ++col)
+    {
+        const Index feature_index = col % features;
+        const auto method = static_cast<ScalerMethod>(static_cast<int>(scalers_vector(feature_index)));
+        auto column = output_matrix.col(col).array();
+
+        const Descriptives descriptives(minimums_vector(feature_index),
+                                        maximums_vector(feature_index),
+                                        means_vector(feature_index),
+                                        standard_deviations_vector(feature_index));
+
+        if (inverse)
+            unscale_column_cpu(column, method, descriptives, min_range, max_range);
+        else
+            scale_column_cpu(column, method, descriptives, min_range, max_range);
+    }
+}
+
+void scale(const TensorView& input,
+           const TensorView& minimums, const TensorView& maximums,
+           const TensorView& means, const TensorView& standard_deviations,
+           const TensorView& scalers,
+           float min_range, float max_range,
+           TensorView& output)
+{
+    if (input.is_cuda())
+        return scale_gpu(input, minimums, maximums, means, standard_deviations, scalers,
+                         min_range, max_range, output, false);
+    scale_cpu(input, minimums, maximums, means, standard_deviations, scalers,
+              min_range, max_range, output, false);
+}
+
+void unscale(const TensorView& input,
+             const TensorView& minimums, const TensorView& maximums,
+             const TensorView& means, const TensorView& standard_deviations,
+             const TensorView& scalers,
+             float min_range, float max_range,
+             TensorView& output)
+{
+    if (input.is_cuda())
+        return scale_gpu(input, minimums, maximums, means, standard_deviations, scalers,
+                         min_range, max_range, output, true);
+
+    scale_cpu(input, minimums, maximums, means, standard_deviations, scalers,
+              min_range, max_range, output, true);
+}
+
+void ScaleOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, ForwardPropagationMode)
+{
+    const TensorView& input = get_input(forward_propagation, layer);
+    TensorView& output      = get_output(forward_propagation, layer);
+
+    if (!minimums.get_data())
+        return copy(input, output);
+
+    if (invert)
+        unscale(input, minimums, maximums, means, standard_deviations, scalers,
+                min_range, max_range, output);
+    else
+        scale(input, minimums, maximums, means, standard_deviations, scalers,
+              min_range, max_range, output);
+}
+
+Scaling::Scaling(const Shape& new_input_shape)
+    : Scaling(LayerType::Scaling, false)
+{
+    set(new_input_shape);
+}
+
+Scaling::Scaling(const Shape& new_input_shape, const ScalerMethod method)
+    : Scaling(new_input_shape)
+{
+    set_scalers(method);
+}
+
+Scaling::Scaling(LayerType type, bool invert)
+    : Layer(type, Trainability::Frozen)
+{
+    scale_op.invert = invert;
+    operators = {&scale_op};
+}
+
+VectorR Scaling::get_standard_deviations() const { return descriptives_field(descriptives, &Descriptives::standard_deviation); }
+
+void Scaling::set(const Shape& new_input_shape)
+{
+    input_shape = new_input_shape;
+
+    set_label("scaling_layer");
+
+    const Index features = input_shape.empty() ? 0 : input_shape.back();
+    descriptives.assign(size_t(features), Descriptives(-1.0f, 1.0f, 0.0f, 1.0f));
+    scalers.assign(size_t(features), ScalerMethod::MeanStandardDeviation);
+    min_range = -1.0f;
+    max_range = 1.0f;
+    op_storage_dirty = true;
+
+    check_rank(input_shape, {1, 2, 3}, "Scaling", "input");
+}
+
+void Scaling::apply_input_shape(const Shape& new_input_shape)
+{
+
+    const string previous_label = get_label();
+    const vector<Descriptives> previous_descriptives = descriptives;
+    const vector<ScalerMethod> previous_scalers = scalers;
+    const float previous_min_range = min_range;
+    const float previous_max_range = max_range;
+
+    set(new_input_shape);
+
+    set_label(previous_label);
+
+    if (ssize(previous_descriptives) == ssize(descriptives))
+    {
+        descriptives = previous_descriptives;
+        scalers = previous_scalers;
+        min_range = previous_min_range;
+        max_range = previous_max_range;
+        op_storage_dirty = true;
+    }
+}
+
+void Scaling::set_descriptives(const vector<Descriptives>& new_descriptives)
+{
+    throw_if(ssize(new_descriptives) != ssize(descriptives),
+             "{}::set_descriptives: size mismatch (expected {}, got {}).",
+                    get_name(), descriptives.size(), new_descriptives.size());
+    descriptives = new_descriptives;
+    op_storage_dirty = true;
+    refresh_op_storage(op_storage.get_device());
+}
+
+void Scaling::set_scalers(const vector<string>& scalers_str)
+{
+    throw_if(ssize(scalers_str) != ssize(scalers),
+             "{}::set_scalers: size mismatch (expected {}, got {}).",
+                    get_name(), scalers.size(), scalers_str.size());
+    ranges::transform(scalers_str, scalers.begin(), string_to_scaler_method);
+    op_storage_dirty = true;
+    refresh_op_storage(op_storage.get_device());
+}
+
+void Scaling::set_scalers(const ScalerMethod method)
+{
+    ranges::fill(scalers, method);
+    op_storage_dirty = true;
+    refresh_op_storage(op_storage.get_device());
+}
+
+void Scaling::set_scalers(const string& scaler)
+{
+    set_scalers(string_to_scaler_method(scaler));
+}
+
+void Scaling::set_feature_scaling(const FeatureScaling& scaling)
+{
+    throw_if(scaling.descriptives.size() != descriptives.size()
+             || scaling.scalers.size() != scalers.size(),
+             "{}::set_feature_scaling: size mismatch (expected {}, got {} descriptives and {} scalers).",
+             get_name(), descriptives.size(), scaling.descriptives.size(),
+             scaling.scalers.size());
+    throw_if(!(scaling.min_range < scaling.max_range),
+             "{}::set_feature_scaling: minimum range must be smaller than maximum range.",
+             get_name());
+
+    descriptives = scaling.descriptives;
+    scalers = scaling.scalers;
+    min_range = scaling.min_range;
+    max_range = scaling.max_range;
+    op_storage_dirty = true;
+    refresh_op_storage(op_storage.get_device());
+}
+
+bool Scaling::is_passthrough() const
+{
+    return ranges::all_of(scalers, [](ScalerMethod m) { return m == ScalerMethod::None; });
+}
+
+vector<TensorSpec> Scaling::get_forward_specs(Index batch_size) const
+{
+    if (is_passthrough())
+        return {};
+    return Layer::get_forward_specs(batch_size);
+}
+
+void Scaling::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, ForwardPropagationMode pass)
+{
+    if (is_passthrough())
+        return;
+    Layer::forward_propagate(forward_propagation, layer, pass);
+}
+
+float* Scaling::link_states(float* pointer, Device device)
+{
+    refresh_op_storage(device);
+    return pointer;
+}
+
+void Scaling::refresh_op_storage(Device device)
+{
+    const Index features = ssize(descriptives);
+
+    if (!refresh_feature_storage(op_storage, op_storage_dirty, device, features, 5,
+            [&](float* staging)
+            {
+                for (Index i = 0; i < features; ++i)
+                {
+                    staging[size_t(0 * features + i)] = descriptives[size_t(i)].minimum;
+                    staging[size_t(1 * features + i)] = descriptives[size_t(i)].maximum;
+                    staging[size_t(2 * features + i)] = descriptives[size_t(i)].mean;
+                    staging[size_t(3 * features + i)] = descriptives[size_t(i)].standard_deviation;
+                    staging[size_t(4 * features + i)] = float(int(scalers[size_t(i)]));
+                }
+            }))
+        return;
+
+    scale_op.min_range = min_range;
+    scale_op.max_range = max_range;
+
+    if (features == 0)
+    {
+        scale_op.minimums = scale_op.maximums = scale_op.means =
+            scale_op.standard_deviations = scale_op.scalers = TensorView();
+        return;
+    }
+
+    float* const base = op_storage.as<float>();
+    const Shape shape{features};
+    scale_op.minimums            = TensorView(base, shape, Type::FP32, device);
+    scale_op.maximums            = TensorView(base + 1 * features, shape, Type::FP32, device);
+    scale_op.means               = TensorView(base + 2 * features, shape, Type::FP32, device);
+    scale_op.standard_deviations = TensorView(base + 3 * features, shape, Type::FP32, device);
+    scale_op.scalers             = TensorView(base + 4 * features, shape, Type::FP32, device);
+}
+
+void Scaling::read_JSON_body(const Json* scaling_layer_element)
+{
+    if (!scaling_layer_element) return;
+
+    const auto parse_field = [&](const string& field, float Descriptives::* member)
+    {
+        if (!scaling_layer_element->has(field)) return;
+        VectorR values;
+        string_to_vector(read_json_string(scaling_layer_element, field), values);
+        throw_if(values.size() != ssize(descriptives),
+                 "Scaling::read_JSON_body: field \"{}\" has size {}, expected {}.",
+                        field, values.size(), descriptives.size());
+        for (Index i = 0; i < values.size(); ++i)
+            descriptives[size_t(i)].*member = values(i);
+    };
+
+    parse_field("Minimums",           &Descriptives::minimum);
+    parse_field("Maximums",           &Descriptives::maximum);
+    parse_field("Means",              &Descriptives::mean);
+    parse_field("StandardDeviations", &Descriptives::standard_deviation);
+
+    if (scaling_layer_element->has("Scalers"))
+    {
+        const vector<string> tokens = get_tokens(
+            read_json_string(scaling_layer_element, "Scalers"), " ");
+        throw_if(ssize(tokens) != ssize(scalers),
+                 "Scaling::read_JSON_body: \"Scalers\" has {} entries, expected {}.",
+                        tokens.size(), scalers.size());
+        ranges::transform(tokens, scalers.begin(), string_to_scaler_method);
+    }
+
+    if (scaling_layer_element->has("MinRange"))
+        min_range = parse_float(read_json_string(scaling_layer_element, "MinRange"), "Scaling: MinRange");
+    if (scaling_layer_element->has("MaxRange"))
+        max_range = parse_float(read_json_string(scaling_layer_element, "MaxRange"), "Scaling: MaxRange");
+
+    op_storage_dirty = true;
+    refresh_op_storage(op_storage.get_device());
+}
+
+void Scaling::write_JSON_body(JsonWriter& printer) const
+{
+    vector<string> scaler_names(scalers.size());
+    ranges::transform(scalers, scaler_names.begin(), scaler_method_to_string);
+
+    write_json(printer, {
+        {"Means",              vector_to_string(get_means())},
+        {"StandardDeviations", vector_to_string(get_standard_deviations())},
+        {"Minimums",           vector_to_string(get_minimums())},
+        {"Maximums",           vector_to_string(get_maximums())},
+        {"Scalers",            vector_to_string(scaler_names)},
+        {"MinRange",           min_range},
+        {"MaxRange",           max_range}
+    });
+}
+
+namespace
+{
+
+string expression_literal(float value)
+{
+    ostringstream stream;
+    stream.precision(10);
+    stream << value;
+
+    string text = stream.str();
+
+    if (text.find_first_of(".eE") == string::npos)
+        text += ".0";
+
+    return text;
+}
+
+}
+
+string Scaling::affine_expression(string_view input, const AffineMap& affine)
+{
+    if (affine.slope == 0.0f)
+        return expression_literal(affine.offset);
+    if (affine.slope == 1.0f && affine.offset == 0.0f)
+        return string(input);
+
+    string expression = string(input) + "*" + expression_literal(affine.slope);
+    if (affine.offset > 0.0f) expression += "+";
+    if (affine.offset != 0.0f) expression += expression_literal(affine.offset);
+    return expression;
+}
+
+string Scaling::write_expression(const vector<string>& input_names,
+                                 const vector<string>&) const
+{
+    const Index outputs_number = get_outputs_number();
+    throw_if(outputs_number == 0 || ssize(scalers) == 0
+             || outputs_number % ssize(scalers) != 0,
+             "Scaling::write_expression: layer not configured.");
+
+    ostringstream buffer;
+
+    for (Index i = 0; i < outputs_number; ++i)
+    {
+        const size_t feature = size_t(i % ssize(scalers));
+        const ScalerMethod scaler = scalers[feature];
+
+        if (scaler == ScalerMethod::Logarithm)
+        {
+            buffer << "scaled_" << input_names[i] << " = log(max(" << input_names[i]
+                   << ", " << EPSILON << "));\n";
+            continue;
+        }
+
+        buffer << "scaled_" << input_names[i] << " = "
+               << affine_expression(input_names[i], scaling_affine(
+                      scaler, descriptives[feature], min_range, max_range))
+               << ";\n";
+    }
+
+    return buffer.str();
+}
+
+}

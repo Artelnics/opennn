@@ -1,0 +1,105 @@
+#include "tests/pch.h"
+#include "tests/numerical_derivatives.h"
+
+#include "opennn/network/layers/flatten_layer.h"
+#include "opennn/network/layers/dense_layer.h"
+#include "opennn/dataset/tabular_dataset.h"
+#include "opennn/network/network.h"
+#include "opennn/training_strategy/loss.h"
+
+using namespace opennn;
+
+class FlattenLayerTest : public ::testing::Test
+{
+protected:
+    const Index height = 4;
+    const Index width = 4;
+    const Index channels = 3;
+    const Shape input_shape{ height, width, channels };
+
+    unique_ptr<Flatten> flatten_layer;
+
+    void SetUp() override
+    {
+        flatten_layer = make_unique<Flatten>(input_shape);
+    }
+};
+
+TEST_F(FlattenLayerTest, DefaultConstructor)
+{
+    Flatten default_flatten;
+
+    EXPECT_EQ(default_flatten.get_name(), "Flatten");
+    EXPECT_EQ(default_flatten.get_output_shape(), Shape{ 0 });
+}
+
+TEST_F(FlattenLayerTest, Constructor)
+{
+    EXPECT_EQ(flatten_layer->get_input_shape(), input_shape);
+    EXPECT_EQ(flatten_layer->get_output_shape(), Shape{ height * width * channels });
+    EXPECT_EQ(flatten_layer->get_name(), "Flatten");
+}
+
+TEST_F(FlattenLayerTest, ForwardPropagate)
+{
+    const Index batch_size = 2;
+
+    Network network;
+    network.add_layer(make_unique<Flatten>(input_shape));
+    network.compile();
+
+    Tensor4 inputs_data(batch_size, height, width, channels);
+    inputs_data.setConstant(1.23f);
+
+    ForwardPropagation forward_propagation(batch_size, &network);
+    vector<TensorView> input_views = { TensorView(inputs_data.data(), {batch_size, height, width, channels}) };
+    network.forward_propagate(input_views, forward_propagation, ForwardPropagationMode::Inference);
+
+    TensorView output_view = forward_propagation.get_outputs();
+    const Shape& output_dims = output_view.get_shape();
+
+    ASSERT_EQ(output_dims.get_rank(), 2);
+    EXPECT_EQ(output_dims[0], batch_size);
+    EXPECT_EQ(output_dims[1], height * width * channels);
+
+    for(Index i = 0; i < output_view.size(); ++i)
+        EXPECT_NEAR(output_view.as<type>()[i], 1.23f, 1e-6f);
+}
+
+TEST_F(FlattenLayerTest, FlattenBackwardGradientMatchesNumerical)
+{
+    const Index samples_number = 5;
+    const Index sequence_length = 3;
+    const Index embedding_dimension = 4;
+
+    const Shape network_input_shape{sequence_length, embedding_dimension};
+    const Index targets_number = 2;
+
+    TabularDataset dataset(samples_number, network_input_shape, {targets_number});
+    dataset.set_data_random();
+    dataset.set_sample_roles("Training");
+
+    Network network;
+
+    const Index dense_index = network.add_layer(make_unique<opennn::Dense>(network_input_shape, Shape{embedding_dimension}, "Identity"),
+                                                       {-1});
+
+    network.add_layer(make_unique<Flatten>(network.get_layer(dense_index)->get_output_shape()),
+                             {dense_index});
+
+    network.add_layer(make_unique<opennn::Dense>(network.get_output_shape(), Shape{targets_number}, "Identity"));
+
+    network.compile();
+    network.set_parameters_random();
+
+    Loss loss(&network, &dataset);
+    loss.set_error(Loss::Error::MeanSquaredError);
+
+    const type error = calculate_numerical_error(loss);
+    EXPECT_GE(error, 0);
+
+    const VectorR gradient = calculate_gradient(loss);
+    const VectorR numerical_gradient = calculate_numerical_gradient(loss);
+
+    EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(1.0e-3));
+}

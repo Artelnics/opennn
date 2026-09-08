@@ -42,11 +42,11 @@ OpenNN is a high-performance C++ library for neural networks, deep learning, and
 - `benchmarks/` - reproducible benchmark suite and benchmark methodology
 
 The library itself is split by responsibility, and every include spells out the
-folder it comes from — `#include "opennn/neural_network/layers/dense_layer.h"`:
+folder it comes from — `#include "opennn/network/layers/dense_layer.h"`:
 
 - `opennn/core/` - tensor types and operations, device backend, memory, generic
   utilities; `core/cuda/` holds the CUDA kernels
-- `opennn/neural_network/` - the network, its `layers/` and `operators/`,
+- `opennn/network/` - the network, its `layers/` and `operators/`,
   forward and back propagation, expression export
 - `opennn/dataset/` - tabular, image, language, time series and YOLO datasets
 - `opennn/training_strategy/` - losses and optimization algorithms
@@ -56,7 +56,7 @@ folder it comes from — `#include "opennn/neural_network/layers/dense_layer.h"`
 They depend on each other in that order, top to bottom: `core` knows nothing
 about the rest, and `testing_analysis` may use everything above it. Datasets
 sit above the network because the language datasets tokenize and the YOLO
-dataset builds detection targets, while nothing in `neural_network/` includes
+dataset builds detection targets, while nothing in `network/` includes
 a dataset.
 
 ## Quick start

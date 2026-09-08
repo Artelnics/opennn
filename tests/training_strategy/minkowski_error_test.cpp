@@ -3,7 +3,7 @@
 #include "tests/numerical_derivatives.h"
 
 #include "opennn/core/tensor_types.h"
-#include "opennn/neural_network/neural_network.h"
+#include "opennn/network/network.h"
 #include "opennn/dataset/dataset.h"
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/training_strategy/loss.h"
@@ -15,19 +15,19 @@ TEST(MinkowskiErrorTest, DefaultConstructor)
 {
     Loss loss;
 
-    EXPECT_EQ(loss.get_neural_network() == nullptr, true);
+    EXPECT_EQ(loss.get_network() == nullptr, true);
     EXPECT_EQ(loss.get_dataset() == nullptr, true);
 }
 
 TEST(MinkowskiErrorTest, GeneralConstructor)
 {
-    NeuralNetwork neural_network;
+    Network network;
     TabularDataset dataset;
 
-    Loss loss(&neural_network, &dataset);
+    Loss loss(&network, &dataset);
     loss.set_error(Loss::Error::MinkowskiError);
 
-    EXPECT_EQ(loss.get_neural_network() != nullptr, true);
+    EXPECT_EQ(loss.get_network() != nullptr, true);
     EXPECT_EQ(loss.get_dataset() != nullptr, true);
 }
 
@@ -42,9 +42,9 @@ TEST(MinkowskiErrorTest, BackPropagate)
     dataset.set_data_random();
     dataset.set_sample_roles("Training");
 
-    ApproximationNetwork neural_network({ inputs_number }, { neurons_number }, { outputs_number });
+    ApproximationNetwork network({ inputs_number }, { neurons_number }, { outputs_number });
 
-    Loss loss(&neural_network, &dataset);
+    Loss loss(&network, &dataset);
     loss.set_error(Loss::Error::MinkowskiError);
 
     const VectorR gradient = calculate_gradient(loss);

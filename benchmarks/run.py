@@ -208,7 +208,7 @@ def cpu_pinning(threads: int | None) -> tuple[list[str], dict[str, str], dict]:
 
 # What a launch wrote to stderr is kept whether or not it failed. The text
 # worth having is printed by runs that succeed: both graph-capture paths report
-# why capture was refused and then carry on eagerly (neural_network.cpp,
+# why capture was refused and then carry on eagerly (network.cpp,
 # optimizer.cpp), so gating this on a nonzero return code threw away the reason
 # behind every `cuda_graph="failed"` the artifacts record.
 #

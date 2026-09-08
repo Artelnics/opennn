@@ -11,9 +11,9 @@
 #include "opennn/core/parallel_algorithms.h"
 #include "opennn/core/tensor_types.h"
 #include "opennn/dataset/tabular_dataset.h"
-#include "opennn/neural_network/layers/dense_layer.h"
-#include "opennn/neural_network/layers/scaling_layer.h"
-#include "opennn/neural_network/neural_network.h"
+#include "opennn/network/layers/dense_layer.h"
+#include "opennn/network/layers/scaling_layer.h"
+#include "opennn/network/network.h"
 #include "opennn/models/models.h"
 #include "opennn/registry.h"
 #include "opennn/training_strategy/levenberg_marquardt_algorithm.h"
@@ -33,11 +33,11 @@ void set_confidence_interval(Correlation& correlation, Index sample_count)
     correlation.upper_confidence = z_correlation_to_r_correlation(ci_upper);
 }
 
-float output_target_correlation(NeuralNetwork& neural_network, TabularDataset& dataset, Index& sample_count)
+float output_target_correlation(Network& network, TabularDataset& dataset, Index& sample_count)
 {
     const MatrixR inputs = dataset.get_feature_data("Input");
     const MatrixR targets = dataset.get_feature_data("Target");
-    const MatrixR outputs = neural_network.calculate_outputs(inputs);
+    const MatrixR outputs = network.calculate_outputs(inputs);
 
     sample_count = inputs.rows();
 
@@ -68,12 +68,12 @@ Correlation fit_softmax_correlation(const MatrixR& x_filter,
     const Index input_features_number = dataset.get_features_number(VariableRole::Input);
     const Index target_features_number = dataset.get_features_number(VariableRole::Target);
 
-    ClassificationNetwork neural_network({ input_features_number }, Shape{}, { target_features_number });
+    ClassificationNetwork network({ input_features_number }, Shape{}, { target_features_number });
 
-    neural_network.compile(Device::CPU);
-    neural_network.set_parameters_glorot();
+    network.compile(Device::CPU);
+    network.set_parameters_glorot();
 
-    Loss loss(&neural_network, &dataset);
+    Loss loss(&network, &dataset);
     loss.set_error("MeanSquaredError");
     loss.set_regularization("None");
 
@@ -92,7 +92,7 @@ Correlation fit_softmax_correlation(const MatrixR& x_filter,
     }
 
     Index sample_count = 0;
-    correlation.coefficient = output_target_correlation(neural_network, dataset, sample_count);
+    correlation.coefficient = output_target_correlation(network, dataset, sample_count);
 
     set_confidence_interval(correlation, sample_count);
 
@@ -377,14 +377,14 @@ static Correlation fit_logistic_correlation(const VectorR& input, const VectorR&
     dataset.set_shape(VariableRole::Target, {1});
     dataset.set_display(false);
 
-    NeuralNetwork neural_network;
+    Network network;
     const Shape dimensions = { 1 };
-    neural_network.add_layer(make_unique<Scaling>(dimensions));
-    neural_network.add_layer(make_unique<Dense>(dimensions, dimensions, "Sigmoid"));
+    network.add_layer(make_unique<Scaling>(dimensions));
+    network.add_layer(make_unique<Dense>(dimensions, dimensions, "Sigmoid"));
 
-    neural_network.compile(Device::CPU);
+    network.compile(Device::CPU);
 
-    Loss loss(&neural_network, &dataset);
+    Loss loss(&network, &dataset);
     loss.set_error("MeanSquaredError");
     loss.set_regularization("None");
 
@@ -413,7 +413,7 @@ static Correlation fit_logistic_correlation(const VectorR& input, const VectorR&
     }
 
     Index sample_count = 0;
-    correlation.coefficient = output_target_correlation(neural_network, dataset, sample_count);
+    correlation.coefficient = output_target_correlation(network, dataset, sample_count);
 
     if (!isfinite(correlation.coefficient))
     {
@@ -432,7 +432,7 @@ static Correlation fit_logistic_correlation(const VectorR& input, const VectorR&
     // inverted the sign of an otherwise correct correlation. Ask the layer for
     // its own parameters rather than assuming how they are laid out.
     const vector<TensorView>& regression_parameters =
-        neural_network.get_layer(1)->get_parameter_views();
+        network.get_layer(1)->get_parameter_views();
 
     correlation.intercept = *regression_parameters[0].as<float>();
     correlation.slope     = *regression_parameters[1].as<float>();

@@ -64,7 +64,7 @@ void GrowingInputs::set_default()
     maximum_epochs = 1000;
     maximum_time = 3600.0f;
 
-    maximum_inputs_number = (training_strategy && training_strategy->get_neural_network() && training_strategy->get_dataset())
+    maximum_inputs_number = (training_strategy && training_strategy->get_network() && training_strategy->get_dataset())
         ? training_strategy->get_dataset()->get_variables_number(VariableRole::Input)
         : 50;
 }
@@ -127,7 +127,7 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
 
     Index variable_index = 0;
 
-    NeuralNetwork* neural_network = training_strategy->get_neural_network();
+    Network* network = training_strategy->get_network();
 
     Index validation_failures = 0;
 
@@ -168,7 +168,7 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
             continue;
         }
 
-        configure_neural_network_inputs(neural_network, dataset, input_features_number);
+        configure_network_inputs(network, dataset, input_features_number);
 
         const string& candidate_name = variable_names[current_variable_index];
 
@@ -181,18 +181,18 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
             : vector<Index>{};
 
         const CandidateEvaluation candidate_evaluation = evaluate_candidate(
-            training_strategy, neural_network, folds_number, fold_partition, trials_number, false,
+            training_strategy, network, folds_number, fold_partition, trials_number, false,
             [&](Index trial, float training_error, float validation_error, bool improved)
             {
                 if (improved && warm_start)
-                    candidate_snapshot = capture_parameter_snapshot(neural_network);
+                    candidate_snapshot = capture_parameter_snapshot(network);
 
                 if (improved && validation_error < input_selection_results.optimum_validation_error)
                 {
                     input_selection_results.optimal_input_variables_indices = dataset->get_variable_indices(VariableRole::Input);
                     input_selection_results.optimal_input_variable_names = dataset->get_variable_names(VariableRole::Input);
-                    neural_network->copy_parameters_host();
-                    input_selection_results.optimal_parameters = neural_network->get_parameters_map();
+                    network->copy_parameters_host();
+                    input_selection_results.optimal_parameters = network->get_parameters_map();
                     input_selection_results.optimum_training_error = training_error;
                     input_selection_results.optimum_validation_error = validation_error;
                 }
@@ -204,10 +204,10 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
             },
             [&](Index trial)
             {
-                neural_network->set_parameters_random();
+                network->set_parameters_random();
 
                 if (trial == 0 && !warm_row_map.empty())
-                    seed_parameters_from_snapshot(neural_network, warm_snapshot, warm_row_map);
+                    seed_parameters_from_snapshot(network, warm_snapshot, warm_row_map);
             });
 
         const float minimum_training_error = candidate_evaluation.training_error;
@@ -289,13 +289,13 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
     input_selection_results.elapsed_time = get_time(elapsed_time);
     input_selection_results.resize_history(epoch);
 
-    install_optimal_inputs(neural_network, dataset,
+    install_optimal_inputs(network, dataset,
                            input_selection_results.optimal_input_variables_indices,
                            target_variable_indices, time_variable_indices);
 
     set_maximum_inputs_number(dataset->get_variables_number(VariableRole::Input));
 
-    finalize_selected_model(training_strategy, neural_network,
+    finalize_selected_model(training_strategy, network,
                             input_selection_results.optimal_parameters, folds_number, display, "inputs");
 
     if (display) input_selection_results.print();

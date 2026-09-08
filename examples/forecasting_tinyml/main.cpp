@@ -14,9 +14,9 @@
 #include "opennn/core/configuration.h"
 #include "opennn/core/variable.h"
 #include "opennn/models/models.h"
-#include "opennn/neural_network/layers/scaling_layer.h"
-#include "opennn/neural_network/layers/unscaling_layer.h"
-#include "opennn/neural_network/model_expression.h"
+#include "opennn/network/layers/scaling_layer.h"
+#include "opennn/network/layers/unscaling_layer.h"
+#include "opennn/network/model_expression.h"
 #include "opennn/registry.h"
 
 using namespace opennn;
@@ -26,7 +26,7 @@ static constexpr Index FEATURES = 2;
 static constexpr Index HIDDEN = 6;
 static constexpr Index REFERENCE_ROWS = 8;
 
-static void configure_network(NeuralNetwork& network)
+static void configure_network(Network& network)
 {
     network.set_input_variables(vector<Variable>(FEATURES));
     network.set_output_variables(vector<Variable>(1));
@@ -41,7 +41,7 @@ static void configure_network(NeuralNetwork& network)
     unscaling->set_descriptives({Descriptives(0.0f, 10.0f, 3.0f, 1.5f)});
 }
 
-static void export_model(NeuralNetwork& network, const string& stem)
+static void export_model(Network& network, const string& stem)
 {
     const ModelExpression model_expression(&network);
     model_expression.save(stem + "_model.c", ModelExpression::ProgrammingLanguage::C);

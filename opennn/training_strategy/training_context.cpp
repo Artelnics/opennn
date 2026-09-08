@@ -8,7 +8,7 @@
 
 #include "opennn/training_strategy/training_context.h"
 #include "opennn/training_strategy/loss.h"
-#include "opennn/neural_network/neural_network.h"
+#include "opennn/network/network.h"
 
 namespace opennn
 {
@@ -18,9 +18,9 @@ TrainingContext::TrainingContext(const Index batch_size, Loss& loss,
                                  TrainingContext* share_memory_with,
                                  const bool joint_gradient_arena)
 {
-    NeuralNetwork* const neural_network = loss.get_neural_network();
+    Network* const network = loss.get_network();
 
-    throw_if(!neural_network, "TrainingContext: the loss has no neural network.");
+    throw_if(!network, "TrainingContext: the loss has no neural network.");
     throw_if(share_memory_with == this, "TrainingContext: a context cannot share with itself.");
 
     const bool use_joint_gradient_arena =
@@ -47,7 +47,7 @@ TrainingContext::TrainingContext(const Index batch_size, Loss& loss,
                            gradient_lifetimes.end());
 
     forward.set(batch_size,
-                neural_network,
+                network,
                 share_memory_with ? &share_memory_with->forward.arena : nullptr,
                 ForwardPropagationMode::Training,
                 InferenceShapePolicy{},

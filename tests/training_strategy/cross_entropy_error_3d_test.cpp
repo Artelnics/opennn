@@ -2,7 +2,7 @@
 #include "opennn/core/tensor_types.h"
 #include "opennn/training_strategy/error_functions.h"
 #include "opennn/training_strategy/loss.h"
-#include "opennn/neural_network/layers/dense_layer.h"
+#include "opennn/network/layers/dense_layer.h"
 #include "opennn/dataset/dataset.h"
 #include "opennn/dataset/tabular_dataset.h"
 #include "gtest/gtest.h"
@@ -25,13 +25,13 @@ void fill_logits(Tensor3& logits)
 
 TEST(CrossEntropyError3DTest, DefaultConstructor)
 {
-    NeuralNetwork neural_network;
+    Network network;
     TabularDataset dataset;
 
-    Loss loss(&neural_network, &dataset);
+    Loss loss(&network, &dataset);
     loss.set_error(Loss::Error::CrossEntropy3d);
 
-    EXPECT_TRUE(loss.get_neural_network() != nullptr);
+    EXPECT_TRUE(loss.get_network() != nullptr);
     EXPECT_TRUE(loss.get_dataset() != nullptr);
 }
 

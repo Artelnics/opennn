@@ -55,7 +55,7 @@ def main():
         spec = importlib.util.spec_from_file_location(f"reproduced_{name}", runs[0] / "model.py")
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
-        model = module.NeuralNetwork()
+        model = module.Network()
         reference = np.loadtxt(runs[0] / "reference.csv", delimiter=",")
         columns = metadata["input_columns"]
         predicted = np.asarray([model.calculate_outputs(row[:columns].tolist()) for row in reference])

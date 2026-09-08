@@ -15,7 +15,7 @@ namespace opennn
 {
 
 class TrainingStrategy;
-class NeuralNetwork;
+class Network;
 class Dataset;
 
 struct TrainingResult;
@@ -53,9 +53,9 @@ public:
 
 protected:
 
-    void configure_neural_network_inputs(NeuralNetwork*, Dataset*, Index) const;
+    void configure_network_inputs(Network*, Dataset*, Index) const;
 
-    void install_optimal_inputs(NeuralNetwork*,
+    void install_optimal_inputs(Network*,
                                 Dataset*,
                                 const vector<Index>& optimal_input_indices,
                                 const vector<Index>& target_indices,

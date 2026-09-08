@@ -43,9 +43,9 @@
 #include "opennn/core/random_utilities.h"
 #include "opennn/core/tensor_types.h"
 #include "opennn/dataset/time_series_dataset.h"
-#include "opennn/neural_network/forward_propagation.h"
-#include "opennn/neural_network/layers/dense_layer.h"
-#include "opennn/neural_network/layers/long_short_term_memory_layer.h"
+#include "opennn/network/forward_propagation.h"
+#include "opennn/network/layers/dense_layer.h"
+#include "opennn/network/layers/long_short_term_memory_layer.h"
 #include "opennn/models/models.h"
 #include "opennn/training_strategy/adaptive_moment_estimation.h"
 #include "opennn/training_strategy/training_strategy.h"
@@ -104,12 +104,12 @@ unique_ptr<ForecastingLstmNetwork> build(TimeSeriesDataset& dataset, const Optio
     return network;
 }
 
-unique_ptr<NeuralNetwork> build_inference(const TimeSeriesDataset& dataset,
+unique_ptr<Network> build_inference(const TimeSeriesDataset& dataset,
                                           const Options& options)
 {
     set_seed(SEED);
 
-    auto network = make_unique<NeuralNetwork>();
+    auto network = make_unique<Network>();
     network->set_task(NetworkTask::Forecasting);
 
     auto recurrent = make_unique<LongShortTermMemory>(dataset.get_shape("Input"),
@@ -200,7 +200,7 @@ AdaptiveMomentEstimation* configure(TrainingStrategy& strategy, Index batch)
     return adam;
 }
 
-void describe(const TimeSeriesDataset& dataset, const NeuralNetwork& network, const Options& options)
+void describe(const TimeSeriesDataset& dataset, const Network& network, const Options& options)
 {
     cout << "samples=" << dataset.get_used_samples_number()
          << " inputs=" << dataset.get_shape("Input").back()
@@ -273,7 +273,7 @@ int main(int argc, char* argv[])
             vector<double> epoch_seconds;
             auto previous_mark = clock_type::now();
 
-            adam->post_epoch_callback = [&](Index epoch, float, float, NeuralNetwork*)
+            adam->post_epoch_callback = [&](Index epoch, float, float, Network*)
             {
                 const auto now = clock_type::now();
                 const double elapsed = chrono::duration<double>(now - previous_mark).count();

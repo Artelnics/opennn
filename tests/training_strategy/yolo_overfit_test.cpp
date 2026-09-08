@@ -1,14 +1,14 @@
 #include "tests/pch.h"
 
 #include "opennn/dataset/yolo_dataset.h"
-#include "opennn/neural_network/layers/detection_layer.h"
-#include "opennn/neural_network/layers/detection_v8_layer.h"
-#include "opennn/neural_network/layers/convolutional_layer.h"
-#include "opennn/neural_network/layers/pooling_layer.h"
-#include "opennn/neural_network/layers/concatenation_layer.h"
-#include "opennn/neural_network/layers/addition_layer.h"
-#include "opennn/neural_network/layers/activation_layer.h"
-#include "opennn/neural_network/neural_network.h"
+#include "opennn/network/layers/detection_layer.h"
+#include "opennn/network/layers/detection_v8_layer.h"
+#include "opennn/network/layers/convolutional_layer.h"
+#include "opennn/network/layers/pooling_layer.h"
+#include "opennn/network/layers/concatenation_layer.h"
+#include "opennn/network/layers/addition_layer.h"
+#include "opennn/network/layers/activation_layer.h"
+#include "opennn/network/network.h"
 #include "opennn/training_strategy/loss.h"
 #include "opennn/training_strategy/adaptive_moment_estimation.h"
 
@@ -56,7 +56,7 @@ TEST(YoloOverfit, SingleImageSingleClassLossDecreases)
     no_aug.enabled = false;
 
     auto build_net = [&]() {
-        auto net = make_unique<NeuralNetwork>();
+        auto net = make_unique<Network>();
         net->add_layer(make_unique<Convolutional>(
             Shape{H, W, 3}, Shape{3, 3, 3, 16}, "LeakyReLU", Shape{1, 1}, "Same", BatchNormalization::No, "conv1"));
         net->add_layer(make_unique<Convolutional>(
@@ -134,7 +134,7 @@ TEST(YoloOverfit, SPPFGradientFlowsAndLossDecreases)
     YoloDataset::AugmentationPolicy no_aug; no_aug.enabled = false;
 
     auto build_sppf_net = [&]() {
-        auto net = make_unique<NeuralNetwork>();
+        auto net = make_unique<Network>();
 
         net->add_layer(make_unique<Convolutional>(
             Shape{H, W, 3}, Shape{3, 3, 3, ch}, "LeakyReLU", Shape{1, 1}, "Same", BatchNormalization::Yes, "conv_stem"));
@@ -218,7 +218,7 @@ TEST(YoloOverfit, CSPGradientFlowsAndLossDecreases)
     YoloDataset::AugmentationPolicy no_aug; no_aug.enabled = false;
 
     auto build_csp_net = [&]() {
-        auto net = make_unique<NeuralNetwork>();
+        auto net = make_unique<Network>();
 
         const Shape input{H, W, 3};
         const Index stem = net->add_layer(make_unique<Convolutional>(
@@ -306,7 +306,7 @@ TEST(YoloOverfit, V8AnchorFreeGradientFlowsAndLossDecreases)
     YoloDataset::AugmentationPolicy no_aug; no_aug.enabled = false;
 
     auto build_v8_net = [&]() {
-        auto net = make_unique<NeuralNetwork>();
+        auto net = make_unique<Network>();
 
         const Shape input{H, W, 3};
         const Index stem = net->add_layer(make_unique<Convolutional>(

@@ -166,7 +166,7 @@ TEST_F(AdaptiveMomentEstimationTest, TrainsRemainderBatchCPU)
     adam.set_display(false);
 
     Index batches_processed = 0;
-    adam.post_batch_callback = [&](NeuralNetwork*) { ++batches_processed; };
+    adam.post_batch_callback = [&](Network*) { ++batches_processed; };
 
     EXPECT_TRUE(isfinite(adam.train().get_training_error()));
     EXPECT_EQ(batches_processed, 3);
@@ -192,7 +192,7 @@ TEST_F(AdaptiveMomentEstimationTest, TrainingScalingCleanupSurvivesCallbackExcep
     adam.set_batch_size(2);
     adam.set_maximum_epochs(0);
     adam.set_display(false);
-    adam.post_batch_callback = [](NeuralNetwork*)
+    adam.post_batch_callback = [](Network*)
     {
         throw runtime_error("intentional callback failure");
     };
@@ -258,7 +258,7 @@ TEST_F(AdaptiveMomentEstimationTest, TrainsRemainderBatchGPU)
     adam.set_display(false);
 
     Index batches_processed = 0;
-    adam.post_batch_callback = [&](NeuralNetwork*) { ++batches_processed; };
+    adam.post_batch_callback = [&](Network*) { ++batches_processed; };
 
     EXPECT_TRUE(isfinite(adam.train().get_training_error()));
     EXPECT_EQ(batches_processed, 3);
@@ -475,7 +475,7 @@ TEST_F(AdaptiveMomentEstimationTest, ResidentDatasetCleanupSurvivesCallbackExcep
     adam.set_batch_size(2);
     adam.set_maximum_epochs(0);
     adam.set_display(false);
-    adam.post_batch_callback = [](NeuralNetwork*)
+    adam.post_batch_callback = [](Network*)
     {
         throw runtime_error("intentional callback failure");
     };

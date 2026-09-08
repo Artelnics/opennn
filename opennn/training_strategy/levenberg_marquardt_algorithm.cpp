@@ -14,9 +14,9 @@
 #include "opennn/core/tensor_operations.h"
 #include "opennn/dataset/batch.h"
 #include "opennn/dataset/dataset.h"
-#include "opennn/neural_network/back_propagation.h"
-#include "opennn/neural_network/forward_propagation.h"
-#include "opennn/neural_network/layers/dense_layer.h"
+#include "opennn/network/back_propagation.h"
+#include "opennn/network/forward_propagation.h"
+#include "opennn/network/layers/dense_layer.h"
 #include "opennn/training_strategy/loss.h"
 
 namespace opennn
@@ -48,10 +48,10 @@ void LevenbergMarquardtAlgorithm::back_propagate(const Batch& batch,
     back_propagation_lm.gradient.noalias() = factor * J.transpose() * errors_vector;
     back_propagation_lm.hessian.noalias() = factor * J.transpose() * J;
 
-    const TensorView parameters(loss->get_neural_network()->get_parameters_data(),
-                                {loss->get_neural_network()->get_parameters_buffer_size()},
+    const TensorView parameters(loss->get_network()->get_parameters_data(),
+                                {loss->get_network()->get_parameters_buffer_size()},
                                 Type::FP32,
-                                loss->get_neural_network()->get_device());
+                                loss->get_network()->get_device());
     back_propagation_lm.regularization = loss->calculate_regularization(parameters);
 
     loss->add_regularization_gradient(TensorView(back_propagation_lm.gradient.data(),
@@ -91,9 +91,9 @@ void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch&  ,
                                                    const ForwardPropagation& forward_propagation,
                                                    BackPropagationLM& back_propagation_lm) const
 {
-    NeuralNetwork* neural_network = loss->get_neural_network();
-    const auto& layers = neural_network->get_layers();
-    const auto& source_layers = neural_network->get_source_layers();
+    Network* network = loss->get_network();
+    const auto& layers = network->get_layers();
+    const auto& source_layers = network->get_source_layers();
 
     MatrixR& jacobian = back_propagation_lm.squared_errors_jacobian;
     jacobian.setZero();
@@ -122,7 +122,7 @@ void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch&  ,
 
     if (dense_indices.empty()) return;
 
-    throw_if(offset != neural_network->get_parameters_buffer_size(),
+    throw_if(offset != network->get_parameters_buffer_size(),
              "LevenbergMarquardtAlgorithm: unsupported parameter layout (only plain Dense "
              "layers without batch normalization are supported). Use AdaptiveMomentEstimation, "
              "SGD, or QuasiNewtonMethod instead.");
@@ -197,7 +197,7 @@ void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch&  ,
 
         if (n == 0) break;
 
-        const MatrixMap weights(neural_network->get_parameters_data() + weight_offset,
+        const MatrixMap weights(network->get_parameters_data() + weight_offset,
                                 inputs_number, neurons);
 
         const auto* previous_dense = static_cast<const Dense*>(layers[dense_indices[n - 1]].get());
@@ -220,10 +220,10 @@ void LevenbergMarquardtAlgorithm::compute_jacobian(const Batch&  ,
 
 TrainingResult LevenbergMarquardtAlgorithm::train()
 {
-    NeuralNetwork* neural_network = loss->get_neural_network();
-    neural_network->warn_if_stale_configuration();
+    Network* network = loss->get_network();
+    network->warn_if_stale_configuration();
 
-    throw_if(neural_network->is_gpu(),
+    throw_if(network->is_gpu(),
              "LevenbergMarquardtAlgorithm does not support GPU training: "
              "its Jacobian and gradient computation map device pointers as host memory. "
              "Use AdaptiveMomentEstimation or StochasticGradientDescent on GPU.");
@@ -241,7 +241,7 @@ TrainingResult LevenbergMarquardtAlgorithm::train()
 
     BackPropagationLM training_back_propagation_lm(context.training_samples_number, loss);
 
-    const Index parameters_number = neural_network->get_parameters_buffer_size();
+    const Index parameters_number = network->get_parameters_buffer_size();
 
     OptimizerData optimization_data;
     damping_parameter = initial_damping_parameter;
@@ -300,11 +300,11 @@ void LevenbergMarquardtAlgorithm::update_full_batch_parameters(const Batch& batc
                                                                BackPropagationLM& back_propagation_lm,
                                                                OptimizerData& optimization_data)
 {
-    NeuralNetwork* neural_network = loss->get_neural_network();
+    Network* network = loss->get_network();
     if (damping_parameter <= 0.0f)
         damping_parameter = initial_damping_parameter;
 
-    VectorMap parameters = neural_network->get_parameters_map();
+    VectorMap parameters = network->get_parameters_map();
 
     float& error = back_propagation_lm.error;
     float& regularization = back_propagation_lm.regularization;
@@ -329,7 +329,7 @@ void LevenbergMarquardtAlgorithm::update_full_batch_parameters(const Batch& batc
 
         potential_parameters = parameters + parameter_updates;
 
-        neural_network->forward_propagate(batch.get_inputs(),
+        network->forward_propagate(batch.get_inputs(),
                                           potential_parameters,
                                           forward_propagation);
 
@@ -400,12 +400,12 @@ void LevenbergMarquardtAlgorithm::from_JSON(const JsonDocument& document)
 
 BackPropagationLM::BackPropagationLM(const Index new_samples_number, Loss* new_loss)
 {
-    if (!new_loss || !new_loss->get_neural_network() || new_samples_number == 0) return;
+    if (!new_loss || !new_loss->get_network() || new_samples_number == 0) return;
 
-    const NeuralNetwork* neural_network = new_loss->get_neural_network();
+    const Network* network = new_loss->get_network();
 
-    const Index outputs_number = neural_network->get_outputs_number();
-    const Index parameters_number = neural_network->get_parameters_buffer_size();
+    const Index outputs_number = network->get_outputs_number();
+    const Index parameters_number = network->get_parameters_buffer_size();
     const Index total_error_terms = new_samples_number * outputs_number;
 
     errors                  = VectorR::Zero(total_error_terms);

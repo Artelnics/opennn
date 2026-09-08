@@ -1,0 +1,48 @@
+﻿//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   A C T I V A T I O N   O P E R A T O R   H E A D E R
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
+
+#pragma once
+
+#include "opennn/network/operators/operator.h"
+
+namespace opennn
+{
+
+struct ActivationOperator : Operator
+{
+    static ActivationFunction from_string(const string& name) { return activation_function_from_string(name); }
+    static const string& to_string(ActivationFunction function) { return activation_function_to_string(function); }
+
+    ActivationFunction activation_function = ActivationFunction::Identity;
+
+    optional<size_t> saved_output_slot;
+
+    bool forward_fused = false;
+    bool backward_fused = false;
+
+    bool backward_fused_by_consumer = false;
+
+    void set_activation_function(ActivationFunction new_function) { activation_function = new_function; }
+    void set_activation_function(const string& name) { set_activation_function(from_string(name)); }
+
+    void forward_propagate(ForwardPropagation&, size_t, ForwardPropagationMode) override;
+    void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
+
+    void to_JSON(JsonWriter&) const override;
+    void from_JSON(const Json*) override;
+
+    ActivationOperator() = default;
+    ActivationOperator(const ActivationOperator&) = delete;
+    ActivationOperator& operator=(const ActivationOperator&) = delete;
+};
+
+}
+
+// OpenNN: Open Neural Networks Library.
+// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Licensed under the GNU Lesser General Public License v2.1 or later.

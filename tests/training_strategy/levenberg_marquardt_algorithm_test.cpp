@@ -2,7 +2,7 @@
 #include "tests/numerical_derivatives.h"
 #include "opennn/core/configuration.h"
 #include "opennn/core/random_utilities.h"
-#include "opennn/neural_network/layers/dense_layer.h"
+#include "opennn/network/layers/dense_layer.h"
 #include "opennn/training_strategy/loss.h"
 #include "opennn/dataset/dataset.h"
 #include "opennn/dataset/tabular_dataset.h"

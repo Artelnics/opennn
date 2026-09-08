@@ -8,16 +8,16 @@
 
 #pragma once
 
-#include "opennn/neural_network/neural_network.h"
-#include "opennn/neural_network/layers/pooling_layer.h"
-#include "opennn/neural_network/detection_head.h"
+#include "opennn/network/network.h"
+#include "opennn/network/layers/pooling_layer.h"
+#include "opennn/network/detection_head.h"
 
 namespace opennn
 {
 
 class TokenizerOperator;
 
-class ApproximationNetwork : public NeuralNetwork
+class ApproximationNetwork : public Network
 {
 
 public:
@@ -28,7 +28,7 @@ public:
                          const string& hidden_activation = "Tanh");
 };
 
-class ClassificationNetwork : public NeuralNetwork
+class ClassificationNetwork : public Network
 {
 
 public:
@@ -39,7 +39,7 @@ public:
                           const string& hidden_activation = "Tanh");
 };
 
-class ForecastingNetwork : public NeuralNetwork
+class ForecastingNetwork : public Network
 {
 
 public:
@@ -49,7 +49,7 @@ public:
                        const Shape&);
 };
 
-class ForecastingLstmNetwork : public NeuralNetwork
+class ForecastingLstmNetwork : public Network
 {
 
 public:
@@ -59,7 +59,7 @@ public:
                            const Shape&);
 };
 
-class AutoencoderNetwork : public NeuralNetwork
+class AutoencoderNetwork : public Network
 {
 
 public:
@@ -76,7 +76,7 @@ public:
 
 #ifndef OPENNN_NO_VISION
 
-class ImageClassificationNetwork : public NeuralNetwork
+class ImageClassificationNetwork : public Network
 {
 
 public:
@@ -86,7 +86,7 @@ public:
                                const Shape&);
 };
 
-class ResNet : public NeuralNetwork
+class ResNet : public Network
 {
 
 public:
@@ -100,7 +100,7 @@ public:
            bool use_bottleneck = false);
 };
 
-class YoloNetwork : public NeuralNetwork
+class YoloNetwork : public Network
 {
 public:
 
@@ -133,7 +133,7 @@ private:
     Backbone backbone;
 };
 
-class TextClassificationNetwork : public NeuralNetwork
+class TextClassificationNetwork : public Network
 {
 
 public:
@@ -156,7 +156,7 @@ public:
     const TokenizerOperator* get_tokenizer() const;
 };
 
-class Transformer final : public NeuralNetwork
+class Transformer final : public Network
 {
 public:
 
@@ -188,7 +188,7 @@ public:
 
 };
 
-class TextGenerationNetwork final : public NeuralNetwork
+class TextGenerationNetwork final : public Network
 {
 public:
 
@@ -220,7 +220,7 @@ public:
 
 };
 
-class Qwen3 final : public NeuralNetwork
+class Qwen3 final : public Network
 {
 public:
 
@@ -273,7 +273,7 @@ private:
                float rms_epsilon);
 };
 
-class Bert final : public NeuralNetwork
+class Bert final : public Network
 {
 public:
 
@@ -288,7 +288,7 @@ public:
          Index type_vocabulary_size = 2);
 };
 
-class BertForSequenceClassification final : public NeuralNetwork
+class BertForSequenceClassification final : public Network
 {
 public:
 
@@ -317,8 +317,8 @@ public:
 
 #endif
 
-Index load_darknet_backbone(NeuralNetwork&, const filesystem::path&, Index);
-Index load_darknet_backbone_v11(NeuralNetwork&, const filesystem::path&);
+Index load_darknet_backbone(Network&, const filesystem::path&, Index);
+Index load_darknet_backbone_v11(Network&, const filesystem::path&);
 
 }
 

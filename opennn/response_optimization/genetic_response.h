@@ -17,7 +17,7 @@ class GeneticResponse : public ResponseOptimization
 {
 public:
 
-    explicit GeneticResponse(NeuralNetwork* = nullptr);
+    explicit GeneticResponse(Network* = nullptr);
 
 private:
 

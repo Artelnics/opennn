@@ -39,7 +39,7 @@ is outside every number in this document.
 
 | question | OpenNN process | PyTorch process | recorded |
 |---|---|---|---|
-| `memory` | link the library, construct an empty `NeuralNetwork`, `TabularDataset` and `TrainingStrategy` | `import torch`, construct an empty `nn.Sequential` and an `Adam` over one tensor | peak anonymous resident set (`RssAnon` from `/proc/<pid>/status`, polled by the runner and reported as `peak_mib`); the drivers' own `/proc/self/statm` print is total RSS and appears separately as `baseline_ram_mb` |
+| `memory` | link the library, construct an empty `Network`, `TabularDataset` and `TrainingStrategy` | `import torch`, construct an empty `nn.Sequential` and an `Adam` over one tensor | peak anonymous resident set (`RssAnon` from `/proc/<pid>/status`, polled by the runner and reported as `peak_mib`); the drivers' own `/proc/self/statm` print is total RSS and appears separately as `baseline_ram_mb` |
 | `startup` | construct `ApproximationNetwork({10},{64},{1})` and predict on one row of ones | construct `Linear(10,64) → Tanh → Linear(64,1)` and predict on one row of ones | seconds from process entry to the prediction, plus the whole-process wall time the runner measures around the launch |
 | `export` | train `ApproximationNetwork({3},{64},{1})` for 50 epochs on a 512-row synthetic sum and write it as `.c` and `.py` through `ModelExpression` | `torch.jit.script` a `Linear(3,64) → Tanh → Linear(64,1)` and save it | bytes of the exported files, and a driver-declared `standalone_source` flag on the PyTorch side; neither export is executed by the run |
 
@@ -103,7 +103,7 @@ carry before the first useful instruction.
 The OpenNN process links `libopennn.a` statically and maps twelve shared
 libraries — MKL, oneDNN, libgomp, and the CUDA runtime, cuBLAS, cuBLASLt,
 NVRTC and cuDNN. A mapped library costs resident memory only for the pages
-that are touched, and constructing an empty `NeuralNetwork`, an empty
+that are touched, and constructing an empty `Network`, an empty
 `TabularDataset` and a `TrainingStrategy` touches very few. Three readings
 describe the result and they do not reconcile: the runner's polling records a
 118.2 MiB anonymous peak and an 87.9 MiB file-backed peak, each an
@@ -186,7 +186,7 @@ first *GPU use*:
 `Device::Auto` resolves to CUDA whenever a device is present
 (`configuration.cpp`, `resolve_effective`), `ApproximationNetwork`'s
 constructor compiles the network (`models.cpp:41-45`), and `calculate_outputs`
-then takes the `is_gpu()` branch (`neural_network.cpp:1117`), which loads CUDA
+then takes the `is_gpu()` branch (`network.cpp:1117`), which loads CUDA
 modules, builds the per-lane cuBLAS and cuDNN handles and allocates on the
 device. How the 202 MiB and the 0.446 s divide between the context and the
 rest of first use was not measured: the run that would separate them is the
@@ -252,8 +252,8 @@ session agree to the millisecond.
   `export` cell, which trains on the CPU for 50 epochs, now peaks 6 MiB
   above the `memory` cell where it peaked 38 MiB above it at `93cc90e07`.
 - **The two `memory` processes do not construct equivalent objects.** OpenNN's
-  `NeuralNetwork` has no layers, so `compile()` returns immediately
-  (`neural_network.cpp:546-548`): no device is resolved and no parameter
+  `Network` has no layers, so `compile()` returns immediately
+  (`network.cpp:546-548`): no device is resolved and no parameter
   storage is allocated, and its `TrainingStrategy` attaches a loss and an
   optimizer object to that empty network. PyTorch's process builds an empty
   `nn.Sequential` *and* a real `Adam` over a live

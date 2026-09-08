@@ -11,40 +11,40 @@
 #include <utility>
 
 #include "opennn/core/string_utilities.h"
-#include "opennn/neural_network/layers/activation_layer.h"
-#include "opennn/neural_network/layers/addition_layer.h"
-#include "opennn/neural_network/layers/clamping_layer.h"
-#include "opennn/neural_network/layers/c2psa_layer.h"
-#include "opennn/neural_network/layers/concatenation_layer.h"
-#include "opennn/neural_network/layers/convolutional_layer.h"
-#include "opennn/neural_network/layers/dense_layer.h"
-#include "opennn/neural_network/layers/detection_layer.h"
-#include "opennn/neural_network/layers/detection_v8_layer.h"
-#include "opennn/neural_network/layers/embedding_layer.h"
-#include "opennn/neural_network/layers/flatten_layer.h"
-#include "opennn/neural_network/layers/grouped_query_attention_layer.h"
-#include "opennn/neural_network/layers/long_short_term_memory_layer.h"
-#include "opennn/neural_network/layers/multihead_attention_layer.h"
-#include "opennn/neural_network/layers/non_max_suppression_layer.h"
-#include "opennn/neural_network/layers/normalization_layer_3d.h"
-#include "opennn/neural_network/layers/pooling_layer.h"
-#include "opennn/neural_network/layers/pooling_layer_3d.h"
-#include "opennn/neural_network/layers/recurrent_layer.h"
-#include "opennn/neural_network/layers/scaling_layer.h"
-#include "opennn/neural_network/layers/tokenizer_layer.h"
-#include "opennn/neural_network/layers/unscaling_layer.h"
-#include "opennn/neural_network/layers/upsampling_layer.h"
+#include "opennn/network/layers/activation_layer.h"
+#include "opennn/network/layers/addition_layer.h"
+#include "opennn/network/layers/clamping_layer.h"
+#include "opennn/network/layers/c2psa_layer.h"
+#include "opennn/network/layers/concatenation_layer.h"
+#include "opennn/network/layers/convolutional_layer.h"
+#include "opennn/network/layers/dense_layer.h"
+#include "opennn/network/layers/detection_layer.h"
+#include "opennn/network/layers/detection_v8_layer.h"
+#include "opennn/network/layers/embedding_layer.h"
+#include "opennn/network/layers/flatten_layer.h"
+#include "opennn/network/layers/grouped_query_attention_layer.h"
+#include "opennn/network/layers/long_short_term_memory_layer.h"
+#include "opennn/network/layers/multihead_attention_layer.h"
+#include "opennn/network/layers/non_max_suppression_layer.h"
+#include "opennn/network/layers/normalization_layer_3d.h"
+#include "opennn/network/layers/pooling_layer.h"
+#include "opennn/network/layers/pooling_layer_3d.h"
+#include "opennn/network/layers/recurrent_layer.h"
+#include "opennn/network/layers/scaling_layer.h"
+#include "opennn/network/layers/tokenizer_layer.h"
+#include "opennn/network/layers/unscaling_layer.h"
+#include "opennn/network/layers/upsampling_layer.h"
 
 namespace opennn
 {
 
-static void finalize_build(NeuralNetwork& network)
+static void finalize_build(Network& network)
 {
     network.compile();
     network.set_parameters_glorot();
 }
 
-static void add_dense_stack(NeuralNetwork& network,
+static void add_dense_stack(Network& network,
                             const Shape& complexity_dimensions,
                             const string& hidden_activation)
 {
@@ -57,7 +57,7 @@ static void add_dense_stack(NeuralNetwork& network,
 }
 
 template<typename MakeLayer>
-static void add_recurrent_stack(NeuralNetwork& network,
+static void add_recurrent_stack(Network& network,
                                 const Shape& complexity_dimensions,
                                 const string& base_label,
                                 MakeLayer make_layer)
@@ -75,7 +75,7 @@ static void add_recurrent_stack(NeuralNetwork& network,
     }
 }
 
-static void add_regression_output(NeuralNetwork& network,
+static void add_regression_output(Network& network,
                                   const Shape& output_shape,
                                   const string& output_label,
                                   Clamping::ClampingMethod clamping_method
@@ -96,7 +96,7 @@ ApproximationNetwork::ApproximationNetwork(const Shape& input_shape,
                                            const Shape& complexity_dimensions,
                                            const Shape& output_shape,
                                            const string& hidden_activation)
-    : NeuralNetwork(NetworkTask::Approximation)
+    : Network(NetworkTask::Approximation)
 {
     add_layer(make_unique<Scaling>(input_shape));
 
@@ -111,7 +111,7 @@ ClassificationNetwork::ClassificationNetwork(const Shape& input_shape,
                                              const Shape& complexity_dimensions,
                                              const Shape& output_shape,
                                              const string& hidden_activation)
-    : NeuralNetwork(NetworkTask::Classification)
+    : Network(NetworkTask::Classification)
 {
     add_layer(make_unique<Scaling>(input_shape));
 
@@ -129,7 +129,7 @@ ClassificationNetwork::ClassificationNetwork(const Shape& input_shape,
 ForecastingNetwork::ForecastingNetwork(const Shape& input_shape,
                                        const Shape& complexity_dimensions,
                                        const Shape& output_shape)
-    : NeuralNetwork(NetworkTask::Forecasting)
+    : Network(NetworkTask::Forecasting)
 {
     add_layer(make_unique<Scaling>(input_shape));
 
@@ -146,7 +146,7 @@ ForecastingNetwork::ForecastingNetwork(const Shape& input_shape,
 ForecastingLstmNetwork::ForecastingLstmNetwork(const Shape& input_shape,
                                                const Shape& complexity_dimensions,
                                                const Shape& output_shape)
-    : NeuralNetwork(NetworkTask::Forecasting)
+    : Network(NetworkTask::Forecasting)
 {
     add_layer(make_unique<Scaling>(input_shape));
 
@@ -163,7 +163,7 @@ ForecastingLstmNetwork::ForecastingLstmNetwork(const Shape& input_shape,
 AutoencoderNetwork::AutoencoderNetwork(const Shape& input_shape,
                                                const Shape& complexity_dimensions,
                                                const Shape& output_shape)
-    : NeuralNetwork(NetworkTask::AnomalyDetection)
+    : Network(NetworkTask::AnomalyDetection)
 {
     throw_if(input_shape.empty(),
              "AutoencoderNetwork: input shape cannot be empty.");
@@ -208,7 +208,7 @@ AutoencoderNetwork::AutoencoderNetwork(const Shape& input_shape,
                                                const Shape& encoder_dimensions,
                                                const string& hidden_activation,
                                                const string& output_activation)
-    : NeuralNetwork(NetworkTask::AnomalyDetection)
+    : Network(NetworkTask::AnomalyDetection)
 {
     throw_if(input_shape.empty(),
              "AutoencoderNetwork: input shape cannot be empty.");

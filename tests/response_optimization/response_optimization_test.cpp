@@ -11,13 +11,13 @@
 #include "opennn/response_optimization/domain_contraction.h"
 #include "opennn/response_optimization/expression_evaluator.h"
 #include "opennn/response_optimization/genetic_response.h"
-#include "opennn/neural_network/neural_network.h"
+#include "opennn/network/network.h"
 #include "opennn/core/random_utilities.h"
 #include "opennn/response_optimization/response_optimization.h"
-#include "opennn/neural_network/layers/scaling_layer.h"
-#include "opennn/neural_network/standard_networks.h"
+#include "opennn/network/layers/scaling_layer.h"
+#include "opennn/network/standard_networks.h"
 #include "opennn/core/statistics.h"
-#include "opennn/neural_network/layers/unscaling_layer.h"
+#include "opennn/network/layers/unscaling_layer.h"
 #include "opennn/core/variable.h"
 
 using namespace opennn;
@@ -172,7 +172,7 @@ struct CategoricalApproximation
 };
 
 
-vector<float> scan_categories(NeuralNetwork& network,
+vector<float> scan_categories(Network& network,
                               const Index numeric_number,
                               const Index categories_number,
                               const float input_minimum,
@@ -224,7 +224,7 @@ Index read_category(const MatrixR& results,
 }
 
 
-pair<float, float> sample_response(NeuralNetwork& network,
+pair<float, float> sample_response(Network& network,
                                    const Index inputs_number,
                                    const float input_minimum,
                                    const float input_maximum,
@@ -249,7 +249,7 @@ pair<float, float> sample_response(NeuralNetwork& network,
 
 enum class Driver { Contraction, Genetic };
 
-unique_ptr<ResponseOptimization> make_driver(const Driver driver, NeuralNetwork* network)
+unique_ptr<ResponseOptimization> make_driver(const Driver driver, Network* network)
 {
     if (driver == Driver::Genetic) return make_unique<GeneticResponse>(network);
 
@@ -685,7 +685,7 @@ TEST(DrawKHot, ReportsInfeasiblePins)
 }
 
 
-TEST(ResponseOptimizationSetup, NoNeuralNetworkThrows)
+TEST(ResponseOptimizationSetup, NoNetworkThrows)
 {
     DomainContraction optimization;
 

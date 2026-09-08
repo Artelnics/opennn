@@ -10,7 +10,7 @@
 
 #include "opennn/dataset/dataset.h"
 #include "opennn/model_selection/selection_utilities.h"
-#include "opennn/neural_network/neural_network.h"
+#include "opennn/network/network.h"
 
 namespace opennn
 {
@@ -20,16 +20,16 @@ InputsSelection::InputsSelection(TrainingStrategy* new_training_strategy)
     set(new_training_strategy);
 }
 
-void InputsSelection::configure_neural_network_inputs(NeuralNetwork* neural_network, Dataset* dataset, Index input_features_number) const
+void InputsSelection::configure_network_inputs(Network* network, Dataset* dataset, Index input_features_number) const
 {
     dataset->resize_input_shape(input_features_number);
-    neural_network->set_input_shape(dataset->get_input_shape());
-    neural_network->set_input_variables(dataset->get_model_input_variables());
+    network->set_input_shape(dataset->get_input_shape());
+    network->set_input_variables(dataset->get_model_input_variables());
 
-    neural_network->compile();
+    network->compile();
 }
 
-void InputsSelection::install_optimal_inputs(NeuralNetwork* neural_network,
+void InputsSelection::install_optimal_inputs(Network* network,
                                              Dataset* dataset,
                                              const vector<Index>& optimal_input_indices,
                                              const vector<Index>& target_indices,
@@ -40,10 +40,10 @@ void InputsSelection::install_optimal_inputs(NeuralNetwork* neural_network,
     if (time_indices.size() == 1)
         dataset->set_variable_role(time_indices[0], "Time");
 
-    configure_neural_network_inputs(neural_network, dataset,
+    configure_network_inputs(network, dataset,
                                     dataset->get_features_number(VariableRole::Input));
 
-    apply_input_scaling(neural_network, capture_input_scaling(dataset));
+    apply_input_scaling(network, capture_input_scaling(dataset));
 }
 
 InputsSelectionResult::InputsSelectionResult(const Index maximum_epochs)

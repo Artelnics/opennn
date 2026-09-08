@@ -24,18 +24,18 @@
 #include "opennn/core/device_backend.h"
 #include "opennn/dataset/batch.h"
 #include "opennn/dataset/tabular_dataset.h"
-#include "opennn/neural_network/back_propagation.h"
-#include "opennn/neural_network/forward_propagation.h"
-#include "opennn/neural_network/layers/convolutional_layer.h"
-#include "opennn/neural_network/layers/dense_layer.h"
-#include "opennn/neural_network/layers/flatten_layer.h"
-#include "opennn/neural_network/layers/upsampling_layer.h"
-#include "opennn/neural_network/neural_network.h"
-#include "opennn/neural_network/operators/pool3d_operator.h"
+#include "opennn/network/back_propagation.h"
+#include "opennn/network/forward_propagation.h"
+#include "opennn/network/layers/convolutional_layer.h"
+#include "opennn/network/layers/dense_layer.h"
+#include "opennn/network/layers/flatten_layer.h"
+#include "opennn/network/layers/upsampling_layer.h"
+#include "opennn/network/network.h"
+#include "opennn/network/operators/pool3d_operator.h"
 #include "opennn/training_strategy/loss.h"
 
 #ifdef OPENNN_HAS_CUDA
-#include "opennn/neural_network/layers/kernel_upsampling.cuh"
+#include "opennn/network/layers/kernel_upsampling.cuh"
 #endif
 
 using namespace opennn;
@@ -190,15 +190,15 @@ namespace
 
 VectorR gradient_with_stamped_arena(Loss& loss, float stamp)
 {
-    NeuralNetwork* neural_network = loss.get_neural_network();
+    Network* network = loss.get_network();
     Dataset* dataset = loss.get_dataset();
 
     const Index samples_number = dataset->get_samples_number("Training");
 
-    Batch batch(samples_number, dataset, neural_network->get_config());
+    Batch batch(samples_number, dataset, network->get_config());
     batch.fill(dataset->get_sample_indices("Training"), dataset->get_feature_selection());
 
-    ForwardPropagation forward_propagation(samples_number, neural_network);
+    ForwardPropagation forward_propagation(samples_number, network);
     BackPropagation back_propagation(samples_number, loss);
 
     // Without a joint plan BackPropagation owns the delta arena, which is the
@@ -207,7 +207,7 @@ VectorR gradient_with_stamped_arena(Loss& loss, float stamp)
         fill_n(back_propagation.arena.as<float>(),
                size_t(back_propagation.arena.size_in_floats()), stamp);
 
-    neural_network->forward_propagate(batch.get_inputs(), forward_propagation, ForwardPropagationMode::Training);
+    network->forward_propagate(batch.get_inputs(), forward_propagation, ForwardPropagationMode::Training);
     loss.back_propagate(batch, forward_propagation, back_propagation);
 
     back_propagation.gradient.migrate_to(Device::CPU);
@@ -227,30 +227,30 @@ TEST(BackwardFullWrite, UpsamplingGradientIgnoresPriorArenaContents)
     dataset.set_data_random();
     dataset.set_sample_roles("Training");
 
-    NeuralNetwork neural_network;
-    const Index convolutional_index = neural_network.add_layer(make_unique<Convolutional>(spatial_shape,
+    Network network;
+    const Index convolutional_index = network.add_layer(make_unique<Convolutional>(spatial_shape,
                                                                                           Shape{3, 3, channels, kernels},
                                                                                           "Identity", Shape{1, 1}, "Same"),
                                                                {-1});
 
     // Upsampling must sit above a trainable layer, or its input delta never
     // reaches a gradient and the stamp cannot show up in the comparison.
-    const Index upsampling_index = neural_network.add_layer(make_unique<Upsampling>(
-                                                                neural_network.get_layer(convolutional_index)->get_output_shape(),
+    const Index upsampling_index = network.add_layer(make_unique<Upsampling>(
+                                                                network.get_layer(convolutional_index)->get_output_shape(),
                                                                 scale, "upsampling"),
                                                             {convolutional_index});
 
-    const Index flatten_index = neural_network.add_layer(make_unique<Flatten>(
-                                                             neural_network.get_layer(upsampling_index)->get_output_shape()),
+    const Index flatten_index = network.add_layer(make_unique<Flatten>(
+                                                             network.get_layer(upsampling_index)->get_output_shape()),
                                                          {upsampling_index});
 
-    neural_network.add_layer(make_unique<opennn::Dense>(
-                                 neural_network.get_layer(flatten_index)->get_output_shape(),
+    network.add_layer(make_unique<opennn::Dense>(
+                                 network.get_layer(flatten_index)->get_output_shape(),
                                  dataset.get_target_shape()),
                              {flatten_index});
-    neural_network.compile();
+    network.compile();
 
-    Loss loss(&neural_network, &dataset);
+    Loss loss(&network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);
 
     const VectorR clean = gradient_with_stamped_arena(loss, 0.0f);

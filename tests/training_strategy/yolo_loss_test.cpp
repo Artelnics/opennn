@@ -3,12 +3,12 @@
 
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/dataset/yolo_dataset.h"
-#include "opennn/neural_network/layers/detection_layer.h"
-#include "opennn/neural_network/layers/detection_v8_layer.h"
-#include "opennn/neural_network/layers/convolutional_layer.h"
-#include "opennn/neural_network/layers/concatenation_layer.h"
-#include "opennn/neural_network/layers/non_max_suppression_layer.h"
-#include "opennn/neural_network/neural_network.h"
+#include "opennn/network/layers/detection_layer.h"
+#include "opennn/network/layers/detection_v8_layer.h"
+#include "opennn/network/layers/convolutional_layer.h"
+#include "opennn/network/layers/concatenation_layer.h"
+#include "opennn/network/layers/non_max_suppression_layer.h"
+#include "opennn/network/network.h"
 #include "opennn/training_strategy/loss.h"
 
 #include "tests/test_helpers.h"
@@ -49,7 +49,7 @@ struct YoloLossFixture
     }
 };
 
-void build_yolo_network(NeuralNetwork& net, const YoloLossFixture& f)
+void build_yolo_network(Network& net, const YoloLossFixture& f)
 {
     net.add_layer(make_unique<Convolutional>(Shape{f.H, f.W, 3},
                                              Shape{1, 1, 3, f.channels},
@@ -77,7 +77,7 @@ TEST(YoloLoss, OutputDeltaLayersFollowSelectedLoss)
         const Index head_channels = v8 ? 5 : 6;
         const vector<std::array<float, 2>> anchors{{0.5f, 0.5f}};
 
-        NeuralNetwork network;
+        Network network;
         const Index stem = network.add_layer(make_unique<Convolutional>(
                                Shape{height, width, 3}, Shape{1, 1, 3, features},
                                "Identity", Shape{1, 1}, "Same", BatchNormalization::No, "stem"));
@@ -146,7 +146,7 @@ TEST(YoloLoss, InferencePolicyRetainsConsumedHead)
     constexpr Index head_channels = 6;
     const vector<std::array<float, 2>> anchors{{0.5f, 0.5f}};
 
-    NeuralNetwork network;
+    Network network;
     const Index stem = network.add_layer(make_unique<Convolutional>(
                            Shape{height, width, 3}, Shape{1, 1, 3, features},
                            "Identity", Shape{1, 1}, "Same", BatchNormalization::No, "stem"));
@@ -205,10 +205,10 @@ TEST(YoloLoss, NoObjectGradientMatchesNumericalGradient)
     no_aug.enabled = false;
     dataset.set_augmentation_policy(no_aug);
 
-    NeuralNetwork neural_network;
-    build_yolo_network(neural_network, f);
+    Network network;
+    build_yolo_network(network, f);
 
-    Loss loss(&neural_network, &dataset);
+    Loss loss(&network, &dataset);
     loss.set_error(Loss::Error::Yolo);
     loss.set_regularization(Loss::Regularization::NoRegularization);
 
@@ -235,10 +235,10 @@ TEST(YoloLoss, WithObjectGradientMatchesV1Approximation)
     no_aug.enabled = false;
     dataset.set_augmentation_policy(no_aug);
 
-    NeuralNetwork neural_network;
-    build_yolo_network(neural_network, f);
+    Network network;
+    build_yolo_network(network, f);
 
-    Loss loss(&neural_network, &dataset);
+    Loss loss(&network, &dataset);
     loss.set_error(Loss::Error::Yolo);
     loss.set_regularization(Loss::Regularization::NoRegularization);
 
@@ -272,7 +272,7 @@ struct YoloLossV8Fixture
     }
 };
 
-void build_yolo_v8_network(NeuralNetwork& net, const YoloLossV8Fixture& f)
+void build_yolo_v8_network(Network& net, const YoloLossV8Fixture& f)
 {
     net.add_layer(make_unique<Convolutional>(Shape{f.H, f.W, 3},
                                              Shape{1, 1, 3, f.ch},
@@ -299,10 +299,10 @@ TEST(YoloLoss, V8UsesDetectionContractWithGenericDataset)
     dataset.set_data_constant(0.0f);
     dataset.set_sample_roles(SampleRole::Training);
 
-    NeuralNetwork neural_network;
-    build_yolo_v8_network(neural_network, f);
+    Network network;
+    build_yolo_v8_network(network, f);
 
-    Loss loss(&neural_network, &dataset);
+    Loss loss(&network, &dataset);
     loss.set_error(Loss::Error::Yolo);
     loss.set_regularization(Loss::Regularization::NoRegularization);
 
@@ -330,10 +330,10 @@ TEST(YoloLoss, V8WithObjectGradientMatchesNumericalGradient)
     no_aug.enabled = false;
     dataset.set_augmentation_policy(no_aug);
 
-    NeuralNetwork neural_network;
-    build_yolo_v8_network(neural_network, f);
+    Network network;
+    build_yolo_v8_network(network, f);
 
-    Loss loss(&neural_network, &dataset);
+    Loss loss(&network, &dataset);
     loss.set_error(Loss::Error::Yolo);
     loss.set_regularization(Loss::Regularization::NoRegularization);
 
@@ -361,7 +361,7 @@ TEST(YoloLoss, V8DecoupledHeadGradientMatchesNumericalGradient)
     no_aug.enabled = false;
     dataset.set_augmentation_policy(no_aug);
 
-    NeuralNetwork net;
+    Network net;
     constexpr Index head_ch = 4;
     const Shape feat{f.H, f.W, head_ch};
 
@@ -410,10 +410,10 @@ TEST(YoloLoss, V8TALVFLGradientMatchesNumerical)
     no_aug.enabled = false;
     dataset.set_augmentation_policy(no_aug);
 
-    NeuralNetwork neural_network;
-    build_yolo_v8_network(neural_network, f);
+    Network network;
+    build_yolo_v8_network(network, f);
 
-    Loss loss_fn(&neural_network, &dataset);
+    Loss loss_fn(&network, &dataset);
     loss_fn.set_error(Loss::Error::Yolo);
     loss_fn.set_regularization(Loss::Regularization::NoRegularization);
 
@@ -445,7 +445,7 @@ TEST(YoloLoss, V8DFLGradientMatchesNumerical)
     no_aug.enabled = false;
     dataset.set_augmentation_policy(no_aug);
 
-    NeuralNetwork net;
+    Network net;
     net.add_layer(make_unique<Convolutional>(Shape{f.H, f.W, 3},
                                              Shape{1, 1, 3, dfl_ch},
                                              "Identity", Shape{1, 1}, "Same", BatchNormalization::No, "v8_logits"));

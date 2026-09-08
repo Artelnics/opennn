@@ -23,12 +23,13 @@ the same major version: an application requesting 8.x must migrate explicitly.
 
 | Former header | Current header |
 | --- | --- |
-| `opennn/neural_network.h` | `opennn/neural_network/neural_network.h` |
+| `opennn/neural_network.h` | `opennn/network/network.h` |
+| `opennn/neural_network/neural_network.h` (earlier 9.0 candidate) | `opennn/network/network.h` |
 | `opennn/dataset.h` | `opennn/dataset/dataset.h` and `opennn/dataset/tabular_dataset.h` |
 | `opennn/standard_networks.h` | `opennn/models/models.h` |
 | `opennn/training_strategy.h` | `opennn/training_strategy/training_strategy.h` |
-| `opennn/dense_layer.h` | `opennn/neural_network/layers/dense_layer.h` |
-| `opennn/bounding_layer.h` | `opennn/neural_network/layers/clamping_layer.h` |
+| `opennn/dense_layer.h` | `opennn/network/layers/dense_layer.h` |
+| `opennn/bounding_layer.h` | `opennn/network/layers/clamping_layer.h` |
 | `opennn/response_optimization.h` | `opennn/response_optimization/response_optimization.h` |
 | `opennn/variable.h` | `opennn/core/variable.h` |
 
@@ -37,6 +38,23 @@ data and the specialized image, language and time-series dataset classes for
 their respective storage contracts. Use `opennn::Dense` and `Clamping` for the
 current layer classes. The installed-package smoke program demonstrates adding
 layers, compiling a network, and running a row-major `MatrixR` batch.
+
+## Network naming
+
+The public class is now `opennn::Network`, declared in
+`opennn/network/network.h`. Replace `NeuralNetwork` in constructors, pointers,
+references and derived classes with `Network`. The former
+`opennn/neural_network/` directory is now `opennn/network/`, including layer and
+operator headers. There is no old-name alias or forwarding header. Rebuild all
+consumers because the C++ binary symbols have changed.
+
+Generated Python models also expose `Network`; update callers to
+`module.Network()` and regenerate exports. JSON models use the top-level key
+`"Network"`. For models from the earlier 9.0 candidate, rename only the previous
+top-level `"NeuralNetwork"` key to `"Network"`, retaining the contents and matching
+binary file. The old root is rejected. Parameter layouts and binary snapshot
+formats are unchanged by this naming change. This root-key edit is not an 8.x
+model conversion; follow the procedure below for historical formats.
 
 ## Models and parameters
 
@@ -57,7 +75,7 @@ For each production model:
 4. Compare predictions against the recorded cases, including missing values,
    categories, boundary values and forecasting windows. Choose numerical
    tolerances appropriate to the deployment precision.
-5. Save with `NeuralNetwork::save` and `save_parameters_binary`, reload using
+5. Save with `Network::save` and `save_parameters_binary`, reload using
    the matching current APIs, and repeat prediction comparisons. Keep paired
    architecture and parameter files together.
 
@@ -71,7 +89,7 @@ padding. `get_parameters_number()` reports the logical count;
 Prefer the paired model save/load APIs for persistence. Buffer sizes alone
 still do not establish that two models use the same parameter ordering.
 
-`NeuralNetwork::load(path)` requires the matching `.bin` file or embedded JSON
+`Network::load(path)` requires the matching `.bin` file or embedded JSON
 parameter values. A missing binary with no embedded weights raises an error
 before clearing the existing network. Saved model pairs must be kept together.
 Nonempty embedded parameter text must contain exactly the compiled buffer's
@@ -85,7 +103,7 @@ embedded weights are copied. This check applies to alignment padding as well.
 For intentional architecture-only loading, use a new network explicitly:
 
 ```cpp
-NeuralNetwork network;
+Network network;
 network.from_JSON(load_json_file(path));
 // Initialize or load matching parameters before using the model for inference.
 ```

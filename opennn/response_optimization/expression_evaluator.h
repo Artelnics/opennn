@@ -13,7 +13,7 @@
 namespace opennn
 {
 
-class NeuralNetwork;
+class Network;
 
 enum class ExpressionLinearity   { Linear, Nonlinear };
 enum class ExpressionInvolvement { InputsOnly, OutputsOnly, Mixed };
@@ -80,7 +80,7 @@ CompiledExpression compile_expression(const string&,
                                 const vector<pair<string, Index>>&,
                             const vector<pair<string, Index>>&);
 
-CompiledExpression compile_expression(const string&, const NeuralNetwork*, const string& role = "Expression");
+CompiledExpression compile_expression(const string&, const Network*, const string& role = "Expression");
 
 CompiledExpression compile_ast(const ExpressionNode&);
 

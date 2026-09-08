@@ -54,9 +54,9 @@
 #include "opennn/dataset/kernel_gather.cuh"
 #include "opennn/dataset/dataset.h"
 #include "opennn/dataset/tabular_dataset.h"
-#include "opennn/neural_network/forward_propagation.h"
-#include "opennn/neural_network/layers/dense_layer.h"
-#include "opennn/neural_network/neural_network.h"
+#include "opennn/network/forward_propagation.h"
+#include "opennn/network/layers/dense_layer.h"
+#include "opennn/network/network.h"
 #include "opennn/testing_analysis/testing_analysis.h"
 #include "opennn/training_strategy/adaptive_moment_estimation.h"
 #include "opennn/training_strategy/training_strategy.h"
@@ -104,11 +104,11 @@ struct Options
 // Glorot initialisation is set explicitly rather than left to whatever the
 // wrapper defaulted to, for the same reason: it is a property of the
 // comparison, so it belongs where the comparison can see it.
-unique_ptr<NeuralNetwork> build(const Shape& inputs, const Shape& targets, const Options& options)
+unique_ptr<Network> build(const Shape& inputs, const Shape& targets, const Options& options)
 {
     set_seed(SEED);
 
-    auto network = make_unique<NeuralNetwork>();
+    auto network = make_unique<Network>();
     Shape current = inputs;
 
     for (Index i = 0; i < options.layers; ++i)
@@ -273,7 +273,7 @@ int main(int argc, char* argv[])
             vector<double> epoch_seconds;
             auto previous_mark = clock_type::now();
 
-            adam->post_epoch_callback = [&](Index epoch, float, float, NeuralNetwork*)
+            adam->post_epoch_callback = [&](Index epoch, float, float, Network*)
             {
                 const auto now = clock_type::now();
                 const double elapsed = chrono::duration<double>(now - previous_mark).count();

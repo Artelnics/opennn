@@ -14,7 +14,7 @@
 #include "opennn/response_optimization/response_optimization.h"
 #include "opennn/response_optimization/domain_contraction.h"
 #include "opennn/response_optimization/genetic_response.h"
-#include "opennn/neural_network/neural_network.h"
+#include "opennn/network/network.h"
 
 using namespace opennn;
 
@@ -51,7 +51,7 @@ int main()
     {
         cout << "OpenNN. Concrete Response Optimization Example." << endl;
 
-        NeuralNetwork network(
+        Network network(
             filesystem::path(CONCRETE_EXAMPLE_DIR) / "nn" / "concrete_uci.json");
 
         DomainContraction domain_contraction(&network);

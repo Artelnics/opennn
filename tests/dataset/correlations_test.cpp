@@ -5,10 +5,10 @@
 #include "opennn/core/tensor_types.h"
 #include "opennn/core/statistics.h"
 #include "opennn/dataset/dataset.h"
-#include "opennn/neural_network/neural_network.h"
+#include "opennn/network/network.h"
 #include "opennn/training_strategy/training_strategy.h"
-#include "opennn/neural_network/layers/scaling_layer.h"
-#include "opennn/neural_network/layers/dense_layer.h"
+#include "opennn/network/layers/scaling_layer.h"
+#include "opennn/network/layers/dense_layer.h"
 #include "opennn/core/string_utilities.h"
 
 using namespace opennn;

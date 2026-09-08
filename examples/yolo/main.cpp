@@ -25,9 +25,9 @@
 #include "opennn/dataset/image_processing.h"
 #include "opennn/training_strategy/adaptive_moment_estimation.h"
 #include "opennn/core/configuration.h"
-#include "opennn/neural_network/forward_propagation.h"
-#include "opennn/neural_network/layers/layer.h"
-#include "opennn/neural_network/layers/non_max_suppression_layer.h"
+#include "opennn/network/forward_propagation.h"
+#include "opennn/network/layers/layer.h"
+#include "opennn/network/layers/non_max_suppression_layer.h"
 #include "opennn/core/random_utilities.h"
 #include "opennn/models/models.h"
 #include "opennn/training_strategy/loss.h"
@@ -46,7 +46,7 @@ struct GtBox { int cls; float cx, cy, w, h; };
 // copying to host first when they are device-resident. Both the training-loop
 // diagnostic and the mAP pass need exactly this, and each had written it out.
 // The scratch vector must outlive the returned heads: they hold spans into it.
-vector<YoloFpnHead> collect_fpn_heads(const NeuralNetwork& network,
+vector<YoloFpnHead> collect_fpn_heads(const Network& network,
                                       const ForwardPropagation& forward_propagation,
                                       bool is_v8_head,
                                       Index classes_number,
@@ -987,7 +987,7 @@ int main(int argc, char* argv[])
         constexpr float EMA_DECAY = 0.9999f;
 
         vector<float> ema_live_cpu(static_cast<size_t>(n_params));
-        adam->post_batch_callback = [&](NeuralNetwork* nn) {
+        adam->post_batch_callback = [&](Network* nn) {
             const float* src = nn->get_parameters_data();
 #ifdef OPENNN_HAS_CUDA
             if (nn->get_parameters_device() == Device::CUDA)
@@ -1027,7 +1027,7 @@ int main(int argc, char* argv[])
         
         csv_log << "epoch,train_error,val_error\n";
 
-        adam->post_epoch_callback = [&](Index epoch, float train_err, float val_err, NeuralNetwork*)
+        adam->post_epoch_callback = [&](Index epoch, float train_err, float val_err, Network*)
         {
             csv_log << (epochs_done + static_cast<int>(epoch)) << ","
                     << train_err << "," << val_err << "\n";

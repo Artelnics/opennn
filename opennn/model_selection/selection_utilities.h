@@ -16,7 +16,7 @@ namespace opennn
 {
 
 class TrainingStrategy;
-class NeuralNetwork;
+class Network;
 class Dataset;
 
 struct CandidateEvaluation
@@ -26,7 +26,7 @@ struct CandidateEvaluation
 };
 
 CandidateEvaluation evaluate_candidate(TrainingStrategy*,
-                                       NeuralNetwork*,
+                                       Network*,
                                        Index folds_number,
                                        const vector<vector<Index>>& fold_partition,
                                        Index trials_number,
@@ -43,16 +43,16 @@ struct ParameterSnapshot
 
 FeatureScaling capture_input_scaling(Dataset*);
 
-void apply_input_scaling(NeuralNetwork*, FeatureScaling);
+void apply_input_scaling(Network*, FeatureScaling);
 
-ParameterSnapshot capture_parameter_snapshot(NeuralNetwork*);
+ParameterSnapshot capture_parameter_snapshot(Network*);
 
-void seed_parameters_from_snapshot(NeuralNetwork*,
+void seed_parameters_from_snapshot(Network*,
                                    const ParameterSnapshot&,
                                    const vector<Index>& input_row_map = {});
 
 void finalize_selected_model(TrainingStrategy*,
-                             NeuralNetwork*,
+                             Network*,
                              const VectorR& optimal_parameters,
                              Index folds_number,
                              bool display,

@@ -14,11 +14,11 @@
 #include "opennn/dataset/correlations.h"
 #include "opennn/core/parallel_algorithms.h"
 #include "opennn/core/scaling.h"
-#include "opennn/neural_network/neural_network.h"
+#include "opennn/network/network.h"
 #include "opennn/core/statistics.h"
 #include "opennn/training_strategy/error_functions.h"
-#include "opennn/neural_network/forward_propagation.h"
-#include "opennn/neural_network/back_propagation.h"
+#include "opennn/network/forward_propagation.h"
+#include "opennn/network/back_propagation.h"
 #include "opennn/dataset/batch.h"
 
 namespace opennn
@@ -27,9 +27,9 @@ namespace opennn
 namespace
 {
 
-FeatureScaling get_output_scaling(const NeuralNetwork& neural_network)
+FeatureScaling get_output_scaling(const Network& network)
 {
-    for (const unique_ptr<Layer>& layer : neural_network.get_layers())
+    for (const unique_ptr<Layer>& layer : network.get_layers())
         if (const auto* endpoint = dynamic_cast<const FeatureScalingEndpoint*>(layer.get());
             endpoint && endpoint->get_scaling_role() == VariableRole::Target)
             return endpoint->get_feature_scaling();
@@ -55,15 +55,15 @@ VectorR get_scaling_ranges(const FeatureScaling& scaling, Index outputs_number)
 
 }
 
-TestingAnalysis::TestingAnalysis(NeuralNetwork* new_neural_network, Dataset* new_dataset)
+TestingAnalysis::TestingAnalysis(Network* new_network, Dataset* new_dataset)
 {
-    neural_network = new_neural_network;
+    network = new_network;
     dataset = new_dataset;
 }
 
 void TestingAnalysis::check() const
 {
-    throw_if(!neural_network,
+    throw_if(!network,
              "neural network is not set.");
 
     throw_if(!dataset,
@@ -79,7 +79,7 @@ Tensor<TestingAnalysis::GoodnessOfFitAnalysis, 1> TestingAnalysis::perform_goodn
     throw_if(testing_samples_number == 0,
              "Number of testing samples is zero.\n");
 
-    const Index outputs_number = neural_network->get_outputs_number();
+    const Index outputs_number = network->get_outputs_number();
 
     const auto [all_targets, all_outputs] = get_targets_and_outputs("Testing");
     Tensor<GoodnessOfFitAnalysis, 1> goodness_of_fit_results(outputs_number);
@@ -129,7 +129,7 @@ pair<MatrixR, MatrixR> TestingAnalysis::get_targets_and_outputs(const string& sa
     constexpr Index maximum_cpu_batch_size = 4096;
 
     const Index default_batch_size =
-        neural_network->is_gpu() ? Index(256)
+        network->is_gpu() ? Index(256)
                                  : min<Index>(maximum_cpu_batch_size, samples_number);
     const Index current_batch_size =
         (batch_size <= 0) ? default_batch_size
@@ -159,7 +159,7 @@ pair<MatrixR, MatrixR> TestingAnalysis::get_targets_and_outputs(const string& sa
     // Only on the host path. calculate_outputs owns device residency and
     // graph capture for a GPU network, and its evaluation batch is 256, so
     // there is little to reclaim and a great deal to get wrong.
-    const bool reuse_arena = !neural_network->is_gpu();
+    const bool reuse_arena = !network->is_gpu();
 
     unique_ptr<Batch> batch;
     unique_ptr<ForwardPropagation> propagation;
@@ -180,7 +180,7 @@ pair<MatrixR, MatrixR> TestingAnalysis::get_targets_and_outputs(const string& sa
             batch = make_unique<Batch>(n, dataset, host_config);
             if (reuse_arena)
                 propagation = make_unique<ForwardPropagation>(
-                    n, neural_network, ForwardPropagationMode::Inference);
+                    n, network, ForwardPropagationMode::Inference);
             built_for = n;
         }
 
@@ -190,13 +190,13 @@ pair<MatrixR, MatrixR> TestingAnalysis::get_targets_and_outputs(const string& sa
 
         if (reuse_arena)
         {
-            neural_network->forward_propagate(batch->get_inputs(), *propagation,
+            network->forward_propagate(batch->get_inputs(), *propagation,
                                               ForwardPropagationMode::Inference);
             batch_outputs = propagation->get_outputs().as_matrix();
         }
         else
         {
-            batch_outputs = neural_network->calculate_outputs(batch->get_inputs());
+            batch_outputs = network->calculate_outputs(batch->get_inputs());
         }
 
         if (output_data.size() == 0)
@@ -218,12 +218,12 @@ Tensor3 TestingAnalysis::calculate_error_data() const
     throw_if(testing_samples_number == 0,
              "Number of testing samples is zero.\n");
 
-    const Index outputs_number = neural_network->get_outputs_number();
+    const Index outputs_number = network->get_outputs_number();
 
     const auto [targets, outputs] = get_targets_and_outputs("Testing");
 
     const VectorR ranges = get_scaling_ranges(
-        get_output_scaling(*neural_network), outputs_number);
+        get_output_scaling(*network), outputs_number);
 
     Tensor3 error_data(testing_samples_number, 3, outputs_number);
 
@@ -259,7 +259,7 @@ MatrixR TestingAnalysis::calculate_percentage_error_data() const
     const auto [targets, outputs] = get_targets_and_outputs("Testing");
 
     const VectorR ranges = get_scaling_ranges(
-        get_output_scaling(*neural_network), neural_network->get_outputs_number());
+        get_output_scaling(*network), network->get_outputs_number());
     const MatrixR errors = targets - outputs;
     MatrixR error_data = ((errors.array() * 100.0f).rowwise() / ranges.transpose().array()).matrix();
     error_data = error_data.array().isFinite().select(error_data.array(), 0.0f).matrix();

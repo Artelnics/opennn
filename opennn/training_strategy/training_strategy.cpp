@@ -13,17 +13,17 @@
 namespace opennn
 {
 
-TrainingStrategy::TrainingStrategy(NeuralNetwork* new_neural_network, Dataset* new_dataset)
+TrainingStrategy::TrainingStrategy(Network* new_network, Dataset* new_dataset)
 {
-    set(new_neural_network, new_dataset);
+    set(new_network, new_dataset);
 }
 
-void TrainingStrategy::set(NeuralNetwork* new_neural_network, Dataset* new_dataset)
+void TrainingStrategy::set(Network* new_network, Dataset* new_dataset)
 {
-    neural_network = new_neural_network;
+    network = new_network;
     dataset = new_dataset;
 
-    if (!neural_network)
+    if (!network)
     {
         optimizer.reset();
         return loss.reset();
@@ -38,23 +38,23 @@ void TrainingStrategy::set_dataset(Dataset* new_dataset)
     if (loss) loss->set_dataset(new_dataset);
 }
 
-void TrainingStrategy::set_neural_network(NeuralNetwork* new_neural_network)
+void TrainingStrategy::set_network(Network* new_network)
 {
-    neural_network = new_neural_network;
-    if (!neural_network)
+    network = new_network;
+    if (!network)
     {
         optimizer.reset();
         loss.reset();
     }
     else if (loss)
-        loss->set_neural_network(new_neural_network);
+        loss->set_network(new_network);
     else
         set_default();
 }
 
 void TrainingStrategy::set_loss(const string& new_loss)
 {
-    loss = make_unique<Loss>(neural_network, dataset);
+    loss = make_unique<Loss>(network, dataset);
     loss->set_error(new_loss);
 
     if (optimizer)
@@ -70,16 +70,16 @@ void TrainingStrategy::set_optimization_algorithm(const string& new_optimization
 
 void TrainingStrategy::set_default()
 {
-    if (!get_neural_network())
+    if (!get_network())
         return;
 
     const char* loss_name = "MeanSquaredError";
     const char* optimizer_name = "AdaptiveMomentEstimation";
 
-    switch (neural_network->get_task())
+    switch (network->get_task())
     {
         case NetworkTask::Classification:
-            loss_name = neural_network->get_outputs_number() == 1
+            loss_name = network->get_outputs_number() == 1
                       ? "WeightedSquaredError"
                       : "CrossEntropy";
             optimizer_name = "QuasiNewtonMethod";
@@ -104,16 +104,16 @@ void TrainingStrategy::set_default()
 
     set_loss(loss_name);
     set_optimization_algorithm(optimizer_name);
-    optimizer->configure_for_task(neural_network->get_task());
+    optimizer->configure_for_task(network->get_task());
 }
 
 TrainingResult TrainingStrategy::train()
 {
-    throw_if(!get_neural_network(), "neural network is not set.");
+    throw_if(!get_network(), "neural network is not set.");
 
     throw_if(!get_dataset(), "dataset is not set.");
 
-    throw_if(!loss->get_neural_network() || !loss->get_dataset(), "loss is not set.");
+    throw_if(!loss->get_network() || !loss->get_dataset(), "loss is not set.");
 
     throw_if(!optimizer->get_loss(), "optimizer is not set.");
 

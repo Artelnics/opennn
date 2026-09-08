@@ -2,8 +2,8 @@
 #include "opennn/core/configuration.h"
 #include "opennn/dataset/language_dataset.h"
 #include "opennn/core/random_utilities.h"
-#include "opennn/neural_network/back_propagation.h"
-#include "opennn/neural_network/layers/dense_layer.h"
+#include "opennn/network/back_propagation.h"
+#include "opennn/network/layers/dense_layer.h"
 #include "opennn/models/models.h"
 #include "opennn/training_strategy/stochastic_gradient_descent.h"
 #include "opennn/dataset/tabular_dataset.h"
@@ -124,13 +124,13 @@ TEST_F(StochasticGradientDescentTest, GpuClipWorkspaceIsBackwardOwned)
 
     Configuration::instance().set(Device::CUDA, Type::FP32);
 
-    NeuralNetwork neural_network;
-    neural_network.add_layer(
+    Network network;
+    network.add_layer(
         make_unique<opennn::Dense>(Shape{2}, Shape{1}, "Identity"));
-    neural_network.compile(Device::CUDA);
-    neural_network.set_parameters_random();
+    network.compile(Device::CUDA);
+    network.set_parameters_random();
 
-    Loss loss(&neural_network);
+    Loss loss(&network);
     BackPropagation first(1, loss);
     BackPropagation second(1, loss);
 
@@ -170,8 +170,8 @@ TEST_F(StochasticGradientDescentTest, GpuClipSupportsTailAndCudaGraph)
     dataset.set_data_random();
     dataset.set_sample_roles("Training");
 
-    ApproximationNetwork neural_network({2}, {4}, {1});
-    Loss loss(&neural_network, &dataset);
+    ApproximationNetwork network({2}, {4}, {1});
+    Loss loss(&network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);
 
     StochasticGradientDescent optimizer(&loss);
@@ -333,7 +333,7 @@ TEST_F(StochasticGradientDescentTest, JointGradientArenaSupportsCudaGraphRemaind
     sgd.set_joint_gradient_arena(true);
 
     Index batches_processed = 0;
-    sgd.post_batch_callback = [&](NeuralNetwork*) { ++batches_processed; };
+    sgd.post_batch_callback = [&](Network*) { ++batches_processed; };
 
     EXPECT_TRUE(isfinite(sgd.train().get_training_error()));
     EXPECT_EQ(batches_processed, 3);

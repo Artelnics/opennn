@@ -14,13 +14,13 @@
 namespace opennn
 {
 
-class NeuralNetwork;
+class Network;
 
 class ResponseOptimization
 {
 public:
 
-    void set(NeuralNetwork* = nullptr);
+    void set(Network* = nullptr);
 
     struct Objective
     {
@@ -51,7 +51,7 @@ public:
         pair<float, float> calculate_bounds() const;
     };
 
-    explicit ResponseOptimization(NeuralNetwork* = nullptr);
+    explicit ResponseOptimization(Network* = nullptr);
 
     virtual ~ResponseOptimization();
 
@@ -62,7 +62,7 @@ public:
 
 protected:
 
-    NeuralNetwork* neural_network = nullptr;
+    Network* network = nullptr;
 
     vector<Objective> objectives;
     vector<Constraint> constraints;

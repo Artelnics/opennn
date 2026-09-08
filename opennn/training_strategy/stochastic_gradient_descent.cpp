@@ -12,9 +12,9 @@
 #include "opennn/core/profiler.h"
 #include "opennn/dataset/batch.h"
 #include "opennn/dataset/dataset.h"
-#include "opennn/neural_network/back_propagation.h"
-#include "opennn/neural_network/forward_propagation.h"
-#include "opennn/neural_network/neural_network.h"
+#include "opennn/network/back_propagation.h"
+#include "opennn/network/forward_propagation.h"
+#include "opennn/network/network.h"
 #include "opennn/training_strategy/kernel_optimizers.cuh"
 #include "opennn/training_strategy/loss.h"
 
@@ -34,7 +34,7 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
                                                   OptimizerData& optimizer_data,
                                                   UpdateMode mode)
 {
-    NeuralNetwork* neural_network = loss->get_neural_network();
+    Network* network = loss->get_network();
     const vector<BackPropagation::GradientSlice>& gradient_slices =
         back_propagation.get_gradient_slices();
 
@@ -46,9 +46,9 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
         float* const velocity_ptr = momentum > 0.0f
             ? optimizer_data.views[Velocity].as<float>()
             : nullptr;
-        float* const parameters = neural_network->get_parameters_data();
+        float* const parameters = network->get_parameters_data();
         bfloat16* const mirror =
-            neural_network->get_parameters_bf16_mirror_data();
+            network->get_parameters_bf16_mirror_data();
         cudaStream_t stream = device::get_compute_stream();
 
         for(const BackPropagation::GradientSlice& slice : gradient_slices)
@@ -79,15 +79,15 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
 
     clip_gradient_norm(back_propagation, gradient_clip_norm);
 
-    if (neural_network->is_gpu())
+    if (network->is_gpu())
     {
 #ifdef OPENNN_HAS_CUDA
         float* const velocity_ptr = momentum > 0.0f
             ? optimizer_data.views[Velocity].as<float>()
             : nullptr;
-        float* const parameters = neural_network->get_parameters_data();
+        float* const parameters = network->get_parameters_data();
         bfloat16* const mirror =
-            neural_network->get_parameters_bf16_mirror_data();
+            network->get_parameters_bf16_mirror_data();
 
         PROFILE_SCOPE("optim:sgd_update_cuda");
 
@@ -108,7 +108,7 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
 #endif
     }
 
-    VectorMap parameters = neural_network->get_parameters_map();
+    VectorMap parameters = network->get_parameters_map();
 
     float* const velocity = momentum > 0.0f
         ? optimizer_data.views[Velocity].as<float>()

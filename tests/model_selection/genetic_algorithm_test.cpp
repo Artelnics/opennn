@@ -67,9 +67,9 @@ TEST(GeneticAlgorithmTest, InputSelection)
 
     dataset.split_samples_random(type(0.7), type(0.15), type(0.15));
 
-    ApproximationNetwork neural_network(dataset.get_input_shape(), {2}, {1});
+    ApproximationNetwork network(dataset.get_input_shape(), {2}, {1});
 
-    TrainingStrategy training_strategy(&neural_network, &dataset);
+    TrainingStrategy training_strategy(&network, &dataset);
     training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
     training_strategy.get_optimization_algorithm()->set_display(false);
     training_strategy.get_optimization_algorithm()->set_maximum_epochs(10);
@@ -112,8 +112,8 @@ TEST(GeneticAlgorithmTest, SelectsParsimoniousSubset)
     dataset.set_data(data);
     dataset.split_samples_random(type(0.7), type(0.15), type(0.15));
 
-    ApproximationNetwork neural_network(dataset.get_input_shape(), {2}, {1});
-    TrainingStrategy training_strategy(&neural_network, &dataset);
+    ApproximationNetwork network(dataset.get_input_shape(), {2}, {1});
+    TrainingStrategy training_strategy(&network, &dataset);
     training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
     training_strategy.get_optimization_algorithm()->set_display(false);
     training_strategy.get_optimization_algorithm()->set_maximum_epochs(10);
@@ -170,8 +170,8 @@ TEST(GeneticAlgorithmTest, CrossValidationKeepsPersistentRoles)
 
     const vector<SampleRole> roles_before = dataset.get_sample_roles();
 
-    ApproximationNetwork neural_network(dataset.get_input_shape(), {2}, {1});
-    TrainingStrategy training_strategy(&neural_network, &dataset);
+    ApproximationNetwork network(dataset.get_input_shape(), {2}, {1});
+    TrainingStrategy training_strategy(&network, &dataset);
     training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
     training_strategy.get_optimization_algorithm()->set_display(false);
     training_strategy.get_optimization_algorithm()->set_maximum_epochs(10);
@@ -199,8 +199,8 @@ TEST(GeneticAlgorithmTest, RequiresValidation)
     dataset.set_data_random();
     dataset.set_sample_roles("Training");
 
-    ApproximationNetwork neural_network({2}, {2}, {1});
-    TrainingStrategy training_strategy(&neural_network, &dataset);
+    ApproximationNetwork network({2}, {2}, {1});
+    TrainingStrategy training_strategy(&network, &dataset);
 
     GeneticAlgorithm genetic_algorithm(&training_strategy);
     genetic_algorithm.set_display(false);
@@ -218,8 +218,8 @@ TEST(GeneticAlgorithmTest, CrossValidationDoesNotRequirePersistentValidation)
     dataset.set_data_random();
     dataset.set_sample_roles("Training");
 
-    ApproximationNetwork neural_network(dataset.get_input_shape(), {2}, {1});
-    TrainingStrategy training_strategy(&neural_network, &dataset);
+    ApproximationNetwork network(dataset.get_input_shape(), {2}, {1});
+    TrainingStrategy training_strategy(&network, &dataset);
     training_strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
     training_strategy.get_optimization_algorithm()->set_display(false);
     training_strategy.get_optimization_algorithm()->set_maximum_epochs(10);

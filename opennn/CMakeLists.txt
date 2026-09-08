@@ -430,7 +430,7 @@ if(OPENNN_HAS_CUDA)
     endif()
 
     set_property(
-        SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/neural_network/operators/attention_operator.cpp
+        SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/network/operators/attention_operator.cpp
         APPEND PROPERTY COMPILE_DEFINITIONS HAVE_CUDNN_FRONTEND)
 
     if(TARGET opennn_flash_attention)
@@ -489,9 +489,9 @@ target_precompile_headers(opennn PRIVATE
 
 if(MSVC AND OPENNN_HAS_CUDA)
     set_source_files_properties(
-        ${CMAKE_CURRENT_SOURCE_DIR}/neural_network/operators/attention_operator.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/neural_network/operators/batch_norm_operator.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/neural_network/operators/convolution_operator.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/network/operators/attention_operator.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/network/operators/batch_norm_operator.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/network/operators/convolution_operator.cpp
         PROPERTIES SKIP_PRECOMPILE_HEADERS ON
     )
 endif()

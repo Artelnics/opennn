@@ -12,7 +12,7 @@
 #include <functional>
 #include "opennn/dataset/batch.h"
 #include "opennn/core/device_backend.h"
-#include "opennn/neural_network/forward_propagation.h"
+#include "opennn/network/forward_propagation.h"
 #include "opennn/core/json.h"
 #include "opennn/training_strategy/loss.h"
 #include "opennn/training_strategy/training_context.h"
@@ -25,7 +25,7 @@ namespace opennn
 
 inline constexpr float GRADIENT_NORM_EPS = 1e-6f;
 
-class NeuralNetwork;
+class Network;
 struct Buffer;
 struct BackPropagation;
 
@@ -111,8 +111,8 @@ public:
     void save(const filesystem::path&) const;
     void load(const filesystem::path&);
 
-    function<void(Index, float, float, NeuralNetwork*)> post_epoch_callback;
-    function<void(NeuralNetwork*)> post_batch_callback;
+    function<void(Index, float, float, Network*)> post_epoch_callback;
+    function<void(Network*)> post_batch_callback;
     function<void(Index, float)> post_best_callback;
 
 protected:
@@ -179,13 +179,13 @@ protected:
         vector<float> states;
     };
 
-    void update_best_parameters(NeuralNetwork*,
+    void update_best_parameters(Network*,
                                 float,
                                 Index,
                                 Index&,
                                 BestModelSnapshot&);
 
-    void restore_best_parameters(NeuralNetwork*,
+    void restore_best_parameters(Network*,
                                  TrainingResult&,
                                  const BestModelSnapshot&);
 
@@ -220,7 +220,7 @@ protected:
 
     void setup_batch_pools(BatchPools& pools,
                            Dataset& dataset,
-                           NeuralNetwork& neural_network,
+                           Network& network,
                            Index training_batch_size,
                            Index validation_batch_size,
                            bool has_validation,
@@ -235,14 +235,14 @@ protected:
         FillMode,
         WorkerProfileCounters* profile_counters = nullptr);
 
-    int get_batch_pool_size(const NeuralNetwork&) const;
+    int get_batch_pool_size(const Network&) const;
 
     struct EpochLoopContext;
     Loss::EvaluationResult run_epoch_loop(EpochLoopContext&);
 
     struct FullBatchContext
     {
-        NeuralNetwork* neural_network = nullptr;
+        Network* network = nullptr;
         Index training_samples_number = 0;
         Index validation_samples_number = 0;
         unique_ptr<Batch> training_batch;

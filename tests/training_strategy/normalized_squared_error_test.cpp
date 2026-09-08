@@ -5,8 +5,8 @@
 #include "opennn/core/tensor_types.h"
 #include "opennn/dataset/dataset.h"
 #include "opennn/dataset/tabular_dataset.h"
-#include "opennn/neural_network/layers/dense_layer.h"
-#include "opennn/neural_network/neural_network.h"
+#include "opennn/network/layers/dense_layer.h"
+#include "opennn/network/network.h"
 #include "opennn/models/models.h"
 #include "opennn/training_strategy/loss.h"
 
@@ -16,19 +16,19 @@ TEST(NormalizedSquaredErrorTest, DefaultConstructor)
 {
     Loss loss;
 
-    EXPECT_EQ(loss.get_neural_network() == nullptr, true);
+    EXPECT_EQ(loss.get_network() == nullptr, true);
     EXPECT_EQ(loss.get_dataset() == nullptr, true);
 }
 
 TEST(NormalizedSquaredErrorTest, GeneralConstructor)
 {
-    NeuralNetwork neural_network;
+    Network network;
     TabularDataset dataset;
 
-    Loss loss(&neural_network, &dataset);
+    Loss loss(&network, &dataset);
     loss.set_error(Loss::Error::NormalizedSquaredError);
 
-    EXPECT_EQ(loss.get_neural_network() != nullptr, true);
+    EXPECT_EQ(loss.get_network() != nullptr, true);
     EXPECT_EQ(loss.get_dataset() != nullptr, true);
 }
 
@@ -43,9 +43,9 @@ TEST(NormalizedSquaredErrorTest, BackPropagate)
     dataset.set_data_random();
     dataset.set_sample_roles("Training");
 
-    ApproximationNetwork neural_network({inputs_number}, {neurons_number}, {targets_number});
+    ApproximationNetwork network({inputs_number}, {neurons_number}, {targets_number});
 
-    Loss loss(&neural_network, &dataset);
+    Loss loss(&network, &dataset);
     loss.set_error(Loss::Error::NormalizedSquaredError);
     loss.set_normalization_coefficient();
     loss.set_regularization_weight(0.0);
@@ -69,11 +69,11 @@ TEST(NormalizedSquaredErrorTest, SetNormalizationCoefficientFromTrainingTargets)
     dataset.set_data(data);
     dataset.set_sample_roles("Training");
 
-    NeuralNetwork neural_network;
-    neural_network.add_layer(make_unique<opennn::Dense>(Shape{1}, Shape{1}, "Identity"));
-    neural_network.compile();
+    Network network;
+    network.add_layer(make_unique<opennn::Dense>(Shape{1}, Shape{1}, "Identity"));
+    network.compile();
 
-    Loss loss(&neural_network, &dataset);
+    Loss loss(&network, &dataset);
     loss.set_error(Loss::Error::NormalizedSquaredError);
     loss.set_normalization_coefficient();
 
@@ -96,10 +96,10 @@ TEST(NormalizedSquaredErrorTest, MiniBatchErrorMeanMatchesFullBatch)
     dataset.set_data_random();
     dataset.set_sample_roles("Training");
 
-    ApproximationNetwork neural_network({inputs_number}, {4}, {targets_number});
-    neural_network.set_parameters_random();
+    ApproximationNetwork network({inputs_number}, {4}, {targets_number});
+    network.set_parameters_random();
 
-    Loss loss(&neural_network, &dataset);
+    Loss loss(&network, &dataset);
     loss.set_error(Loss::Error::NormalizedSquaredError);
     loss.set_normalization_coefficient();
     loss.set_regularization_weight(0.0f);
@@ -111,11 +111,11 @@ TEST(NormalizedSquaredErrorTest, MiniBatchErrorMeanMatchesFullBatch)
     {
         const Index count = ssize(indices);
 
-        Batch batch(count, &dataset, neural_network.get_config());
+        Batch batch(count, &dataset, network.get_config());
         batch.fill(indices, features);
 
-        ForwardPropagation forward_propagation(count, &neural_network);
-        neural_network.forward_propagate(batch.get_inputs(), forward_propagation);
+        ForwardPropagation forward_propagation(count, &network);
+        network.forward_propagate(batch.get_inputs(), forward_propagation);
 
         return loss.calculate_error(batch, forward_propagation).error;
     };

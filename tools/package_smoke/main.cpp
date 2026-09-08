@@ -3,8 +3,8 @@
 // the exported target, its include directories and its transitive
 // dependencies are all in place.
 #include "opennn/core/configuration.h"
-#include "opennn/neural_network/neural_network.h"
-#include "opennn/neural_network/layers/dense_layer.h"
+#include "opennn/network/network.h"
+#include "opennn/network/layers/dense_layer.h"
 
 #include <iostream>
 #include <cstdio>
@@ -20,7 +20,7 @@ int main()
 
     Configuration::instance().set(Device::CPU, Type::FP32);
 
-    NeuralNetwork network;
+    Network network;
     network.add_layer(std::make_unique<opennn::Dense>(Shape{4}, Shape{3}, "ReLU"), {-1});
     network.add_layer(std::make_unique<opennn::Dense>(Shape{3}, Shape{1}, "Identity"), {0});
     network.compile();

@@ -12,7 +12,7 @@
 #include "opennn/core/configuration.h"
 #include "opennn/dataset/language_dataset.h"
 #include "opennn/models/models.h"
-#include "opennn/neural_network/chat.h"
+#include "opennn/network/chat.h"
 #include "opennn/training_strategy/training_strategy.h"
 
 using namespace opennn;

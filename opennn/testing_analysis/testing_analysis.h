@@ -14,7 +14,7 @@ namespace opennn
 {
 
 class Dataset;
-class NeuralNetwork;
+class Network;
 
 struct Descriptives;
 struct Histogram;
@@ -33,7 +33,7 @@ class TestingAnalysis
 
 public:
 
-    explicit TestingAnalysis(NeuralNetwork* = nullptr, Dataset* = nullptr);
+    explicit TestingAnalysis(Network* = nullptr, Dataset* = nullptr);
 
     struct GoodnessOfFitAnalysis
     {
@@ -81,9 +81,9 @@ public:
         float population_standard_deviation = 0.0f;
     };
 
-    const NeuralNetwork* get_neural_network() const { return neural_network; }
+    const Network* get_network() const { return network; }
     const Dataset* get_dataset() const { return dataset; }
-    void set_neural_network(NeuralNetwork* new_neural_network) { neural_network = new_neural_network; }
+    void set_network(Network* new_network) { network = new_network; }
     void set_dataset(Dataset* new_dataset) { dataset = new_dataset; }
     void set_batch_size(Index new_batch_size) { batch_size = new_batch_size; }
     void check() const;
@@ -157,7 +157,7 @@ private:
 
     VectorR calculate_classification_errors(const string&, bool binary) const;
 
-    NeuralNetwork* neural_network = nullptr;
+    Network* network = nullptr;
 
     Dataset* dataset = nullptr;
 

@@ -28,7 +28,7 @@ void GeneticAlgorithm::set_default()
 {
     name = "GeneticAlgorithm";
 
-    if (!training_strategy || !training_strategy->get_neural_network() || !training_strategy->get_dataset())
+    if (!training_strategy || !training_strategy->get_network() || !training_strategy->get_dataset())
         return;
 
     const Dataset* dataset = training_strategy->get_dataset();
@@ -209,7 +209,7 @@ void GeneticAlgorithm::evaluate_population()
 {
     Loss* loss = training_strategy->get_loss();
     Dataset* dataset = training_strategy->get_dataset();
-    NeuralNetwork* neural_network = loss->get_neural_network();
+    Network* network = loss->get_network();
     const Index individuals_number = get_individuals_number();
 
     Optimizer* optimizer = training_strategy->get_optimization_algorithm();
@@ -231,13 +231,13 @@ void GeneticAlgorithm::evaluate_population()
 
         const Index input_features_number = dataset->get_features_number(VariableRole::Input);
 
-        configure_neural_network_inputs(neural_network, dataset, input_features_number);
+        configure_network_inputs(network, dataset, input_features_number);
 
         const CandidateEvaluation candidate_evaluation = evaluate_candidate(
-            training_strategy, neural_network, folds_number, fold_partition, 1, false,
+            training_strategy, network, folds_number, fold_partition, 1, false,
             [&](Index, float training_error, float validation_error, bool)
             {
-                individual_parameters(i) = neural_network->get_parameters_map();
+                individual_parameters(i) = network->get_parameters_map();
 
                 training_errors(i) = training_error;
                 validation_errors(i) = validation_error;
@@ -506,7 +506,7 @@ InputsSelectionResult GeneticAlgorithm::perform_input_selection()
     if (dataset->has_nan())
         dataset->scrub_missing_values();
 
-    NeuralNetwork* neural_network = loss->get_neural_network();
+    Network* network = loss->get_network();
 
     time_t beginning_time;
     float elapsed_time = 0.0f;
@@ -594,11 +594,11 @@ InputsSelectionResult GeneticAlgorithm::perform_input_selection()
         perform_mutation();
     }
 
-    install_optimal_inputs(neural_network, dataset,
+    install_optimal_inputs(network, dataset,
                            genes_to_variable_indices(input_selection_results.optimal_inputs),
                            original_target_indices, time_variable_indices);
 
-    finalize_selected_model(training_strategy, neural_network,
+    finalize_selected_model(training_strategy, network,
                             input_selection_results.optimal_parameters, folds_number, display, "inputs");
 
     if (display)

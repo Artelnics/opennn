@@ -47,8 +47,8 @@
       "path": "examples/concrete",
       "inventory": {
         "files": 5,
-        "normalized_bytes": 67926,
-        "sha256": "b5c62118001d2bb0313161287b42f39b6a121588ecd33ca1dd8e988358faa32d"
+        "normalized_bytes": 67920,
+        "sha256": "73681f1073b92bff682834d1006eb00f30ec41c6d20a6e59712c87f75f02f483"
       },
       "redistribution_cleared": false,
       "review": "See DATASETS.md for source, attribution, transformations and unresolved records."
@@ -77,8 +77,8 @@
       "path": "examples/iris_plant",
       "inventory": {
         "files": 2,
-        "normalized_bytes": 6635,
-        "sha256": "e7aa359cd33aa8b9b697eda8d6b96687061a1490e987ee96e0bcdf54bd96921f"
+        "normalized_bytes": 6629,
+        "sha256": "68b9d8d59db88b263c2011f88b7a06b7a9646adfce7d1529cfc326c4d1b91b2d"
       },
       "redistribution_cleared": false,
       "review": "See DATASETS.md for source, attribution, transformations and unresolved records."

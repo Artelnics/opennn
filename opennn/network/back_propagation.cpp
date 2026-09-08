@@ -1,0 +1,762 @@
+//   OpenNN: Open Neural Networks Library
+//   www.opennn.net
+//
+//   B A C K   P R O P A G A T I O N   S O U R C E
+//
+//   Artificial Intelligence Techniques SL
+//   artelnics@artelnics.com
+
+#include "opennn/network/back_propagation.h"
+#include "opennn/registry.h"
+#include "opennn/core/memory_pool.h"
+#include "opennn/training_strategy/loss.h"
+#include "opennn/network/network.h"
+#include "opennn/core/tensor_operations.h"
+#include "opennn/core/memory_debug.h"
+
+namespace opennn
+{
+
+namespace
+{
+
+vector<bool> find_passthrough_layers(const vector<unique_ptr<Layer>>& layers,
+                                     const vector<vector<TensorSpec>>& backward_specs,
+                                     Index batch_size)
+{
+    vector<bool> passthrough(layers.size());
+    for (size_t i = 0; i < layers.size(); ++i)
+        passthrough[i] = backward_specs[i].empty()
+                      && layers[i]->get_forward_specs(batch_size).empty();
+    return passthrough;
+}
+
+}
+
+BackPropagation::BackPropagation(const Index new_batch_size,
+                                 Loss& new_loss,
+                                 Buffer* external_arena,
+                                 span<const Index> arena_offsets,
+                                 Buffer* external_gradient,
+                                 span<const Index> gradient_arena_offsets)
+{
+    set(new_batch_size, new_loss, external_arena, arena_offsets,
+        external_gradient, gradient_arena_offsets);
+}
+
+Network* BackPropagation::get_network() const
+{
+    return loss ? loss->get_network() : nullptr;
+}
+
+const Network& BackPropagation::require_network() const
+{
+    throw_if(!loss, "BackPropagation: loss is not set.");
+
+    const Network* const network = loss->get_network();
+    throw_if(!network, "BackPropagation: the loss has no neural network.");
+
+    return *network;
+}
+
+void BackPropagation::set(const Index new_batch_size, 
+                          Loss& new_loss,
+                          Buffer* external_arena,
+                          span<const Index> arena_offsets,
+                          Buffer* external_gradient,
+                          span<const Index> gradient_arena_offsets)
+{
+    batch_size = new_batch_size;
+    loss = &new_loss;
+
+    const Network& network = require_network();
+
+    layer_scratch_storage.clear();
+    layer_scratch_storage.reserve(size_t(network.get_layers_number()));
+    for (Index i = 0; i < network.get_layers_number(); ++i)
+        layer_scratch_storage.emplace_back(network.get_device());
+
+    throw_if(network.get_training_type() == Type::INT8,
+             "INT8 is inference-only; training requires FP32 or BF16.");
+
+    output_delta_layer_index = network.get_last_trainable_layer_index();
+
+    metrics.reset();
+
+    setup_gradient(external_gradient, external_arena,
+                   gradient_arena_offsets);
+
+    DeltaPlan plan = build_delta_plan();
+
+    if (external_arena && !arena_offsets.empty())
+    {
+        arena.resize_bytes(0, network.get_device());
+        bind_deltas(plan.layout, arena_offsets,
+                    external_arena->as<uint8_t>(),
+                    external_arena->get_device(),
+                    plan.backward_specs);
+    }
+    else
+        setup_arena(plan.backward_specs, plan.layout);
+
+    plan_delta_addends();
+}
+
+void BackPropagation::plan_delta_addends()
+{
+    const Network& network = require_network();
+    const auto& layers = network.get_layers();
+    const size_t layers_number = size_t(network.get_layers_number());
+
+    input_delta_addends.assign(layers_number, {});
+    for (size_t i = 0; i < layers_number; ++i)
+        input_delta_addends[i].assign(slots[i].empty() ? 0 : slots[i].size() - 1, TensorView{});
+    folded_consumer_edge.assign(layers_number, {SIZE_MAX, SIZE_MAX});
+
+    for (size_t producer = 0; producer < consumer_edges.size(); ++producer)
+    {
+        const auto& edges = consumer_edges[producer];
+        if (edges.size() != 2) continue;
+
+        const TensorView& destination = output_deltas[producer];
+        if (!destination.get_data()) continue;
+
+        const auto slot_of = [&](const pair<size_t, size_t>& edge) -> const TensorView*
+        {
+            const auto [consumer, input] = edge;
+            const size_t slot = input + 1;
+            if (consumer >= slots.size() || slot >= slots[consumer].size()) return nullptr;
+            const TensorView& view = slots[consumer][slot];
+            return view.get_data() && view.size() == destination.size() ? &view : nullptr;
+        };
+
+        const TensorView* first  = slot_of(edges[0]);
+        const TensorView* second = slot_of(edges[1]);
+        const bool first_is_destination  = first  && first->get_data() == destination.get_data();
+        const bool second_is_destination = second && second->get_data() == destination.get_data();
+        if (first_is_destination == second_is_destination) continue;
+
+        const auto& edge_a = first_is_destination ? edges[0] : edges[1];
+        const auto& edge_b = first_is_destination ? edges[1] : edges[0];
+        const TensorView* addend = first_is_destination ? second : first;
+        const auto [layer_a, input_a] = edge_a;
+
+        if (!addend
+            || layer_a >= edge_b.first
+            || !layers[layer_a]->folds_input_delta_addend(input_a)
+            || input_a >= input_delta_addends[layer_a].size())
+            continue;
+
+        input_delta_addends[layer_a][input_a] = *addend;
+        folded_consumer_edge[producer] = edge_b;
+    }
+}
+
+const TensorView& BackPropagation::input_delta_addend(size_t layer, size_t input) const noexcept
+{
+    static const TensorView empty;
+    if (layer >= input_delta_addends.size() || input >= input_delta_addends[layer].size())
+        return empty;
+    return input_delta_addends[layer][input];
+}
+
+void BackPropagation::setup_gradient(
+    Buffer* external_gradient,
+    Buffer* external_arena,
+    span<const Index> gradient_arena_offsets)
+{
+    const Network& network = require_network();
+
+    const auto parameter_specs = network.get_parameter_specs();
+
+    gradient_bytes = get_aligned_bytes(parameter_specs, Type::FP32);
+    const Device device = network.get_device();
+
+    gradient_slices.clear();
+    layer_gradient_views.assign(parameter_specs.size(), TensorView{});
+    joint_gradient_arena = !gradient_arena_offsets.empty();
+
+    if(joint_gradient_arena)
+    {
+        throw_if(!external_arena,
+                 "BackPropagation::setup_gradient: joint gradient offsets require "
+                 "an external arena.");
+
+        throw_if(external_arena->get_device() != device,
+                 "BackPropagation::setup_gradient: joint gradient arena is on "
+                 "device {}, expected {}.",
+                 int(external_arena->get_device()), int(device));
+
+        const size_t expected_slices = ranges::count_if(
+            parameter_specs,
+            [](const vector<TensorSpec>& specs)
+            {
+                return get_aligned_bytes(specs, Type::FP32) > 0;
+            });
+
+        throw_if(gradient_arena_offsets.size() != expected_slices,
+                 "BackPropagation::setup_gradient: got {} joint gradient offsets "
+                 "for {} parameterized layers.",
+                 gradient_arena_offsets.size(), expected_slices);
+
+        gradient.resize_bytes(0, device);
+
+        uint8_t* const arena_base = external_arena->as<uint8_t>();
+        Index parameter_offset = 0;
+        size_t slice_index = 0;
+
+        for(size_t layer = 0; layer < parameter_specs.size(); ++layer)
+        {
+            const Index layer_bytes =
+                get_aligned_bytes(parameter_specs[layer], Type::FP32);
+
+            if(layer_bytes > 0)
+            {
+                const Index arena_offset = gradient_arena_offsets[slice_index++];
+                throw_if(arena_offset < 0
+                         || arena_offset + layer_bytes > external_arena->byte_size(),
+                         "BackPropagation::setup_gradient: layer {} gradient range "
+                         "[{}, {}) is outside the {}-byte arena.",
+                         layer, arena_offset, arena_offset + layer_bytes,
+                         external_arena->byte_size());
+
+                TensorView values(arena_base + arena_offset,
+                                  Shape{layer_bytes / Index(sizeof(float))},
+                                  Type::FP32, device);
+
+                layer_gradient_views[layer] = values;
+                gradient_slices.push_back({values, parameter_offset});
+            }
+
+            parameter_offset += layer_bytes / Index(sizeof(float));
+        }
+
+        throw_if(parameter_offset != network.get_parameters_buffer_size(),
+                 "BackPropagation::setup_gradient: planned {} parameter-gradient "
+                 "elements, expected {}.",
+                 parameter_offset,
+                 network.get_parameters_buffer_size());
+
+        memory_debug::record("backward.aliased",
+                             "BackPropagation::gradient", 0,
+                             format("batch={},logical_mib={:.2f},slices={}",
+                                    batch_size,
+                                    double(gradient_bytes) / (1024.0 * 1024.0),
+                                    gradient_slices.size()));
+
+        return link_parameter_gradients();
+    }
+
+    const bool share = external_gradient
+                    && external_gradient->get_device() == device
+                    && external_gradient->byte_size() >= gradient_bytes;
+
+    if (share)
+        gradient.set_view(external_gradient->data(), gradient_bytes, device);
+    else
+    {
+        if (external_gradient)
+            throw runtime_error(
+                format("BackPropagation::setup_gradient: the gradient buffer offered "
+                       "holds {} bytes on device {} and this layout needs {} on device {}.",
+                       external_gradient->byte_size(), int(external_gradient->get_device()),
+                       gradient_bytes, int(device)));
+
+        gradient.resize_bytes(gradient_bytes, device);
+    }
+
+    gradient.setZero();
+
+    if(gradient_bytes > 0)
+    {
+        gradient_slices.push_back(
+            {TensorView(gradient.as<float>(),
+                        Shape{gradient_bytes / Index(sizeof(float))},
+                        Type::FP32, device),
+             0});
+    }
+
+    memory_debug::record(share ? "backward.aliased" : "backward",
+                         "BackPropagation::gradient", share ? 0 : gradient_bytes,
+                         format("batch={}", batch_size));
+
+    link_parameter_gradients();
+}
+
+void BackPropagation::link_parameter_gradients()
+{
+    const Network& network = require_network();
+
+    if(has_joint_gradient_arena())
+        network.link_gradients(layer_gradient_views);
+    else
+        network.link_gradients(gradient);
+}
+
+BackPropagation::DeltaLayout BackPropagation::build_delta_layout(
+    const vector<vector<TensorSpec>>& backward_specs) const
+{
+    const Network& network = require_network();
+    const auto& layers = network.get_layers();
+    const auto& source_layers = network.get_source_layers();
+
+    const Index first_layer = network.get_first_trainable_layer_index();
+    const Index last_layer = network.get_last_trainable_layer_index();
+    const Type compute_dtype = activation_dtype(network.get_training_type());
+
+    const auto is_trainable = [&](Index layer)
+    {
+        return layer >= first_layer && layer <= last_layer;
+    };
+
+    DeltaLayout layout;
+    layout.passthrough_layers =
+        find_passthrough_layers(layers, backward_specs, batch_size);
+
+    layout.aliases_residual_delta.assign(layers.size(), false);
+    layout.reusable_consumer_deltas.assign(
+        layers.size(), {SIZE_MAX, SIZE_MAX});
+
+    vector<bool> receives_loss_delta(layers.size(), false);
+    for (const Index layer : loss->get_output_delta_layer_indices())
+    {
+        throw_if(layer < 0 || size_t(layer) >= layers.size(),
+                 "Loss output-delta layer {} is outside the network.", layer);
+        receives_loss_delta[size_t(layer)] = true;
+    }
+
+    const auto resolve_source = [&](Index layer)
+    {
+        while (layer >= 0
+               && layout.passthrough_layers[size_t(layer)]
+               && !source_layers[layer].empty()
+               && source_layers[layer][0] >= 0)
+        {
+            layer = source_layers[layer][0];
+        }
+
+        return layer;
+    };
+
+    const auto make_delta_shape = [&](Index layer)
+    {
+        return Shape{batch_size}.append(layers[layer]->get_output_shape());
+    };
+
+    for (Index layer = first_layer; layer <= last_layer; ++layer)
+    {
+        const size_t i = size_t(layer);
+        const auto& specs = backward_specs[i];
+        const auto& sources = source_layers[i];
+
+        if (!layers[i]->allows_input_delta_alias()
+            || specs.size() != 2
+            || sources.size() != 2
+            || !is_trainable(sources[0])
+            || !is_trainable(sources[1])
+            || sources[0] >= sources[1]
+            || specs[0].shape.empty()
+            || specs[1] != specs[0]
+            || !layers[size_t(sources[1])]->preserves_output_delta_during_backward())
+        {
+            continue;
+        }
+
+        layout.aliases_residual_delta[i] = true;
+        layout.aliased_residual_delta_bytes += get_aligned_bytes(specs[1]);
+    }
+
+    const Shape output_delta_shape = make_delta_shape(last_layer);
+    const Index loss_consumer = resolve_source(last_layer);
+
+    if (output_delta_shape.size() > 0 && !loss->output_delta_overwrites_outputs())
+    {
+        layout.entries.push_back({
+            last_layer,
+            0,
+            {output_delta_shape, compute_dtype},
+            0,
+            last_layer - loss_consumer
+        });
+    }
+
+    for (Index layer = first_layer; layer <= last_layer; ++layer)
+    {
+        const size_t i = size_t(layer);
+        const auto& specs = backward_specs[i];
+        const auto& sources = source_layers[i];
+
+        for (size_t slot = 0; slot < specs.size(); ++slot)
+        {
+            const auto& spec = specs[slot];
+
+            if (spec.shape.empty()
+                || (slot == 1 && layout.aliases_residual_delta[i]))
+            {
+                continue;
+            }
+
+            const Index first_step = last_layer - layer;
+            Index last_step = first_step;
+
+            if (slot < sources.size())
+            {
+                const Index source = resolve_source(sources[slot]);
+
+                if (!is_trainable(source))
+                    continue;
+
+                last_step = last_layer - source;
+            }
+
+            layout.entries.push_back({
+                layer,
+                slot + 1,
+                spec,
+                first_step,
+                last_step
+            });
+        }
+    }
+
+    for (Index layer = first_layer; layer < last_layer; ++layer)
+    {
+        const size_t i = size_t(layer);
+        const auto& edges = consumer_edges[i];
+
+        const bool detached_loss_output = edges.empty() && receives_loss_delta[i];
+
+        if (!detached_loss_output && edges.size() <= 1)
+            continue;
+
+        const Shape output_shape = layers[i]->get_output_shape();
+        const Shape delta_shape = Shape{batch_size}.append(output_shape);
+
+        if (!detached_loss_output)
+        {
+            const auto reusable = ranges::find_if(
+                edges,
+                [&](const auto& edge)
+                {
+                    const auto [consumer, input] = edge;
+                    const auto& specs = backward_specs[consumer];
+
+                    return input < specs.size()
+                        && !specs[input].shape.empty()
+                        && specs[input].shape == delta_shape;
+                });
+
+            if (reusable != edges.end())
+            {
+                layout.reusable_consumer_deltas[i] = *reusable;
+                continue;
+            }
+        }
+
+        if (output_shape.empty())
+            continue;
+
+        const Index last_step = last_layer - layer;
+
+        layout.entries.push_back({
+            layer,
+            0,
+            {delta_shape, compute_dtype},
+            detached_loss_output ? Index{0} : last_step,
+            last_step
+        });
+    }
+
+    return layout;
+}
+
+vector<MemoryPoolEntry> BackPropagation::to_pool_entries(const vector<DeltaEntry>& delta_entries,
+                                                         Index step_offset)
+{
+    vector<MemoryPoolEntry> lifetime_entries;
+    lifetime_entries.reserve(delta_entries.size());
+
+    ranges::transform(delta_entries, back_inserter(lifetime_entries),
+                      [step_offset](const DeltaEntry& entry)
+                      {
+                          return MemoryPoolEntry{get_aligned_bytes(entry.spec),
+                                                 entry.first_step + step_offset,
+                                                 entry.last_step + step_offset};
+                      });
+    return lifetime_entries;
+}
+
+vector<MemoryPoolEntry> BackPropagation::make_co_planned_lifetimes(
+    Loss& new_loss, const Index new_batch_size)
+{
+    BackPropagation planner;
+    planner.loss = &new_loss;
+    planner.batch_size = new_batch_size;
+
+    const Network& network = planner.require_network();
+    const DeltaPlan plan = planner.build_delta_plan();
+
+    const Index backward_base = backward_step(network.get_layers_number(), 0);
+    const Index step_offset =
+        backward_base - network.get_last_trainable_layer_index();
+
+    return to_pool_entries(plan.layout.entries, step_offset);
+}
+
+vector<MemoryPoolEntry> BackPropagation::make_gradient_co_planned_lifetimes(
+    Loss& new_loss)
+{
+    Network* const network = new_loss.get_network();
+    throw_if(!network,
+             "BackPropagation::make_gradient_co_planned_lifetimes: the loss "
+             "has no neural network.");
+
+    const auto parameter_specs = network->get_parameter_specs();
+    const Index layers_number = network->get_layers_number();
+    const Index first_layer = network->get_first_trainable_layer_index();
+    const Index last_layer = network->get_last_trainable_layer_index();
+    const Index optimizer_step = 2 * layers_number;
+
+    vector<MemoryPoolEntry> entries;
+    entries.reserve(parameter_specs.size());
+
+    for(size_t layer = 0; layer < parameter_specs.size(); ++layer)
+    {
+        const Index bytes =
+            get_aligned_bytes(parameter_specs[layer], Type::FP32);
+        if(bytes <= 0) continue;
+
+        const Index layer_index = Index(layer);
+        const bool participates_in_backward =
+            layer_index >= first_layer && layer_index <= last_layer;
+
+        entries.push_back({
+            bytes,
+            participates_in_backward
+                ? backward_step(layers_number, layer_index)
+                : optimizer_step,
+            optimizer_step
+        });
+    }
+
+    return entries;
+}
+
+BackPropagation::DeltaPlan BackPropagation::build_delta_plan()
+{
+    const Network& network = require_network();
+
+    consumer_edges = network.get_consumer_edges();
+
+    DeltaPlan plan;
+    plan.backward_specs = network.get_backward_specs(batch_size);
+    plan.layout = build_delta_layout(plan.backward_specs);
+
+    return plan;
+}
+
+void BackPropagation::setup_arena(const vector<vector<TensorSpec>>& backward_specs,
+                                  const DeltaLayout& layout)
+{
+    const Network& network = require_network();
+
+    const Index first_trainable_layer_index = network.get_first_trainable_layer_index();
+    const Index last_trainable_layer_index = network.get_last_trainable_layer_index();
+    const Index layers_number = network.get_layers_number();
+
+    const vector<DeltaEntry>& delta_entries = layout.entries;
+
+    const vector<MemoryPoolEntry> lifetime_entries = to_pool_entries(delta_entries);
+
+    memory_debug::record_pool_lifetimes(
+        "backward", lifetime_entries,
+        format("first_trainable={},last_trainable={},layers={}",
+               first_trainable_layer_index,
+               last_trainable_layer_index,
+               layers_number));
+
+    const MemoryPoolPlan pool_plan = plan_memory_pool_best(lifetime_entries);
+
+    arena.resize_bytes(pool_plan.peak_bytes, network.get_device());
+    arena.setZero();
+    memory_debug::record("backward", "BackPropagation::arena", pool_plan.peak_bytes,
+                         format("batch={},planner=best", batch_size));
+    memory_debug::record("backward.arena_analysis", "live_bytes_lower_bound",
+                         pool_plan.lower_bound_live_bytes,
+                         format("batch={},entries={}", batch_size, delta_entries.size()));
+    memory_debug::record("backward.arena_analysis", "allocator_fragmentation_overhead",
+                         pool_plan.fragmentation_bytes(),
+                         format("batch={},entries={}", batch_size, delta_entries.size()));
+
+    bind_deltas(layout, pool_plan.byte_offsets,
+                arena.as<uint8_t>(), arena.get_device(),
+                backward_specs);
+}
+
+void BackPropagation::bind_deltas(const DeltaLayout& layout,
+                                  span<const Index> byte_offsets,
+                                  uint8_t* base, Device device,
+                                  const vector<vector<TensorSpec>>& backward_specs)
+{
+    const Network& network = require_network();
+
+    throw_if(byte_offsets.size() != layout.entries.size(),
+             "BackPropagation::bind_deltas: got {} byte offsets for {} delta "
+             "entries; the forward co-plan and this layout disagree.",
+             byte_offsets.size(), layout.entries.size());
+
+    const auto& layers = network.get_layers();
+    const Index layers_number = network.get_layers_number();
+    const Index first_layer = network.get_first_trainable_layer_index();
+    const Index last_layer = network.get_last_trainable_layer_index();
+
+    output_deltas.assign(size_t(layers_number), TensorView{});
+    slots.assign(size_t(layers_number), {});
+
+    for (Index i = 0; i < layers_number; ++i)
+        slots[i].resize(backward_specs[i].size() + 1);
+
+    for (size_t i = 0; i < layout.entries.size(); ++i)
+    {
+        const DeltaEntry& entry = layout.entries[i];
+
+        TensorView delta(base + byte_offsets[i],
+                         entry.spec.shape,
+                         entry.spec.dtype,
+                         device);
+
+        if (entry.slot == 0)
+            output_deltas[entry.layer] = delta;
+        else
+            slots[entry.layer][entry.slot] = delta;
+    }
+
+    for (Index i = first_layer; i <= last_layer; ++i)
+        if (layout.aliases_residual_delta[size_t(i)])
+            slots[i][2] = slots[i][1];
+
+    if (layout.aliased_residual_delta_bytes > 0)
+        memory_debug::record(
+            "backward.delta_alias",
+            "residual_input_delta_bytes",
+            layout.aliased_residual_delta_bytes,
+            format("batch={}", batch_size));
+
+    for (Index layer_index = first_layer; layer_index < last_layer; ++layer_index)
+    {
+        const size_t index = size_t(layer_index);
+        const auto& edges = consumer_edges[index];
+
+        if (edges.empty())
+            continue;
+
+        if (edges.size() > 1)
+        {
+            const auto [consumer_layer, input_position] =
+                layout.reusable_consumer_deltas[index];
+
+            if (consumer_layer != SIZE_MAX)
+                output_deltas[index] = slots[consumer_layer][input_position + 1];
+
+            continue;
+        }
+
+        auto [consumer_layer, input_position] = edges.front();
+
+        while (layout.passthrough_layers[consumer_layer]
+               && consumer_edges[consumer_layer].size() == 1)
+            tie(consumer_layer, input_position) =
+                consumer_edges[consumer_layer].front();
+
+        const size_t slot = input_position + 1;
+
+        if (slot < slots[consumer_layer].size()
+            && !slots[consumer_layer][slot].empty())
+            output_deltas[index] = slots[consumer_layer][slot];
+        else if (layout.passthrough_layers[consumer_layer]
+                 && !output_deltas[consumer_layer].empty())
+            output_deltas[index] = output_deltas[consumer_layer];
+        else
+            continue;
+
+        const TensorView& delta = output_deltas[index];
+        output_deltas[index] = TensorView(
+            delta.get_data(),
+            Shape{batch_size}.append(layers[index]->get_output_shape()),
+            delta.get_type(),
+            delta.get_device());
+    }
+}
+
+void BackPropagation::accumulate_output_deltas(size_t layer_index)
+{
+    const auto& edges = consumer_edges[layer_index];
+    if (edges.size() <= 1) return;
+
+    TensorView& destination = output_deltas[layer_index];
+    if (!destination.get_data()) return;
+
+    const auto source = [&](const auto& edge) -> const TensorView&
+    {
+        return slots[edge.first][1 + edge.second];
+    };
+
+    const auto valid = [&](const auto& edge)
+    {
+        const TensorView& s = source(edge);
+        return s.get_data() && s.size() == destination.size();
+    };
+
+    auto first = std::ranges::find_if(edges, [&](const auto& edge)
+    {
+        const TensorView& s = source(edge);
+        return valid(edge) && s.get_data() == destination.get_data();
+    });
+
+    if (first == edges.end())
+        first = std::ranges::find_if(edges, valid);
+
+    if (first == edges.end())
+        return destination.setZero();
+
+    const TensorView& first_source = source(*first);
+
+    if (first_source.get_data() != destination.get_data())
+        copy(first_source, destination);
+
+    const pair<size_t, size_t> folded = layer_index < folded_consumer_edge.size()
+        ? folded_consumer_edge[layer_index] : pair<size_t, size_t>{SIZE_MAX, SIZE_MAX};
+
+    for (auto it = edges.begin(); it != edges.end(); ++it)
+    {
+        const TensorView& s = source(*it);
+
+        if (it == first || !valid(*it) || s.get_data() == destination.get_data() || *it == folded)
+            continue;
+
+        if (destination.is_cuda())
+            add(destination, s, destination);
+        else
+            destination.as_vector() += s.as_vector();
+    }
+}
+
+TensorView& BackPropagation::get_output_delta()
+{
+    throw_if(output_deltas.empty(),
+             "BackPropagation::get_output_delta: deltas are not bound.");
+    return output_deltas[output_delta_layer_index];
+}
+
+const TensorView& BackPropagation::get_output_delta() const
+{
+    throw_if(output_deltas.empty(),
+             "BackPropagation::get_output_delta: deltas are not bound.");
+    return output_deltas[output_delta_layer_index];
+}
+
+}
+
+// OpenNN: Open Neural Networks Library.
+// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
+// Licensed under the GNU Lesser General Public License v2.1 or later.

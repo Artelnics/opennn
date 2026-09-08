@@ -138,13 +138,13 @@ def read_models(models_header: Path) -> dict[str, Any]:
     if not models_header.is_file():
         return {"count": None, "names": [], "note": f"{models_header} not found"}
 
-    names = re.findall(r"^class\s+(\w+)\s+(?:final\s+)?:\s*public\s+NeuralNetwork",
+    names = re.findall(r"^class\s+(\w+)\s+(?:final\s+)?:\s*public\s+Network",
                        models_header.read_text(errors="replace"), re.M)
 
     return {
         "count": len(names),
         "names": names,
-        "method": f"classes deriving from NeuralNetwork in {models_header.name}",
+        "method": f"classes deriving from Network in {models_header.name}",
     }
 
 
@@ -160,7 +160,7 @@ def read_layers(layers_directory: Path) -> dict[str, Any]:
     return {
         "count": len(names),
         "names": names,
-        "method": ("one *.h per layer type in neural_network/layers, "
+        "method": ("one *.h per layer type in network/layers, "
                    "excluding the abstract base layer.h"),
     }
 
@@ -446,7 +446,7 @@ def main() -> int:
         "source": {
             "library": count_tree(ROOT / "opennn"),
             "models": read_models(ROOT / "opennn" / "models" / "models.h"),
-            "layers": read_layers(ROOT / "opennn" / "neural_network" / "layers"),
+            "layers": read_layers(ROOT / "opennn" / "network" / "layers"),
             "examples": measure_examples(ROOT / "examples"),
             "application_lines": measure_application_lines(
                 ROOT / "examples" / "breast_cancer" / "main.cpp",

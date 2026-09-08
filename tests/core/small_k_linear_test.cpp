@@ -28,9 +28,9 @@
 #include "opennn/core/device_backend.h"
 #include "opennn/core/tensor_operations.h"
 #include "opennn/core/tensor_types.h"
-#include "opennn/neural_network/forward_propagation.h"
-#include "opennn/neural_network/layers/dense_layer.h"
-#include "opennn/neural_network/neural_network.h"
+#include "opennn/network/forward_propagation.h"
+#include "opennn/network/layers/dense_layer.h"
+#include "opennn/network/network.h"
 
 using namespace opennn;
 
@@ -49,7 +49,7 @@ void check_forward(Index rows, Index features, Index outputs, const string& acti
 {
     Configuration::instance().set(Device::CUDA, precision);
 
-    NeuralNetwork network;
+    Network network;
     network.add_layer(make_unique<opennn::Dense>(Shape{features}, Shape{outputs}, activation));
     network.compile();
     network.set_parameters_glorot();

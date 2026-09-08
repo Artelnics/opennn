@@ -8,8 +8,8 @@
 
 #pragma once
 
-#include "opennn/neural_network/forward_propagation.h"
-#include "opennn/neural_network/back_propagation.h"
+#include "opennn/network/forward_propagation.h"
+#include "opennn/network/back_propagation.h"
 
 namespace opennn
 {

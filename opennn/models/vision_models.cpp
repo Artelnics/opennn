@@ -12,40 +12,40 @@
 
 #include "opennn/core/io_utilities.h"
 #include "opennn/core/string_utilities.h"
-#include "opennn/neural_network/layers/activation_layer.h"
-#include "opennn/neural_network/layers/addition_layer.h"
-#include "opennn/neural_network/layers/clamping_layer.h"
-#include "opennn/neural_network/layers/c2psa_layer.h"
-#include "opennn/neural_network/layers/concatenation_layer.h"
-#include "opennn/neural_network/layers/convolutional_layer.h"
-#include "opennn/neural_network/layers/dense_layer.h"
-#include "opennn/neural_network/layers/detection_layer.h"
-#include "opennn/neural_network/layers/detection_v8_layer.h"
-#include "opennn/neural_network/layers/embedding_layer.h"
-#include "opennn/neural_network/layers/flatten_layer.h"
-#include "opennn/neural_network/layers/grouped_query_attention_layer.h"
-#include "opennn/neural_network/layers/long_short_term_memory_layer.h"
-#include "opennn/neural_network/layers/multihead_attention_layer.h"
-#include "opennn/neural_network/layers/non_max_suppression_layer.h"
-#include "opennn/neural_network/layers/normalization_layer_3d.h"
-#include "opennn/neural_network/layers/pooling_layer.h"
-#include "opennn/neural_network/layers/pooling_layer_3d.h"
-#include "opennn/neural_network/layers/recurrent_layer.h"
-#include "opennn/neural_network/layers/scaling_layer.h"
-#include "opennn/neural_network/layers/tokenizer_layer.h"
-#include "opennn/neural_network/layers/unscaling_layer.h"
-#include "opennn/neural_network/layers/upsampling_layer.h"
+#include "opennn/network/layers/activation_layer.h"
+#include "opennn/network/layers/addition_layer.h"
+#include "opennn/network/layers/clamping_layer.h"
+#include "opennn/network/layers/c2psa_layer.h"
+#include "opennn/network/layers/concatenation_layer.h"
+#include "opennn/network/layers/convolutional_layer.h"
+#include "opennn/network/layers/dense_layer.h"
+#include "opennn/network/layers/detection_layer.h"
+#include "opennn/network/layers/detection_v8_layer.h"
+#include "opennn/network/layers/embedding_layer.h"
+#include "opennn/network/layers/flatten_layer.h"
+#include "opennn/network/layers/grouped_query_attention_layer.h"
+#include "opennn/network/layers/long_short_term_memory_layer.h"
+#include "opennn/network/layers/multihead_attention_layer.h"
+#include "opennn/network/layers/non_max_suppression_layer.h"
+#include "opennn/network/layers/normalization_layer_3d.h"
+#include "opennn/network/layers/pooling_layer.h"
+#include "opennn/network/layers/pooling_layer_3d.h"
+#include "opennn/network/layers/recurrent_layer.h"
+#include "opennn/network/layers/scaling_layer.h"
+#include "opennn/network/layers/tokenizer_layer.h"
+#include "opennn/network/layers/unscaling_layer.h"
+#include "opennn/network/layers/upsampling_layer.h"
 
 namespace opennn
 {
 
-static void finalize_build(NeuralNetwork& network)
+static void finalize_build(Network& network)
 {
     network.compile();
     network.set_parameters_glorot();
 }
 
-static void bias_v8_class_logits(NeuralNetwork& network)
+static void bias_v8_class_logits(Network& network)
 {
     constexpr float PRIOR_BIAS = -4.5951f;
 
@@ -85,7 +85,7 @@ unique_ptr<ResNet> ResNet::from_pretrained(
 ImageClassificationNetwork::ImageClassificationNetwork(const Shape& input_shape,
                                                        const Shape& complexity_dimensions,
                                                        const Shape& output_shape)
-    : NeuralNetwork(NetworkTask::ImageClassification)
+    : Network(NetworkTask::ImageClassification)
 {
     throw_if(input_shape.get_rank() != 3, "Input shape size is not 3.");
 
@@ -143,7 +143,7 @@ ResNet::ResNet(const Shape& input_shape,
                const Shape& initial_filters,
                const Shape& output_shape,
                bool use_bottleneck)
-    : NeuralNetwork(NetworkTask::ImageClassification)
+    : Network(NetworkTask::ImageClassification)
 {
     throw_if(input_shape.get_rank() != 3, "ResNet: input shape must be rank 3 (H, W, C).");
     throw_if(Index(blocks_per_stage.size()) != Index(initial_filters.get_rank()),
@@ -272,7 +272,7 @@ struct BackboneFeatures
 
 struct YoloBuilder
 {
-    NeuralNetwork& network;
+    Network& network;
     const char* act;
     Shape stride;
     Index classes_number;
@@ -771,7 +771,7 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                          bool use_sppf,
                          Index reg_max,
                          ModelSize model_size)
-    : NeuralNetwork(NetworkTask::ObjectDetection),
+    : Network(NetworkTask::ObjectDetection),
       backbone(backbone)
 {
     throw_if(input_shape.get_rank() != 3, "YoloNetwork: input shape must be rank 3 (H, W, C).");
@@ -1180,7 +1180,7 @@ DarknetFile open_darknet_weights(const filesystem::path& weights_path, const cha
 
 }
 
-Index load_darknet_backbone(NeuralNetwork& network,
+Index load_darknet_backbone(Network& network,
                             const filesystem::path& weights_path,
                             Index n_backbone_convs)
 {
@@ -1202,7 +1202,7 @@ Index load_darknet_backbone(NeuralNetwork& network,
     return loaded;
 }
 
-Index load_darknet_backbone_v11(NeuralNetwork& network,
+Index load_darknet_backbone_v11(Network& network,
                                 const filesystem::path& weights_path)
 {
     const DarknetFile file = open_darknet_weights(weights_path, "load_darknet_backbone_v11");

@@ -17,7 +17,7 @@ class DomainContraction : public ResponseOptimization
 {
 public:
 
-    explicit DomainContraction(NeuralNetwork* = nullptr);
+    explicit DomainContraction(Network* = nullptr);
 
 private:
 

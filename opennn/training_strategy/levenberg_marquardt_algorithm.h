@@ -12,7 +12,7 @@
 namespace opennn
 {
 
-class NeuralNetwork;
+class Network;
 class Dense;
 struct ForwardPropagation;
 

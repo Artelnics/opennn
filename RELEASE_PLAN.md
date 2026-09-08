@@ -8,11 +8,11 @@ hardening results are recorded in `RELEASE_VERIFICATION.md`.
 ## 1. What the package is today
 
 **Code.** `opennn/` is 253 files, 83,000 lines of C++20 (GCC 13+, Clang 17+;
-`std::format`), in eight modules: core 18.9k lines, neural_network 32.5k,
+`std::format`), in eight modules: core 18.9k lines, network 32.5k,
 dataset 13.1k, training_strategy 9.3k, model_selection 2.5k,
 response_optimization 2.7k, models 2.7k, testing_analysis 1.2k. CUDA is 21
 `.cu` and 24 `.cuh` files under `core/cuda`. Eight source files exceed 2,000
-lines (`neural_network.cpp` 2,990, `tabular_dataset.cpp` 2,853,
+lines (`network.cpp` 2,990, `tabular_dataset.cpp` 2,853,
 `device_backend.cpp` 2,756, `optimizer.cpp` 2,421, `tensor_operations.cpp`
 2,368, `model_expression.cpp` 2,238, `yolo_dataset.cpp` 2,231,
 `long_short_term_memory_layer.cpp` 2,146). There are no TODO/FIXME markers
@@ -137,7 +137,7 @@ The release is done when all of these hold and CI proves the ones it can:
   `[[nodiscard]]` frontend calls, then `-Werror` in CI.
 - Split the eight files over 2,000 lines along their existing seams:
   `device_backend.cpp` → backend/streams, cuBLASLt policy, cuDNN plan
-  cache; `neural_network.cpp` → parameter storage vs propagation vs
+  cache; `network.cpp` → parameter storage vs propagation vs
   serialisation; `tabular_dataset.cpp` → reading vs statistics vs
   splitting; `optimizer.cpp` → per-optimizer files.
 - Logging: one `opennn::log` facility (levels, off by default, sink
@@ -180,7 +180,7 @@ The release is done when all of these hold and CI proves the ones it can:
 
 ### Phase 5 — Documentation (1 week, parallel with 3–4)
 - API reference: Doxygen over the 107 public headers, user-facing classes
-  first (datasets, `NeuralNetwork`, layers, `TrainingStrategy` and
+  first (datasets, `Network`, layers, `TrainingStrategy` and
   optimizers, `TestingAnalysis`, model selection, `Configuration`,
   `ModelExpression`); published with the docs site.
 - User guide: install; data → model → training → testing → export;

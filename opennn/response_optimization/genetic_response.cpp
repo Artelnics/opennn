@@ -7,7 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "opennn/response_optimization/genetic_response.h"
-#include "opennn/neural_network/neural_network.h"
+#include "opennn/network/network.h"
 #include "opennn/core/random_utilities.h"
 #include "opennn/core/statistics.h"
 #include "opennn/core/tensor_operations.h"
@@ -74,8 +74,8 @@ VectorR calculate_crowding_distances(const MatrixR& front_values)
 }
 
 
-GeneticResponse::GeneticResponse(NeuralNetwork* new_neural_network)
-    : ResponseOptimization(new_neural_network)
+GeneticResponse::GeneticResponse(Network* new_network)
+    : ResponseOptimization(new_network)
 {
 }
 
@@ -85,7 +85,7 @@ pair<MatrixR, MatrixR> GeneticResponse::initialize_population(const pair<VectorR
     const Index attempts_number = iterations_number*points_number;
 
     MatrixR inputs(points_number, domain.first.size());
-    MatrixR outputs(points_number, neural_network->get_outputs_number());
+    MatrixR outputs(points_number, network->get_outputs_number());
 
     Index feasible_number = 0;
 
@@ -234,7 +234,7 @@ pair<MatrixR, MatrixR> GeneticResponse::recombinate_population(const MatrixR& pa
     const Index attempts_number = iterations_number*points_number;
 
     MatrixR inputs(points_number, parent_inputs.cols());
-    MatrixR outputs(points_number, neural_network->get_outputs_number());
+    MatrixR outputs(points_number, network->get_outputs_number());
 
     Index feasible_number = 0;
 
@@ -286,7 +286,7 @@ pair<MatrixR, MatrixR> GeneticResponse::mutate_population(const MatrixR& offspri
     const Index attempts_number = iterations_number*points_number;
 
     MatrixR inputs(points_number, offspring_inputs.cols());
-    MatrixR outputs(points_number, neural_network->get_outputs_number());
+    MatrixR outputs(points_number, network->get_outputs_number());
 
     Index feasible_number = 0;
 
@@ -342,7 +342,7 @@ void GeneticResponse::crossover(VectorR& first_child,
 
 void GeneticResponse::mutate_individual(VectorR& candidate, const pair<VectorR, VectorR>& domain) const
 {
-    const vector<pair<Index, Index>> categorical_blocks = get_categorical_blocks(neural_network->get_input_variables());
+    const vector<pair<Index, Index>> categorical_blocks = get_categorical_blocks(network->get_input_variables());
 
     vector<char> categorical_columns(size_t(candidate.size()), 0);
 

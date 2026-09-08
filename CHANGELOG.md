@@ -8,6 +8,10 @@ remaining limitations.
 
 ### Reconciliation and release preparation
 
+- Rename the public class to `Network` without an alias, move the network headers
+  to `opennn/network/`, and use `Network` in JSON and generated Python models.
+  This breaks the former source names, binary symbols and JSON root name;
+  see `MIGRATION.md` before rebuilding consumers or loading earlier models.
 - Reconcile master through `efd566b38` with the current module layout.
 - Restore all-missing histogram bins and bounded random genetic initialization.
 - Fix JavaScript feature identifiers, categorical controls and HTML labels;

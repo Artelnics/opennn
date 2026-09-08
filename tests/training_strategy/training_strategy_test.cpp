@@ -1,6 +1,6 @@
 #include "tests/pch.h"
 
-#include "opennn/neural_network/layers/dense_layer.h"
+#include "opennn/network/layers/dense_layer.h"
 #include "opennn/models/models.h"
 #include "opennn/dataset/dataset.h"
 #include "opennn/dataset/language_dataset.h"
@@ -30,7 +30,7 @@ TEST(TrainingStrategy, DefaultConstructor)
 {
     TrainingStrategy training_strategy;
 
-    EXPECT_EQ(training_strategy.get_neural_network(), nullptr);
+    EXPECT_EQ(training_strategy.get_network(), nullptr);
     EXPECT_EQ(training_strategy.get_dataset(), nullptr);
 }
 
@@ -39,13 +39,13 @@ TEST(TrainingStrategy, GeneralConstructor)
     TabularDataset dataset(10, {2}, {1});
     dataset.set_data_random();
 
-    ApproximationNetwork neural_network({2}, {3}, {1});
+    ApproximationNetwork network({2}, {3}, {1});
 
-    TrainingStrategy training_strategy_1(&neural_network, &dataset);
+    TrainingStrategy training_strategy_1(&network, &dataset);
 
-    EXPECT_EQ(training_strategy_1.get_neural_network(), &neural_network);
+    EXPECT_EQ(training_strategy_1.get_network(), &network);
     EXPECT_EQ(training_strategy_1.get_dataset(), &dataset);
-    EXPECT_EQ(neural_network.get_task(), NetworkTask::Approximation);
+    EXPECT_EQ(network.get_task(), NetworkTask::Approximation);
     EXPECT_EQ(training_strategy_1.get_loss()->get_name(), "MeanSquaredError");
     EXPECT_EQ(training_strategy_1.get_optimization_algorithm()->get_name(),
               "AdaptiveMomentEstimation");
@@ -54,10 +54,10 @@ TEST(TrainingStrategy, GeneralConstructor)
 TEST(TrainingStrategy, UsesExplicitNetworkTask)
 {
     TabularDataset dataset(10, {2}, {1});
-    NeuralNetwork neural_network;
-    neural_network.set_task(NetworkTask::LanguageModeling);
+    Network network;
+    network.set_task(NetworkTask::LanguageModeling);
 
-    TrainingStrategy training_strategy(&neural_network, &dataset);
+    TrainingStrategy training_strategy(&network, &dataset);
 
     EXPECT_EQ(training_strategy.get_loss()->get_name(), "CrossEntropyError3d");
     EXPECT_EQ(training_strategy.get_optimization_algorithm()->get_name(),
@@ -72,10 +72,10 @@ TEST(TrainingStrategy, UsesExplicitNetworkTask)
 TEST(TrainingStrategy, ClassificationFamilyUsesOptimizerTaskDefaults)
 {
     TabularDataset dataset(10, {2}, {2});
-    NeuralNetwork neural_network;
-    neural_network.set_task(NetworkTask::ImageClassification);
+    Network network;
+    network.set_task(NetworkTask::ImageClassification);
 
-    TrainingStrategy training_strategy(&neural_network, &dataset);
+    TrainingStrategy training_strategy(&network, &dataset);
 
     EXPECT_EQ(training_strategy.get_loss()->get_name(), "CrossEntropy");
     EXPECT_EQ(training_strategy.get_optimization_algorithm()->get_name(),
@@ -86,13 +86,13 @@ TEST(TrainingStrategy, ClassificationFamilyUsesOptimizerTaskDefaults)
 TEST(TrainingStrategy, DoesNotInferTaskFromTopology)
 {
     TabularDataset dataset(10, {2}, {2});
-    NeuralNetwork neural_network;
-    neural_network.add_layer(
+    Network network;
+    network.add_layer(
         make_unique<opennn::Dense>(Shape{2}, Shape{2}, "Softmax"));
 
-    TrainingStrategy training_strategy(&neural_network, &dataset);
+    TrainingStrategy training_strategy(&network, &dataset);
 
-    EXPECT_EQ(neural_network.get_task(), NetworkTask::Generic);
+    EXPECT_EQ(network.get_task(), NetworkTask::Generic);
     EXPECT_EQ(training_strategy.get_loss()->get_name(), "MeanSquaredError");
     EXPECT_EQ(training_strategy.get_optimization_algorithm()->get_name(),
               "AdaptiveMomentEstimation");
@@ -126,11 +126,11 @@ TEST(TrainingStrategy, RebindsLossDependencies)
     ApproximationNetwork second_network({2}, {3}, {1});
 
     TrainingStrategy training_strategy(&first_network, &first_dataset);
-    training_strategy.set_neural_network(&second_network);
+    training_strategy.set_network(&second_network);
     training_strategy.set_dataset(&second_dataset);
 
     ASSERT_NE(training_strategy.get_loss(), nullptr);
-    EXPECT_EQ(training_strategy.get_loss()->get_neural_network(), &second_network);
+    EXPECT_EQ(training_strategy.get_loss()->get_network(), &second_network);
     EXPECT_EQ(training_strategy.get_loss()->get_dataset(), &second_dataset);
 
     training_strategy.set();
@@ -141,15 +141,15 @@ TEST(TrainingStrategy, RebindsLossDependencies)
 TEST(TrainingStrategy, InitializesWhenNetworkIsSetLater)
 {
     TabularDataset dataset(10, {2}, {1});
-    ApproximationNetwork neural_network({2}, {3}, {1});
+    ApproximationNetwork network({2}, {3}, {1});
 
     TrainingStrategy training_strategy;
     training_strategy.set_dataset(&dataset);
-    training_strategy.set_neural_network(&neural_network);
+    training_strategy.set_network(&network);
 
     ASSERT_NE(training_strategy.get_loss(), nullptr);
     ASSERT_NE(training_strategy.get_optimization_algorithm(), nullptr);
-    EXPECT_EQ(training_strategy.get_loss()->get_neural_network(), &neural_network);
+    EXPECT_EQ(training_strategy.get_loss()->get_network(), &network);
     EXPECT_EQ(training_strategy.get_loss()->get_dataset(), &dataset);
 }
 

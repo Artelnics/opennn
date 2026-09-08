@@ -43,8 +43,8 @@ Two groups, with different validity.
 every machine and can be taken on a laptop. Library size counts every
 `.cpp/.h/.cu/.cuh` under `opennn/`, excluding blank lines and whole-line
 comments, with block comments tracked across lines. Models are the classes
-deriving from `NeuralNetwork` in `models/models.h`; layer types are the headers
-in `neural_network/layers/` less the abstract base; examples are the
+deriving from `Network` in `models/models.h`; layer types are the headers
+in `network/layers/` less the abstract base; examples are the
 directories under `examples/` with a `main.cpp`.
 
 **Machine facts** are read from the host and are only valid for the machine

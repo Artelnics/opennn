@@ -1,0 +1,1192 @@
+#include "tests/pch.h"
+
+#include "opennn/core/json.h"
+#include "opennn/network/network.h"
+#include "opennn/models/models.h"
+#include "opennn/network/layers/dense_layer.h"
+#include "opennn/network/layers/embedding_layer.h"
+#include "opennn/network/layers/layer.h"
+#include "opennn/network/layers/long_short_term_memory_layer.h"
+#include "opennn/network/layers/recurrent_layer.h"
+#include "opennn/network/layers/scaling_layer.h"
+#include "opennn/network/layers/tokenizer_layer.h"
+#include "opennn/dataset/dataset.h"
+
+using namespace opennn;
+
+namespace
+{
+
+vector<char> read_snapshot_bytes(const filesystem::path& path)
+{
+    ifstream input(path, ios::binary | ios::ate);
+    throw_if(!input.is_open(), "Cannot open test snapshot: {}", path.string());
+
+    const streamoff file_size = input.tellg();
+    throw_if(file_size < 0, "Cannot determine test snapshot size: {}", path.string());
+    input.seekg(0);
+
+    vector<char> bytes(static_cast<size_t>(file_size));
+    input.read(bytes.data(), file_size);
+    throw_if(!input, "Cannot read test snapshot: {}", path.string());
+    return bytes;
+}
+
+void write_snapshot_bytes(const filesystem::path& path, const vector<char>& bytes)
+{
+    ofstream output(path, ios::binary | ios::trunc);
+    throw_if(!output.is_open(), "Cannot open test snapshot: {}", path.string());
+    output.write(bytes.data(), streamsize(bytes.size()));
+    throw_if(!output, "Cannot write test snapshot: {}", path.string());
+}
+
+enum class SnapshotKind { Parameters, States };
+
+void configure_snapshot_network(Network& network, const Shape& input_shape,
+                                const Shape& output_shape, SnapshotKind kind)
+{
+    network.add_layer(make_unique<opennn::Dense>(
+        input_shape, output_shape, "Identity",
+        kind == SnapshotKind::States ? BatchNormalization::Yes : BatchNormalization::No));
+    network.compile();
+}
+
+Index snapshot_size(const Network& network, SnapshotKind kind)
+{
+    return kind == SnapshotKind::Parameters
+         ? network.get_parameters_buffer_size()
+         : network.get_states_buffer_size();
+}
+
+const float* snapshot_data(const Network& network, SnapshotKind kind)
+{
+    return kind == SnapshotKind::Parameters
+         ? network.get_parameters_data()
+         : network.get_states_data();
+}
+
+void set_snapshot(Network& network, SnapshotKind kind, const VectorR& values)
+{
+    if (kind == SnapshotKind::Parameters) network.set_parameters(values);
+    else                                  network.set_states(values);
+}
+
+void save_snapshot(const Network& network, SnapshotKind kind,
+                   const filesystem::path& path)
+{
+    if (kind == SnapshotKind::Parameters) network.save_parameters_binary(path);
+    else                                  network.save_states_binary(path);
+}
+
+void load_snapshot(Network& network, SnapshotKind kind,
+                   const filesystem::path& path)
+{
+    if (kind == SnapshotKind::Parameters) network.load_parameters_binary(path);
+    else                                  network.load_states_binary(path);
+}
+
+void expect_snapshot_values(const Network& network, SnapshotKind kind,
+                            const VectorR& expected)
+{
+    const float* actual = snapshot_data(network, kind);
+    for (Index i = 0; i < expected.size(); ++i)
+        EXPECT_FLOAT_EQ(actual[i], expected(i));
+}
+
+void validate_snapshot_format(SnapshotKind kind, string_view file_stem,
+                              float scale, float offset, float sentinel_value)
+{
+    const filesystem::path directory = filesystem::temp_directory_path();
+    const string stem(file_stem);
+    const filesystem::path versioned_path = directory / (stem + ".bin");
+    const filesystem::path corrupted_path = directory / (stem + "_corrupted.bin");
+    const filesystem::path future_path = directory / (stem + "_future.bin");
+    const filesystem::path legacy_path = directory / (stem + "_legacy.bin");
+    const initializer_list<filesystem::path> paths = {
+        versioned_path, corrupted_path, future_path, legacy_path};
+
+    error_code error;
+    for (const filesystem::path& path : paths) filesystem::remove(path, error);
+
+    Network source;
+    configure_snapshot_network(source, Shape{2}, Shape{3}, kind);
+
+    VectorR expected(snapshot_size(source, kind));
+    for (Index i = 0; i < expected.size(); ++i)
+        expected(i) = scale * float(i + 1) + offset;
+    set_snapshot(source, kind, expected);
+    save_snapshot(source, kind, versioned_path);
+
+    Network compatible;
+    configure_snapshot_network(compatible, Shape{2}, Shape{3}, kind);
+    load_snapshot(compatible, kind, versioned_path);
+    expect_snapshot_values(compatible, kind, expected);
+
+    Network different_layout;
+    configure_snapshot_network(different_layout, Shape{3}, Shape{2}, kind);
+    ASSERT_EQ(snapshot_size(different_layout, kind), expected.size());
+    EXPECT_THROW(load_snapshot(different_layout, kind, versioned_path), runtime_error);
+
+    const vector<char> file_bytes = read_snapshot_bytes(versioned_path);
+    ASSERT_GT(file_bytes.size(), expected.size() * sizeof(float));
+
+    vector<char> corrupted_bytes = file_bytes;
+    corrupted_bytes.back() ^= char(0x01);
+    write_snapshot_bytes(corrupted_path, corrupted_bytes);
+
+    const VectorR sentinel = VectorR::Constant(expected.size(), sentinel_value);
+    set_snapshot(compatible, kind, sentinel);
+    EXPECT_THROW(load_snapshot(compatible, kind, corrupted_path), runtime_error);
+    expect_snapshot_values(compatible, kind, sentinel);
+
+    vector<char> future_bytes = file_bytes;
+    ASSERT_GT(future_bytes.size(), size_t(8));
+    future_bytes[8] = char(2);
+    future_bytes[9] = future_bytes[10] = future_bytes[11] = 0;
+    write_snapshot_bytes(future_path, future_bytes);
+    EXPECT_THROW(load_snapshot(compatible, kind, future_path), runtime_error);
+
+    ofstream legacy(legacy_path, ios::binary | ios::trunc);
+    ASSERT_TRUE(legacy.is_open());
+    legacy.write(reinterpret_cast<const char*>(expected.data()),
+                 streamsize(expected.size() * Index(sizeof(float))));
+    ASSERT_TRUE(legacy.good());
+    legacy.close();
+
+    load_snapshot(compatible, kind, legacy_path);
+    expect_snapshot_values(compatible, kind, expected);
+
+    for (const filesystem::path& path : paths) filesystem::remove(path, error);
+}
+
+#ifdef OPENNN_HAS_CUDA
+void validate_cuda_snapshot_roundtrip(SnapshotKind kind, string_view file_name,
+                                      float scale, float offset, float sentinel_value)
+{
+    const filesystem::path path = filesystem::temp_directory_path() / file_name;
+    error_code error;
+    filesystem::remove(path, error);
+
+    Network network;
+    configure_snapshot_network(network, Shape{2}, Shape{3}, kind);
+
+    VectorR expected(snapshot_size(network, kind));
+    for (Index i = 0; i < expected.size(); ++i)
+        expected(i) = scale * float(i + 1) + offset;
+    set_snapshot(network, kind, expected);
+
+    if (kind == SnapshotKind::Parameters) network.copy_parameters_device();
+    else                                  network.copy_states_device();
+
+    save_snapshot(network, kind, path);
+    set_snapshot(network, kind, VectorR::Constant(expected.size(), sentinel_value));
+    load_snapshot(network, kind, path);
+
+    if (kind == SnapshotKind::Parameters) network.copy_parameters_host();
+    else                                  network.copy_states_host();
+
+    expect_snapshot_values(network, kind, expected);
+    filesystem::remove(path, error);
+}
+#endif
+
+}
+
+TEST(NetworkTest, DefaultConstructor)
+{
+    Network network;
+
+    EXPECT_EQ(network.is_empty(), true);
+    EXPECT_EQ(network.get_layers_number(), 0);
+    EXPECT_EQ(network.get_task(), NetworkTask::Generic);
+}
+
+// Caches derived from the weights -- cuDNN's packed RNN weight space, folded
+// batch norm, quantized copies -- are only safe if every way of changing the
+// parameters moves the version they compare against. A path that mutates
+// without bumping is not a slow cache, it is a cache that serves stale weights,
+// so each of them is pinned here rather than left to inspection.
+TEST(NetworkTest, ParametersVersionMovesOnEveryMutation)
+{
+    Network network;
+    network.add_layer(make_unique<opennn::Dense>(Shape{4}, Shape{2}, "Identity"), {-1});
+    network.compile();
+
+    const uint64_t after_compile = network.get_parameters_version();
+
+    network.set_parameters_random();
+    const uint64_t after_random = network.get_parameters_version();
+    EXPECT_NE(after_random, after_compile);
+
+    network.set_parameters_glorot();
+    const uint64_t after_glorot = network.get_parameters_version();
+    EXPECT_NE(after_glorot, after_random);
+
+    VectorR replacement = VectorR::Zero(network.get_parameters_buffer_size());
+    network.set_parameters(replacement);
+    const uint64_t after_set = network.get_parameters_version();
+    EXPECT_NE(after_set, after_glorot);
+
+    // Handing out a mutable view counts as a change: the optimizers write
+    // straight through this and cannot be observed doing it.
+    (void)network.get_parameters_map();
+    const uint64_t after_handle = network.get_parameters_version();
+    EXPECT_NE(after_handle, after_set);
+
+    // Reading through the const overload is not a change.
+    const Network& readable = network;
+    (void)readable.get_parameters_map();
+    EXPECT_EQ(network.get_parameters_version(), after_handle);
+}
+
+TEST(NetworkTest, RejectsWrongSourceCount)
+{
+    Network network;
+
+    EXPECT_THROW(network.add_layer(
+                     make_unique<opennn::Dense>(Shape{2}, Shape{2}, "Identity"),
+                     {-1, -2}),
+                 runtime_error);
+
+    EXPECT_THROW(network.add_layer(nullptr), runtime_error);
+}
+
+TEST(NetworkTest, DetectsRecurrentLayersByCapability)
+{
+    const auto has_recurrent_layer = [](unique_ptr<Layer> layer)
+    {
+        Network network;
+        network.add_layer(std::move(layer));
+        return network.has_recurrent_layers();
+    };
+
+    EXPECT_FALSE(has_recurrent_layer(
+        make_unique<opennn::Dense>(Shape{3}, Shape{2}, "Identity")));
+    EXPECT_TRUE(has_recurrent_layer(
+        make_unique<Recurrent>(Shape{4, 3}, Shape{2})));
+    EXPECT_TRUE(has_recurrent_layer(
+        make_unique<LongShortTermMemory>(Shape{4, 3}, Shape{2})));
+}
+
+TEST(NetworkTest, InputCountIsTheExternalShapeSize)
+{
+    const auto inputs_number = [](unique_ptr<Layer> layer)
+    {
+        Network network;
+        network.add_layer(std::move(layer));
+        return network.get_inputs_number();
+    };
+
+    EXPECT_EQ(inputs_number(
+        make_unique<opennn::Dense>(Shape{5}, Shape{2}, "Identity")), 5);
+    EXPECT_EQ(inputs_number(
+        make_unique<Recurrent>(Shape{4, 3}, Shape{2})), 12);
+    EXPECT_EQ(inputs_number(
+        make_unique<LongShortTermMemory>(Shape{4, 3}, Shape{2})), 12);
+    EXPECT_EQ(inputs_number(
+        make_unique<Scaling>(Shape{2, 3, 4})), 24);
+    EXPECT_EQ(inputs_number(
+        make_unique<Embedding>(Shape{100, 7}, 8)), 7);
+}
+
+TEST(NetworkTest, DiscreteInputLayersRejectBf16InputCasts)
+{
+    const opennn::Dense dense(Shape{1}, Shape{1}, "Identity");
+    const Embedding embedding(Shape{512, 1}, 2);
+    const Tokenizer tokenizer(Shape{1});
+
+    EXPECT_TRUE(dense.allows_bf16_input_cast(0));
+    EXPECT_FALSE(embedding.allows_bf16_input_cast(0));
+    EXPECT_FALSE(tokenizer.allows_bf16_input_cast(0));
+}
+
+TEST(NetworkTest, SetInputShapePropagatesFromTheFirstExternalInput)
+{
+    Network scaled;
+    scaled.add_layer(make_unique<Scaling>(Shape{2}));
+    scaled.add_layer(make_unique<opennn::Dense>(Shape{2}, Shape{3}, "Identity"));
+    scaled.add_layer(make_unique<opennn::Dense>(Shape{3}, Shape{1}, "Identity"));
+
+    scaled.set_input_shape(Shape{5});
+
+    EXPECT_EQ(scaled.get_layer(0)->get_input_shape(), Shape{5});
+    EXPECT_EQ(scaled.get_layer(1)->get_input_shape(), Shape{5});
+    EXPECT_EQ(scaled.get_layer(2)->get_input_shape(), Shape{3});
+
+    Network unscaled;
+    unscaled.add_layer(make_unique<opennn::Dense>(Shape{2}, Shape{3}, "Identity"));
+    unscaled.add_layer(make_unique<opennn::Dense>(Shape{3}, Shape{1}, "Identity"));
+
+    unscaled.set_input_shape(Shape{7});
+
+    EXPECT_EQ(unscaled.get_layer(0)->get_input_shape(), Shape{7});
+    EXPECT_EQ(unscaled.get_layer(1)->get_input_shape(), Shape{3});
+}
+
+TEST(NetworkTest, SetInputShapeDoesNotRequireTrainableLayers)
+{
+    Network empty;
+    EXPECT_NO_THROW(empty.set_input_shape(Shape{4}));
+
+    Network preprocessing_only;
+    preprocessing_only.add_layer(make_unique<Scaling>(Shape{2}));
+
+    EXPECT_NO_THROW(preprocessing_only.set_input_shape(Shape{6}));
+    EXPECT_EQ(preprocessing_only.get_input_shape(), Shape{6});
+}
+
+TEST(NetworkTest, SetInputShapeLeavesOtherExternalInputsUnchanged)
+{
+    Network network;
+    network.add_layer(
+        make_unique<opennn::Dense>(Shape{2}, Shape{3}, "Identity"), {-1});
+    network.add_layer(
+        make_unique<opennn::Dense>(Shape{4}, Shape{3}, "Identity"), {-2});
+
+    network.set_input_shape(Shape{5});
+
+    EXPECT_EQ(network.get_layer(0)->get_input_shape(), Shape{5});
+    EXPECT_EQ(network.get_layer(1)->get_input_shape(), Shape{4});
+}
+
+TEST(NetworkTest, PreScaledInputBoundaryIsPlannedOnce)
+{
+    Network network;
+    network.add_layer(make_unique<Scaling>(Shape{1}));
+    network.add_layer(make_unique<opennn::Dense>(Shape{1}, Shape{1}, "Identity"));
+    network.compile();
+
+    ForwardPropagation raw_training(
+        2, &network, ForwardPropagationMode::Training, {}, false);
+    ForwardPropagation preprocessed_inference(
+        2, &network, ForwardPropagationMode::Inference, {}, true);
+
+    EXPECT_EQ(raw_training.get_execution_start_layer(), 0);
+    EXPECT_EQ(preprocessed_inference.get_execution_start_layer(), 1);
+    EXPECT_FALSE(raw_training.slots[0].back().empty());
+    EXPECT_TRUE(preprocessed_inference.slots[0].back().empty());
+
+    Tensor2 inputs(2, 1);
+    inputs.setValues({{2.0f}, {3.0f}});
+    const vector<TensorView> input_views = {
+        TensorView(inputs.data(), {2, 1})};
+
+    network.forward_propagate(input_views, raw_training, ForwardPropagationMode::Training);
+    network.forward_propagate(input_views, preprocessed_inference, ForwardPropagationMode::Inference);
+
+    EXPECT_NE(raw_training.inputs[1][0].get_data(), inputs.data());
+    EXPECT_EQ(preprocessed_inference.inputs[1][0].get_data(), inputs.data());
+}
+
+TEST(NetworkTest, PreScaledBoundaryLeavesTextInputPipelineActive)
+{
+    TextClassificationNetwork network(Shape{16, 4, 8}, Shape{2}, Shape{2});
+
+    ASSERT_FALSE(network.get_layer(0)->skip_for_pre_scaled_input());
+
+    ForwardPropagation propagation(
+        3, &network, ForwardPropagationMode::Training, {}, true);
+
+    EXPECT_EQ(propagation.get_execution_start_layer(), 0);
+}
+
+TEST(NetworkTest, PreScaledInputIsOutputWhenEveryLayerIsSkipped)
+{
+    Network network;
+    network.add_layer(make_unique<Scaling>(Shape{1}));
+    network.compile();
+
+    ForwardPropagation propagation(
+        2, &network, ForwardPropagationMode::Inference, {}, true);
+
+    Tensor2 inputs(2, 1);
+    inputs.setValues({{2.0f}, {3.0f}});
+    const vector<TensorView> input_views = {
+        TensorView(inputs.data(), {2, 1})};
+
+    network.forward_propagate(input_views, propagation, ForwardPropagationMode::Inference);
+
+    const TensorView outputs = propagation.get_outputs();
+    ASSERT_EQ(outputs.get_data(), inputs.data());
+    EXPECT_EQ(outputs.get_shape(), (Shape{2, 1}));
+}
+
+TEST(NetworkTest, SerializesNetworkTask)
+{
+    Network network;
+    network.set_task(NetworkTask::TextClassification);
+
+    JsonWriter writer;
+    network.to_JSON(writer);
+
+    JsonDocument document;
+    document.set_root(Json::parse(writer.c_str()));
+    ASSERT_TRUE(document.get_root().has("Network"));
+    EXPECT_FALSE(document.get_root().has("NeuralNetwork"));
+
+    Network loaded;
+    loaded.from_JSON(document);
+
+    EXPECT_EQ(loaded.get_task(), NetworkTask::TextClassification);
+
+    // The former root is intentionally unsupported; migrate earlier 9.0 JSON.
+    const JsonDocument previous_document =
+        JsonDocument::wrap("NeuralNetwork", document.get_root().at("Network"));
+    EXPECT_THROW(loaded.from_JSON(previous_document), runtime_error);
+}
+
+TEST(NetworkTest, SerializesTiedWeightRelationships)
+{
+    Network network;
+
+    auto embedding = make_unique<Embedding>(Shape{11, 4}, 6, "embedding");
+    Layer* embedding_source = embedding.get();
+    network.add_layer(std::move(embedding));
+
+    auto output = make_unique<opennn::Dense>(Shape{4, 6}, Shape{11}, "Identity", BatchNormalization::No, "output");
+    output->set_use_bias(false);
+    output->set_tied_weight_source(embedding_source);
+    network.add_layer(std::move(output));
+    network.compile();
+
+    JsonWriter writer;
+    network.to_JSON(writer);
+
+    JsonDocument document;
+    document.set_root(Json::parse(writer.c_str()));
+
+    Network restored;
+    restored.from_JSON(document);
+
+    ASSERT_EQ(restored.get_layers_number(), 2);
+    const Layer::TiedWeight tied_weight = restored.get_layer(1)->get_tied_weight();
+    EXPECT_EQ(tied_weight.source, restored.get_layer(0).get());
+    EXPECT_EQ(tied_weight.spec_index, 0);
+    EXPECT_EQ(tied_weight.source_spec_index, 0);
+
+    JsonWriter restored_writer;
+    restored.to_JSON(restored_writer);
+    EXPECT_EQ(restored_writer.c_str(), writer.c_str());
+}
+
+TEST(NetworkTest, CompleteSaveLoadPreservesModelOwnedState)
+{
+    const filesystem::path directory = filesystem::temp_directory_path();
+    const filesystem::path model_path = directory / "opennn_complete_persistence_test.json";
+    filesystem::path parameters_path = model_path;
+    parameters_path.replace_extension(".bin");
+    const filesystem::path states_path = directory / "opennn_complete_persistence_test.states.bin";
+
+    error_code error;
+    filesystem::remove(model_path, error);
+    filesystem::remove(parameters_path, error);
+    filesystem::remove(states_path, error);
+
+    Network network;
+    network.set_task(NetworkTask::Classification);
+    network.set_training_activation_recomputation(true);
+
+    auto scaling = make_unique<Scaling>(Shape{3});
+    scaling->set_descriptives({
+        Descriptives(-3.14159274f, 7.12345695f, 0.123456791f, 1.23456788f),
+        Descriptives(-2.71828175f, 9.87654305f, -0.987654328f, 2.34567881f),
+        Descriptives(-1.41421354f, 6.78901243f, 0.333333343f, 3.45678902f)
+    });
+    scaling->set_scalers({"MeanStandardDeviation", "MinimumMaximum", "StandardDeviation"});
+    network.add_layer(std::move(scaling));
+
+    auto dense = make_unique<opennn::Dense>(Shape{3}, Shape{2}, "ReLU", BatchNormalization::Yes, "output");
+    dense->set_momentum(0.234567895f);
+    network.add_layer(std::move(dense));
+
+    Variable count("count", "Decoder", VariableType::Integer, "Logarithm");
+    Variable category("category", "Input", VariableType::Categorical, "None", {"red", "green"});
+    Variable target("scores", "InputTarget", VariableType::Numeric, "StandardDeviation");
+    target.features = 2;
+    network.set_input_variables({count, category});
+    network.set_output_variables({target});
+
+    network.compile();
+
+    VectorR parameters(network.get_parameters_buffer_size());
+    for (Index i = 0; i < parameters.size(); ++i)
+        parameters(i) = 0.013579246f * float(i + 1) - 0.246813580f;
+    network.set_parameters(parameters);
+
+    VectorR states = VectorR::Zero(network.get_states_buffer_size());
+    ASSERT_GT(states.size(), get_aligned_size(2) + 1);
+    states(0) = 0.123456791f;
+    states(1) = -0.987654328f;
+    states(get_aligned_size(2)) = 1.23456788f;
+    states(get_aligned_size(2) + 1) = 2.34567881f;
+    network.set_states(states);
+
+    MatrixR inputs(2, 3);
+    inputs << -1.25f, 0.5f, 2.75f,
+               3.5f, -0.75f, 1.125f;
+    const MatrixR expected_outputs = network.calculate_outputs(inputs);
+
+    network.save(model_path);
+    network.save_states_binary(states_path);
+
+    ASSERT_TRUE(filesystem::exists(model_path));
+    ASSERT_GT(filesystem::file_size(parameters_path),
+              uintmax_t(parameters.size() * Index(sizeof(float))));
+    ASSERT_GT(filesystem::file_size(states_path),
+              uintmax_t(states.size() * Index(sizeof(float))));
+
+    const JsonDocument saved_document = load_json_file(model_path);
+    const Json* saved_root = get_json_root(saved_document, "Network");
+    ASSERT_NE(saved_root, nullptr);
+    EXPECT_TRUE(read_json_bool(saved_root, "TrainingActivationRecomputation"));
+    EXPECT_FALSE(saved_root->has("Device"));
+    EXPECT_FALSE(saved_root->has("TrainingType"));
+
+    Network restored;
+    restored.load(model_path);
+
+    EXPECT_EQ(restored.get_task(), NetworkTask::Classification);
+    EXPECT_TRUE(restored.get_training_activation_recomputation());
+    EXPECT_EQ(restored.get_device(), Device::CPU);
+    EXPECT_EQ(restored.get_training_type(), Type::FP32);
+
+    ASSERT_EQ(restored.get_input_variables().size(), 2);
+    const Variable& restored_count = restored.get_input_variables()[0];
+    EXPECT_EQ(restored_count.name, "count");
+    EXPECT_EQ(restored_count.role, VariableRole::Decoder);
+    EXPECT_EQ(restored_count.type, VariableType::Integer);
+    EXPECT_EQ(restored_count.scaler, ScalerMethod::Logarithm);
+
+    const Variable& restored_category = restored.get_input_variables()[1];
+    EXPECT_EQ(restored_category.role, VariableRole::Input);
+    EXPECT_EQ(restored_category.type, VariableType::Categorical);
+    EXPECT_EQ(restored_category.scaler, ScalerMethod::None);
+    EXPECT_EQ(restored_category.categories, vector<string>({"red", "green"}));
+
+    ASSERT_EQ(restored.get_output_variables().size(), 1);
+    const Variable& restored_target = restored.get_output_variables()[0];
+    EXPECT_EQ(restored_target.role, VariableRole::InputTarget);
+    EXPECT_EQ(restored_target.type, VariableType::Numeric);
+    EXPECT_EQ(restored_target.scaler, ScalerMethod::StandardDeviation);
+    EXPECT_EQ(restored_target.features, 2);
+
+    ASSERT_EQ(restored.get_parameters_buffer_size(), parameters.size());
+    ASSERT_EQ(restored.get_states_buffer_size(), states.size());
+    for (Index i = 0; i < parameters.size(); ++i)
+        EXPECT_FLOAT_EQ(restored.get_parameters_data()[i], parameters(i));
+    for (Index i = 0; i < states.size(); ++i)
+        EXPECT_FLOAT_EQ(restored.get_states_data()[i], states(i));
+
+    JsonWriter original_writer;
+    JsonWriter restored_writer;
+    network.to_JSON(original_writer);
+    restored.to_JSON(restored_writer);
+    EXPECT_EQ(restored_writer.c_str(), original_writer.c_str());
+
+    const MatrixR actual_outputs = restored.calculate_outputs(inputs);
+    ASSERT_EQ(actual_outputs.rows(), expected_outputs.rows());
+    ASSERT_EQ(actual_outputs.cols(), expected_outputs.cols());
+    for (Index i = 0; i < actual_outputs.size(); ++i)
+        EXPECT_FLOAT_EQ(actual_outputs(i), expected_outputs(i));
+
+    restored.set_states(VectorR::Zero(states.size()));
+    restored.load_states_binary(states_path);
+    for (Index i = 0; i < states.size(); ++i)
+        EXPECT_FLOAT_EQ(restored.get_states_data()[i], states(i));
+
+    EXPECT_THROW(network.save(directory), runtime_error);
+
+    filesystem::remove(model_path, error);
+    filesystem::remove(parameters_path, error);
+    filesystem::remove(states_path, error);
+}
+
+TEST(NetworkTest, ModelLoadRejectsMissingWeightsAndPreservesExistingNetwork)
+{
+    Configuration::instance().set(Device::CPU, Type::FP32);
+    const filesystem::path path = filesystem::temp_directory_path()
+                                / "opennn_missing_model_weights_test.json";
+    filesystem::path binary_path = path;
+    binary_path.replace_extension(".bin");
+
+    Network network;
+    network.add_layer(make_unique<opennn::Dense>(Shape{1}, Shape{1}, "Identity"));
+    network.compile();
+    network.set_parameters(VectorR::Ones(network.get_parameters_buffer_size()));
+    const MatrixR inputs = MatrixR::Ones(1, 1);
+    ASSERT_FLOAT_EQ(network.calculate_outputs(inputs)(0, 0), 2.0f);
+
+    network.save(path);
+    ASSERT_TRUE(filesystem::remove(binary_path));
+    const float* parameter_storage = network.get_parameters_data();
+
+    try
+    {
+        network.load(path);
+        FAIL() << "A complete model must not load without its weights.";
+    }
+    catch (const runtime_error& error)
+    {
+        EXPECT_NE(string(error.what()).find("missing parameter file"), string::npos);
+        EXPECT_NE(string(error.what()).find(binary_path.string()), string::npos);
+    }
+    EXPECT_EQ(network.get_parameters_data(), parameter_storage);
+    EXPECT_FLOAT_EQ(network.calculate_outputs(inputs)(0, 0), 2.0f);
+    EXPECT_THROW(Network{path}, runtime_error);
+
+    // Architecture-only loading remains an explicit operation on a new network.
+    Network architecture;
+    architecture.from_JSON(load_json_file(path));
+    EXPECT_EQ(architecture.get_layers_number(), 1);
+    EXPECT_EQ(architecture.get_input_shape(), Shape({1}));
+    EXPECT_EQ(architecture.get_output_shape(), Shape({1}));
+
+    // An empty legacy Parameters element is not a replacement for the binary.
+    JsonDocument document = load_json_file(path);
+    document.get_root()["Network"]["Parameters"]["Values"] = Json("");
+    document.save(path);
+    EXPECT_THROW(network.load(path), runtime_error);
+    EXPECT_EQ(network.get_parameters_data(), parameter_storage);
+    EXPECT_FLOAT_EQ(network.calculate_outputs(inputs)(0, 0), 2.0f);
+
+    filesystem::remove(path);
+}
+
+TEST(NetworkTest, ModelLoadRetainsEmbeddedJsonWeights)
+{
+    Configuration::instance().set(Device::CPU, Type::FP32);
+    const filesystem::path path = filesystem::temp_directory_path()
+                                / "opennn_embedded_model_weights_test.json";
+    filesystem::path binary_path = path;
+    binary_path.replace_extension(".bin");
+
+    Network original;
+    original.add_layer(make_unique<opennn::Dense>(Shape{1}, Shape{1}, "Identity"));
+    original.compile();
+    original.set_parameters(VectorR::Ones(original.get_parameters_buffer_size()));
+    original.save(path);
+    ASSERT_TRUE(filesystem::remove(binary_path));
+
+    string values;
+    for (Index i = 0; i < original.get_parameters_buffer_size(); ++i)
+        values += "1 ";
+    JsonDocument document = load_json_file(path);
+    document.get_root()["Network"]["Parameters"]["Values"] = Json(values);
+    document.save(path);
+
+    Network restored(path);
+    EXPECT_EQ(restored.get_parameters_buffer_size(), original.get_parameters_buffer_size());
+    EXPECT_FLOAT_EQ(restored.calculate_outputs(MatrixR::Ones(1, 1))(0, 0), 2.0f);
+    filesystem::remove(path);
+}
+
+namespace
+{
+
+void validate_embedded_parameter_counts(Device device)
+{
+    Configuration::instance().set(device, Type::FP32);
+    const filesystem::path path = filesystem::temp_directory_path()
+        / (device == Device::CPU ? "opennn_parameter_count_cpu.json"
+                                 : "opennn_parameter_count_cuda.json");
+    filesystem::path binary_path = path;
+    binary_path.replace_extension(".bin");
+    filesystem::remove(binary_path);
+
+    Network original;
+    original.add_layer(make_unique<opennn::Dense>(Shape{1}, Shape{1}, "Identity"));
+    original.compile();
+    const Index expected_count = original.get_parameters_buffer_size();
+    ASSERT_GT(expected_count, 1);
+    save_json_file(path, original);
+    JsonDocument document = load_json_file(path);
+
+    for (const Index count : {expected_count - 1, expected_count + 1, Index(0)})
+    {
+        SCOPED_TRACE(count);
+        string values = " \t\r\n";
+        for (Index i = 0; i < count; ++i) values += "1 ";
+        document.get_root()["Network"]["Parameters"]["Values"] = Json(values);
+
+        Network direct;
+        try
+        {
+            direct.from_JSON(document);
+            ADD_FAILURE() << "Wrong embedded parameter count was accepted: " << count;
+        }
+        catch (const runtime_error& error)
+        {
+            EXPECT_NE(string(error.what()).find(
+                format("got {}, expected {}", count, expected_count)), string::npos);
+        }
+        // Rejection must happen before even a prefix of the supplied ones is applied.
+        ASSERT_EQ(direct.get_parameters_buffer_size(), expected_count);
+        EXPECT_EQ(direct.get_device(), device);
+        direct.copy_parameters_host();
+        for (Index i = 0; i < expected_count; ++i)
+            EXPECT_FLOAT_EQ(direct.get_parameters_data()[i], 0.0f);
+
+        document.save(path);
+        Network loaded;
+        EXPECT_THROW(loaded.load(path), runtime_error);
+    }
+
+    string values;
+    for (Index i = 0; i < expected_count; ++i) values += "1 ";
+    document.get_root()["Network"]["Parameters"]["Values"] = Json(values);
+    const MatrixR inputs = MatrixR::Ones(1, 1);
+    Network direct;
+    direct.from_JSON(document);
+    EXPECT_EQ(direct.get_device(), device);
+    EXPECT_FLOAT_EQ(direct.calculate_outputs(inputs)(0, 0), 2.0f);
+    document.save(path);
+    Network loaded(path);
+    EXPECT_EQ(loaded.get_device(), device);
+    EXPECT_FLOAT_EQ(loaded.calculate_outputs(inputs)(0, 0), 2.0f);
+    filesystem::remove(path);
+}
+
+}
+
+TEST(NetworkTest, EmbeddedParameterCountsAreExact)
+{
+    validate_embedded_parameter_counts(Device::CPU);
+}
+
+namespace
+{
+
+void validate_finite_embedded_parameters(Device device)
+{
+    Configuration::instance().set(device, Type::FP32);
+    const filesystem::path path = filesystem::temp_directory_path()
+        / (device == Device::CPU ? "opennn_finite_parameters_cpu.json"
+                                 : "opennn_finite_parameters_cuda.json");
+    filesystem::path binary_path = path;
+    binary_path.replace_extension(".bin");
+    filesystem::remove(binary_path);
+
+    Network original;
+    original.add_layer(make_unique<opennn::Dense>(Shape{1}, Shape{1}, "Identity"));
+    original.compile();
+    const Index count = original.get_parameters_buffer_size();
+    ASSERT_GT(count, 1);
+    save_json_file(path, original);
+    JsonDocument document = load_json_file(path);
+
+    for (const string token : {"nan", "inf", "-inf"})
+    for (const Index invalid_index : {Index(0), count - 1})
+    {
+        SCOPED_TRACE(token);
+        SCOPED_TRACE(invalid_index);
+        string values;
+        for (Index i = 0; i < count; ++i)
+            values += (i == invalid_index ? token : "1") + " ";
+        document.get_root()["Network"]["Parameters"]["Values"] = Json(values);
+        document.save(path);
+
+        for (const bool from_file : {false, true})
+        {
+            SCOPED_TRACE(from_file);
+            Network loaded;
+            try
+            {
+                if (from_file) loaded.load(path);
+                else loaded.from_JSON(document);
+                ADD_FAILURE() << "Non-finite embedded parameter was accepted";
+            }
+            catch (const runtime_error& error)
+            {
+                EXPECT_NE(string(error.what()).find(
+                    format("non-finite embedded parameter at index {}", invalid_index)), string::npos);
+            }
+            ASSERT_EQ(loaded.get_parameters_buffer_size(), count);
+            EXPECT_EQ(loaded.get_device(), device);
+            loaded.copy_parameters_host();
+            // Even a non-finite last entry must be rejected before copying a prefix.
+            for (Index i = 0; i < count; ++i)
+                EXPECT_FLOAT_EQ(loaded.get_parameters_data()[i], 0.0f);
+        }
+    }
+
+    // Extreme finite values remain valid weights, as do signed zero and tiny values.
+    for (const auto& [token, expected] : vector<pair<string, float>>{
+             {"-0", -0.0f},
+             {"1.17549435e-38", numeric_limits<float>::min()},
+             {"3.402823466e+38", numeric_limits<float>::max()},
+             {"-3.402823466e+38", numeric_limits<float>::lowest()}})
+    {
+        SCOPED_TRACE(token);
+        string values = token + " ";
+        for (Index i = 1; i < count; ++i) values += "0 ";
+        document.get_root()["Network"]["Parameters"]["Values"] = Json(values);
+        document.save(path);
+        for (const bool from_file : {false, true})
+        {
+            Network loaded;
+            if (from_file) loaded.load(path);
+            else loaded.from_JSON(document);
+            loaded.copy_parameters_host();
+            EXPECT_FLOAT_EQ(loaded.get_parameters_data()[0], expected);
+        }
+    }
+    filesystem::remove(path);
+}
+
+}
+
+TEST(NetworkTest, EmbeddedParametersMustBeFinite)
+{
+    validate_finite_embedded_parameters(Device::CPU);
+}
+
+#ifdef OPENNN_HAS_CUDA
+TEST(NetworkTest, EmbeddedParametersMustBeFiniteOnCuda)
+{
+    if (!device::has_cuda_device()) GTEST_SKIP() << "No CUDA device.";
+    validate_finite_embedded_parameters(Device::CUDA);
+}
+
+TEST(NetworkTest, EmbeddedParameterCountsAreExactOnCuda)
+{
+    if (!device::has_cuda_device()) GTEST_SKIP() << "No CUDA device.";
+    validate_embedded_parameter_counts(Device::CUDA);
+}
+#endif
+
+TEST(NetworkTest, ModelSaveCommitsOrRecoversJsonAndParametersTogether)
+{
+    const filesystem::path directory = filesystem::temp_directory_path();
+    const filesystem::path model_path = directory / "opennn_atomic_model_save_test.json";
+    const filesystem::path candidate_path =
+        directory / "opennn_atomic_model_save_candidate.json";
+    filesystem::path parameter_path = model_path;
+    parameter_path.replace_extension(".bin");
+    filesystem::path candidate_parameter_path = candidate_path;
+    candidate_parameter_path.replace_extension(".bin");
+
+    const auto suffixed = [](filesystem::path path, string_view suffix)
+    {
+        path += suffix;
+        return path;
+    };
+    const filesystem::path model_backup = suffixed(model_path, ".bak");
+    const filesystem::path parameter_backup = suffixed(parameter_path, ".bak");
+    const filesystem::path marker_path = suffixed(model_path, ".save-transaction");
+
+    const vector<filesystem::path> artifacts = {
+        model_path,
+        parameter_path,
+        suffixed(model_path, ".tmp"),
+        suffixed(parameter_path, ".tmp"),
+        model_backup,
+        parameter_backup,
+        marker_path,
+        suffixed(marker_path, ".tmp"),
+        candidate_path,
+        candidate_parameter_path,
+        suffixed(candidate_path, ".tmp"),
+        suffixed(candidate_parameter_path, ".tmp"),
+        suffixed(candidate_path, ".bak"),
+        suffixed(candidate_parameter_path, ".bak"),
+        suffixed(candidate_path, ".save-transaction"),
+        suffixed(suffixed(candidate_path, ".save-transaction"), ".tmp")
+    };
+
+    error_code error;
+    for (const filesystem::path& path : artifacts) filesystem::remove(path, error);
+
+    Network original;
+    original.set_task(NetworkTask::Classification);
+    original.add_layer(make_unique<opennn::Dense>(Shape{2}, Shape{3}, "Identity"));
+    original.compile();
+    const VectorR original_parameters =
+        VectorR::LinSpaced(original.get_parameters_buffer_size(), -0.75f, 0.25f);
+    original.set_parameters(original_parameters);
+
+    Network replacement;
+    replacement.set_task(NetworkTask::Forecasting);
+    replacement.add_layer(make_unique<opennn::Dense>(Shape{2}, Shape{3}, "Identity"));
+    replacement.compile();
+    const VectorR replacement_parameters =
+        VectorR::LinSpaced(replacement.get_parameters_buffer_size(), 1.25f, 2.25f);
+    replacement.set_parameters(replacement_parameters);
+
+    original.save(model_path);
+    replacement.save(model_path);
+
+    Network committed;
+    committed.load(model_path);
+    EXPECT_EQ(committed.get_task(), NetworkTask::Forecasting);
+    for (Index i = 0; i < replacement_parameters.size(); ++i)
+        EXPECT_FLOAT_EQ(committed.get_parameters_data()[i], replacement_parameters(i));
+    EXPECT_FALSE(filesystem::exists(suffixed(model_path, ".tmp")));
+    EXPECT_FALSE(filesystem::exists(suffixed(parameter_path, ".tmp")));
+    EXPECT_FALSE(filesystem::exists(model_backup));
+    EXPECT_FALSE(filesystem::exists(parameter_backup));
+    EXPECT_FALSE(filesystem::exists(marker_path));
+
+    original.save(model_path);
+    replacement.save(candidate_path);
+
+    // Simulate interruption after both replacements but before the marker is
+    // removed. The next load must roll the pair back to the old generation.
+    filesystem::rename(model_path, model_backup);
+    filesystem::rename(parameter_path, parameter_backup);
+    filesystem::rename(candidate_path, model_path);
+    filesystem::rename(candidate_parameter_path, parameter_path);
+    ofstream marker(marker_path, ios::trunc);
+    ASSERT_TRUE(marker.is_open());
+    marker << "OPENNN_SAVE_TRANSACTION_V1\n1 1\n";
+    marker.close();
+    ASSERT_TRUE(marker.good());
+
+    Network recovered;
+    recovered.load(model_path);
+    EXPECT_EQ(recovered.get_task(), NetworkTask::Classification);
+    for (Index i = 0; i < original_parameters.size(); ++i)
+        EXPECT_FLOAT_EQ(recovered.get_parameters_data()[i], original_parameters(i));
+
+    EXPECT_FALSE(filesystem::exists(suffixed(model_path, ".tmp")));
+    EXPECT_FALSE(filesystem::exists(suffixed(parameter_path, ".tmp")));
+    EXPECT_FALSE(filesystem::exists(model_backup));
+    EXPECT_FALSE(filesystem::exists(parameter_backup));
+    EXPECT_FALSE(filesystem::exists(marker_path));
+
+    for (const filesystem::path& path : artifacts) filesystem::remove(path, error);
+}
+
+TEST(NetworkTest, ParameterSnapshotsValidateVersionIntegrityAndLayout)
+{
+    validate_snapshot_format(SnapshotKind::Parameters,
+                             "opennn_parameter_format_test",
+                             0.017f, -0.31f, 42.0f);
+}
+
+TEST(NetworkTest, StateSnapshotsValidateVersionIntegrityAndLayout)
+{
+    validate_snapshot_format(SnapshotKind::States,
+                             "opennn_state_format_test",
+                             0.021f, 0.19f, 23.0f);
+}
+
+#ifdef OPENNN_HAS_CUDA
+TEST(NetworkTest, VersionedParameterSnapshotRoundTripsCudaStorage)
+{
+    if (!device::has_cuda_device()) GTEST_SKIP() << "No CUDA device.";
+    Configuration::instance().set(Device::CUDA, Type::FP32);
+    validate_cuda_snapshot_roundtrip(
+        SnapshotKind::Parameters, "opennn_parameter_format_cuda.bin",
+        0.029f, -0.43f, 17.0f);
+}
+
+TEST(NetworkTest, VersionedStateSnapshotRoundTripsCudaStorage)
+{
+    if (!device::has_cuda_device()) GTEST_SKIP() << "No CUDA device.";
+    Configuration::instance().set(Device::CUDA, Type::FP32);
+    validate_cuda_snapshot_roundtrip(
+        SnapshotKind::States, "opennn_state_format_cuda.bin",
+        0.031f, 0.27f, 29.0f);
+}
+#endif
+
+TEST(NetworkTest, ApproximationConstructor)
+{
+    ApproximationNetwork network({ 1 }, { 4 }, { 2 });
+
+    EXPECT_EQ(network.get_layers_number(), 5);
+    EXPECT_EQ(network.get_layer(0)->get_name(), "Scaling");
+    EXPECT_EQ(network.get_layer(1)->get_name(), "Dense");
+    EXPECT_EQ(network.get_layer(2)->get_name(), "Dense");
+    EXPECT_EQ(network.get_layer(3)->get_name(), "Unscaling");
+    EXPECT_EQ(network.get_layer(4)->get_name(), "Clamping");
+    EXPECT_EQ(network.get_task(), NetworkTask::Approximation);
+}
+
+TEST(NetworkTest, ClassificationConstructor)
+{
+    ClassificationNetwork network({ 1 }, { 4 }, { 2 });
+
+    EXPECT_EQ(network.get_layers_number(), 3);
+    EXPECT_EQ(network.get_layer(0)->get_name(), "Scaling");
+    EXPECT_EQ(network.get_layer(1)->get_name(), "Dense");
+    EXPECT_EQ(network.get_layer(2)->get_name(), "Dense");
+    EXPECT_EQ(network.get_task(), NetworkTask::Classification);
+}
+
+TEST(NetworkTest, AproximationConstructor)
+{
+    ApproximationNetwork network({ 1 }, { 4 }, { 2 });
+
+    EXPECT_EQ(network.get_layers_number(), 5);
+    EXPECT_EQ(network.get_layer(0)->get_name(), "Scaling");
+    EXPECT_EQ(network.get_layer(1)->get_name(), "Dense");
+    EXPECT_EQ(network.get_layer(2)->get_name(), "Dense");
+    EXPECT_EQ(network.get_layer(3)->get_name(), "Unscaling");
+    EXPECT_EQ(network.get_layer(4)->get_name(), "Clamping");
+}
+
+TEST(NetworkTest, ForecastingConstructor)
+{
+    ForecastingNetwork network({ 1,1 }, { 4 }, { 2 });
+
+    EXPECT_EQ(network.get_layers_number(), 5);
+    EXPECT_EQ(network.get_layer(0)->get_name(), "Scaling");
+    EXPECT_EQ(network.get_layer(1)->get_name(), "Recurrent");
+    EXPECT_EQ(network.get_layer(2)->get_name(), "Dense");
+    EXPECT_EQ(network.get_layer(3)->get_name(), "Unscaling");
+    EXPECT_EQ(network.get_layer(4)->get_name(), "Clamping");
+    EXPECT_EQ(network.get_task(), NetworkTask::Forecasting);
+}
+
+TEST(NetworkTest, AnomalyDetectionConstructor)
+{
+    AutoencoderNetwork network({ 1 }, { 4 }, { 2 });
+
+    EXPECT_EQ(network.get_layers_number(), 6);
+    EXPECT_EQ(network.get_layer(0)->get_name(), "Scaling");
+    EXPECT_EQ(network.get_layer(1)->get_name(), "Dense");
+    EXPECT_EQ(network.get_layer(2)->get_name(), "Dense");
+    EXPECT_EQ(network.get_layer(3)->get_name(), "Dense");
+    EXPECT_EQ(network.get_layer(4)->get_name(), "Dense");
+    EXPECT_EQ(network.get_layer(5)->get_name(), "Unscaling");
+    EXPECT_EQ(network.get_task(), NetworkTask::AnomalyDetection);
+}
+
+TEST(NetworkTest, AnomalyDetectionSymmetricEncoderConstructor)
+{
+    AutoencoderNetwork network({140}, {32, 16, 8}, "ReLU", "Sigmoid");
+
+    ASSERT_EQ(network.get_layers_number(), 8);
+    EXPECT_EQ(network.get_input_shape(), Shape({140}));
+    EXPECT_EQ(network.get_output_shape(), Shape({140}));
+
+    const vector<Shape> expected_shapes = {
+        {140}, {32}, {16}, {8}, {16}, {32}, {140}, {140}
+    };
+
+    for (Index i = 0; i < network.get_layers_number(); ++i)
+        EXPECT_EQ(network.get_layer(i)->get_output_shape(), expected_shapes[size_t(i)]);
+
+    EXPECT_EQ(network.get_layer(1)->get_name(), "Dense");
+    EXPECT_EQ(network.get_layer(3)->get_label(), "bottleneck_layer");
+
+    for (Index i = 1; i <= 5; ++i)
+    {
+        const opennn::Dense* dense =
+            dynamic_cast<const opennn::Dense*>(network.get_layer(i).get());
+        ASSERT_NE(dense, nullptr);
+        EXPECT_EQ(dense->get_activation_function(), ActivationFunction::ReLU);
+        EXPECT_TRUE(dense->get_use_bias());
+    }
+
+    const opennn::Dense* output =
+        dynamic_cast<const opennn::Dense*>(network.get_layer(6).get());
+    ASSERT_NE(output, nullptr);
+    EXPECT_EQ(output->get_activation_function(), ActivationFunction::Sigmoid);
+    EXPECT_TRUE(output->get_use_bias());
+}
+
+TEST(NetworkTest, AnomalyDetectionSymmetricEncoderRejectsEmptyEncoder)
+{
+    EXPECT_THROW(AutoencoderNetwork({140}, {}, "ReLU", "Sigmoid"), runtime_error);
+}
+
+TEST(NetworkTest, ImageClassificationConstructor)
+{
+    const Index height = 3;
+    const Index width = 3;
+    const Index channels = 1;
+
+    const Index complexity = 1;
+
+    const Index outputs_number = 1;
+
+    ImageClassificationNetwork network({height, width, channels}, { complexity }, { outputs_number });
+
+    EXPECT_EQ(network.get_layers_number(), 6);
+    EXPECT_EQ(network.get_layer(0)->get_name(), "Scaling");
+    EXPECT_EQ(network.get_layer(1)->get_name(), "Convolutional");
+    EXPECT_EQ(network.get_layer(2)->get_name(), "Pooling");
+    EXPECT_EQ(network.get_layer(3)->get_name(), "Flatten");
+    EXPECT_EQ(network.get_layer(4)->get_name(), "Dense");
+    EXPECT_EQ(network.get_layer(4)->get_label(), "dense_2d_layer_1");
+    EXPECT_EQ(network.get_layer(5)->get_name(), "Dense");
+    EXPECT_EQ(network.get_layer(5)->get_label(), "classification_layer");
+    EXPECT_EQ(network.get_task(), NetworkTask::ImageClassification);
+}
+
+TEST(NetworkTest, ForwardPropagate)
+{
+    const Index samples_number = 5;
+    const Index inputs_number = 2;
+    const Index outputs_number = 1;
+    const Index neurons_number = 1;
+
+    ApproximationNetwork network_aproximation({inputs_number}, {neurons_number}, {outputs_number});
+    network_aproximation.set_parameters_random();
+
+    MatrixR input_data(samples_number, inputs_number);
+    input_data << 0, 0,
+                  1, 1,
+                  2, 2,
+                  3, 3,
+                  4, 4;
+
+    MatrixR result = network_aproximation.calculate_outputs(input_data);
+
+    EXPECT_EQ(result.rows(), samples_number);
+    EXPECT_EQ(result.cols(), outputs_number);
+
+    ClassificationNetwork network_classification({inputs_number}, {neurons_number}, {outputs_number});
+
+    MatrixR result_classification = network_classification.calculate_outputs(input_data);
+
+    EXPECT_EQ(result_classification.rows(), samples_number);
+    EXPECT_EQ(result_classification.cols(), outputs_number);
+}
+
+TEST(NetworkTest, CalculateOutputsEmpty)
+{
+    Network network;
+
+    MatrixR inputs;
+
+    const MatrixR outputs = network.calculate_outputs(inputs);
+
+    EXPECT_EQ(outputs.size(), 0);
+}
+
+// Network caches the first and last trainable layer indices and
+// invalidates them only on structural change: add_layer, clear, steal_from and
+// from_JSON. Layer::set_is_trainable is a public mutator that changes what
+// those caches hold and invalidates neither, so freezing or unfreezing after
+// any query leaves the stale range in place. BackPropagation plans the backward
+// arena and decides which layers get gradients from exactly that range, and a
+// fine-tune freezes, trains, unfreezes and trains again.
+TEST(NetworkTest, TrainableRangeFollowsFreezingAfterItHasBeenQueried)
+{
+    Network network;
+    network.add_layer(make_unique<opennn::Dense>(Shape{4}, Shape{8}, "ReLU"));
+    network.add_layer(make_unique<opennn::Dense>(Shape{8}, Shape{8}, "ReLU"));
+    network.add_layer(make_unique<opennn::Dense>(Shape{8}, Shape{2}, "ReLU"));
+    network.compile();
+
+    ASSERT_EQ(network.get_layers_number(), 3);
+
+    // Warm the caches, exactly as constructing a BackPropagation does.
+    ASSERT_EQ(network.get_first_trainable_layer_index(), 0);
+    ASSERT_EQ(network.get_last_trainable_layer_index(), 2);
+
+    network.get_layer(Index(0))->set_is_trainable(false);
+    EXPECT_EQ(network.get_first_trainable_layer_index(), 1)
+        << "freezing the first layer left the trainable range where it was";
+
+    network.get_layer(Index(2))->set_is_trainable(false);
+    EXPECT_EQ(network.get_last_trainable_layer_index(), 1)
+        << "freezing the last layer left the trainable range where it was";
+
+    network.get_layer(Index(0))->set_is_trainable(true);
+    EXPECT_EQ(network.get_first_trainable_layer_index(), 0)
+        << "unfreezing the first layer left the trainable range where it was";
+}

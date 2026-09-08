@@ -33,8 +33,8 @@
 #include "opennn/core/tensor_operations.h"
 #include "opennn/core/random_utilities.h"
 #include "opennn/dataset/tabular_dataset.h"
-#include "opennn/neural_network/model_expression.h"
-#include "opennn/neural_network/neural_network.h"
+#include "opennn/network/model_expression.h"
+#include "opennn/network/network.h"
 #include "opennn/models/models.h"
 #include "opennn/training_strategy/adaptive_moment_estimation.h"
 #include "opennn/training_strategy/training_strategy.h"
@@ -86,7 +86,7 @@ int main(int argc, char* argv[])
         // before a single sample is loaded.
         Configuration::instance().set(Device::Auto, Type::FP32);
 
-        NeuralNetwork network;
+        Network network;
         TabularDataset dataset;
         TrainingStrategy strategy(&network, &dataset);
 

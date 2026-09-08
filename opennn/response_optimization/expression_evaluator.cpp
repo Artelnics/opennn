@@ -8,7 +8,7 @@
 
 #include "opennn/pch.h"
 #include "opennn/response_optimization/expression_evaluator.h"
-#include "opennn/neural_network/neural_network.h"
+#include "opennn/network/network.h"
 #include "opennn/core/string_utilities.h"
 #include "opennn/core/variable.h"
 
@@ -1067,10 +1067,10 @@ CompiledExpression compile_expression(const string& expression,
 
 
 CompiledExpression compile_expression(const string& expression,
-                                      const NeuralNetwork* neural_network,
+                                      const Network* network,
                                       const string& role)
 {
-    throw_if(!neural_network, "The neural network has not been set.");
+    throw_if(!network, "The neural network has not been set.");
 
     throw_if(expression.find_first_of("<>=") != string::npos,
              role + " '" + expression + "' cannot contain comparison symbols. Use a condition instead.");
@@ -1078,8 +1078,8 @@ CompiledExpression compile_expression(const string& expression,
     try
     {
         return compile_expression(expression,
-                                  get_variable_columns(neural_network->get_input_variables()),
-                                  get_variable_columns(neural_network->get_output_variables()));
+                                  get_variable_columns(network->get_input_variables()),
+                                  get_variable_columns(network->get_output_variables()));
     }
     catch (const exception& e)
     {

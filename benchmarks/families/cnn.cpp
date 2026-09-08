@@ -42,7 +42,7 @@
 #include "opennn/core/memory_debug.h"
 #include "opennn/core/tensor_types.h"
 #include "opennn/dataset/image_dataset.h"
-#include "opennn/neural_network/forward_propagation.h"
+#include "opennn/network/forward_propagation.h"
 #include "opennn/models/models.h"
 #include "opennn/training_strategy/adaptive_moment_estimation.h"
 #include "opennn/training_strategy/training_strategy.h"
@@ -228,7 +228,7 @@ int main(int argc, char* argv[])
             vector<double> epoch_seconds;
             auto previous_mark = clock_type::now();
 
-            adam->post_epoch_callback = [&](Index epoch, float, float, NeuralNetwork*)
+            adam->post_epoch_callback = [&](Index epoch, float, float, Network*)
             {
                 const auto now = clock_type::now();
                 const double elapsed = chrono::duration<double>(now - previous_mark).count();

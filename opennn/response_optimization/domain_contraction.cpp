@@ -7,7 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "opennn/response_optimization/domain_contraction.h"
-#include "opennn/neural_network/neural_network.h"
+#include "opennn/network/network.h"
 #include "opennn/core/tensor_operations.h"
 
 namespace opennn
@@ -49,8 +49,8 @@ Index category_column(const VectorR& input, const pair<Index, Index>& block)
 }
 
 
-DomainContraction::DomainContraction(NeuralNetwork* new_neural_network)
-    : ResponseOptimization(new_neural_network)
+DomainContraction::DomainContraction(Network* new_network)
+    : ResponseOptimization(new_network)
 {
 }
 
@@ -59,7 +59,7 @@ pair<VectorR, VectorR> DomainContraction::contract_categories(pair<VectorR, Vect
                                                               const VectorR& category_scores,
                                                               const Index iteration) const
 {
-    for (const pair<Index, Index>& block : get_categorical_blocks(neural_network->get_input_variables()))
+    for (const pair<Index, Index>& block : get_categorical_blocks(network->get_input_variables()))
     {
         vector<Index> live_columns;
 
@@ -101,7 +101,7 @@ pair<MatrixR, MatrixR> DomainContraction::sample_local_domains(
             const Index batch = sample_size - sampled;
 
             MatrixR inputs(batch, domain.first.size());
-            MatrixR outputs(batch, neural_network->get_outputs_number());
+            MatrixR outputs(batch, network->get_outputs_number());
 
             Index feasible_number = 0;
 
@@ -141,7 +141,7 @@ pair<MatrixR, MatrixR> DomainContraction::sample_local_domains(
 MatrixR DomainContraction::single_optimization()
 {
     const vector<pair<Index, Index>> blocks =
-        get_categorical_blocks(neural_network->get_input_variables());
+        get_categorical_blocks(network->get_input_variables());
 
     pair<VectorR, VectorR> allowed_domain = calculate_domain();
 
@@ -202,7 +202,7 @@ MatrixR DomainContraction::single_optimization()
 MatrixR DomainContraction::multi_optimization()
 {
     const vector<pair<Index, Index>> blocks =
-        get_categorical_blocks(neural_network->get_input_variables());
+        get_categorical_blocks(network->get_input_variables());
 
     pair<VectorR, VectorR> allowed_domain = calculate_domain();
 

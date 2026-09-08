@@ -17,9 +17,9 @@ namespace
 class InputsSelectionProbe final : public InputsSelection
 {
 public:
-    void configure(NeuralNetwork* neural_network, Dataset* dataset, Index input_features)
+    void configure(Network* network, Dataset* dataset, Index input_features)
     {
-        configure_neural_network_inputs(neural_network, dataset, input_features);
+        configure_network_inputs(network, dataset, input_features);
     }
 
     Index get_minimum_inputs_number() const override { return 1; }
@@ -48,8 +48,8 @@ TEST(ModelSelectionTest, OrderedDatasetsProduceContiguousFolds)
     TimeSeriesDataset dataset(8, {1}, {1});
     dataset.set_sample_roles(SampleRole::Training);
 
-    NeuralNetwork neural_network;
-    TrainingStrategy training_strategy(&neural_network, &dataset);
+    Network network;
+    TrainingStrategy training_strategy(&network, &dataset);
 
     const vector<vector<Index>> folds =
         build_fold_partition(&training_strategy, 3, 17);
@@ -66,12 +66,12 @@ TEST(ModelSelectionTest, ConfiguresForecastingInputsThroughDatasetContract)
     dataset.set_variable_names({"temperature", "pressure", "target"});
     dataset.set_past_time_steps(3);
 
-    ForecastingNetwork neural_network({3, 2}, {2}, {1});
+    ForecastingNetwork network({3, 2}, {2}, {1});
     InputsSelectionProbe inputs_selection;
-    inputs_selection.configure(&neural_network, &dataset, 2);
+    inputs_selection.configure(&network, &dataset, 2);
 
-    EXPECT_EQ(neural_network.get_input_shape(), (Shape{3, 2}));
-    const vector<Variable>& input_variables = neural_network.get_input_variables();
+    EXPECT_EQ(network.get_input_shape(), (Shape{3, 2}));
+    const vector<Variable>& input_variables = network.get_input_variables();
     ASSERT_EQ(input_variables.size(), 6);
     EXPECT_EQ(input_variables.front().name, "temperature_lag0");
     EXPECT_EQ(input_variables.back().name, "pressure_lag2");
@@ -79,9 +79,9 @@ TEST(ModelSelectionTest, ConfiguresForecastingInputsThroughDatasetContract)
 
 TEST(ModelSelectionTest, AppliesInputScalingThroughEndpointContract)
 {
-    ApproximationNetwork neural_network({2}, {}, {1});
+    ApproximationNetwork network({2}, {}, {1});
     auto* const endpoint = dynamic_cast<FeatureScalingEndpoint*>(
-        neural_network.get_layers().front().get());
+        network.get_layers().front().get());
     ASSERT_NE(endpoint, nullptr);
 
     FeatureScaling current = endpoint->get_feature_scaling();
@@ -97,7 +97,7 @@ TEST(ModelSelectionTest, AppliesInputScalingThroughEndpointContract)
         ScalerMethod::MeanStandardDeviation,
         ScalerMethod::MinimumMaximum};
 
-    apply_input_scaling(&neural_network, selected);
+    apply_input_scaling(&network, selected);
 
     const FeatureScaling actual = endpoint->get_feature_scaling();
     EXPECT_EQ(actual.scalers, selected.scalers);

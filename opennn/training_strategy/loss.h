@@ -9,8 +9,8 @@
 #pragma once
 
 #include "opennn/core/device_backend.h"
-#include "opennn/neural_network/neural_network.h"
-#include "opennn/neural_network/back_propagation.h"
+#include "opennn/network/network.h"
+#include "opennn/network/back_propagation.h"
 
 namespace opennn
 {
@@ -57,18 +57,18 @@ public:
         return regularization_map().from_string(name);
     }
 
-    explicit Loss(NeuralNetwork* = nullptr, Dataset* = nullptr);
+    explicit Loss(Network* = nullptr, Dataset* = nullptr);
 
     virtual ~Loss() = default;
 
-    const NeuralNetwork* get_neural_network() const noexcept
+    const Network* get_network() const noexcept
     {
-        return neural_network;
+        return network;
     }
 
-    NeuralNetwork* get_neural_network()
+    Network* get_network()
     {
-        return neural_network;
+        return network;
     }
 
     const Dataset* get_dataset() const noexcept
@@ -81,9 +81,9 @@ public:
         return dataset;
     }
 
-    void set(NeuralNetwork* = nullptr, Dataset* = nullptr);
+    void set(Network* = nullptr, Dataset* = nullptr);
 
-    void set_neural_network(NeuralNetwork* new_neural_network) { neural_network = new_neural_network; }
+    void set_network(Network* new_network) { network = new_network; }
 
     virtual void set_dataset(Dataset* new_dataset) { dataset = new_dataset; }
 
@@ -171,7 +171,7 @@ protected:
     Regularization regularization_method = Regularization::NoRegularization;
     float regularization_weight = 0.001f;
 
-    NeuralNetwork* neural_network = nullptr;
+    Network* network = nullptr;
     Dataset* dataset = nullptr;
 
     string name = "Loss";
@@ -181,14 +181,14 @@ private:
     void add_regularization_gradient(const TensorView&,
                                      Index parameter_offset) const;
 
-    void check_neural_network() const
+    void check_network() const
     {
-        throw_if(!neural_network, "Loss error: neural network is not set.");
+        throw_if(!network, "Loss error: neural network is not set.");
     }
 
     bool runs_on_gpu() const noexcept
     {
-        return device::is_cuda_build() && neural_network && neural_network->is_gpu();
+        return device::is_cuda_build() && network && network->is_gpu();
     }
 
     bool has_regularization() const noexcept

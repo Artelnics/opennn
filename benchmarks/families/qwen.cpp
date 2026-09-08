@@ -24,10 +24,10 @@
 #include "opennn/core/profiler.h"
 #include "opennn/core/tensor_types.h"
 #include "opennn/models/models.h"
-#include "opennn/neural_network/chat.h"
-#include "opennn/neural_network/forward_propagation.h"
-#include "opennn/neural_network/neural_network.h"
-#include "opennn/neural_network/operators/tokenizer_operator.h"
+#include "opennn/network/chat.h"
+#include "opennn/network/forward_propagation.h"
+#include "opennn/network/network.h"
+#include "opennn/network/operators/tokenizer_operator.h"
 
 using namespace opennn;
 using namespace std;

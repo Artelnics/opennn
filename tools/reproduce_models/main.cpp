@@ -4,7 +4,7 @@
 #include "opennn/core/random_utilities.h"
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/models/models.h"
-#include "opennn/neural_network/model_expression.h"
+#include "opennn/network/model_expression.h"
 #include "opennn/training_strategy/adaptive_moment_estimation.h"
 #include "opennn/training_strategy/training_strategy.h"
 
@@ -41,7 +41,7 @@ int main(int argc, char** argv)
             dataset.set_sample_role(i, role);
             split << i << ',' << role << '\n';
         }
-        unique_ptr<NeuralNetwork> network;
+        unique_ptr<Network> network;
         if (classification)
             network = make_unique<ClassificationNetwork>(dataset.get_input_shape(), Shape{16}, dataset.get_target_shape());
         else
@@ -90,7 +90,7 @@ int main(int argc, char** argv)
             throw runtime_error("Reference model does not meet the documented held-out quality threshold: " + to_string(quality));
 
         network->save(output / "model.json"); // Writes the paired model.bin as well.
-        NeuralNetwork restored;
+        Network restored;
         restored.load(output / "model.json");
         const MatrixR reloaded = restored.calculate_outputs(inputs);
         const float error = (predictions - reloaded).cwiseAbs().maxCoeff();

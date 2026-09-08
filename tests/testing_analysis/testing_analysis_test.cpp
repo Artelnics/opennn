@@ -18,10 +18,10 @@ TEST(TestingAnalysis, ErrorData)
     dataset.set_data_constant(type(0));
     dataset.set_sample_roles("Testing");
 
-    ApproximationNetwork neural_network({ inputs_number }, {}, { targets_number });
-    neural_network.set_parameters_random();
+    ApproximationNetwork network({ inputs_number }, {}, { targets_number });
+    network.set_parameters_random();
 
-    TestingAnalysis testing_analysis(&neural_network, &dataset);
+    TestingAnalysis testing_analysis(&network, &dataset);
 
     Tensor3 error_data = testing_analysis.calculate_error_data();
 
@@ -43,10 +43,10 @@ TEST(TestingAnalysis, PercentageErrorData)
     dataset.set_data_constant(type(0));
     dataset.set_sample_roles("Testing");
 
-    ApproximationNetwork neural_network({inputs_number}, {}, {targets_number});
-    neural_network.set_parameters_random();
+    ApproximationNetwork network({inputs_number}, {}, {targets_number});
+    network.set_parameters_random();
 
-    TestingAnalysis testing_analysis(&neural_network, &dataset);
+    TestingAnalysis testing_analysis(&network, &dataset);
     error_data = testing_analysis.calculate_percentage_error_data();
 
     EXPECT_EQ(error_data.size(), 1);
@@ -63,10 +63,10 @@ TEST(TestingAnalysis, ErrorDataDescriptives)
     dataset.set_data_constant(type(0));
     dataset.set_sample_roles("Testing");
 
-    ApproximationNetwork neural_network({ inputs_number }, {}, { targets_number });
-    neural_network.set_parameters_random();
+    ApproximationNetwork network({ inputs_number }, {}, { targets_number });
+    network.set_parameters_random();
 
-    TestingAnalysis testing_analysis(&neural_network, &dataset);
+    TestingAnalysis testing_analysis(&network, &dataset);
 
     const vector<vector<Descriptives>> error_data_descriptives =
         testing_analysis.calculate_error_data_descriptives();
@@ -89,10 +89,10 @@ TEST(TestingAnalysis, ErrorDataHistograms)
     dataset.set_data_constant(type(0));
     dataset.set_sample_roles("Testing");
 
-    ApproximationNetwork neural_network({inputs_number}, {}, {targets_number});
-    neural_network.set_parameters_random();
+    ApproximationNetwork network({inputs_number}, {}, {targets_number});
+    network.set_parameters_random();
 
-    TestingAnalysis testing_analysis(&neural_network, &dataset);
+    TestingAnalysis testing_analysis(&network, &dataset);
     error_data_histograms = testing_analysis.calculate_error_data_histograms();
 
     EXPECT_EQ(error_data_histograms.size(), 1);
@@ -218,9 +218,9 @@ TEST(TestingAnalysis, BinaryClassificationTests)
 
     dataset.set_sample_roles("Testing");
 
-    ClassificationNetwork neural_network({1}, {1}, {1});
+    ClassificationNetwork network({1}, {1}, {1});
 
-    TestingAnalysis testing_analysis(&neural_network, &dataset);
+    TestingAnalysis testing_analysis(&network, &dataset);
 
     VectorR binary = testing_analysis.calculate_binary_classification_tests();
 
@@ -241,11 +241,11 @@ TEST(TestingAnalysis, PrintsMultipleClassificationTests)
     dataset.set_data(data);
     dataset.set_sample_roles("Testing");
 
-    ClassificationNetwork neural_network({1}, {}, {3});
-    neural_network.set_parameters(VectorR::Zero(
-        neural_network.get_parameters_buffer_size()));
+    ClassificationNetwork network({1}, {}, {3});
+    network.set_parameters(VectorR::Zero(
+        network.get_parameters_buffer_size()));
 
-    TestingAnalysis testing_analysis(&neural_network, &dataset);
+    TestingAnalysis testing_analysis(&network, &dataset);
 
     testing::internal::CaptureStdout();
     testing_analysis.print_multiple_classification_tests();
@@ -261,8 +261,8 @@ TEST(TestingAnalysis, RejectsBinaryNetworkForMultipleClassificationTests)
     dataset.set_data_constant(0.0f);
     dataset.set_sample_roles("Testing");
 
-    ClassificationNetwork neural_network({1}, {}, {1});
-    TestingAnalysis testing_analysis(&neural_network, &dataset);
+    ClassificationNetwork network({1}, {}, {1});
+    TestingAnalysis testing_analysis(&network, &dataset);
 
     EXPECT_THROW(testing_analysis.print_multiple_classification_tests(), runtime_error);
 }
