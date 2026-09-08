@@ -16,12 +16,25 @@ option(OpenNN_BUILD_TESTS "Build OpenNN tests" ON)
 option(OpenNN_BUILD_EXAMPLES "Build OpenNN examples" ON)
 option(OpenNN_BUILD_BENCHMARKS "Build OpenNN benchmark targets" OFF)
 option(OpenNN_CHECK_HEADERS "Compile each OpenNN header in isolation" OFF)
+option(OpenNN_BUILD_FUZZERS "Build Clang libFuzzer targets" OFF)
 
 if(OpenNN_BUILD_TESTS OR OpenNN_CHECK_HEADERS)
     enable_testing()
 endif()
 
 add_subdirectory(opennn)
+
+if(OpenNN_BUILD_FUZZERS)
+    if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR MSVC)
+        message(FATAL_ERROR "OpenNN_BUILD_FUZZERS requires Clang with libFuzzer support")
+    endif()
+    add_executable(opennn_json_fuzz tools/fuzz/json_fuzz.cpp)
+    target_link_libraries(opennn_json_fuzz PRIVATE opennn)
+    target_compile_options(opennn_json_fuzz PRIVATE
+        -fsanitize=fuzzer,address,undefined -fno-omit-frame-pointer)
+    target_link_options(opennn_json_fuzz PRIVATE
+        -fsanitize=fuzzer,address,undefined -fno-omit-frame-pointer)
+endif()
 
 if(OpenNN_BUILD_TESTS)
     add_subdirectory(tests)
@@ -50,6 +63,6 @@ if(OpenNN_INSTALL)
         set(_opennn_package_backend cpu)
     endif()
     set(CPACK_PACKAGE_FILE_NAME
-        "OpenNN-${PROJECT_VERSION}-candidate-${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}-${_opennn_package_backend}")
+        "OpenNN-${PROJECT_VERSION}-candidate-${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}-${OpenNN_CPU_TARGET}-${_opennn_package_backend}")
     include(CPack)
 endif()

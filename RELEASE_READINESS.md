@@ -26,11 +26,15 @@ No public API was removed based on absence of local callers.
   suites. Historical results are not substitutes for the candidate's results.
 - `python tools/check_dataset_manifest.py` must pass. The stronger `--release`
   check must also pass before publishing an archive containing all data.
+- `python tools/check_release_scope.py --package-kind binary` must pass for the
+  CMake/CPack package. A full-source archive remains blocked until every tracked
+  asset's redistribution record is cleared.
 - Resolve the data/derivative permission records listed in `DATASETS.md`, or
   provide reviewed reproducible replacements. Existing data is retained.
-- Convert and validate representative production 8.x models using the migration
-  procedure. There is no general XML/NDM converter or blanket model-compatibility
-  certification.
+- If a complete production 8.x model becomes available, convert and validate it
+  using the migration procedure. None exists in the repository or elsewhere, so
+  9.0 explicitly makes no historical model-compatibility claim; this limitation
+  is enforced by `RELEASE_SCOPE.json` rather than represented as completed work.
 - Confirm the changelog describes the final contents, then create an annotated
   `v9.0.0` tag on the reviewed master commit and publish matching artifacts.
 
