@@ -42,6 +42,22 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Reject a toolchain without OpenMP
+        run: |
+          if cmake -S . -B build-no-openmp -G Ninja \
+              -DOpenNN_DISABLE_CUDA=ON \
+              -DOpenNN_BUILD_TESTS=OFF \
+              -DOpenNN_BUILD_EXAMPLES=OFF \
+              -DOpenNN_BUILD_BENCHMARKS=OFF \
+              -DCMAKE_DISABLE_FIND_PACKAGE_OpenMP=ON \
+              > missing-openmp.log 2>&1; then
+            cat missing-openmp.log
+            echo "Configuration unexpectedly accepted a toolchain without OpenMP."
+            exit 1
+          fi
+          cat missing-openmp.log
+          grep -F "OpenNN requires OpenMP C++ support" missing-openmp.log
+
       - name: Configure without vision and sequence models
         run: >
           cmake -S . -B build-core -G Ninja

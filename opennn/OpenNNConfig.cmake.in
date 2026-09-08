@@ -20,7 +20,7 @@ endif()
 find_dependency(Eigen3 5.0)
 
 if(@_opennn_needs_openmp@)
-    find_dependency(OpenMP)
+    find_dependency(OpenMP COMPONENTS CXX)
 endif()
 
 find_dependency(ZLIB CONFIG COMPONENTS static)

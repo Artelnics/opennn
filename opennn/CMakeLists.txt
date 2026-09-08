@@ -29,6 +29,27 @@ list(PREPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/core/cuda")
 include(FetchContent)
 include(CheckLanguage)
 
+if(APPLE)
+    find_path(LIBOMP_INCLUDE_DIR omp.h
+        PATHS /opt/homebrew/opt/libomp/include /usr/local/opt/libomp/include)
+    find_library(LIBOMP_LIBRARY NAMES omp libomp.dylib
+        PATHS /opt/homebrew/opt/libomp/lib /usr/local/opt/libomp/lib)
+    if(NOT LIBOMP_INCLUDE_DIR OR NOT LIBOMP_LIBRARY)
+        message(FATAL_ERROR
+            "OpenNN requires OpenMP C++ support. Install libomp (for example, "
+            "with 'brew install libomp') or set LIBOMP_INCLUDE_DIR and "
+            "LIBOMP_LIBRARY to an existing libomp installation.")
+    endif()
+else()
+    find_package(OpenMP QUIET COMPONENTS CXX)
+    if(NOT OpenMP_CXX_FOUND)
+        message(FATAL_ERROR
+            "OpenNN requires OpenMP C++ support. Install the OpenMP development "
+            "runtime for the selected compiler, or select a C++ compiler with "
+            "OpenMP support.")
+    endif()
+endif()
+
 if(NOT OpenNN_DISABLE_CUDA)
     check_language(CUDA)
 endif()
@@ -93,18 +114,6 @@ if(OpenNN_CHECK_HEADERS AND NOT MSVC)
                 "${CMAKE_CXX_COMPILER}"
                 "${PROJECT_SOURCE_DIR}"
                 "$<TARGET_PROPERTY:Eigen3::Eigen,INTERFACE_INCLUDE_DIRECTORIES>")
-endif()
-
-if(APPLE)
-    find_path(LIBOMP_INCLUDE_DIR omp.h
-        PATHS /opt/homebrew/opt/libomp/include /usr/local/opt/libomp/include)
-    find_library(LIBOMP_LIBRARY NAMES omp libomp.dylib
-        PATHS /opt/homebrew/opt/libomp/lib /usr/local/opt/libomp/lib)
-    if(NOT LIBOMP_INCLUDE_DIR OR NOT LIBOMP_LIBRARY)
-        message(WARNING "OpenMP not found. Continuing without OpenMP support.")
-    endif()
-else()
-    find_package(OpenMP)
 endif()
 
 file(GLOB_RECURSE CPP_SOURCES CONFIGURE_DEPENDS "*.cpp")
@@ -349,12 +358,10 @@ if(APPLE)
         $<BUILD_INTERFACE:-fexperimental-library>)
     target_link_options(opennn PUBLIC
         $<BUILD_INTERFACE:-fexperimental-library>)
-    if(LIBOMP_INCLUDE_DIR AND LIBOMP_LIBRARY)
-        target_compile_options(opennn PRIVATE -Xpreprocessor -fopenmp)
-        target_include_directories(opennn SYSTEM PRIVATE "${LIBOMP_INCLUDE_DIR}")
-        target_link_libraries(opennn PUBLIC "${LIBOMP_LIBRARY}")
-    endif()
-elseif(OpenMP_FOUND)
+    target_compile_options(opennn PRIVATE -Xpreprocessor -fopenmp)
+    target_include_directories(opennn SYSTEM PRIVATE "${LIBOMP_INCLUDE_DIR}")
+    target_link_libraries(opennn PUBLIC "${LIBOMP_LIBRARY}")
+else()
     # MSVC's plain -openmp is OpenMP 2.0 and rejects `#pragma omp simd` with
     # C7660, which stops the whole build the first time a kernel uses one.
     # -openmp:experimental is the same runtime plus the OpenMP 3/4 constructs,
@@ -575,7 +582,7 @@ if(OpenNN_INSTALL)
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenNN)
 
     set(_opennn_needs_openmp OFF)
-    if(NOT APPLE AND OpenMP_FOUND AND NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    if(NOT APPLE AND NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         set(_opennn_needs_openmp ON)
     endif()
     set(_opennn_needs_cudnn OFF)

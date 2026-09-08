@@ -46,6 +46,8 @@ remaining limitations.
 
 ### Reliability and portability
 
+- Fail configuration immediately when the selected C++ toolchain lacks the
+  required OpenMP runtime, instead of producing an unusable library.
 - Build, install and consume the core package with vision and sequence models
   disabled; retain the generic `Network` chat path in that configuration.
 - Reject non-finite embedded JSON weights before copying parameters, with an
