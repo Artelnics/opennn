@@ -149,3 +149,69 @@ a master release.
 
 Raw build and test logs and generated export files are retained outside the
 checkout. Optional backend skips are reported separately from passing tests.
+
+## 2026-09-08: reconciled 9.0.0 candidate
+
+Candidate `c8d919c72914c0ff61f91788be00002a496c08b9` merges development
+`5840396e9` and master `efd566b38`. All 98 conflicted paths have recorded
+resolutions in `MERGE_RECONCILIATION.md`. Master is an ancestor of the
+reconciled development branch. Versioning targets 9.0.0; no tag was published.
+
+- Windows MSVC 19.50 CPU: 1,071 unit tests ran; 1,030 passed and 41 skipped
+  (GPU/optional facilities). All 26 response-optimization scenarios passed.
+- Windows relocated-package consumer: configured, built and ran against
+  OpenNN 9.0. This local build reused an external Eigen package, supplied
+  explicitly to the consumer; hosted CI checks the fetched-dependency case.
+- Linux CPU on the GPU runner: 1,030 passed, 41 skipped.
+- Linux CUDA: 1,189 tests ran; 1,179 passed and 10 skipped for optional
+  facilities. All 26 CUDA response-optimization scenarios also passed.
+  One explicitly disabled test remains in the suite.
+- JavaScript is executed with Node 24: all dense activations, difficult feature
+  labels, categorical one-hot controls and six-output dropdown updates agree
+  with native inference. Exporting does not rename the source network.
+- New regressions cover all-missing histogram bins, genetic initialization
+  JSON/legacy defaults, and atomic class labels with sequence truncation.
+- The final documentation inventory passes for 14 groups / 10,131 indexed
+  files, including three added per-dataset attribution notices. The separate
+  `--release` clearance gate remains intentionally failing for 11 groups.
+  Airfoil, both breast-cancer CSVs and all 10,000 MNIST test images have verified sources, transformations
+  and attribution. Other sources/derivatives still need the records in DATASETS.md.
+
+Local Clang 17 ASan/UBSan verification also passed both executables:
+unit suite 340.55 seconds, integration suite 301.03 seconds, with
+`detect_leaks=1:halt_on_error=1:allocator_may_return_null=1` and
+`halt_on_error=1:print_stacktrace=1`. This reused the external WSL build cache
+against the same candidate source.
+
+The first hosted sanitizer attempt was cancelled after a 44-minute build
+with several six-to-eight-minute gaps compiling unchanged files and no
+compiler error. Only that job was retried on a fresh worker; the other
+successful jobs were retained.
+
+Hosted results for code commit `c8d919c72`:
+
+- [Main CI, run 34167608153](https://github.com/Artelnics/opennn/actions/runs/34167608153):
+  GCC 13 CPU, Clang 17 CPU, Windows MSVC 2022 CPU and CUDA 12.9 compilation
+  passed. The CPU jobs include relocated-package consumers.
+- [Linux CUDA, run 34167608171](https://github.com/Artelnics/opennn/actions/runs/34167608171):
+  full CPU and CUDA verification passed, including both integration runs.
+- Hosted ASan/UBSan retry
+  [job 101888844903](https://github.com/Artelnics/opennn/actions/runs/34167608153/job/101888844903)
+  was still building when this record was written. Its final result is pending;
+  the successful local sanitizer run is not represented as a hosted CI pass.
+  Check the linked run before promoting the candidate.
+
+The attribution/manifest follow-up `adad276c3` changes documentation and data
+notices only. Its 14-group inventory was checked locally. That commit and this
+verification record use `[skip ci]`; the executable code verified above is
+unchanged. These records do not claim a completed six-job green matrix.
+
+Neural Designer validation is deferred at the owner's request. No general
+8.x XML/NDM conversion or representative production-model compatibility is
+claimed. The merge retains 9.x time-series window-start indexing, documented
+as a behavior change. These limitations and dataset clearance remain release
+publication work, independent of the engineering test results.
+
+The prior targeted CUDA memory checks apply to their recorded earlier commit;
+this reconciliation did not change CUDA memory-management code. They were not
+rerun as part of this batch. Raw logs remain outside Git.
