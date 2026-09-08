@@ -8,6 +8,9 @@ remaining limitations.
 
 ### Reconciliation and release preparation
 
+- Separate CSV parsing, column/type inference and binary-cache ingestion into
+  `tabular_dataset_io.cpp`. The public `TabularDataset` API, parsing behavior,
+  allocations and data layouts are unchanged.
 - Separate network JSON, snapshots and save/load recovery into `network_io.cpp`.
   Shared setup helpers remain private and inline; the public `Network` API,
   file formats, execution kernels and buffer layouts are unchanged.
