@@ -65,6 +65,12 @@ Current-format round trips and malformed binary rejection are tested. Those
 tests do not certify arbitrary historical models. Real 8.x artifact conversion
 remains application-specific work; no converter is claimed by this release.
 
+Raw parameter snapshots use the compiled storage layout, including alignment
+padding. `get_parameters_number()` reports the logical count;
+`get_parameters_buffer_size()` reports the size expected by `set_parameters`.
+Prefer the paired model save/load APIs for persistence. Buffer sizes alone
+still do not establish that two models use the same parameter ordering.
+
 ### Available historical artifacts reviewed
 
 The example assets in tags `v8.0.0`, `v8.0.1` and master `efd566b38` were
@@ -73,6 +79,8 @@ files are dataset caches. `time_series_data_set.xml` describes a dataset, not
 a neural-network topology. The Madrid `_Params.bin` has no matching saved
 network architecture, feature/scaling contract and reference predictions in
 those assets. These files do not form a complete production-model migration case.
+The owner confirmed that no complete external 8.x reference model is available
+for this review, so production-model migration remains unverified.
 
 The current concrete JSON/binary pair is exercised by response-optimization
 integration tests, but that is current-format validation. The independently

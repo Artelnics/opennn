@@ -67,3 +67,8 @@ or standard libraries are not promised; compare predictions and recorded setting
 These are newly trained reference models, not reconstructed copies of the
 historical bundled models or substitutes for their missing provenance. They are
 not production-model migration evidence. Generated models remain outside Git.
+
+Linux GCC CI runs the Iris/concrete source reconstruction and repeated model
+verification against its freshly installed OpenNN package. Its reports are
+retained as workflow artifacts; generated datasets and model binaries are not
+uploaded by that job.

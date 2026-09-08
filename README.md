@@ -256,3 +256,7 @@ This checkout prepares **9.0.0**; no final release is implied. See
 [MIGRATION.md](MIGRATION.md) for 8.x source/model migration,
 [DATASETS.md](DATASETS.md) for dataset attribution and unresolved permissions,
 and [RELEASE_READINESS.md](RELEASE_READINESS.md) for publication gates.
+
+[Reproduction recipes](tools/REPRODUCTION.md) rebuild verified datasets and
+train repeatable reference models. [Packaging instructions](tools/PACKAGING.md)
+describe candidate archives, checksums and validation from an extracted package.
