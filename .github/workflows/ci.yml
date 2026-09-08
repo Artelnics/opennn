@@ -195,6 +195,7 @@ jobs:
         run: ctest --test-dir build-sanitizers --output-on-failure
       - name: Preserve test log
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: sanitizer-test-log
