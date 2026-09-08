@@ -10,6 +10,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstdint>
 #include <cstring>
 #include <utility>
@@ -1718,6 +1719,11 @@ void NeuralNetwork::from_JSON(const JsonDocument& document)
              "(got {}, expected {}). Supply the complete compiled parameter buffer, "
              "including alignment padding.",
              json_parameters.size(), parameters.size_in_floats());
+
+    for (Index i = 0; i < json_parameters.size(); ++i)
+        throw_if(!std::isfinite(json_parameters(i)),
+                 "NeuralNetwork::from_JSON: non-finite embedded parameter at index {}. "
+                 "All embedded parameter values must be finite.", i);
 
     const HostParametersGuard guard(*this);
     std::copy_n(json_parameters.data(), json_parameters.size(), parameters.as<float>());

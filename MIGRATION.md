@@ -79,6 +79,9 @@ number of values, including alignment padding. Too few or too many values now
 raise an error before any embedded weights are copied; the previous warning and
 partial-copy behavior is no longer accepted. Whitespace-only text has zero values
 and is rejected for a model requiring parameters.
+Embedded parameter values must also be finite: NaN and positive or negative
+infinity now raise an error identifying the zero-based buffer index before any
+embedded weights are copied. This check applies to alignment padding as well.
 For intentional architecture-only loading, use a new network explicitly:
 
 ```cpp

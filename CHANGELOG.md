@@ -21,6 +21,8 @@ remaining limitations.
 
 ### Reliability and portability
 
+- Reject non-finite embedded JSON weights before copying parameters, with an
+  error identifying the invalid value's index.
 - Reject embedded JSON parameter-count mismatches before copying weights,
   replacing the previous warning and partial copy.
 - Reject model loading when both the matching parameter file and embedded JSON

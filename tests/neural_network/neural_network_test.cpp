@@ -746,7 +746,100 @@ TEST(NeuralNetworkTest, EmbeddedParameterCountsAreExact)
     validate_embedded_parameter_counts(Device::CPU);
 }
 
+namespace
+{
+
+void validate_finite_embedded_parameters(Device device)
+{
+    Configuration::instance().set(device, Type::FP32);
+    const filesystem::path path = filesystem::temp_directory_path()
+        / (device == Device::CPU ? "opennn_finite_parameters_cpu.json"
+                                 : "opennn_finite_parameters_cuda.json");
+    filesystem::path binary_path = path;
+    binary_path.replace_extension(".bin");
+    filesystem::remove(binary_path);
+
+    NeuralNetwork original;
+    original.add_layer(make_unique<opennn::Dense>(Shape{1}, Shape{1}, "Identity"));
+    original.compile();
+    const Index count = original.get_parameters_buffer_size();
+    ASSERT_GT(count, 1);
+    save_json_file(path, original);
+    JsonDocument document = load_json_file(path);
+
+    for (const string token : {"nan", "inf", "-inf"})
+    for (const Index invalid_index : {Index(0), count - 1})
+    {
+        SCOPED_TRACE(token);
+        SCOPED_TRACE(invalid_index);
+        string values;
+        for (Index i = 0; i < count; ++i)
+            values += (i == invalid_index ? token : "1") + " ";
+        document.get_root()["NeuralNetwork"]["Parameters"]["Values"] = Json(values);
+        document.save(path);
+
+        for (const bool from_file : {false, true})
+        {
+            SCOPED_TRACE(from_file);
+            NeuralNetwork loaded;
+            try
+            {
+                if (from_file) loaded.load(path);
+                else loaded.from_JSON(document);
+                ADD_FAILURE() << "Non-finite embedded parameter was accepted";
+            }
+            catch (const runtime_error& error)
+            {
+                EXPECT_NE(string(error.what()).find(
+                    format("non-finite embedded parameter at index {}", invalid_index)), string::npos);
+            }
+            ASSERT_EQ(loaded.get_parameters_buffer_size(), count);
+            EXPECT_EQ(loaded.get_device(), device);
+            loaded.copy_parameters_host();
+            // Even a non-finite last entry must be rejected before copying a prefix.
+            for (Index i = 0; i < count; ++i)
+                EXPECT_FLOAT_EQ(loaded.get_parameters_data()[i], 0.0f);
+        }
+    }
+
+    // Extreme finite values remain valid weights, as do signed zero and tiny values.
+    for (const auto& [token, expected] : vector<pair<string, float>>{
+             {"-0", -0.0f},
+             {"1.17549435e-38", numeric_limits<float>::min()},
+             {"3.402823466e+38", numeric_limits<float>::max()},
+             {"-3.402823466e+38", numeric_limits<float>::lowest()}})
+    {
+        SCOPED_TRACE(token);
+        string values = token + " ";
+        for (Index i = 1; i < count; ++i) values += "0 ";
+        document.get_root()["NeuralNetwork"]["Parameters"]["Values"] = Json(values);
+        document.save(path);
+        for (const bool from_file : {false, true})
+        {
+            NeuralNetwork loaded;
+            if (from_file) loaded.load(path);
+            else loaded.from_JSON(document);
+            loaded.copy_parameters_host();
+            EXPECT_FLOAT_EQ(loaded.get_parameters_data()[0], expected);
+        }
+    }
+    filesystem::remove(path);
+}
+
+}
+
+TEST(NeuralNetworkTest, EmbeddedParametersMustBeFinite)
+{
+    validate_finite_embedded_parameters(Device::CPU);
+}
+
 #ifdef OPENNN_HAS_CUDA
+TEST(NeuralNetworkTest, EmbeddedParametersMustBeFiniteOnCuda)
+{
+    if (!device::has_cuda_device()) GTEST_SKIP() << "No CUDA device.";
+    validate_finite_embedded_parameters(Device::CUDA);
+}
+
 TEST(NeuralNetworkTest, EmbeddedParameterCountsAreExactOnCuda)
 {
     if (!device::has_cuda_device()) GTEST_SKIP() << "No CUDA device.";
