@@ -14,9 +14,13 @@ namespace opennn
 {
 
 class Network;
+#ifndef OPENNN_NO_VISION
 class TextGenerationNetwork;
+#endif
 class TokenizerOperator;
+#ifndef OPENNN_NO_VISION
 class Transformer;
+#endif
 struct ForwardPropagation;
 
 enum class ReasoningMode
@@ -193,8 +197,10 @@ public:
 
     static constexpr Index PREFILL_BLOCK_SIZE = 1024;
 
+#ifndef OPENNN_NO_VISION
     explicit ChatSession(Transformer&);
     explicit ChatSession(TextGenerationNetwork&);
+#endif
 
     ChatSession(Network&,
                 const TokenizerOperator&,

@@ -317,8 +317,10 @@ public:
 
 #endif
 
+#ifndef OPENNN_NO_VISION
 Index load_darknet_backbone(Network&, const filesystem::path&, Index);
 Index load_darknet_backbone_v11(Network&, const filesystem::path&);
+#endif
 
 }
 

@@ -46,6 +46,8 @@ remaining limitations.
 
 ### Reliability and portability
 
+- Build, install and consume the core package with vision and sequence models
+  disabled; retain the generic `Network` chat path in that configuration.
 - Reject non-finite embedded JSON weights before copying parameters, with an
   error identifying the invalid value's index.
 - Reject embedded JSON parameter-count mismatches before copying weights,

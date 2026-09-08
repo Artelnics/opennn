@@ -757,6 +757,8 @@ bool remove_oldest_turn(vector<ChatMessage>& messages)
     return true;
 }
 
+#ifndef OPENNN_NO_VISION
+
 enum class ClassicSessionKind
 {
     SequenceToSequence,
@@ -993,10 +995,13 @@ void read_classic_distribution(ClassicGenerationState& state,
     softmax_in_place(state.distribution, vocabulary);
 }
 
+#endif
+
 }
 
 struct ChatSession::Impl
 {
+#ifndef OPENNN_NO_VISION
     explicit Impl(Transformer& new_network)
         : network(&new_network),
           tokenizer(new_network.get_target_tokenizer()),
@@ -1016,6 +1021,7 @@ struct ChatSession::Impl
         classic = make_decoder_only_state(new_network);
         vocabulary = classic->distribution.size();
     }
+#endif
 
     Impl(Network& new_network,
          const TokenizerOperator& new_tokenizer,
@@ -1231,7 +1237,9 @@ struct ChatSession::Impl
     Network* network = nullptr;
     const TokenizerOperator* tokenizer = nullptr;
     unique_ptr<ChatTemplate> chat_template;
+#ifndef OPENNN_NO_VISION
     unique_ptr<ClassicGenerationState> classic;
+#endif
     bool gpu = false;
     bool execution_trimmed = false;
     Index context_length = 0;
@@ -1250,6 +1258,8 @@ struct ChatSession::Impl
     unique_ptr<SpeculativeDraft> draft;
 };
 
+#ifndef OPENNN_NO_VISION
+
 ChatSession::ChatSession(Transformer& network)
     : impl(make_unique<Impl>(network))
 {
@@ -1259,6 +1269,8 @@ ChatSession::ChatSession(TextGenerationNetwork& network)
     : impl(make_unique<Impl>(network))
 {
 }
+
+#endif
 
 ChatSession::ChatSession(
     Network& network,
@@ -1274,8 +1286,10 @@ ChatSession::~ChatSession() = default;
 
 void ChatSession::attach_draft_model(Network& draft_network, Index draft_tokens)
 {
+#ifndef OPENNN_NO_VISION
     throw_if(impl->classic != nullptr,
              "ChatSession::attach_draft_model: unsupported session type.");
+#endif
     throw_if(!impl->gpu,
              "ChatSession::attach_draft_model: speculative decoding requires the GPU session.");
     throw_if(draft_tokens < 1,
@@ -1364,6 +1378,8 @@ void ChatSession::attach_draft_model(Network& draft_network, Index draft_tokens)
 
 namespace
 {
+
+#ifndef OPENNN_NO_VISION
 
 struct ClassicDecodeLoop
 {
@@ -1557,6 +1573,8 @@ ChatResponse send_classic_decoder(
     return loop.finish();
 }
 
+#endif
+
 }
 
 ChatResponse ChatSession::send(
@@ -1572,12 +1590,14 @@ ChatResponse ChatSession::send(
     const SamplingConfig sampling =
         options.sampling.value_or(default_sampling(mode));
 
+#ifndef OPENNN_NO_VISION
     if (impl->classic)
         return impl->classic->kind == ClassicSessionKind::SequenceToSequence
             ? send_sequence_to_sequence(
                   *impl->classic, user_message, sampling, callback)
             : send_classic_decoder(
                 *impl->classic, user_message, sampling, callback);
+#endif
 
     if (impl->execution_trimmed)
     {
@@ -1864,9 +1884,11 @@ void ChatSession::chat(const ChatOptions& options)
 void ChatSession::set_messages(
     const vector<ChatMessage>& messages)
 {
+#ifndef OPENNN_NO_VISION
     throw_if(impl->classic != nullptr,
              "ChatSession::set_messages: this session has no "
              "semantic conversation history.");
+#endif
     throw_if(!valid_complete_history(messages),
              "ChatSession::set_messages: expected leading system "
              "messages followed by complete user/assistant turns.");
@@ -1883,18 +1905,23 @@ void ChatSession::clear()
 {
     impl->messages.clear();
     impl->cached_tokens.clear();
+#ifndef OPENNN_NO_VISION
     if (impl->classic)
     {
         impl->classic->history.clear();
         return;
     }
+#endif
     impl->prefill.past_length = 0;
     impl->decode.past_length = 0;
 }
 
 void ChatSession::trim()
 {
-    if (impl->classic || !impl->gpu || impl->execution_trimmed) return;
+#ifndef OPENNN_NO_VISION
+    if (impl->classic) return;
+#endif
+    if (!impl->gpu || impl->execution_trimmed) return;
     device::synchronize(device::get_compute_stream());
     device::synchronize(device::get_transfer_stream());
     const device::CudaBlockCacheBypass release_blocks;
@@ -1945,7 +1972,9 @@ SamplingConfig ChatSession::default_sampling(
 const ForwardPropagation&
 ChatSession::get_decode_propagation() const
 {
+#ifndef OPENNN_NO_VISION
     if (impl->classic) return *impl->classic->propagation;
+#endif
     return impl->gpu ? impl->decode : impl->prefill;
 }
 

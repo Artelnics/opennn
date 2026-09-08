@@ -14,13 +14,21 @@
 #include "opennn/core/memory_pool.h"
 #include "opennn/core/profiler.h"
 #include "opennn/core/string_utilities.h"
+
+#ifndef OPENNN_NO_VISION
 #include "opennn/network/layers/grouped_query_attention_layer.h"
+#endif
 
 namespace opennn
 {
 
 bool ForwardPropagation::reserve_kv_cache(const Index required, const Index preserved_tokens)
 {
+#ifdef OPENNN_NO_VISION
+    (void)required;
+    (void)preserved_tokens;
+    return false;
+#else
     if (!network || mode != ForwardPropagationMode::Inference
         || batch_size != 1 || !network->is_gpu()
         || network->get_training_type() != Type::BF16) return false;
@@ -86,6 +94,7 @@ bool ForwardPropagation::reserve_kv_cache(const Index required, const Index pres
     const device::CudaBlockCacheBypass release_old_buckets;
     replacements.clear();
     return true;
+#endif
 }
 
 void ForwardPropagation::release_inference_storage()
@@ -398,9 +407,12 @@ void ForwardPropagation::set(
     {
         for(size_t i = 0; i < layers_number; ++i)
         {
+#ifndef OPENNN_NO_VISION
             const auto* attention = dynamic_cast<const GroupedQueryAttention*>(layers[i].get());
+#endif
             for(size_t j = 0; j < forward_specs[i].size(); ++j)
             {
+#ifndef OPENNN_NO_VISION
                 if(layers[i]->get_forward_slot_kind(j + 1)
                        == ForwardSlotKind::TrainingOnly
                    || layers[i]->is_forward_slot_inference_elidable(
@@ -408,6 +420,13 @@ void ForwardPropagation::set(
                           network->get_device())
                    || (attention && attention->is_forward_slot_inference_elidable(
                           j + 1, network->get_device(), batch_size)))
+#else
+                if(layers[i]->get_forward_slot_kind(j + 1)
+                       == ForwardSlotKind::TrainingOnly
+                   || layers[i]->is_forward_slot_inference_elidable(
+                          j + 1,
+                          network->get_device()))
+#endif
                 {
                     forward_specs[i][j] = {};
                 }

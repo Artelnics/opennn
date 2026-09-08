@@ -24,6 +24,48 @@ env:
   OPENNN_THREADS: "4"
 
 jobs:
+  core-only:
+    name: Linux GCC (vision and sequence disabled)
+    runs-on: ubuntu-24.04
+    env:
+      CC: gcc-13
+      CXX: g++-13
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build gcc-13 g++-13
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Configure without vision and sequence models
+        run: >
+          cmake -S . -B build-core -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_FIND_USE_PACKAGE_REGISTRY=OFF
+          -DOpenNN_DISABLE_CUDA=ON
+          -DOpenNN_ENABLE_MKL=OFF
+          -DOpenNN_BUILD_VISION=OFF
+          -DOpenNN_BUILD_TESTS=OFF
+          -DOpenNN_BUILD_EXAMPLES=OFF
+          -DOpenNN_BUILD_BENCHMARKS=OFF
+
+      - name: Build and install the core package
+        run: |
+          cmake --build build-core --target opennn --parallel
+          cmake --install build-core --prefix "$PWD/core-prefix"
+          python tools/check_installed_package.py "$PWD/core-prefix"
+
+      - name: Consume the installed core package
+        run: |
+          cmake -S tools/package_smoke -B build-core/package -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/core-prefix" -DCMAKE_FIND_USE_PACKAGE_REGISTRY=OFF -DOpenNN_PACKAGE_EXPECT_NO_VISION=ON
+          cmake --build build-core/package
+          ./build-core/package/opennn_package_smoke
+
   linux:
     name: Linux ${{ matrix.compiler }} (CPU, Eigen)
     runs-on: ubuntu-24.04

@@ -1153,6 +1153,8 @@ Index Yolo::load_pretrained_backbone(
 
 #endif
 
+#ifndef OPENNN_NO_VISION
+
 namespace
 {
 
@@ -1241,6 +1243,8 @@ Index load_darknet_backbone_v11(Network& network,
 
     return loaded;
 }
+
+#endif
 
 }
 

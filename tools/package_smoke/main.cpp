@@ -3,6 +3,8 @@
 // the exported target, its include directories and its transitive
 // dependencies are all in place.
 #include "opennn/core/configuration.h"
+#include "opennn/models/models.h"
+#include "opennn/network/chat.h"
 #include "opennn/network/network.h"
 #include "opennn/network/layers/dense_layer.h"
 
@@ -13,6 +15,10 @@ extern "C"
 {
 #include <jpeglib.h>
 }
+
+#if defined(OPENNN_PACKAGE_EXPECT_NO_VISION) && !defined(OPENNN_NO_VISION)
+#error "The installed core target must export OPENNN_NO_VISION"
+#endif
 
 int main()
 {

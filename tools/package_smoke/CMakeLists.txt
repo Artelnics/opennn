@@ -14,3 +14,10 @@ find_package(OpenNN 9.0 CONFIG REQUIRED)
 add_executable(opennn_package_smoke main.cpp)
 target_link_libraries(opennn_package_smoke PRIVATE OpenNN::opennn)
 target_compile_features(opennn_package_smoke PRIVATE cxx_std_20)
+
+option(OpenNN_PACKAGE_EXPECT_NO_VISION
+    "Require the installed OpenNN target to disable vision and sequence APIs" OFF)
+if(OpenNN_PACKAGE_EXPECT_NO_VISION)
+    target_compile_definitions(opennn_package_smoke PRIVATE
+        OPENNN_PACKAGE_EXPECT_NO_VISION)
+endif()
