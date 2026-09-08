@@ -255,6 +255,13 @@ target_include_directories(opennn PUBLIC
 )
 target_link_libraries(opennn PUBLIC Eigen3::Eigen)
 
+# Restrict Eigen to its MPL-2.0 subset. OpenNN includes only Core, Dense, LU, QR
+# and Cholesky, which are MPL-2.0, plus unsupported/Eigen/CXX11/Tensor, which is
+# Apache-2.0. It uses no Sparse or OrderingMethods module, which are the parts
+# carrying LGPL-derived code. The define makes that a build-time guarantee, so an
+# LGPL-licensed Eigen module can never be pulled in by accident.
+target_compile_definitions(opennn PUBLIC EIGEN_MPL2_ONLY)
+
 # Parallel std algorithms. MSVC implements them in its own runtime; libstdc++
 # declares them (so __cpp_lib_parallel_algorithm is defined either way) but
 # resolves them through TBB at link time. Only advertise them when they will
