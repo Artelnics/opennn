@@ -44,7 +44,7 @@
 #include "opennn/dataset/image_dataset.h"
 #include "opennn/network/forward_propagation.h"
 #include "opennn/models/models.h"
-#include "opennn/training/adaptive_moment_estimation.h"
+#include "opennn/training/adam.h"
 #include "opennn/training/training.h"
 
 using namespace opennn;
@@ -115,13 +115,13 @@ Options parse_options(int argc, char* argv[], int first)
     return options;
 }
 
-AdaptiveMomentEstimation* configure(Training& strategy, Index batch)
+Adam* configure(Training& training, Index batch)
 {
-    strategy.set_loss("CrossEntropy");
-    strategy.get_loss()->set_regularization("NoRegularization");
-    strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
+    training.set_loss("CrossEntropy");
+    training.get_loss()->set_regularization("NoRegularization");
+    training.set_optimization_algorithm("Adam");
 
-    auto* adam = dynamic_cast<AdaptiveMomentEstimation*>(strategy.get_optimization_algorithm());
+    auto* adam = dynamic_cast<Adam*>(training.get_optimization_algorithm());
     adam->set_batch_size(batch);
     adam->set_display_period(1000000);
     adam->set_gradient_clip_norm(0.0f);
@@ -214,8 +214,8 @@ int main(int argc, char* argv[])
             const bool graph = options.device == Device::CUDA
                                && getenv("OPENNN_NO_CUDA_GRAPH") == nullptr;
 
-            Training strategy(network.get(), dataset.get());
-            auto* adam = configure(strategy, batch);
+            Training training(network.get(), dataset.get());
+            auto* adam = configure(training, batch);
             adam->set_cuda_graph(graph);
             adam->set_maximum_epochs(warmup + epochs);
 
@@ -245,7 +245,7 @@ int main(int argc, char* argv[])
                          << unix_now() << "\n" << defaultfloat;
             };
 
-            strategy.train();
+            training.train();
 
             if (Index(epoch_seconds.size()) != epochs)
             {
@@ -414,9 +414,9 @@ int main(int argc, char* argv[])
             auto network = build(*dataset);
             cout << "parameters=" << network->get_parameters_number() << "\n" << flush;
 
-            Training strategy(network.get(), dataset.get());
-            configure(strategy, batch)->set_maximum_epochs(1);
-            strategy.train();
+            Training training(network.get(), dataset.get());
+            configure(training, batch)->set_maximum_epochs(1);
+            training.train();
         }
         catch (const exception& error)
         {

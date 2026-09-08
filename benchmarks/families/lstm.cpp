@@ -45,9 +45,9 @@
 #include "opennn/dataset/time_series_dataset.h"
 #include "opennn/network/forward_propagation.h"
 #include "opennn/network/layers/dense_layer.h"
-#include "opennn/network/layers/long_short_term_memory_layer.h"
+#include "opennn/network/layers/lstm_layer.h"
 #include "opennn/models/models.h"
-#include "opennn/training/adaptive_moment_estimation.h"
+#include "opennn/training/adam.h"
 #include "opennn/training/training.h"
 
 using namespace opennn;
@@ -112,10 +112,10 @@ unique_ptr<Network> build_inference(const TimeSeriesDataset& dataset,
     auto network = make_unique<Network>();
     network->set_task(NetworkTask::Forecasting);
 
-    auto recurrent = make_unique<LongShortTermMemory>(dataset.get_shape("Input"),
+    auto recurrent = make_unique<LSTM>(dataset.get_shape("Input"),
                                                        Shape{options.hidden},
                                                        "Tanh", "Sigmoid",
-                                                       "long_short_term_memory_layer");
+                                                       "lstm_layer");
     recurrent->set_return_sequences(false);
     network->add_layer(std::move(recurrent));
 
@@ -186,12 +186,12 @@ Options parse_options(int argc, char* argv[], int first)
     return options;
 }
 
-AdaptiveMomentEstimation* configure(Training& strategy, Index batch)
+Adam* configure(Training& training, Index batch)
 {
-    strategy.set_loss("MeanSquaredError");
-    strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
+    training.set_loss("MeanSquaredError");
+    training.set_optimization_algorithm("Adam");
 
-    auto* adam = dynamic_cast<AdaptiveMomentEstimation*>(strategy.get_optimization_algorithm());
+    auto* adam = dynamic_cast<Adam*>(training.get_optimization_algorithm());
     adam->set_batch_size(batch);
     adam->set_display(false);
     adam->set_display_period(1000000);
@@ -259,8 +259,8 @@ int main(int argc, char* argv[])
             const bool graph = options.device == Device::CUDA
                                && getenv("OPENNN_NO_CUDA_GRAPH") == nullptr;
 
-            Training strategy(network.get(), dataset.get());
-            auto* adam = configure(strategy, batch);
+            Training training(network.get(), dataset.get());
+            auto* adam = configure(training, batch);
             adam->set_cuda_graph(graph);
             adam->set_maximum_epochs(warmup + epochs);
 
@@ -290,7 +290,7 @@ int main(int argc, char* argv[])
                          << unix_now() << "\n" << defaultfloat;
             };
 
-            strategy.train();
+            training.train();
 
             if (Index(epoch_seconds.size()) != epochs)
             {
@@ -450,9 +450,9 @@ int main(int argc, char* argv[])
             auto network = build(*dataset, options);
             describe(*dataset, *network, options);
 
-            Training strategy(network.get(), dataset.get());
-            configure(strategy, batch)->set_maximum_epochs(1);
-            strategy.train();
+            Training training(network.get(), dataset.get());
+            configure(training, batch)->set_maximum_epochs(1);
+            training.train();
         }
         catch (const exception& error)
         {

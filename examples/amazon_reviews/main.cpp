@@ -11,7 +11,7 @@
 #include "opennn/dataset/language_dataset.h"
 #include "opennn/models/models.h"
 #include "opennn/training/training.h"
-#include "opennn/testing_analysis/testing_analysis.h"
+#include "opennn/evaluation/evaluation.h"
 
 using namespace opennn;
 
@@ -41,9 +41,9 @@ int main()
 
         training.train();
 
-        TestingAnalysis testing_analysis(&text_classification_network, &language_dataset);
+        Evaluation evaluation(&text_classification_network, &language_dataset);
 
-        testing_analysis.print_binary_classification_tests();
+        evaluation.print_binary_classification_tests();
 
         const string document = "This product is amazing and I love it!";
         const auto prediction = text_classification_network.classify(document);

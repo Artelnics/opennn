@@ -9,7 +9,7 @@
 #include "opennn/network/forward_propagation.h"
 #include "opennn/training/loss.h"
 #include "opennn/core/configuration.h"
-#include "opennn/testing_analysis/testing_analysis.h"
+#include "opennn/evaluation/evaluation.h"
 
 using namespace opennn;
 
@@ -152,7 +152,7 @@ TEST(BertDatasetTest, BertClassifierGradientOnCpu)
     clean_up(vocab_path, text_path, seq);
 }
 
-TEST(BertDatasetTest, TestingAnalysisSupportsMultipleInputs)
+TEST(BertDatasetTest, EvaluationSupportsMultipleInputs)
 {
     const string vocab_path = write_lines("opennn_bertds_vocab4.txt", bert_vocabulary);
     const string text_path  = write_lines("opennn_bertds_text4.txt", labelled_text);
@@ -166,10 +166,10 @@ TEST(BertDatasetTest, TestingAnalysisSupportsMultipleInputs)
         seq, Index(bert_vocabulary.size()), 8, 2, 16, 1, labels);
     model.set_parameters_random();
 
-    TestingAnalysis testing_analysis(&model, &dataset);
-    testing_analysis.set_batch_size(3);
+    Evaluation evaluation(&model, &dataset);
+    evaluation.set_batch_size(3);
 
-    const MatrixI confusion = testing_analysis.calculate_confusion();
+    const MatrixI confusion = evaluation.calculate_confusion();
 
     EXPECT_EQ(confusion.rows(), 3);
     EXPECT_EQ(confusion.cols(), 3);

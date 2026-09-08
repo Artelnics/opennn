@@ -36,7 +36,7 @@
 #include "opennn/network/model_expression.h"
 #include "opennn/network/network.h"
 #include "opennn/models/models.h"
-#include "opennn/training/adaptive_moment_estimation.h"
+#include "opennn/training/adam.h"
 #include "opennn/training/training.h"
 
 using namespace opennn;
@@ -81,14 +81,14 @@ int main(int argc, char* argv[])
     if (mode == "memory")
     {
         // Empty objects only: a network with no layers, a dataset with no
-        // data, a training strategy over both. This is the floor -- what an
+        // data, a training coordinator over both. This is the floor -- what an
         // application pays for linking the library and declaring intent,
         // before a single sample is loaded.
         Configuration::instance().set(Device::Auto, Type::FP32);
 
         Network network;
         TabularDataset dataset;
-        Training strategy(&network, &dataset);
+        Training training(&network, &dataset);
 
         cout << "baseline_ram_mb=" << resident_mb() << "\n";
     }
@@ -143,17 +143,17 @@ int main(int argc, char* argv[])
         ApproximationNetwork network(dataset.get_input_shape(), {64},
                                      dataset.get_target_shape());
 
-        Training strategy(&network, &dataset);
-        strategy.set_loss("MeanSquaredError");
-        strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
+        Training training(&network, &dataset);
+        training.set_loss("MeanSquaredError");
+        training.set_optimization_algorithm("Adam");
 
-        auto* adam = dynamic_cast<AdaptiveMomentEstimation*>(
-            strategy.get_optimization_algorithm());
+        auto* adam = dynamic_cast<Adam*>(
+            training.get_optimization_algorithm());
         adam->set_maximum_epochs(50);
         adam->set_batch_size(32);
         adam->set_display(false);
 
-        strategy.train();
+        training.train();
 
         ModelExpression expression(&network);
         expression.save(c_path, ModelExpression::ProgrammingLanguage::C);

@@ -14,12 +14,12 @@
 #include "../../opennn/standard_networks.h"
 #include "../../opennn/bounding_layer.h"
 #include "../../opennn/training.h"
-#include "../../opennn/testing_analysis.h"
+#include "../../opennn/evaluation.h"
 #include "../../opennn/model_selection.h"
 #include "../../opennn/optimizer.h"
 #include "../../opennn/variable.h"
 #include "../../opennn/response_optimization.h"
-#include "adaptive_moment_estimation.h"
+#include "adam.h"
 #include "recurrent_layer.h"
 #include "time_series_dataset.h"
 #include "dense_layer.h"
@@ -152,7 +152,7 @@ int main()
                 [](){ return make_unique<NormalizedSquaredError>(); });
             training.set_loss("NormalizedSquaredError");
 
-            AdaptiveMomentEstimation* adam = static_cast<AdaptiveMomentEstimation*>(training.get_optimization_algorithm());
+            Adam* adam = static_cast<Adam*>(training.get_optimization_algorithm());
             adam->set_batch_size(16);
             adam->set_maximum_epochs(max_epochs);
             adam->set_display_period(32);
@@ -198,7 +198,7 @@ int main()
 
         try
         {
-            TestingAnalysis testing_analysis(forecasting_network, &time_series_dataset);
+            Evaluation evaluation(forecasting_network, &time_series_dataset);
 
             cout << "Parameters count: " << forecasting_network->get_parameters().size() << endl;
             cout << "Parameters norm: " << forecasting_network->get_parameters().norm() << endl;
@@ -230,7 +230,7 @@ int main()
             cout << "Calling get_targets_and_outputs..." << endl;
             cout.flush();
 
-            auto [targets, outputs] = testing_analysis.get_targets_and_outputs("Testing");
+            auto [targets, outputs] = evaluation.get_targets_and_outputs("Testing");
 
             cout << "Targets: " << targets.rows() << "x" << targets.cols() << endl;
             cout << "Outputs: " << outputs.rows() << "x" << outputs.cols() << endl;
@@ -239,7 +239,7 @@ int main()
             cout << "Calling calculate_errors..." << endl;
             cout.flush();
 
-            VectorR errors = testing_analysis.calculate_errors("Testing");
+            VectorR errors = evaluation.calculate_errors("Testing");
             cout << "Testing MSE: " << errors[1] << endl;
             cout << "Testing NMSE: " << errors[3] << endl;
         }

@@ -66,7 +66,7 @@ no configurability, nothing the OpenNN example does not also have — because
 padding it would make the number worthless.
 
 The whole difference is two objects. `Training` is the epoch loop and
-`TestingAnalysis` is the report, so what is one statement each on the OpenNN
+`Evaluation` is the report, so what is one statement each on the OpenNN
 side becomes, on the PyTorch side: the train/test split, the feature scaling,
 the loop with its `zero_grad`, `backward` and `step`, and four counted terms of
 a confusion matrix. That is the claim, and it is about where the loop lives,
@@ -119,7 +119,7 @@ or attention and have no standalone-source path. A deck that puts "14
 ready-made models" next to "exports to C" implies the export covers all of
 them; it covers five, and saying so is what keeps the fourteen credible.
 
-Object detection is native rather than an external repository: `YoloNetwork`
+Object detection is native rather than an external repository: `Yolo`
 comes with `detection`, `detection_v8`, `non_max_suppression` and `c2psa`
 layers and a `yolo_dataset`. Pre-trained weights are a first-class path:
 `Qwen3::from_pretrained`, `BertForSequenceClassification::from_pretrained` and
@@ -149,7 +149,7 @@ weights from the project's own release.
   engines plus TensorFlow and the Intel oneAPI runtimes.
 
 - **Export covers dense and recurrent networks, not the whole library.**
-  `ModelExpression` accepts Scaling, Dense, Recurrent, LongShortTermMemory,
+  `ModelExpression` accepts Scaling, Dense, Recurrent, LSTM,
   Unscaling and Clamping layers and throws on anything else
   (`model_expression.cpp:374`), so a convolutional or attention model has no
   standalone-source path. The claim is real for the tabular and forecasting

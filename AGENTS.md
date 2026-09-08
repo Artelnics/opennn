@@ -18,7 +18,7 @@ engineering rules that are not tied to one workstation.
 
 - Follow neighboring files for naming, include order and class layout.
 - Keep reusable tensor and device primitives in `opennn/core/`; datasets,
-  network code, training, model selection and testing analysis must retain their
+  network code, training, model selection and evaluation must retain their
   existing dependency direction.
 - Validate structural changes on both CPU and CUDA when they touch shared code.
   Some qualifications, includes and data-member ordering are intentionally

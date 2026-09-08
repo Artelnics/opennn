@@ -23,7 +23,7 @@
 #include "opennn/network/layers/embedding_layer.h"
 #include "opennn/network/layers/flatten_layer.h"
 #include "opennn/network/layers/grouped_query_attention_layer.h"
-#include "opennn/network/layers/long_short_term_memory_layer.h"
+#include "opennn/network/layers/lstm_layer.h"
 #include "opennn/network/layers/multihead_attention_layer.h"
 #include "opennn/network/layers/non_max_suppression_layer.h"
 #include "opennn/network/layers/normalization_layer_3d.h"
@@ -150,9 +150,9 @@ ForecastingLstmNetwork::ForecastingLstmNetwork(const Shape& input_shape,
 {
     add_layer(make_unique<Scaling>(input_shape));
 
-    add_recurrent_stack(*this, complexity_dimensions, "long_short_term_memory_layer",
+    add_recurrent_stack(*this, complexity_dimensions, "lstm_layer",
                         [](const Shape& in, const Shape& out, const string& label)
-                        { return make_unique<LongShortTermMemory>(in, out, "Tanh", "Sigmoid", label); });
+                        { return make_unique<LSTM>(in, out, "Tanh", "Sigmoid", label); });
 
     add_regression_output(*this, output_shape, "forecasting_layer",
                           Clamping::ClampingMethod::NoClamping);
@@ -160,15 +160,15 @@ ForecastingLstmNetwork::ForecastingLstmNetwork(const Shape& input_shape,
     finalize_build(*this);
 }
 
-AutoencoderNetwork::AutoencoderNetwork(const Shape& input_shape,
+Autoencoder::Autoencoder(const Shape& input_shape,
                                                const Shape& complexity_dimensions,
                                                const Shape& output_shape)
     : Network(NetworkTask::AnomalyDetection)
 {
     throw_if(input_shape.empty(),
-             "AutoencoderNetwork: input shape cannot be empty.");
+             "Autoencoder: input shape cannot be empty.");
     throw_if(complexity_dimensions.empty(),
-             "AutoencoderNetwork: complexity dimensions cannot be empty.");
+             "Autoencoder: complexity dimensions cannot be empty.");
 
     add_layer(make_unique<Scaling>(input_shape));
 
@@ -204,23 +204,23 @@ AutoencoderNetwork::AutoencoderNetwork(const Shape& input_shape,
     finalize_build(*this);
 }
 
-AutoencoderNetwork::AutoencoderNetwork(const Shape& input_shape,
+Autoencoder::Autoencoder(const Shape& input_shape,
                                                const Shape& encoder_dimensions,
                                                const string& hidden_activation,
                                                const string& output_activation)
     : Network(NetworkTask::AnomalyDetection)
 {
     throw_if(input_shape.empty(),
-             "AutoencoderNetwork: input shape cannot be empty.");
+             "Autoencoder: input shape cannot be empty.");
     throw_if(encoder_dimensions.empty(),
-             "AutoencoderNetwork: encoder dimensions cannot be empty.");
+             "Autoencoder: encoder dimensions cannot be empty.");
 
     add_layer(make_unique<Scaling>(input_shape));
 
     for (size_t i = 0; i < encoder_dimensions.get_rank(); ++i)
     {
         throw_if(encoder_dimensions[i] <= 0,
-                 "AutoencoderNetwork: encoder dimensions must be positive.");
+                 "Autoencoder: encoder dimensions must be positive.");
 
         const bool bottleneck = i == encoder_dimensions.get_rank() - 1;
         add_layer(make_unique<Dense>(get_output_shape(),

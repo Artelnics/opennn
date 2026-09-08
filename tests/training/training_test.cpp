@@ -5,9 +5,10 @@
 #include "opennn/dataset/dataset.h"
 #include "opennn/dataset/language_dataset.h"
 #include "opennn/dataset/tabular_dataset.h"
-#include "opennn/training/adaptive_moment_estimation.h"
+#include "opennn/training/adam.h"
 #include "opennn/training/levenberg_marquardt.h"
 #include "opennn/training/quasi_newton.h"
+#include "opennn/training/sgd.h"
 #include "opennn/training/training.h"
 
 #include <fstream>
@@ -41,8 +42,8 @@ TEST(Training, SerializesTrainingConfiguration)
     TabularDataset dataset(4, {2}, {1});
     ApproximationNetwork network({2}, {3}, {1});
     Training training(&network, &dataset);
-    training.set_optimization_algorithm("AdaptiveMomentEstimation");
-    auto* optimizer = dynamic_cast<AdaptiveMomentEstimation*>(training.get_optimization_algorithm());
+    training.set_optimization_algorithm("Adam");
+    auto* optimizer = dynamic_cast<Adam*>(training.get_optimization_algorithm());
     ASSERT_NE(optimizer, nullptr);
     optimizer->set_learning_rate(0.0125f);
     optimizer->set_maximum_epochs(3);
@@ -66,7 +67,7 @@ TEST(Training, SerializesTrainingConfiguration)
         EXPECT_EQ(restored.get_dataset(), &dataset);
         EXPECT_EQ(restored.get_loss()->get_name(), training.get_loss()->get_name());
         const auto* restored_optimizer =
-            dynamic_cast<const AdaptiveMomentEstimation*>(restored.get_optimization_algorithm());
+            dynamic_cast<const Adam*>(restored.get_optimization_algorithm());
         ASSERT_NE(restored_optimizer, nullptr);
         EXPECT_FLOAT_EQ(restored_optimizer->get_learning_rate(), 0.0125f);
         EXPECT_EQ(restored_optimizer->get_maximum_epochs(), 3);
@@ -83,7 +84,7 @@ TEST(Training, SerializesRenamedOptimizers)
 {
     TabularDataset dataset(4, {2}, {1});
     ApproximationNetwork network({2}, {3}, {1});
-    for (const string name : {"LevenbergMarquardt", "QuasiNewton"})
+    for (const string name : {"Adam", "SGD", "LevenbergMarquardt", "QuasiNewton"})
     {
         SCOPED_TRACE(name);
         Training training(&network, &dataset);
@@ -102,7 +103,11 @@ TEST(Training, SerializesRenamedOptimizers)
         const Optimizer* optimizer = restored.get_optimization_algorithm();
         EXPECT_EQ(optimizer->get_name(), name);
         EXPECT_EQ(optimizer->get_maximum_epochs(), 7);
-        if (name == "QuasiNewton")
+        if (name == "Adam")
+            EXPECT_NE(dynamic_cast<const Adam*>(optimizer), nullptr);
+        else if (name == "SGD")
+            EXPECT_NE(dynamic_cast<const SGD*>(optimizer), nullptr);
+        else if (name == "QuasiNewton")
             EXPECT_NE(dynamic_cast<const QuasiNewton*>(optimizer), nullptr);
         else
             EXPECT_NE(dynamic_cast<const LevenbergMarquardt*>(optimizer), nullptr);
@@ -110,6 +115,8 @@ TEST(Training, SerializesRenamedOptimizers)
 
     Training training(&network, &dataset);
     EXPECT_THROW(training.set_optimization_algorithm("QuasiNewtonMethod"), runtime_error);
+    EXPECT_THROW(training.set_optimization_algorithm("AdaptiveMomentEstimation"), runtime_error);
+    EXPECT_THROW(training.set_optimization_algorithm("StochasticGradientDescent"), runtime_error);
 }
 
 TEST(Training, GeneralConstructor)
@@ -126,7 +133,7 @@ TEST(Training, GeneralConstructor)
     EXPECT_EQ(network.get_task(), NetworkTask::Approximation);
     EXPECT_EQ(training_1.get_loss()->get_name(), "MeanSquaredError");
     EXPECT_EQ(training_1.get_optimization_algorithm()->get_name(),
-              "AdaptiveMomentEstimation");
+              "Adam");
 }
 
 TEST(Training, UsesExplicitNetworkTask)
@@ -139,9 +146,9 @@ TEST(Training, UsesExplicitNetworkTask)
 
     EXPECT_EQ(training.get_loss()->get_name(), "CrossEntropyError3d");
     EXPECT_EQ(training.get_optimization_algorithm()->get_name(),
-              "AdaptiveMomentEstimation");
+              "Adam");
 
-    const auto* adam = dynamic_cast<const AdaptiveMomentEstimation*>(
+    const auto* adam = dynamic_cast<const Adam*>(
         training.get_optimization_algorithm());
     ASSERT_NE(adam, nullptr);
     EXPECT_FLOAT_EQ(adam->get_learning_rate(), 0.0001f);
@@ -157,7 +164,7 @@ TEST(Training, ClassificationFamilyUsesOptimizerTaskDefaults)
 
     EXPECT_EQ(training.get_loss()->get_name(), "CrossEntropy");
     EXPECT_EQ(training.get_optimization_algorithm()->get_name(),
-              "AdaptiveMomentEstimation");
+              "Adam");
     EXPECT_EQ(training.get_optimization_algorithm()->get_maximum_epochs(), 100);
 }
 
@@ -173,26 +180,26 @@ TEST(Training, DoesNotInferTaskFromTopology)
     EXPECT_EQ(network.get_task(), NetworkTask::Generic);
     EXPECT_EQ(training.get_loss()->get_name(), "MeanSquaredError");
     EXPECT_EQ(training.get_optimization_algorithm()->get_name(),
-              "AdaptiveMomentEstimation");
+              "Adam");
 }
 
 TEST(Training, ClassificationDefaultsUseDeclaredTask)
 {
     TabularDataset binary_dataset(10, {2}, {1});
     ClassificationNetwork binary_network({2}, {3}, {1});
-    Training binary_strategy(&binary_network, &binary_dataset);
+    Training binary_training(&binary_network, &binary_dataset);
 
     EXPECT_EQ(binary_network.get_task(), NetworkTask::Classification);
-    EXPECT_EQ(binary_strategy.get_loss()->get_name(), "WeightedSquaredError");
-    EXPECT_EQ(binary_strategy.get_optimization_algorithm()->get_name(),
+    EXPECT_EQ(binary_training.get_loss()->get_name(), "WeightedSquaredError");
+    EXPECT_EQ(binary_training.get_optimization_algorithm()->get_name(),
               "QuasiNewton");
 
     TabularDataset multiclass_dataset(10, {2}, {3});
     ClassificationNetwork multiclass_network({2}, {3}, {3});
-    Training multiclass_strategy(&multiclass_network, &multiclass_dataset);
+    Training multiclass_training(&multiclass_network, &multiclass_dataset);
 
-    EXPECT_EQ(multiclass_strategy.get_loss()->get_name(), "CrossEntropy");
-    EXPECT_EQ(multiclass_strategy.get_optimization_algorithm()->get_name(),
+    EXPECT_EQ(multiclass_training.get_loss()->get_name(), "CrossEntropy");
+    EXPECT_EQ(multiclass_training.get_optimization_algorithm()->get_name(),
               "QuasiNewton");
 }
 

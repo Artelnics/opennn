@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   L O N G   S H O R T   T E R M   M E M O R Y   L A Y E R   H E A D E R
+//   L S T M   L A Y E R   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -16,7 +16,7 @@
 namespace opennn
 {
 
-struct LongShortTermMemoryOperator : Operator, CudnnRnnState
+struct LSTMOperator : Operator, CudnnRnnState
 {
     enum ForwardSlot
     {
@@ -204,15 +204,15 @@ private:
 
 };
 
-class LongShortTermMemory final : public Layer
+class LSTM final : public Layer
 {
 public:
 
-    LongShortTermMemory(const Shape& = {},
+    LSTM(const Shape& = {},
                         const Shape& = {},
                         const string& = "Tanh",
                         const string& = "Sigmoid",
-                        const string& = "long_short_term_memory_layer");
+                        const string& = "lstm_layer");
 
     Shape get_input_shape()  const noexcept override { return input_shape; }
     Shape get_output_shape() const override
@@ -241,7 +241,7 @@ public:
              const Shape& = {},
              const string& = "Tanh",
              const string& = "Sigmoid",
-             const string& = "long_short_term_memory_layer");
+             const string& = "lstm_layer");
 
     bool accepts_input_rank(Index rank) const override { return is_one_of(rank, 2); }
     bool is_recurrent() const noexcept override { return true; }
@@ -264,7 +264,7 @@ private:
     Index output_features = 0;
     bool  return_sequences = false;
 
-    LongShortTermMemoryOperator lstm_op;
+    LSTMOperator lstm_op;
 
     void configure_operators();
 };

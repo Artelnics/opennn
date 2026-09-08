@@ -49,7 +49,7 @@ static vector<Index> map_feature_rows(const vector<pair<Index, Index>>& old_ids,
 }
 
 GrowingInputs::GrowingInputs(Training* new_training)
-    : InputsSelection(new_training)
+    : InputSelection(new_training)
 {
     set_default();
 }
@@ -79,7 +79,7 @@ void GrowingInputs::set_maximum_inputs_number(const Index new_maximum_inputs_num
                                 : clamp(new_maximum_inputs_number, Index(1), inputs_number);
 }
 
-InputsSelectionResult GrowingInputs::perform_input_selection()
+InputSelectionResult GrowingInputs::perform_input_selection()
 {
 
     Dataset* dataset = training->get_dataset();
@@ -90,7 +90,7 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
 
     if (display) logging::info() << "Performing growing input selection...\n";
 
-    InputsSelectionResult input_selection_results(original_input_variables_number);
+    InputSelectionResult input_selection_results(original_input_variables_number);
 
     Optimizer* optimizer = training->get_optimization_algorithm();
     const bool optimizer_display = optimizer->get_display();
@@ -149,7 +149,7 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
         if (variable_index >= correlations_rank_descending.size())
         {
             if (display) logging::info() << "\nAll the variables has been used.\n";
-            input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumInputs;
+            input_selection_results.stopping_condition = InputSelection::StoppingCondition::MaximumInputs;
             continue;
         }
 

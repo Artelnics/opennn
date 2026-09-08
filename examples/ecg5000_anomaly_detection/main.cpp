@@ -14,7 +14,7 @@
 #include "opennn/core/random_utilities.h"
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/models/models.h"
-#include "opennn/testing_analysis/testing_analysis.h"
+#include "opennn/evaluation/evaluation.h"
 #include "opennn/training/training.h"
 
 using namespace opennn;
@@ -42,7 +42,7 @@ int main()
 
         dataset.set_variable_indices(signal_indices, signal_indices);
 
-        AutoencoderNetwork autoencoder(dataset.get_input_shape(), 
+        Autoencoder autoencoder(dataset.get_input_shape(),
                                            {32, 16, 8},
                                            "ReLU",
                                            "Identity");
@@ -50,19 +50,19 @@ int main()
         Training training(&autoencoder, &dataset);
         training.train();
 
-        TestingAnalysis testing_analysis(&autoencoder, &dataset);
+        Evaluation evaluation(&autoencoder, &dataset);
 
         const VectorR training_errors =
-            testing_analysis.calculate_reconstruction_errors("Training");
+            evaluation.calculate_reconstruction_errors("Training");
         const auto error_statistics =
-            testing_analysis.calculate_reconstruction_error_statistics(training_errors);
+            evaluation.calculate_reconstruction_error_statistics(training_errors);
         const float anomaly_threshold =
-            testing_analysis.calculate_anomaly_threshold(error_statistics);
+            evaluation.calculate_anomaly_threshold(error_statistics);
         const VectorR testing_errors =
-            testing_analysis.calculate_reconstruction_errors("Testing");
+            evaluation.calculate_reconstruction_errors("Testing");
         const auto testing_error_statistics =
-            testing_analysis.calculate_reconstruction_error_statistics(testing_errors);
-        const VectorI anomalies = testing_analysis.calculate_anomaly_predictions(
+            evaluation.calculate_reconstruction_error_statistics(testing_errors);
+        const VectorI anomalies = evaluation.calculate_anomaly_predictions(
             testing_errors, anomaly_threshold);
 
         const vector<Index> testing_indices = dataset.get_sample_indices(SampleRole::Testing);
@@ -80,9 +80,9 @@ int main()
         }
 
         const VectorR anomaly_tests =
-            testing_analysis.calculate_binary_classification_tests(
+            evaluation.calculate_binary_classification_tests(
                 anomaly_targets, anomaly_outputs);
-        const MatrixI confusion = testing_analysis.calculate_confusion(
+        const MatrixI confusion = evaluation.calculate_confusion(
             anomaly_targets, anomaly_outputs);
 
         cout << "Training reconstruction MAE: " << error_statistics.mean

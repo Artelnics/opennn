@@ -28,12 +28,12 @@
 #include "../../opennn/standard_networks.h"
 #include "../../opennn/bounding_layer.h"
 #include "../../opennn/training.h"
-#include "../../opennn/testing_analysis.h"
+#include "../../opennn/evaluation.h"
 #include "../../opennn/model_selection.h"
 #include "../../opennn/optimizer.h"
 #include "../../opennn/variable.h"
 #include "../../opennn/response_optimization.h"
-#include "adaptive_moment_estimation.h"
+#include "adam.h"
 #include "recurrent_layer.h"
 #include "time_series_dataset.h"
 #include "dense_layer.h"
@@ -178,19 +178,19 @@ int main()
 
             forecasting_network->set_input_names(time_series_dataset.get_feature_names("Input"));
 
-            Training selection_strategy(forecasting_network, &time_series_dataset);
+            Training selection_training(forecasting_network, &time_series_dataset);
 
             Registry<Loss>::instance().register_component("NormalizedSquaredError",
                 [](){ return make_unique<NormalizedSquaredError>(); });
-            selection_strategy.set_loss("NormalizedSquaredError");
+            selection_training.set_loss("NormalizedSquaredError");
 
-            AdaptiveMomentEstimation* selection_adam = static_cast<AdaptiveMomentEstimation*>(selection_strategy.get_optimization_algorithm());
+            Adam* selection_adam = static_cast<Adam*>(selection_training.get_optimization_algorithm());
             selection_adam->set_batch_size(16);
             selection_adam->set_maximum_epochs(5);
             selection_adam->set_display_period(1);
             selection_adam->set_scaling();
 
-            ModelSelection model_selection(&selection_strategy);
+            ModelSelection model_selection(&selection_training);
             model_selection.set_neurons_selection("GrowingNeurons");
 
             GrowingNeurons* growing_neurons = static_cast<GrowingNeurons*>(model_selection.get_neurons_selection());
@@ -224,7 +224,7 @@ int main()
             Training training(forecasting_network, &time_series_dataset);
             training.set_loss("NormalizedSquaredError");
 
-            AdaptiveMomentEstimation* adam = static_cast<AdaptiveMomentEstimation*>(training.get_optimization_algorithm());
+            Adam* adam = static_cast<Adam*>(training.get_optimization_algorithm());
             adam->set_batch_size(16);
             adam->set_maximum_epochs(max_epochs);
             adam->set_display_period(32);
@@ -258,19 +258,19 @@ int main()
 
         try
         {
-            TestingAnalysis testing_analysis(forecasting_network, &time_series_dataset);
+            Evaluation evaluation(forecasting_network, &time_series_dataset);
 
             cout << "Parameters count: " << forecasting_network->get_parameters().size() << endl;
             cout << "Parameters norm: "  << forecasting_network->get_parameters().norm() << endl;
             cout.flush();
 
-            auto [targets, outputs] = testing_analysis.get_targets_and_outputs("Testing");
+            auto [targets, outputs] = evaluation.get_targets_and_outputs("Testing");
 
             cout << "Targets: " << targets.rows() << "x" << targets.cols() << endl;
             cout << "Outputs: " << outputs.rows() << "x" << outputs.cols() << endl;
             cout.flush();
 
-            VectorR errors = testing_analysis.calculate_errors("Testing");
+            VectorR errors = evaluation.calculate_errors("Testing");
             cout << "Testing MSE: " << errors[1] << endl;
             cout << "Testing NMSE: " << errors[3] << endl;
         }

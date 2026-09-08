@@ -1,5 +1,6 @@
 #include "tests/pch.h"
 
+#include "opennn/core/json.h"
 #include "opennn/dataset/dataset.h"
 #include "opennn/dataset/time_series_dataset.h"
 #include "opennn/model_selection/cross_validation.h"
@@ -14,7 +15,7 @@ using namespace opennn;
 namespace
 {
 
-class InputsSelectionProbe final : public InputsSelection
+class InputSelectionProbe final : public InputSelection
 {
 public:
     void configure(Network* network, Dataset* dataset, Index input_features)
@@ -24,7 +25,7 @@ public:
 
     Index get_minimum_inputs_number() const override { return 1; }
     Index get_maximum_inputs_number() const override { return 1; }
-    InputsSelectionResult perform_input_selection() override { return {}; }
+    InputSelectionResult perform_input_selection() override { return {}; }
     void from_JSON(const JsonDocument&) override {}
     void to_JSON(JsonWriter&) const override {}
 };
@@ -41,6 +42,29 @@ TEST(ModelSelectionTest, GeneralConstructor)
     Training training;
 
     ModelSelection model_selection(&training);
+}
+
+TEST(ModelSelectionTest, InputSelectionConfigurationRoundTrips)
+{
+    Training training;
+    ModelSelection selection(&training);
+    JsonWriter writer;
+    selection.to_JSON(writer);
+    JsonDocument document;
+    document.set_root(Json::parse(writer.c_str()));
+    const Json& configuration = document.get_root().at("ModelSelection");
+    EXPECT_FALSE(configuration.has("InputsSelection"));
+    const Json& input = configuration.at("InputSelection");
+    EXPECT_EQ(input.at("InputSelectionMethod").as_string(), "GrowingInputs");
+    EXPECT_TRUE(input.has("GrowingInputs"));
+
+    ModelSelection restored(&training);
+    restored.from_JSON(document);
+    EXPECT_EQ(restored.get_input_selection_name(), "GrowingInputs");
+    EXPECT_EQ(restored.get_training(), &training);
+    JsonWriter restored_writer;
+    restored.to_JSON(restored_writer);
+    EXPECT_EQ(Json::parse(restored_writer.c_str()).dump(), document.get_root().dump());
 }
 
 TEST(ModelSelectionTest, OrderedDatasetsProduceContiguousFolds)
@@ -67,8 +91,8 @@ TEST(ModelSelectionTest, ConfiguresForecastingInputsThroughDatasetContract)
     dataset.set_past_time_steps(3);
 
     ForecastingNetwork network({3, 2}, {2}, {1});
-    InputsSelectionProbe inputs_selection;
-    inputs_selection.configure(&network, &dataset, 2);
+    InputSelectionProbe input_selection;
+    input_selection.configure(&network, &dataset, 2);
 
     EXPECT_EQ(network.get_input_shape(), (Shape{3, 2}));
     const vector<Variable>& input_variables = network.get_input_variables();

@@ -4,11 +4,11 @@
 #include "opennn/dataset/dataset.h"
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/models/models.h"
-#include "opennn/testing_analysis/testing_analysis.h"
+#include "opennn/evaluation/evaluation.h"
 
 using namespace opennn;
 
-TEST(TestingAnalysis, ErrorData)
+TEST(Evaluation, ErrorData)
 {
     const Index samples_number = 1;
     const Index inputs_number = 1;
@@ -21,16 +21,16 @@ TEST(TestingAnalysis, ErrorData)
     ApproximationNetwork network({ inputs_number }, {}, { targets_number });
     network.set_parameters_random();
 
-    TestingAnalysis testing_analysis(&network, &dataset);
+    Evaluation evaluation(&network, &dataset);
 
-    Tensor3 error_data = testing_analysis.calculate_error_data();
+    Tensor3 error_data = evaluation.calculate_error_data();
 
     EXPECT_EQ(error_data.size(), 3);
     EXPECT_EQ(error_data.dimension(0), 1);
     EXPECT_EQ(error_data.dimension(1), 3);
 }
 
-TEST(TestingAnalysis, PercentageErrorData)
+TEST(Evaluation, PercentageErrorData)
 {
     MatrixR error_data;
 
@@ -46,14 +46,14 @@ TEST(TestingAnalysis, PercentageErrorData)
     ApproximationNetwork network({inputs_number}, {}, {targets_number});
     network.set_parameters_random();
 
-    TestingAnalysis testing_analysis(&network, &dataset);
-    error_data = testing_analysis.calculate_percentage_error_data();
+    Evaluation evaluation(&network, &dataset);
+    error_data = evaluation.calculate_percentage_error_data();
 
     EXPECT_EQ(error_data.size(), 1);
     EXPECT_EQ(error_data.cols(), 1);
 }
 
-TEST(TestingAnalysis, ErrorDataDescriptives)
+TEST(Evaluation, ErrorDataDescriptives)
 {
     const Index samples_number = 1;
     const Index inputs_number = 1;
@@ -66,17 +66,17 @@ TEST(TestingAnalysis, ErrorDataDescriptives)
     ApproximationNetwork network({ inputs_number }, {}, { targets_number });
     network.set_parameters_random();
 
-    TestingAnalysis testing_analysis(&network, &dataset);
+    Evaluation evaluation(&network, &dataset);
 
     const vector<vector<Descriptives>> error_data_descriptives =
-        testing_analysis.calculate_error_data_descriptives();
+        evaluation.calculate_error_data_descriptives();
 
     ASSERT_EQ(ssize(error_data_descriptives), targets_number);
     ASSERT_FALSE(error_data_descriptives[0].empty());
     EXPECT_NEAR(error_data_descriptives[0][0].standard_deviation, type(0), 1e-5);
 }
 
-TEST(TestingAnalysis, ErrorDataHistograms)
+TEST(Evaluation, ErrorDataHistograms)
 {
     vector<Histogram> error_data_histograms;
 
@@ -92,13 +92,13 @@ TEST(TestingAnalysis, ErrorDataHistograms)
     ApproximationNetwork network({inputs_number}, {}, {targets_number});
     network.set_parameters_random();
 
-    TestingAnalysis testing_analysis(&network, &dataset);
-    error_data_histograms = testing_analysis.calculate_error_data_histograms();
+    Evaluation evaluation(&network, &dataset);
+    error_data_histograms = evaluation.calculate_error_data_histograms();
 
     EXPECT_EQ(error_data_histograms.size(), 1);
 }
 
-TEST(TestingAnalysis, ReconstructionErrors)
+TEST(Evaluation, ReconstructionErrors)
 {
     MatrixR targets(2, 2);
     targets << 1.0f, 2.0f,
@@ -108,39 +108,39 @@ TEST(TestingAnalysis, ReconstructionErrors)
     reconstructions << 1.0f, 4.0f,
                        2.0f, 4.0f;
 
-    TestingAnalysis testing_analysis;
-    const VectorR errors = testing_analysis.calculate_reconstruction_errors(targets, reconstructions);
+    Evaluation evaluation;
+    const VectorR errors = evaluation.calculate_reconstruction_errors(targets, reconstructions);
 
     ASSERT_EQ(errors.size(), 2);
     EXPECT_FLOAT_EQ(errors(0), 1.0f);
     EXPECT_FLOAT_EQ(errors(1), 0.5f);
 }
 
-TEST(TestingAnalysis, ReconstructionErrorStatisticsUsePopulationDeviation)
+TEST(Evaluation, ReconstructionErrorStatisticsUsePopulationDeviation)
 {
     VectorR errors(4);
     errors << 1.0f, 2.0f, 3.0f, 4.0f;
 
-    TestingAnalysis testing_analysis;
-    const TestingAnalysis::ReconstructionErrorStatistics statistics =
-        testing_analysis.calculate_reconstruction_error_statistics(errors);
+    Evaluation evaluation;
+    const Evaluation::ReconstructionErrorStatistics statistics =
+        evaluation.calculate_reconstruction_error_statistics(errors);
 
     EXPECT_FLOAT_EQ(statistics.minimum, 1.0f);
     EXPECT_FLOAT_EQ(statistics.maximum, 4.0f);
     EXPECT_FLOAT_EQ(statistics.mean, 2.5f);
     EXPECT_NEAR(statistics.population_standard_deviation, sqrt(1.25f), 1.0e-6f);
-    EXPECT_NEAR(testing_analysis.calculate_anomaly_threshold(statistics),
+    EXPECT_NEAR(evaluation.calculate_anomaly_threshold(statistics),
                 2.5f + sqrt(1.25f),
                 1.0e-6f);
 }
 
-TEST(TestingAnalysis, AnomalyPredictionIncludesThresholdEquality)
+TEST(Evaluation, AnomalyPredictionIncludesThresholdEquality)
 {
     VectorR errors(3);
     errors << 0.9f, 1.0f, 1.1f;
 
-    TestingAnalysis testing_analysis;
-    const VectorI predictions = testing_analysis.calculate_anomaly_predictions(errors, 1.0f);
+    Evaluation evaluation;
+    const VectorI predictions = evaluation.calculate_anomaly_predictions(errors, 1.0f);
 
     ASSERT_EQ(predictions.size(), 3);
     EXPECT_EQ(predictions(0), 0);
@@ -148,7 +148,7 @@ TEST(TestingAnalysis, AnomalyPredictionIncludesThresholdEquality)
     EXPECT_EQ(predictions(2), 1);
 }
 
-TEST(TestingAnalysis, BinaryClassificationTestsFromData)
+TEST(Evaluation, BinaryClassificationTestsFromData)
 {
     MatrixR targets(4, 1);
     targets << 1.0f, 1.0f, 0.0f, 0.0f;
@@ -156,8 +156,8 @@ TEST(TestingAnalysis, BinaryClassificationTestsFromData)
     MatrixR predictions(4, 1);
     predictions << 1.0f, 0.0f, 1.0f, 0.0f;
 
-    TestingAnalysis testing_analysis;
-    const VectorR tests = testing_analysis.calculate_binary_classification_tests(targets, predictions);
+    Evaluation evaluation;
+    const VectorR tests = evaluation.calculate_binary_classification_tests(targets, predictions);
 
     EXPECT_FLOAT_EQ(tests(0), 0.5f);
     EXPECT_FLOAT_EQ(tests(2), 0.5f);
@@ -166,7 +166,7 @@ TEST(TestingAnalysis, BinaryClassificationTestsFromData)
     EXPECT_FLOAT_EQ(tests(7), 0.5f);
 }
 
-TEST(TestingAnalysis, Confusion)
+TEST(Evaluation, Confusion)
 {
     MatrixR actual(4, 3);
     actual << type(1), type(0), type(0),
@@ -180,8 +180,8 @@ TEST(TestingAnalysis, Confusion)
         type(0), type(1), type(0),
         type(0), type(0), type(1);
 
-    TestingAnalysis testing_analysis;
-    MatrixI confusion = testing_analysis.calculate_confusion(actual, predicted);
+    Evaluation evaluation;
+    MatrixI confusion = evaluation.calculate_confusion(actual, predicted);
 
     type sum = confusion.sum();
 
@@ -204,7 +204,7 @@ TEST(TestingAnalysis, Confusion)
     EXPECT_EQ(confusion(3,3), 4);
 }
 
-TEST(TestingAnalysis, BinaryClassificationTests)
+TEST(Evaluation, BinaryClassificationTests)
 {
     const Index samples_number = 1;
     const Index inputs_number = 1;
@@ -220,9 +220,9 @@ TEST(TestingAnalysis, BinaryClassificationTests)
 
     ClassificationNetwork network({1}, {1}, {1});
 
-    TestingAnalysis testing_analysis(&network, &dataset);
+    Evaluation evaluation(&network, &dataset);
 
-    VectorR binary = testing_analysis.calculate_binary_classification_tests();
+    VectorR binary = evaluation.calculate_binary_classification_tests();
 
     EXPECT_EQ(binary.size(), 15 );
 
@@ -231,7 +231,7 @@ TEST(TestingAnalysis, BinaryClassificationTests)
 
 }
 
-TEST(TestingAnalysis, PrintsMultipleClassificationTests)
+TEST(Evaluation, PrintsMultipleClassificationTests)
 {
     TabularDataset dataset(3, {1}, {3});
     MatrixR data(3, 4);
@@ -245,29 +245,29 @@ TEST(TestingAnalysis, PrintsMultipleClassificationTests)
     network.set_parameters(VectorR::Zero(
         network.get_parameters_buffer_size()));
 
-    TestingAnalysis testing_analysis(&network, &dataset);
+    Evaluation evaluation(&network, &dataset);
 
     testing::internal::CaptureStdout();
-    testing_analysis.print_multiple_classification_tests();
+    evaluation.print_multiple_classification_tests();
     const string output = testing::internal::GetCapturedStdout();
 
     EXPECT_NE(output.find("Classification accuracy : 0.333333"), string::npos);
     EXPECT_NE(output.find("Confusion matrix"), string::npos);
 }
 
-TEST(TestingAnalysis, RejectsBinaryNetworkForMultipleClassificationTests)
+TEST(Evaluation, RejectsBinaryNetworkForMultipleClassificationTests)
 {
     TabularDataset dataset(1, {1}, {1});
     dataset.set_data_constant(0.0f);
     dataset.set_sample_roles("Testing");
 
     ClassificationNetwork network({1}, {}, {1});
-    TestingAnalysis testing_analysis(&network, &dataset);
+    Evaluation evaluation(&network, &dataset);
 
-    EXPECT_THROW(testing_analysis.print_multiple_classification_tests(), runtime_error);
+    EXPECT_THROW(evaluation.print_multiple_classification_tests(), runtime_error);
 }
 
-TEST(TestingAnalysis, RocCurve)
+TEST(Evaluation, RocCurve)
 {
     MatrixR targets;
     MatrixR outputs;
@@ -288,8 +288,8 @@ TEST(TestingAnalysis, RocCurve)
     outputs(2,0) = type(1);
     outputs(3,0) = type(1);
 
-    TestingAnalysis testing_analysis;
-    roc_curve = testing_analysis.calculate_roc_curve(targets, outputs);
+    Evaluation evaluation;
+    roc_curve = evaluation.calculate_roc_curve(targets, outputs);
 
     EXPECT_EQ(roc_curve.cols(), 3);
     EXPECT_EQ(roc_curve.rows(), 101);
@@ -320,7 +320,7 @@ TEST(TestingAnalysis, RocCurve)
     outputs(2,0) = type(0.84);
     outputs(3,0) = type(0.99);
 
-    roc_curve = testing_analysis.calculate_roc_curve(targets, outputs);
+    roc_curve = evaluation.calculate_roc_curve(targets, outputs);
 
     EXPECT_EQ(roc_curve.cols(), 3);
     EXPECT_EQ(roc_curve.rows(), 101);
@@ -338,7 +338,7 @@ TEST(TestingAnalysis, RocCurve)
     EXPECT_NEAR(roc_curve(100, 1), type(0), type(EPSILON));
 }
 
-TEST(TestingAnalysis, AreaUnderCurve)
+TEST(Evaluation, AreaUnderCurve)
 {
     MatrixR roc_curve;
     MatrixR targets;
@@ -360,11 +360,11 @@ TEST(TestingAnalysis, AreaUnderCurve)
     outputs(2,0) = type(1);
     outputs(3,0) = type(1);
 
-    TestingAnalysis testing_analysis;
+    Evaluation evaluation;
 
-    roc_curve = testing_analysis.calculate_roc_curve(targets, outputs);
+    roc_curve = evaluation.calculate_roc_curve(targets, outputs);
 
-    area_under_curve = testing_analysis.calculate_area_under_curve(roc_curve);
+    area_under_curve = evaluation.calculate_area_under_curve(roc_curve);
 
     EXPECT_LT(area_under_curve - type(1), type(EPSILON));
 
@@ -382,9 +382,9 @@ TEST(TestingAnalysis, AreaUnderCurve)
     outputs(2,0) = type(0);
     outputs(3,0) = type(1);
 
-    roc_curve = testing_analysis.calculate_roc_curve(targets, outputs);
+    roc_curve = evaluation.calculate_roc_curve(targets, outputs);
 
-    area_under_curve = testing_analysis.calculate_area_under_curve(roc_curve);
+    area_under_curve = evaluation.calculate_area_under_curve(roc_curve);
 
     EXPECT_LT(area_under_curve - type(0.5), type(EPSILON));
 
@@ -402,9 +402,9 @@ TEST(TestingAnalysis, AreaUnderCurve)
     outputs(2,0) = type(0.12);
     outputs(3,0) = type(0.99);
 
-    roc_curve = testing_analysis.calculate_roc_curve(targets, outputs);
+    roc_curve = evaluation.calculate_roc_curve(targets, outputs);
 
-    area_under_curve = testing_analysis.calculate_area_under_curve(roc_curve);
+    area_under_curve = evaluation.calculate_area_under_curve(roc_curve);
 
     EXPECT_LT(area_under_curve - type(0.5), type(EPSILON));
 
@@ -422,14 +422,14 @@ TEST(TestingAnalysis, AreaUnderCurve)
     outputs(2,0) = type(0);
     outputs(3,0) = type(0);
 
-    roc_curve = testing_analysis.calculate_roc_curve(targets, outputs);
+    roc_curve = evaluation.calculate_roc_curve(targets, outputs);
 
-    area_under_curve = testing_analysis.calculate_area_under_curve(roc_curve);
+    area_under_curve = evaluation.calculate_area_under_curve(roc_curve);
 
     EXPECT_LT(area_under_curve, type(EPSILON));
 }
 
-TEST(TestingAnalysis, OptimalThreshold)
+TEST(Evaluation, OptimalThreshold)
 {
     type optimal_threshold;
 
@@ -451,11 +451,11 @@ TEST(TestingAnalysis, OptimalThreshold)
     outputs(2,0) = type(1);
     outputs(3,0) = type(1);
 
-    TestingAnalysis testing_analysis;
+    Evaluation evaluation;
 
-    roc_curve = testing_analysis.calculate_roc_curve(targets, outputs);
+    roc_curve = evaluation.calculate_roc_curve(targets, outputs);
 
-    optimal_threshold = testing_analysis.calculate_optimal_threshold(roc_curve);
+    optimal_threshold = evaluation.calculate_optimal_threshold(roc_curve);
 
     EXPECT_LT(optimal_threshold - type(1), type(EPSILON));
 
@@ -473,9 +473,9 @@ TEST(TestingAnalysis, OptimalThreshold)
     outputs(2,0) = type(0);
     outputs(3,0) = type(0);
 
-    roc_curve = testing_analysis.calculate_roc_curve(targets, outputs);
+    roc_curve = evaluation.calculate_roc_curve(targets, outputs);
 
-    optimal_threshold = testing_analysis.calculate_optimal_threshold(roc_curve);
+    optimal_threshold = evaluation.calculate_optimal_threshold(roc_curve);
 
     EXPECT_LT(optimal_threshold - type(1), type(EPSILON));
 
@@ -495,14 +495,14 @@ TEST(TestingAnalysis, OptimalThreshold)
     outputs(3,0) = type(0.62);
     outputs(4,0) = type(0.85);
 
-    roc_curve = testing_analysis.calculate_roc_curve(targets, outputs);
+    roc_curve = evaluation.calculate_roc_curve(targets, outputs);
 
-    optimal_threshold = testing_analysis.calculate_optimal_threshold(roc_curve);
+    optimal_threshold = evaluation.calculate_optimal_threshold(roc_curve);
 
     EXPECT_LT(optimal_threshold - type(0.62), type(EPSILON));
 }
 
-TEST(TestingAnalysis, TruePositiveSamples)
+TEST(Evaluation, TruePositiveSamples)
 {
     vector<Index> true_positives_indices;
     MatrixR targets;
@@ -526,9 +526,9 @@ TEST(TestingAnalysis, TruePositiveSamples)
 
     const type threshold = type(0.5);
 
-    TestingAnalysis testing_analysis;
+    Evaluation evaluation;
 
-    true_positives_indices = testing_analysis.calculate_true_positive_samples(targets, outputs, testing_indices, threshold);
+    true_positives_indices = evaluation.calculate_true_positive_samples(targets, outputs, testing_indices, threshold);
 
     EXPECT_EQ(true_positives_indices.size(), 1);
     EXPECT_EQ(true_positives_indices[0], 1);
@@ -547,7 +547,7 @@ TEST(TestingAnalysis, TruePositiveSamples)
     outputs(2, 0) = type(1);
     outputs(3, 0) = type(1);
 
-    true_positives_indices = testing_analysis.calculate_true_positive_samples(targets, outputs, testing_indices, threshold);
+    true_positives_indices = evaluation.calculate_true_positive_samples(targets, outputs, testing_indices, threshold);
 
     const bool not_empty = !true_positives_indices.empty();
 
@@ -567,7 +567,7 @@ TEST(TestingAnalysis, TruePositiveSamples)
     outputs(2, 0) = type(1);
     outputs(3, 0) = type(1);
 
-    true_positives_indices = testing_analysis.calculate_true_positive_samples(targets, outputs, testing_indices, threshold);
+    true_positives_indices = evaluation.calculate_true_positive_samples(targets, outputs, testing_indices, threshold);
 
     EXPECT_EQ(true_positives_indices.size(), 4);
     EXPECT_EQ(true_positives_indices[0], 0);
@@ -576,7 +576,7 @@ TEST(TestingAnalysis, TruePositiveSamples)
     EXPECT_EQ(true_positives_indices[3], 3);
 }
 
-TEST(TestingAnalysis, FalsePositiveSamples)
+TEST(Evaluation, FalsePositiveSamples)
 {
     vector<Index> false_positives_indices;
     MatrixR targets;
@@ -599,9 +599,9 @@ TEST(TestingAnalysis, FalsePositiveSamples)
     vector<Index> testing_indices = {0, 1, 2, 3};
     const type threshold = type(0.5);
 
-    TestingAnalysis testing_analysis;
+    Evaluation evaluation;
 
-    false_positives_indices = testing_analysis.calculate_false_positive_samples(targets, outputs,testing_indices, threshold);
+    false_positives_indices = evaluation.calculate_false_positive_samples(targets, outputs,testing_indices, threshold);
 
     EXPECT_EQ(false_positives_indices.size(), 1);
     EXPECT_EQ(false_positives_indices[0], 2);
@@ -620,7 +620,7 @@ TEST(TestingAnalysis, FalsePositiveSamples)
     outputs(2, 0) = type(1);
     outputs(3, 0) = type(1);
 
-    false_positives_indices = testing_analysis.calculate_false_positive_samples(targets, outputs, testing_indices, threshold);
+    false_positives_indices = evaluation.calculate_false_positive_samples(targets, outputs, testing_indices, threshold);
 
     EXPECT_EQ(false_positives_indices.size(), 4);
     EXPECT_EQ(false_positives_indices[0], 0);
@@ -642,7 +642,7 @@ TEST(TestingAnalysis, FalsePositiveSamples)
     outputs(2, 0) = type(1);
     outputs(3, 0) = type(1);
 
-    false_positives_indices = testing_analysis.calculate_false_positive_samples(targets, outputs,testing_indices, threshold);
+    false_positives_indices = evaluation.calculate_false_positive_samples(targets, outputs,testing_indices, threshold);
 
     const bool not_empty = !false_positives_indices.empty();
 
@@ -651,7 +651,7 @@ TEST(TestingAnalysis, FalsePositiveSamples)
     EXPECT_EQ(false_positives_indices.size(), 0);
 }
 
-TEST(TestingAnalysis, FalseNegativeSamples)
+TEST(Evaluation, FalseNegativeSamples)
 {
     vector<Index> false_negatives_indices;
     MatrixR targets;
@@ -674,9 +674,9 @@ TEST(TestingAnalysis, FalseNegativeSamples)
     vector<Index> testing_indices = {0, 1, 2, 3};
     const type threshold = type(0.5);
 
-    TestingAnalysis testing_analysis;
+    Evaluation evaluation;
 
-    false_negatives_indices = testing_analysis.calculate_false_negative_samples(targets, outputs, testing_indices, threshold);
+    false_negatives_indices = evaluation.calculate_false_negative_samples(targets, outputs, testing_indices, threshold);
 
     EXPECT_EQ(false_negatives_indices.size(), 1);
     EXPECT_EQ(false_negatives_indices[0], 3);
@@ -695,7 +695,7 @@ TEST(TestingAnalysis, FalseNegativeSamples)
     outputs(2, 0) = type(0);
     outputs(3, 0) = type(0);
 
-    false_negatives_indices = testing_analysis.calculate_false_negative_samples(targets, outputs, testing_indices, threshold);
+    false_negatives_indices = evaluation.calculate_false_negative_samples(targets, outputs, testing_indices, threshold);
 
     EXPECT_EQ(false_negatives_indices.size(), 0);
 
@@ -717,7 +717,7 @@ TEST(TestingAnalysis, FalseNegativeSamples)
     outputs(2, 0) = type(0);
     outputs(3, 0) = type(0);
 
-    false_negatives_indices = testing_analysis.calculate_false_negative_samples(targets, outputs, testing_indices, threshold);
+    false_negatives_indices = evaluation.calculate_false_negative_samples(targets, outputs, testing_indices, threshold);
 
     EXPECT_EQ(false_negatives_indices.size(), 4);
     EXPECT_EQ(false_negatives_indices[0], 0);
@@ -726,7 +726,7 @@ TEST(TestingAnalysis, FalseNegativeSamples)
     EXPECT_EQ(false_negatives_indices[3], 3);
 }
 
-TEST(TestingAnalysis, TrueNegativeSamples)
+TEST(Evaluation, TrueNegativeSamples)
 {
     vector<Index> true_negatives_indices;
     MatrixR targets;
@@ -749,9 +749,9 @@ TEST(TestingAnalysis, TrueNegativeSamples)
     vector<Index> testing_indices = {0, 1, 2, 3};
     const type threshold = type(0.5);
 
-    TestingAnalysis testing_analysis;
+    Evaluation evaluation;
 
-    true_negatives_indices = testing_analysis.calculate_true_negative_samples(targets, outputs, testing_indices, threshold);
+    true_negatives_indices = evaluation.calculate_true_negative_samples(targets, outputs, testing_indices, threshold);
 
     EXPECT_EQ(true_negatives_indices.size(), 4);
     EXPECT_EQ(true_negatives_indices[0], 0);
@@ -773,7 +773,7 @@ TEST(TestingAnalysis, TrueNegativeSamples)
     outputs(2, 0) = type(1);
     outputs(3, 0) = type(1);
 
-    true_negatives_indices = testing_analysis.calculate_true_negative_samples(targets, outputs, testing_indices, threshold);
+    true_negatives_indices = evaluation.calculate_true_negative_samples(targets, outputs, testing_indices, threshold);
 
     const bool not_empty = !true_negatives_indices.empty();
 
@@ -793,15 +793,15 @@ TEST(TestingAnalysis, TrueNegativeSamples)
     outputs(2, 0) = type(1);
     outputs(3, 0) = type(1);
 
-    true_negatives_indices = testing_analysis.calculate_true_negative_samples(targets, outputs, testing_indices, threshold);
+    true_negatives_indices = evaluation.calculate_true_negative_samples(targets, outputs, testing_indices, threshold);
 
     EXPECT_EQ(true_negatives_indices.size(), 1);
     EXPECT_EQ(true_negatives_indices[0], 0);
 }
 
-TEST(TestingAnalysis, MultipleClassificationRates)
+TEST(Evaluation, MultipleClassificationRates)
 {
-    TestingAnalysis testing_analysis;
+    Evaluation evaluation;
 
     MatrixR targets(9, 3);
     targets << type(1), type(0), type(0),
@@ -828,7 +828,7 @@ TEST(TestingAnalysis, MultipleClassificationRates)
     const vector<Index> testing_indices = { 0, 1, 2, 3, 4, 5, 6, 7, 8 };
 
     const Tensor<VectorI, 2> rates =
-        testing_analysis.calculate_multiple_classification_rates(targets, outputs, testing_indices);
+        evaluation.calculate_multiple_classification_rates(targets, outputs, testing_indices);
 
     ASSERT_EQ(rates.dimension(0), 3);
     ASSERT_EQ(rates.dimension(1), 3);

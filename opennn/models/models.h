@@ -59,16 +59,16 @@ public:
                            const Shape&);
 };
 
-class AutoencoderNetwork : public Network
+class Autoencoder : public Network
 {
 
 public:
 
-    AutoencoderNetwork(const Shape&,
+    Autoencoder(const Shape&,
                            const Shape&,
                            const Shape&);
 
-    AutoencoderNetwork(const Shape&,
+    Autoencoder(const Shape&,
                            const Shape&,
                            const string&,
                            const string&);
@@ -100,7 +100,7 @@ public:
            bool use_bottleneck = false);
 };
 
-class YoloNetwork : public Network
+class Yolo : public Network
 {
 public:
 
@@ -114,7 +114,7 @@ public:
 
     enum class ModelSize { n, s, m, l, x };
 
-    YoloNetwork(const Shape&,
+    Yolo(const Shape&,
                 Index,
                 const vector<array<float, 2>>&,
                 Index grid_size = 13,

@@ -258,19 +258,19 @@ TEST(YoloFPN, C3k2ScalingParameterCountsMonotonic)
     const vector<std::array<float, 2>> anchors(9, {0.1f, 0.1f});
     const int grid_size = 10;
 
-    using B  = YoloNetwork::Backbone;
-    using CA = YoloNetwork::ClassActivation;
-    using HS = YoloNetwork::HeadStyle;
-    using BA = YoloNetwork::BodyActivation;
-    using MS = YoloNetwork::ModelSize;
+    using B  = Yolo::Backbone;
+    using CA = Yolo::ClassActivation;
+    using HS = Yolo::HeadStyle;
+    using BA = Yolo::BodyActivation;
+    using MS = Yolo::ModelSize;
 
     Index prev_params = 0;
     for (MS ms : {MS::n, MS::s, MS::m, MS::l, MS::x})
     {
-        YoloNetwork nn(input_shape, classes, anchors, grid_size,
+        Yolo network(input_shape, classes, anchors, grid_size,
                        B::CSPDarknet53v11, CA::Sigmoid, HS::FPNv8,
                        BA::LeakyReLU, false, 16, ms);
-        const Index params = nn.get_parameters_number();
+        const Index params = network.get_parameters_number();
         EXPECT_GT(params, prev_params)
             << "Parameter count did not increase for model_size=" << static_cast<int>(ms);
         prev_params = params;
@@ -288,15 +288,15 @@ TEST(YoloFPN, RejectsParametersTheChosenBackboneAndHeadIgnore)
     const vector<std::array<float, 2>> anchors(9, {0.1f, 0.1f});
     const Index grid_size = 10;
 
-    using B  = YoloNetwork::Backbone;
-    using CA = YoloNetwork::ClassActivation;
-    using HS = YoloNetwork::HeadStyle;
-    using BA = YoloNetwork::BodyActivation;
-    using MS = YoloNetwork::ModelSize;
+    using B  = Yolo::Backbone;
+    using CA = Yolo::ClassActivation;
+    using HS = Yolo::HeadStyle;
+    using BA = Yolo::BodyActivation;
+    using MS = Yolo::ModelSize;
 
     const auto build = [&](B backbone, HS head, bool use_sppf, Index reg_max, MS model_size)
     {
-        YoloNetwork network(input_shape, classes, anchors, grid_size,
+        Yolo network(input_shape, classes, anchors, grid_size,
                             backbone, CA::Sigmoid, head, BA::LeakyReLU,
                             use_sppf, reg_max, model_size);
     };

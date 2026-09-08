@@ -10,7 +10,7 @@ PyTorch side would make the comparison worthless, so there is no argument
 parsing, no logging, no configurability, no type annotations beyond what the
 code needs -- nothing the OpenNN example does not also have.  Where PyTorch
 offers a terser idiom it is used.  What is left is the work `Training`
-and `TestingAnalysis` do on the other side and that the caller must do here:
+and `Evaluation` do on the other side and that the caller must do here:
 splitting the data, scaling it, the epoch loop, the gradient step, and the
 binary-classification report.
 

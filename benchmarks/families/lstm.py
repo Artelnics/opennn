@@ -9,7 +9,7 @@ predicting the next hourly reading from a window of past ones.
   lstm.py capacity <csv>       [batch]              [hidden] [past] [dev] [prec]
 
 `nn.LSTM` reaches cuDNN's fused RNN, and so does OpenNN's
-`LongShortTermMemoryOperator`. Both engines therefore run the *same NVIDIA
+`LSTMOperator`. Both engines therefore run the *same NVIDIA
 kernel*, which makes this the cleanest cell in the matrix: the arithmetic is
 identical, so what is measured is the surrounding machinery -- data movement,
 launch overhead, the optimiser -- rather than two hand-written kernels.

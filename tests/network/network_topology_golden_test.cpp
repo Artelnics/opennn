@@ -100,11 +100,11 @@ protected:
 
 TEST_F(NetworkTopologyGolden, YoloEveryBackboneAndHead)
 {
-    using B  = YoloNetwork::Backbone;
-    using CA = YoloNetwork::ClassActivation;
-    using HS = YoloNetwork::HeadStyle;
-    using BA = YoloNetwork::BodyActivation;
-    using MS = YoloNetwork::ModelSize;
+    using B  = Yolo::Backbone;
+    using CA = Yolo::ClassActivation;
+    using HS = Yolo::HeadStyle;
+    using BA = Yolo::BodyActivation;
+    using MS = Yolo::ModelSize;
 
     struct Case
     {
@@ -146,7 +146,7 @@ TEST_F(NetworkTopologyGolden, YoloEveryBackboneAndHead)
 
         const vector<std::array<float, 2>> anchors(size_t(test_case.anchors_number), {0.1f, 0.1f});
 
-        YoloNetwork network(input_shape, classes, anchors, grid_size,
+        Yolo network(input_shape, classes, anchors, grid_size,
                             test_case.backbone, CA::Sigmoid, test_case.head,
                             BA::LeakyReLU, test_case.use_sppf,
                             test_case.reg_max, test_case.model_size);

@@ -1,12 +1,12 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   A D A P T I V E   M O M E N T   E S T I M A T I O N
+//   A D A M
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "opennn/training/adaptive_moment_estimation.h"
+#include "opennn/training/adam.h"
 
 #include "opennn/core/device_backend.h"
 #include "opennn/core/profiler.h"
@@ -70,11 +70,11 @@ void* get_moment_slice(const TensorView& first_moment, const Index offset)
 
 }
 
-AdaptiveMomentEstimation::AdaptiveMomentEstimation(Loss* new_loss)
+Adam::Adam(Loss* new_loss)
     : Optimizer(new_loss)
 {
     display_period = 100;
-    name = "AdaptiveMomentEstimation";
+    name = "Adam";
 
     // Only the first moment. At beta_1 = 0.9 its per-step increment is 0.1
     // relative, well above BF16's 3.9e-3 half-ULP; at beta_2 = 0.999 the second
@@ -83,23 +83,23 @@ AdaptiveMomentEstimation::AdaptiveMomentEstimation(Loss* new_loss)
     bf16_first_moment = bf16_first_moment_default();
 }
 
-void AdaptiveMomentEstimation::set_beta_1(const float new_beta_1)
+void Adam::set_beta_1(const float new_beta_1)
 {
     throw_if(new_beta_1 < 0.0f || new_beta_1 >= 1.0f,
-             "AdaptiveMomentEstimation::set_beta_1: beta_1 must be in [0, 1).");
+             "Adam::set_beta_1: beta_1 must be in [0, 1).");
 
     beta_1 = new_beta_1;
 }
 
-void AdaptiveMomentEstimation::set_beta_2(const float new_beta_2)
+void Adam::set_beta_2(const float new_beta_2)
 {
     throw_if(new_beta_2 < 0.0f || new_beta_2 >= 1.0f,
-             "AdaptiveMomentEstimation::set_beta_2: beta_2 must be in [0, 1).");
+             "Adam::set_beta_2: beta_2 must be in [0, 1).");
 
     beta_2 = new_beta_2;
 }
 
-void AdaptiveMomentEstimation::configure_for_task(NetworkTask task)
+void Adam::configure_for_task(NetworkTask task)
 {
     static constexpr float language_model_learning_rate = 0.0001f;
 
@@ -109,7 +109,7 @@ void AdaptiveMomentEstimation::configure_for_task(NetworkTask task)
         learning_rate = language_model_learning_rate;
 }
 
-void AdaptiveMomentEstimation::setup_optimizer_data(OptimizerData& optimization_data,
+void Adam::setup_optimizer_data(OptimizerData& optimization_data,
                                                     Index parameters_number,
                                                     Device device)
 {
@@ -137,7 +137,7 @@ void AdaptiveMomentEstimation::setup_optimizer_data(OptimizerData& optimization_
 #endif
 }
 
-void AdaptiveMomentEstimation::on_epoch_begin(Index, OptimizerData& optimization_data)
+void Adam::on_epoch_begin(Index, OptimizerData& optimization_data)
 {
 #ifdef OPENNN_HAS_CUDA
     if (can_use_cuda_graph() && optimization_data.views[GraphScalars].size() >= 4)
@@ -149,7 +149,7 @@ void AdaptiveMomentEstimation::on_epoch_begin(Index, OptimizerData& optimization
 #endif
 }
 
-void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagation,
+void Adam::update_parameters(BackPropagation& back_propagation,
                                                  OptimizerData& optimization_data,
                                                  UpdateMode mode)
 {
@@ -298,9 +298,9 @@ void AdaptiveMomentEstimation::update_parameters(BackPropagation& back_propagati
     }
 }
 
-void AdaptiveMomentEstimation::to_JSON(JsonWriter& printer) const
+void Adam::to_JSON(JsonWriter& printer) const
 {
-    printer.open_element("AdaptiveMomentEstimation");
+    printer.open_element("Adam");
 
     add_json_field(printer, "BatchSize", batch_size);
     add_json_field(printer, "LearningRate", learning_rate);
@@ -312,9 +312,9 @@ void AdaptiveMomentEstimation::to_JSON(JsonWriter& printer) const
     printer.close_element();
 }
 
-void AdaptiveMomentEstimation::from_JSON(const JsonDocument& document)
+void Adam::from_JSON(const JsonDocument& document)
 {
-    const Json* root_element = get_json_root(document, "AdaptiveMomentEstimation");
+    const Json* root_element = get_json_root(document, "Adam");
 
     set_batch_size(read_json_index(root_element, "BatchSize"));
     set_learning_rate(read_json_float(root_element, "LearningRate", learning_rate));

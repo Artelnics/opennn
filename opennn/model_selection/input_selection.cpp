@@ -1,12 +1,12 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   I N P U T S   S E L E C T I O N   C L A S S
+//   I N P U T   S E L E C T I O N   C L A S S
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "opennn/model_selection/inputs_selection.h"
+#include "opennn/model_selection/input_selection.h"
 
 #include "opennn/dataset/dataset.h"
 #include "opennn/model_selection/selection_utilities.h"
@@ -15,12 +15,12 @@
 namespace opennn
 {
 
-InputsSelection::InputsSelection(Training* new_training)
+InputSelection::InputSelection(Training* new_training)
 {
     set(new_training);
 }
 
-void InputsSelection::configure_network_inputs(Network* network, Dataset* dataset, Index input_features_number) const
+void InputSelection::configure_network_inputs(Network* network, Dataset* dataset, Index input_features_number) const
 {
     dataset->resize_input_shape(input_features_number);
     network->set_input_shape(dataset->get_input_shape());
@@ -29,7 +29,7 @@ void InputsSelection::configure_network_inputs(Network* network, Dataset* datase
     network->compile();
 }
 
-void InputsSelection::install_optimal_inputs(Network* network,
+void InputSelection::install_optimal_inputs(Network* network,
                                              Dataset* dataset,
                                              const vector<Index>& optimal_input_indices,
                                              const vector<Index>& target_indices,
@@ -46,12 +46,12 @@ void InputsSelection::install_optimal_inputs(Network* network,
     apply_input_scaling(network, capture_input_scaling(dataset));
 }
 
-InputsSelectionResult::InputsSelectionResult(const Index maximum_epochs)
+InputSelectionResult::InputSelectionResult(const Index maximum_epochs)
 {
     set(maximum_epochs);
 }
 
-void InputsSelectionResult::set(const Index maximum_epochs)
+void InputSelectionResult::set(const Index maximum_epochs)
 {
     training_error_history = VectorR::Constant(maximum_epochs, QUIET_NAN);
     validation_error_history = VectorR::Constant(maximum_epochs, QUIET_NAN);
@@ -59,7 +59,7 @@ void InputsSelectionResult::set(const Index maximum_epochs)
     mean_training_error_history = VectorR::Constant(maximum_epochs, QUIET_NAN);
 }
 
-void InputsSelectionResult::resize_history(const Index new_size)
+void InputSelectionResult::resize_history(const Index new_size)
 {
     training_error_history.conservativeResize(new_size);
     validation_error_history.conservativeResize(new_size);
@@ -67,7 +67,7 @@ void InputsSelectionResult::resize_history(const Index new_size)
     mean_validation_error_history.conservativeResize(new_size);
 }
 
-void InputsSelectionResult::print() const
+void InputSelectionResult::print() const
 {
     logging::info() << "\n"
          << "Input Selection Results" << "\n"
@@ -81,12 +81,12 @@ void InputsSelectionResult::print() const
          << "Optimum validation error: " << optimum_validation_error << "\n";
 }
 
-void InputsSelection::save(const filesystem::path& file_name) const
+void InputSelection::save(const filesystem::path& file_name) const
 {
     save_json_file(file_name, *this);
 }
 
-void InputsSelection::load(const filesystem::path& file_name)
+void InputSelection::load(const filesystem::path& file_name)
 {
     from_JSON(load_json_file(file_name));
 }

@@ -84,7 +84,7 @@ descriptor dump reads `F=16`. The logical feature count the shape gate
 compares is 15 on both sides.
 
 Two networks are timed, by design. Inference times exactly `nn.LSTM +
-nn.Linear` on both sides (OpenNN: `LongShortTermMemory` + `Dense(Identity)`).
+nn.Linear` on both sides (OpenNN: `LSTM` + `Dense(Identity)`).
 Training uses OpenNN's full `ForecastingLstmNetwork`, which is Scaling → LSTM
 → Dense → Unscaling → Clamping(none): OpenNN standardises the inputs inside
 the network and un-standardises the output, while the PyTorch driver
@@ -514,7 +514,7 @@ the second):
 
 | section | ms / call | share |
 |---|---|---|
-| `fwd:LongShortTermMemory` | 3.237 | — |
+| `fwd:LSTM` | 3.237 | — |
 | ` rnn:onednn_forward` | **3.185** | **98.4% of the LSTM layer** |
 | ` rnn:onednn_transpose_input` | 0.020 | 0.6% |
 | ` rnn:onednn_arguments` | 0.005 | 0.2% |
@@ -575,7 +575,7 @@ against 23,251 published, so the instrument costs about 1.5%):
 |---|---|---|
 | `step:bwd_total` | 7.497 | 65.2% |
 | — `rnn:onednn_backward` (the primitive) | 6.222 | 54.4% |
-| — the rest of `bwd:LongShortTermMemory` (unpacking the packed gradients, transposes) | 1.195 | 10.4% |
+| — the rest of `bwd:LSTM` (unpacking the packed gradients, transposes) | 1.195 | 10.4% |
 | `step:fwd_total` | 3.711 | 32.3% |
 | — `rnn:onednn_forward` | 3.496 | 30.6% |
 | — packing and reordering the weights, transposing the input | 0.118 | 1.0% |

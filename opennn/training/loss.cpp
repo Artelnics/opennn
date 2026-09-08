@@ -434,21 +434,21 @@ vector<float> assemble_head_target(const float* tgt,
 }
 
 template <typename LayoutFn>
-void for_each_yolo_head_layout(const Network* nn,
+void for_each_yolo_head_layout(const Network* network,
                                const vector<Index>& detection_indices,
                                LayoutFn&& fn)
 {
     Index per_sample_floats = 0;
     for (Index idx : detection_indices)
     {
-        const Shape head_shape = nn->get_layer(idx)->get_output_shape();
+        const Shape head_shape = network->get_layer(idx)->get_output_shape();
         per_sample_floats += head_shape[0] * head_shape[1] * head_shape[2];
     }
 
     Index head_offset = 0;
     for (Index detection_idx : detection_indices)
     {
-        const Shape head_shape = nn->get_layer(detection_idx)->get_output_shape();
+        const Shape head_shape = network->get_layer(detection_idx)->get_output_shape();
         const Index channels = head_shape[2];
         const Index head_floats = head_shape[0] * head_shape[1] * channels;
 
@@ -460,13 +460,13 @@ void for_each_yolo_head_layout(const Network* nn,
 
 template <typename HeadFn>
 void for_each_yolo_head(const ForwardPropagation& forward_propagation,
-                        const Network* nn,
+                        const Network* network,
                         const vector<Index>& detection_indices,
                         const float* tgt,
                         Index batch_size,
                         HeadFn&& fn)
 {
-    for_each_yolo_head_layout(nn, detection_indices,
+    for_each_yolo_head_layout(network, detection_indices,
         [&](Index detection_idx, const Shape& head_shape, Index channels,
             Index per_sample_floats, Index head_offset, Index head_floats)
         {
@@ -492,7 +492,7 @@ void for_each_yolo_head(const ForwardPropagation& forward_propagation,
 
 Loss::EvaluationResult yolo_error_cpu_multi(const ForwardPropagation& forward_propagation,
                                             const TensorView& target_flat,
-                                            const Network* nn,
+                                            const Network* network,
                                             const vector<Index>& detection_indices,
                                             const DetectionHeadMetadata& head,
                                             YoloLambdas lam)
@@ -501,7 +501,7 @@ Loss::EvaluationResult yolo_error_cpu_multi(const ForwardPropagation& forward_pr
     const bool sigmoid_classes = head.uses_sigmoid_classes();
 
     float total_error = 0.0f;
-    for_each_yolo_head(forward_propagation, nn, detection_indices,
+    for_each_yolo_head(forward_propagation, network, detection_indices,
                        target_flat.as<float>(), batch_size,
         [&](Index, const TensorView& head_output, const TensorView& head_target)
         {
@@ -518,7 +518,7 @@ Loss::EvaluationResult yolo_error_cpu_multi(const ForwardPropagation& forward_pr
 void yolo_gradient_cpu_multi(const ForwardPropagation& forward_propagation,
                              const TensorView& target_flat,
                              BackPropagation& back_propagation,
-                             const Network* nn,
+                             const Network* network,
                              const vector<Index>& detection_indices,
                              const DetectionHeadMetadata& head,
                              YoloLambdas lam)
@@ -527,7 +527,7 @@ void yolo_gradient_cpu_multi(const ForwardPropagation& forward_propagation,
     const float inv_batch = 1.0f / float(batch_size);
     const bool sigmoid_classes = head.uses_sigmoid_classes();
 
-    for_each_yolo_head(forward_propagation, nn, detection_indices,
+    for_each_yolo_head(forward_propagation, network, detection_indices,
                        target_flat.as<float>(), batch_size,
         [&](Index detection_idx, const TensorView& head_output, const TensorView& head_target)
         {
@@ -915,7 +915,7 @@ template<typename HeadFn>
 static void for_each_v8_head(const ForwardPropagation& forward_propagation,
                              const TensorView& target_flat,
                              BackPropagation* back_propagation,
-                             const Network* nn,
+                             const Network* network,
                              const vector<Index>& detection_indices,
                              HeadFn&& fn)
 {
@@ -940,10 +940,10 @@ static void for_each_v8_head(const ForwardPropagation& forward_propagation,
     {
         const TensorView head_view = forward_propagation.slots[size_t(detection_idx)].back();
         const DetectionHeadMetadata metadata =
-            get_detection_head_metadata(*nn, detection_idx);
+            get_detection_head_metadata(*network, detection_idx);
         throw_if(!metadata.is_anchor_free(),
                  "YOLO v8 loss requires anchor-free detection heads.");
-        const Index G       = nn->get_layer(detection_idx)->get_output_shape()[0];
+        const Index G       = network->get_layer(detection_idx)->get_output_shape()[0];
         const Index reg_max = metadata.regression_bins;
 
         TensorView head_output = head_view;
@@ -1008,7 +1008,7 @@ Index get_max_gt_boxes(const TensorView& target_flat, Index batch_size)
 
 Loss::EvaluationResult yolo_v8_error_multi(const ForwardPropagation& forward_propagation,
                                            const TensorView& target_flat,
-                                           const Network* nn,
+                                           const Network* network,
                                            const vector<Index>& detection_indices,
                                            Index classes_number,
                                            YoloLambdas lam)
@@ -1017,7 +1017,7 @@ Loss::EvaluationResult yolo_v8_error_multi(const ForwardPropagation& forward_pro
     const Index max_gt_boxes = get_max_gt_boxes(target_flat, batch_size);
 
     float total_error = 0.0f;
-    for_each_v8_head(forward_propagation, target_flat, nullptr, nn, detection_indices,
+    for_each_v8_head(forward_propagation, target_flat, nullptr, network, detection_indices,
         [&](const TensorView& head_output, const float* tgt, TensorView*, Index G, Index reg_max)
         {
             const TalResult tal = tal_assign_head(head_output, tgt, batch_size, G,
@@ -1032,7 +1032,7 @@ Loss::EvaluationResult yolo_v8_error_multi(const ForwardPropagation& forward_pro
 void yolo_v8_gradient_multi(const ForwardPropagation& forward_propagation,
                             const TensorView& target_flat,
                             BackPropagation& back_propagation,
-                            const Network* nn,
+                            const Network* network,
                             const vector<Index>& detection_indices,
                             Index classes_number,
                             YoloLambdas lam)
@@ -1041,7 +1041,7 @@ void yolo_v8_gradient_multi(const ForwardPropagation& forward_propagation,
     const float inv_batch = 1.0f / float(batch_size);
     const Index max_gt_boxes = get_max_gt_boxes(target_flat, batch_size);
 
-    for_each_v8_head(forward_propagation, target_flat, &back_propagation, nn, detection_indices,
+    for_each_v8_head(forward_propagation, target_flat, &back_propagation, network, detection_indices,
         [&](const TensorView& head_output, const float* tgt, TensorView* head_delta, Index G, Index reg_max)
         {
             const TalResult tal = tal_assign_head(head_output, tgt, batch_size, G,
@@ -1056,7 +1056,7 @@ void yolo_v8_gradient_multi(const ForwardPropagation& forward_propagation,
 
 template <typename HeadFn>
 void for_each_yolo_head_gpu(const ForwardPropagation& forward_propagation,
-                            const Network* nn,
+                            const Network* network,
                             const vector<Index>& detection_indices,
                             const TensorView& target_flat,
                             Buffer& target_device,
@@ -1067,7 +1067,7 @@ void for_each_yolo_head_gpu(const ForwardPropagation& forward_propagation,
     if (target_flat.is_cuda())
     {
         const float* tgt = target_flat.as<float>();
-        for_each_yolo_head_layout(nn, detection_indices,
+        for_each_yolo_head_layout(network, detection_indices,
             [&](Index detection_idx, const Shape& head_shape, Index channels,
                 Index per_sample_floats, Index head_offset, Index head_floats)
             {
@@ -1090,7 +1090,7 @@ void for_each_yolo_head_gpu(const ForwardPropagation& forward_propagation,
         return;
     }
 
-    for_each_yolo_head(forward_propagation, nn, detection_indices,
+    for_each_yolo_head(forward_propagation, network, detection_indices,
                        target_flat.as<float>(), batch_size,
         [&](Index detection_idx, const TensorView& head_output, const TensorView& head_target)
         {
@@ -1108,7 +1108,7 @@ void for_each_yolo_head_gpu(const ForwardPropagation& forward_propagation,
 
 void yolo_error_gpu_accumulate(const ForwardPropagation& forward_propagation,
                                const TensorView& target_flat,
-                               const Network* nn,
+                               const Network* network,
                                const vector<Index>& detection_indices,
                                const DetectionHeadMetadata& head,
                                Buffer& target_device,
@@ -1123,7 +1123,7 @@ void yolo_error_gpu_accumulate(const ForwardPropagation& forward_propagation,
 
     device::set_zero_async(error_accum, Index(sizeof(float)), device::get_compute_stream());
 
-    for_each_yolo_head_gpu(forward_propagation, nn, detection_indices, target_flat, target_device,
+    for_each_yolo_head_gpu(forward_propagation, network, detection_indices, target_flat, target_device,
         [&](Index, const TensorView& head_output, const TensorView& head_target)
         {
             const Index grid_size = head_target.get_shape()[1];
@@ -1136,7 +1136,7 @@ void yolo_error_gpu_accumulate(const ForwardPropagation& forward_propagation,
 
 Loss::EvaluationResult yolo_error_gpu_multi(const ForwardPropagation& forward_propagation,
                                             const TensorView& target_flat,
-                                            const Network* nn,
+                                            const Network* network,
                                             const vector<Index>& detection_indices,
                                             const DetectionHeadMetadata& head,
                                             Buffer& target_device,
@@ -1146,7 +1146,7 @@ Loss::EvaluationResult yolo_error_gpu_multi(const ForwardPropagation& forward_pr
     const Index batch_size = target_flat.get_shape()[0];
 
     error_device.grow_to(Index(sizeof(float)));
-    yolo_error_gpu_accumulate(forward_propagation, target_flat, nn,
+    yolo_error_gpu_accumulate(forward_propagation, target_flat, network,
                               detection_indices, head, target_device,
                               error_device.as<float>(), lam);
 
@@ -1162,7 +1162,7 @@ Loss::EvaluationResult yolo_error_gpu_multi(const ForwardPropagation& forward_pr
 void yolo_gradient_gpu_multi(const ForwardPropagation& forward_propagation,
                              const TensorView& target_flat,
                              BackPropagation& back_propagation,
-                             const Network* nn,
+                             const Network* network,
                              const vector<Index>& detection_indices,
                              const DetectionHeadMetadata& head,
                              Buffer& target_device,
@@ -1175,7 +1175,7 @@ void yolo_gradient_gpu_multi(const ForwardPropagation& forward_propagation,
     const Index batch_size = target_flat.get_shape()[0];
     const float inv_batch = 1.0f / float(batch_size);
 
-    for_each_yolo_head_gpu(forward_propagation, nn, detection_indices, target_flat, target_device,
+    for_each_yolo_head_gpu(forward_propagation, network, detection_indices, target_flat, target_device,
         [&](Index detection_idx, const TensorView& head_output, const TensorView& head_target)
         {
             TensorView& head_delta = back_propagation.output_deltas[size_t(detection_idx)];

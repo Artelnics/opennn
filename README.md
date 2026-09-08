@@ -51,10 +51,10 @@ folder it comes from — `#include "opennn/network/layers/dense_layer.h"`:
 - `opennn/dataset/` - tabular, image, language, time series and YOLO datasets
 - `opennn/training/` - losses and optimization algorithms
 - `opennn/model_selection/` - inputs and neurons selection, genetic algorithm
-- `opennn/testing_analysis/` - testing analysis
+- `opennn/evaluation/` - testing analysis
 
 They depend on each other in that order, top to bottom: `core` knows nothing
-about the rest, and `testing_analysis` may use everything above it. Datasets
+about the rest, and `evaluation` may use everything above it. Datasets
 sit above the network because the language datasets tokenize and the YOLO
 dataset builds detection targets, while nothing in `network/` includes
 a dataset.

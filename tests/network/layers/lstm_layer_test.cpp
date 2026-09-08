@@ -5,28 +5,28 @@
 #include <utility>
 
 #include "opennn/core/tensor_types.h"
-#include "opennn/network/layers/long_short_term_memory_layer.h"
+#include "opennn/network/layers/lstm_layer.h"
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/network/network.h"
 #include "opennn/training/loss.h"
 
 using namespace opennn;
 
-TEST(LongShortTermMemoryLayerTest, DefaultConstructor)
+TEST(LSTMLayerTest, DefaultConstructor)
 {
-    LongShortTermMemory lstm_layer;
+    LSTM lstm_layer;
 
     EXPECT_EQ(lstm_layer.get_inputs_number(), 0);
     EXPECT_EQ(lstm_layer.get_outputs_number(), 0);
 }
 
-TEST(LongShortTermMemoryLayerTest, GeneralConstructor)
+TEST(LSTMLayerTest, GeneralConstructor)
 {
     const Index inputs_number   = random_integer(1, 10);
     const Index neurons_number  = random_integer(1, 10);
     const Index time_steps      = random_integer(1, 10);
 
-    LongShortTermMemory lstm_layer({ time_steps, inputs_number }, { neurons_number });
+    LSTM lstm_layer({ time_steps, inputs_number }, { neurons_number });
 
     const Index parameters_number =
         4 * neurons_number * (1 + inputs_number + neurons_number);
@@ -36,13 +36,13 @@ TEST(LongShortTermMemoryLayerTest, GeneralConstructor)
     EXPECT_EQ(lstm_layer.get_output_shape(), Shape({ neurons_number }));
 }
 
-TEST(LongShortTermMemoryLayerTest, ReturnSequencesOutputShape)
+TEST(LSTMLayerTest, ReturnSequencesOutputShape)
 {
     const Index inputs_number  = 4;
     const Index neurons_number = 6;
     const Index time_steps     = 5;
 
-    LongShortTermMemory lstm_layer({ time_steps, inputs_number }, { neurons_number });
+    LSTM lstm_layer({ time_steps, inputs_number }, { neurons_number });
 
     EXPECT_FALSE(lstm_layer.get_return_sequences());
     EXPECT_EQ(lstm_layer.get_output_shape(), Shape({ neurons_number }));
@@ -52,7 +52,7 @@ TEST(LongShortTermMemoryLayerTest, ReturnSequencesOutputShape)
     EXPECT_EQ(lstm_layer.get_output_shape(), Shape({ time_steps, neurons_number }));
 }
 
-TEST(LongShortTermMemoryLayerTest, ForwardPropagate)
+TEST(LSTMLayerTest, ForwardPropagate)
 {
     const Index outputs_number = 8;
     const Index samples_number = 3;
@@ -64,7 +64,7 @@ TEST(LongShortTermMemoryLayerTest, ForwardPropagate)
     for (const string& act : cell_activations)
     {
         Network network;
-        auto layer = make_unique<LongShortTermMemory>(
+        auto layer = make_unique<LSTM>(
             Shape{time_steps, inputs_number}, Shape{outputs_number});
         layer->set_activation_function(act);
         layer->set_recurrent_activation_function("Sigmoid");
@@ -91,7 +91,7 @@ TEST(LongShortTermMemoryLayerTest, ForwardPropagate)
     }
 }
 
-TEST(LongShortTermMemoryLayerTest, ForwardPropagateValues)
+TEST(LSTMLayerTest, ForwardPropagateValues)
 {
     const Index samples_number = 2;
     const Index inputs_number  = 2;
@@ -103,7 +103,7 @@ TEST(LongShortTermMemoryLayerTest, ForwardPropagateValues)
 
     {
         Network network;
-        auto layer = make_unique<LongShortTermMemory>(
+        auto layer = make_unique<LSTM>(
             Shape{time_steps, inputs_number}, Shape{outputs_number});
         layer->set_activation_function("Tanh");
         layer->set_recurrent_activation_function("Sigmoid");
@@ -133,7 +133,7 @@ TEST(LongShortTermMemoryLayerTest, ForwardPropagateValues)
 
     {
         Network network;
-        auto layer = make_unique<LongShortTermMemory>(
+        auto layer = make_unique<LSTM>(
             Shape{time_steps, inputs_number}, Shape{outputs_number});
         layer->set_activation_function("Tanh");
         layer->set_recurrent_activation_function("Sigmoid");
@@ -170,7 +170,7 @@ TEST(LongShortTermMemoryLayerTest, ForwardPropagateValues)
     }
 }
 
-TEST(LongShortTermMemoryLayerTest, BackPropagate)
+TEST(LSTMLayerTest, BackPropagate)
 {
     const Index samples_number = 4;
     const Index inputs_number  = 3;
@@ -182,7 +182,7 @@ TEST(LongShortTermMemoryLayerTest, BackPropagate)
     dataset.set_sample_roles("Training");
 
     Network network;
-    network.add_layer(make_unique<LongShortTermMemory>(
+    network.add_layer(make_unique<LSTM>(
         Shape{time_steps, inputs_number}, Shape{targets_number}));
     network.compile();
 
@@ -200,7 +200,7 @@ TEST(LongShortTermMemoryLayerTest, BackPropagate)
     EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(1.0e-3));
 }
 
-TEST(LongShortTermMemoryLayerTest, BackPropagateReturnSequences)
+TEST(LSTMLayerTest, BackPropagateReturnSequences)
 {
     const Index samples_number = 4;
     const Index inputs_number  = 3;
@@ -214,7 +214,7 @@ TEST(LongShortTermMemoryLayerTest, BackPropagateReturnSequences)
     dataset.set_sample_roles("Training");
 
     Network network;
-    auto layer = make_unique<LongShortTermMemory>(input_shape, Shape{neurons_number});
+    auto layer = make_unique<LSTM>(input_shape, Shape{neurons_number});
     layer->set_return_sequences(true);
     network.add_layer(std::move(layer));
     network.compile();
@@ -233,22 +233,22 @@ TEST(LongShortTermMemoryLayerTest, BackPropagateReturnSequences)
     EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(1.0e-3));
 }
 
-TEST(LongShortTermMemoryLayerTest, UnsupportedActivationThrows)
+TEST(LSTMLayerTest, UnsupportedActivationThrows)
 {
-    LongShortTermMemory lstm_layer(Shape{3, 4}, Shape{5});
+    LSTM lstm_layer(Shape{3, 4}, Shape{5});
 
     EXPECT_THROW(lstm_layer.set_activation_function("Softmax"), runtime_error);
     EXPECT_THROW(lstm_layer.set_recurrent_activation_function("Softmax"), runtime_error);
 }
 
-TEST(LongShortTermMemoryLayerTest, ForgetBiasInitialisedToOne)
+TEST(LSTMLayerTest, ForgetBiasInitialisedToOne)
 {
     Network network;
-    network.add_layer(make_unique<LongShortTermMemory>(Shape{3, 2}, Shape{4}));
+    network.add_layer(make_unique<LSTM>(Shape{3, 2}, Shape{4}));
     network.compile();
     network.set_parameters_glorot();
 
-    const auto* lstm = dynamic_cast<const LongShortTermMemory*>(network.get_layer(0).get());
+    const auto* lstm = dynamic_cast<const LSTM*>(network.get_layer(0).get());
     ASSERT_NE(lstm, nullptr);
 
     const TensorView& bf = lstm->get_forget_bias();
@@ -259,18 +259,18 @@ TEST(LongShortTermMemoryLayerTest, ForgetBiasInitialisedToOne)
         EXPECT_FLOAT_EQ(bf_data[i], 1.0f);
 }
 
-TEST(LongShortTermMemoryLayerTest, StackedReturnSequencesSurvivesSaveLoad)
+TEST(LSTMLayerTest, StackedReturnSequencesSurvivesSaveLoad)
 {
     const filesystem::path path =
         filesystem::temp_directory_path() / "opennn_lstm_return_sequences_test.json";
 
     Network network;
 
-    auto first = make_unique<LongShortTermMemory>(Shape{5, 3}, Shape{6}, "Tanh", "Sigmoid", "lstm_1");
+    auto first = make_unique<LSTM>(Shape{5, 3}, Shape{6}, "Tanh", "Sigmoid", "lstm_1");
     first->set_return_sequences(true);
     network.add_layer(std::move(first));
 
-    network.add_layer(make_unique<LongShortTermMemory>(Shape{5, 6}, Shape{4}, "Tanh", "Sigmoid", "lstm_2"));
+    network.add_layer(make_unique<LSTM>(Shape{5, 6}, Shape{4}, "Tanh", "Sigmoid", "lstm_2"));
     network.compile();
     network.save(path);
 
@@ -278,8 +278,8 @@ TEST(LongShortTermMemoryLayerTest, StackedReturnSequencesSurvivesSaveLoad)
     loaded.load(path);
     loaded.compile();
 
-    const auto* loaded_first = dynamic_cast<const LongShortTermMemory*>(loaded.get_layer(0).get());
-    const auto* loaded_second = dynamic_cast<const LongShortTermMemory*>(loaded.get_layer(1).get());
+    const auto* loaded_first = dynamic_cast<const LSTM*>(loaded.get_layer(0).get());
+    const auto* loaded_second = dynamic_cast<const LSTM*>(loaded.get_layer(1).get());
     ASSERT_NE(loaded_first, nullptr);
     ASSERT_NE(loaded_second, nullptr);
 

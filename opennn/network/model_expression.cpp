@@ -16,7 +16,7 @@
 #include "opennn/network/layers/clamping_layer.h"
 #include "opennn/network/layers/dense_layer.h"
 #include "opennn/network/layers/recurrent_layer.h"
-#include "opennn/network/layers/long_short_term_memory_layer.h"
+#include "opennn/network/layers/lstm_layer.h"
 #include "opennn/core/enum_map.h"
 #include "opennn/core/string_utilities.h"
 #include "opennn/core/tensor_operations.h"
@@ -380,7 +380,7 @@ string ModelExpression::build_expression(const vector<string>& input_names,
         throw_if(layer_type != LayerType::Scaling
                  && layer_type != LayerType::Dense
                  && layer_type != LayerType::Recurrent
-                 && layer_type != LayerType::LongShortTermMemory
+                 && layer_type != LayerType::LSTM
                  && layer_type != LayerType::Unscaling
                  && layer_type != LayerType::Clamping,
                  "ModelExpression: layer '{}' ({}) is not supported for export.",
@@ -1322,10 +1322,10 @@ string ModelExpression::get_expression_c_embedded() const
                         ? time_steps * hidden
                         : hidden);
             }
-            else if(layer_type == LayerType::LongShortTermMemory)
+            else if(layer_type == LayerType::LSTM)
             {
-                const LongShortTermMemory* lstm =
-                    static_cast<const LongShortTermMemory*>(
+                const LSTM* lstm =
+                    static_cast<const LSTM*>(
                         layers[i].get());
 
                 const vector<TensorView>& parameter_views =

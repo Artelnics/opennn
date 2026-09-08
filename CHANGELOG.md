@@ -8,6 +8,11 @@ remaining limitations.
 
 ### Reconciliation and release preparation
 
+- Simplify public names to `Adam`, `SGD`, `LSTM`, `Autoencoder`, `Yolo`,
+  `InputSelection` and `Evaluation`, with matching headers and variable names.
+  Adam/SGD optimizer and LSTM layer factory/JSON names use the new spellings.
+  Input-selection accessors and factory use singular `input_selection`.
+  No old-name aliases or forwarding headers are provided.
 - Rename optimizer classes to `LevenbergMarquardt` and `QuasiNewton` without
   aliases, including their headers. The Quasi-Newton factory and JSON name is
   now `QuasiNewton`; the Levenberg-Marquardt factory/JSON name is unchanged.

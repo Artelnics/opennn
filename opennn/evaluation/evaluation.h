@@ -1,7 +1,7 @@
 ﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   T E S T I N G   A N A L Y S I S   C L A S S   H E A D E R
+//   E V A L U A T I O N   C L A S S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -28,12 +28,12 @@ enum class ConfusionCell
     TrueNegative
 };
 
-class TestingAnalysis
+class Evaluation
 {
 
 public:
 
-    explicit TestingAnalysis(Network* = nullptr, Dataset* = nullptr);
+    explicit Evaluation(Network* = nullptr, Dataset* = nullptr);
 
     struct GoodnessOfFitAnalysis
     {

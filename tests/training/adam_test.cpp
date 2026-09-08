@@ -7,7 +7,7 @@
 #include "opennn/dataset/image_dataset.h"
 #include "opennn/models/models.h"
 #include "opennn/training/loss.h"
-#include "opennn/training/adaptive_moment_estimation.h"
+#include "opennn/training/adam.h"
 #include "opennn/core/device_backend.h"
 
 #include "tests/test_helpers.h"
@@ -89,7 +89,7 @@ namespace
     }
 }
 
-class AdaptiveMomentEstimationTest : public ::testing::Test
+class AdamTest : public ::testing::Test
 {
 protected:
     int previous_threads = 0;
@@ -106,22 +106,22 @@ protected:
     }
 };
 
-TEST_F(AdaptiveMomentEstimationTest, DefaultConstructor)
+TEST_F(AdamTest, DefaultConstructor)
 {
-    AdaptiveMomentEstimation adaptive_moment_estimation;
+    Adam adam;
 
-    EXPECT_EQ(adaptive_moment_estimation.get_loss() == nullptr, true);
+    EXPECT_EQ(adam.get_loss() == nullptr, true);
 }
 
-TEST_F(AdaptiveMomentEstimationTest, GeneralConstructor)
+TEST_F(AdamTest, GeneralConstructor)
 {
     Loss loss;
-    AdaptiveMomentEstimation adaptive_moment_estimation(&loss);
+    Adam adam(&loss);
 
-    EXPECT_TRUE(adaptive_moment_estimation.get_loss() != nullptr);
+    EXPECT_TRUE(adam.get_loss() != nullptr);
 }
 
-TEST_F(AdaptiveMomentEstimationTest, TrainApproximationCPU)
+TEST_F(AdamTest, TrainApproximationCPU)
 {
     set_seed(1);
     TabularDataset dataset_short(16, {2}, {1});
@@ -130,7 +130,7 @@ TEST_F(AdaptiveMomentEstimationTest, TrainApproximationCPU)
     ApproximationNetwork network_short({2}, {6}, {1});
     Loss loss_short(&network_short, &dataset_short);
     loss_short.set_error(Loss::Error::MeanSquaredError);
-    AdaptiveMomentEstimation adam_short(&loss_short);
+    Adam adam_short(&loss_short);
     adam_short.set_maximum_epochs(2);
     adam_short.set_display(false);
     const type error_short = adam_short.train().get_training_error();
@@ -142,7 +142,7 @@ TEST_F(AdaptiveMomentEstimationTest, TrainApproximationCPU)
     ApproximationNetwork network_long({2}, {6}, {1});
     Loss loss_long(&network_long, &dataset_long);
     loss_long.set_error(Loss::Error::MeanSquaredError);
-    AdaptiveMomentEstimation adam_long(&loss_long);
+    Adam adam_long(&loss_long);
     adam_long.set_maximum_epochs(200);
     adam_long.set_display(false);
     const type error_long = adam_long.train().get_training_error();
@@ -150,7 +150,7 @@ TEST_F(AdaptiveMomentEstimationTest, TrainApproximationCPU)
     EXPECT_LT(error_long, error_short);
 }
 
-TEST_F(AdaptiveMomentEstimationTest, TrainsRemainderBatchCPU)
+TEST_F(AdamTest, TrainsRemainderBatchCPU)
 {
     TabularDataset dataset(5, { 2 }, { 1 });
     dataset.set_data_random();
@@ -160,7 +160,7 @@ TEST_F(AdaptiveMomentEstimationTest, TrainsRemainderBatchCPU)
     Loss loss(&network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);
 
-    AdaptiveMomentEstimation adam(&loss);
+    Adam adam(&loss);
     adam.set_batch_size(2);
     adam.set_maximum_epochs(0);
     adam.set_display(false);
@@ -172,7 +172,7 @@ TEST_F(AdaptiveMomentEstimationTest, TrainsRemainderBatchCPU)
     EXPECT_EQ(batches_processed, 3);
 }
 
-TEST_F(AdaptiveMomentEstimationTest, TrainingScalingCleanupSurvivesCallbackException)
+TEST_F(AdamTest, TrainingScalingCleanupSurvivesCallbackException)
 {
     TabularDataset dataset(4, {1}, {1});
     MatrixR raw(4, 2);
@@ -188,7 +188,7 @@ TEST_F(AdaptiveMomentEstimationTest, TrainingScalingCleanupSurvivesCallbackExcep
     Loss loss(&network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);
 
-    AdaptiveMomentEstimation adam(&loss);
+    Adam adam(&loss);
     adam.set_batch_size(2);
     adam.set_maximum_epochs(0);
     adam.set_display(false);
@@ -207,7 +207,7 @@ TEST_F(AdaptiveMomentEstimationTest, TrainingScalingCleanupSurvivesCallbackExcep
 }
 
 #ifdef OPENNN_HAS_CUDA
-TEST_F(AdaptiveMomentEstimationTest, TrainApproximationGPU)
+TEST_F(AdamTest, TrainApproximationGPU)
 {
     Configuration::instance().set(Device::CUDA, Type::FP32);
 
@@ -218,7 +218,7 @@ TEST_F(AdaptiveMomentEstimationTest, TrainApproximationGPU)
     ApproximationNetwork network_short({2}, {6}, {1});
     Loss loss_short(&network_short, &dataset_short);
     loss_short.set_error(Loss::Error::MeanSquaredError);
-    AdaptiveMomentEstimation adam_short(&loss_short);
+    Adam adam_short(&loss_short);
     adam_short.set_maximum_epochs(2);
     adam_short.set_display(false);
     const type error_short = adam_short.train().get_training_error();
@@ -230,7 +230,7 @@ TEST_F(AdaptiveMomentEstimationTest, TrainApproximationGPU)
     ApproximationNetwork network_long({2}, {6}, {1});
     Loss loss_long(&network_long, &dataset_long);
     loss_long.set_error(Loss::Error::MeanSquaredError);
-    AdaptiveMomentEstimation adam_long(&loss_long);
+    Adam adam_long(&loss_long);
     adam_long.set_maximum_epochs(200);
     adam_long.set_display(false);
     const type error_long = adam_long.train().get_training_error();
@@ -238,7 +238,7 @@ TEST_F(AdaptiveMomentEstimationTest, TrainApproximationGPU)
     EXPECT_LT(error_long, error_short);
 }
 
-TEST_F(AdaptiveMomentEstimationTest, TrainsRemainderBatchGPU)
+TEST_F(AdamTest, TrainsRemainderBatchGPU)
 {
     Configuration::instance().set(Device::CUDA, Type::FP32);
 
@@ -250,7 +250,7 @@ TEST_F(AdaptiveMomentEstimationTest, TrainsRemainderBatchGPU)
     Loss loss(&network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);
 
-    AdaptiveMomentEstimation adam(&loss);
+    Adam adam(&loss);
     adam.set_batch_size(2);
     adam.set_cuda_graph(true);
     adam.set_joint_gradient_arena(true);
@@ -264,7 +264,7 @@ TEST_F(AdaptiveMomentEstimationTest, TrainsRemainderBatchGPU)
     EXPECT_EQ(batches_processed, 3);
 }
 
-TEST_F(AdaptiveMomentEstimationTest, JointGradientArenaMatchesContiguousAdamGPU)
+TEST_F(AdamTest, JointGradientArenaMatchesContiguousAdamGPU)
 {
     Configuration::instance().set(Device::CUDA, Type::BF16);
 
@@ -284,7 +284,7 @@ TEST_F(AdaptiveMomentEstimationTest, JointGradientArenaMatchesContiguousAdamGPU)
         Loss loss(&network, &dataset);
         loss.set_error(Loss::Error::MeanSquaredError);
 
-        AdaptiveMomentEstimation adam(&loss);
+        Adam adam(&loss);
         adam.set_batch_size(8);
         adam.set_maximum_epochs(0);
         adam.set_display(false);
@@ -305,7 +305,7 @@ TEST_F(AdaptiveMomentEstimationTest, JointGradientArenaMatchesContiguousAdamGPU)
         joint_parameters, contiguous_parameters, 1.0e-7f));
 }
 
-TEST_F(AdaptiveMomentEstimationTest, CudaGraphGroupedHostStagingReplay)
+TEST_F(AdamTest, CudaGraphGroupedHostStagingReplay)
 {
     Configuration::instance().set(Device::CUDA, Type::FP32);
 
@@ -318,7 +318,7 @@ TEST_F(AdaptiveMomentEstimationTest, CudaGraphGroupedHostStagingReplay)
     Loss loss(&network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);
 
-    AdaptiveMomentEstimation adam(&loss);
+    Adam adam(&loss);
     adam.set_batch_size(1);
     adam.set_cuda_graph(true);
     adam.set_maximum_epochs(1);
@@ -363,7 +363,7 @@ static void expect_transformer_step_captures(Type dtype, Index sdpa_min_sequence
     Loss loss(&transformer, &dataset);
     loss.set_error(Loss::Error::CrossEntropy3d);
 
-    AdaptiveMomentEstimation adam(&loss);
+    Adam adam(&loss);
     adam.set_batch_size(2);           // 8 whole batches: one grouped graph
     adam.set_cuda_graph(true);
     adam.set_joint_gradient_arena(true);
@@ -376,12 +376,12 @@ static void expect_transformer_step_captures(Type dtype, Index sdpa_min_sequence
     filesystem::remove(file_path);
 }
 
-TEST_F(AdaptiveMomentEstimationTest, CudaGraphCapturesTransformerStepSdpaBf16)
+TEST_F(AdamTest, CudaGraphCapturesTransformerStepSdpaBf16)
 {
     expect_transformer_step_captures(Type::BF16, 1);
 }
 
-TEST_F(AdaptiveMomentEstimationTest, CudaGraphCapturesTransformerStepUnfusedFp32)
+TEST_F(AdamTest, CudaGraphCapturesTransformerStepUnfusedFp32)
 {
     expect_transformer_step_captures(Type::FP32, 1 << 20);
 }
@@ -412,7 +412,7 @@ static float error_with_gap_column(bool resident)
     Loss loss(&network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);
 
-    AdaptiveMomentEstimation adam(&loss);
+    Adam adam(&loss);
     adam.set_batch_size(4);
     adam.set_cuda_graph(true);
     adam.set_maximum_epochs(1);
@@ -421,7 +421,7 @@ static float error_with_gap_column(bool resident)
     return adam.train().get_training_error();
 }
 
-TEST_F(AdaptiveMomentEstimationTest, ResidentNonContiguousInputsTrainOnTheirOwnData)
+TEST_F(AdamTest, ResidentNonContiguousInputsTrainOnTheirOwnData)
 {
     const float host_error = error_with_gap_column(false);
     const float resident_error = error_with_gap_column(true);
@@ -431,7 +431,7 @@ TEST_F(AdaptiveMomentEstimationTest, ResidentNonContiguousInputsTrainOnTheirOwnD
     EXPECT_NEAR(resident_error, host_error, 1.0e-4f * max(1.0f, abs(host_error)));
 }
 
-TEST_F(AdaptiveMomentEstimationTest, CudaGraphGroupedResidentBf16Replay)
+TEST_F(AdamTest, CudaGraphGroupedResidentBf16Replay)
 {
     Configuration::instance().set(Device::CUDA, Type::BF16);
 
@@ -446,7 +446,7 @@ TEST_F(AdaptiveMomentEstimationTest, CudaGraphGroupedResidentBf16Replay)
     Loss loss(&network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);
 
-    AdaptiveMomentEstimation adam(&loss);
+    Adam adam(&loss);
     adam.set_batch_size(1);
     adam.set_cuda_graph(true);
     adam.set_maximum_epochs(1);
@@ -458,7 +458,7 @@ TEST_F(AdaptiveMomentEstimationTest, CudaGraphGroupedResidentBf16Replay)
     EXPECT_FALSE(dataset.is_device_resident());
 }
 
-TEST_F(AdaptiveMomentEstimationTest, ResidentDatasetCleanupSurvivesCallbackException)
+TEST_F(AdamTest, ResidentDatasetCleanupSurvivesCallbackException)
 {
     Configuration::instance().set(Device::CUDA, Type::FP32);
 
@@ -471,7 +471,7 @@ TEST_F(AdaptiveMomentEstimationTest, ResidentDatasetCleanupSurvivesCallbackExcep
     Loss loss(&network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);
 
-    AdaptiveMomentEstimation adam(&loss);
+    Adam adam(&loss);
     adam.set_batch_size(2);
     adam.set_maximum_epochs(0);
     adam.set_display(false);
@@ -486,7 +486,7 @@ TEST_F(AdaptiveMomentEstimationTest, ResidentDatasetCleanupSurvivesCallbackExcep
 }
 #endif
 
-TEST_F(AdaptiveMomentEstimationTest, TrainClassificationCPU)
+TEST_F(AdamTest, TrainClassificationCPU)
 {
     const MatrixR classification_data = separable_classification_data(16, 3);
 
@@ -497,7 +497,7 @@ TEST_F(AdaptiveMomentEstimationTest, TrainClassificationCPU)
     ClassificationNetwork network_short({3}, {6}, {1});
     Loss loss_short(&network_short, &dataset_short);
     loss_short.set_error(Loss::Error::CrossEntropy);
-    AdaptiveMomentEstimation adam_short(&loss_short);
+    Adam adam_short(&loss_short);
     adam_short.set_learning_rate(0.01f);
     adam_short.set_maximum_epochs(2);
     adam_short.set_display(false);
@@ -510,7 +510,7 @@ TEST_F(AdaptiveMomentEstimationTest, TrainClassificationCPU)
     ClassificationNetwork network_long({3}, {6}, {1});
     Loss loss_long(&network_long, &dataset_long);
     loss_long.set_error(Loss::Error::CrossEntropy);
-    AdaptiveMomentEstimation adam_long(&loss_long);
+    Adam adam_long(&loss_long);
     adam_long.set_learning_rate(0.01f);
     adam_long.set_maximum_epochs(300);
     adam_long.set_display(false);
@@ -520,7 +520,7 @@ TEST_F(AdaptiveMomentEstimationTest, TrainClassificationCPU)
 }
 
 #ifdef OPENNN_HAS_CUDA
-TEST_F(AdaptiveMomentEstimationTest, TrainClassificationGPU)
+TEST_F(AdamTest, TrainClassificationGPU)
 {
     Configuration::instance().set(Device::CUDA, Type::FP32);
 
@@ -533,7 +533,7 @@ TEST_F(AdaptiveMomentEstimationTest, TrainClassificationGPU)
     ClassificationNetwork network_short({3}, {6}, {1});
     Loss loss_short(&network_short, &dataset_short);
     loss_short.set_error(Loss::Error::CrossEntropy);
-    AdaptiveMomentEstimation adam_short(&loss_short);
+    Adam adam_short(&loss_short);
     adam_short.set_learning_rate(0.01f);
     adam_short.set_maximum_epochs(2);
     adam_short.set_display(false);
@@ -546,7 +546,7 @@ TEST_F(AdaptiveMomentEstimationTest, TrainClassificationGPU)
     ClassificationNetwork network_long({3}, {6}, {1});
     Loss loss_long(&network_long, &dataset_long);
     loss_long.set_error(Loss::Error::CrossEntropy);
-    AdaptiveMomentEstimation adam_long(&loss_long);
+    Adam adam_long(&loss_long);
     adam_long.set_learning_rate(0.01f);
     adam_long.set_maximum_epochs(300);
     adam_long.set_display(false);
@@ -569,7 +569,7 @@ static void expect_forecasting_training_reduces_error()
     Loss loss(&network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);
 
-    AdaptiveMomentEstimation adam(&loss);
+    Adam adam(&loss);
     adam.set_display(false);
 
     adam.set_maximum_epochs(0);
@@ -581,20 +581,20 @@ static void expect_forecasting_training_reduces_error()
     EXPECT_LT(error_after, error_before);
 }
 
-TEST_F(AdaptiveMomentEstimationTest, TrainForecastingCPU)
+TEST_F(AdamTest, TrainForecastingCPU)
 {
     expect_forecasting_training_reduces_error();
 }
 
 #ifdef OPENNN_HAS_CUDA
-TEST_F(AdaptiveMomentEstimationTest, TrainForecastingGPU)
+TEST_F(AdamTest, TrainForecastingGPU)
 {
     Configuration::instance().set(Device::CUDA, Type::FP32);
     expect_forecasting_training_reduces_error();
 }
 #endif
 
-TEST_F(AdaptiveMomentEstimationTest, TrainImageClassificationCPU)
+TEST_F(AdamTest, TrainImageClassificationCPU)
 {
     const filesystem::path root = write_image_classification_dataset();
 
@@ -604,7 +604,7 @@ TEST_F(AdaptiveMomentEstimationTest, TrainImageClassificationCPU)
     ImageClassificationNetwork network_short(dataset_short.get_input_shape(), {4}, dataset_short.get_target_shape());
     Loss loss_short(&network_short, &dataset_short);
     loss_short.set_error(Loss::Error::CrossEntropy);
-    AdaptiveMomentEstimation adam_short(&loss_short);
+    Adam adam_short(&loss_short);
     adam_short.set_learning_rate(0.01f);
     adam_short.set_maximum_epochs(1);
     adam_short.set_display(false);
@@ -616,7 +616,7 @@ TEST_F(AdaptiveMomentEstimationTest, TrainImageClassificationCPU)
     ImageClassificationNetwork network_long(dataset_long.get_input_shape(), {4}, dataset_long.get_target_shape());
     Loss loss_long(&network_long, &dataset_long);
     loss_long.set_error(Loss::Error::CrossEntropy);
-    AdaptiveMomentEstimation adam_long(&loss_long);
+    Adam adam_long(&loss_long);
     adam_long.set_learning_rate(0.01f);
     adam_long.set_maximum_epochs(60);
     adam_long.set_display(false);
@@ -628,7 +628,7 @@ TEST_F(AdaptiveMomentEstimationTest, TrainImageClassificationCPU)
 }
 
 #ifdef OPENNN_HAS_CUDA
-TEST_F(AdaptiveMomentEstimationTest, TrainImageClassificationGPU)
+TEST_F(AdamTest, TrainImageClassificationGPU)
 {
     Configuration::instance().set(Device::CUDA, Type::FP32);
 
@@ -640,7 +640,7 @@ TEST_F(AdaptiveMomentEstimationTest, TrainImageClassificationGPU)
     ImageClassificationNetwork network_short(dataset_short.get_input_shape(), {4}, dataset_short.get_target_shape());
     Loss loss_short(&network_short, &dataset_short);
     loss_short.set_error(Loss::Error::CrossEntropy);
-    AdaptiveMomentEstimation adam_short(&loss_short);
+    Adam adam_short(&loss_short);
     adam_short.set_learning_rate(0.01f);
     adam_short.set_maximum_epochs(1);
     adam_short.set_display(false);
@@ -652,7 +652,7 @@ TEST_F(AdaptiveMomentEstimationTest, TrainImageClassificationGPU)
     ImageClassificationNetwork network_long(dataset_long.get_input_shape(), {4}, dataset_long.get_target_shape());
     Loss loss_long(&network_long, &dataset_long);
     loss_long.set_error(Loss::Error::CrossEntropy);
-    AdaptiveMomentEstimation adam_long(&loss_long);
+    Adam adam_long(&loss_long);
     adam_long.set_learning_rate(0.01f);
     adam_long.set_maximum_epochs(60);
     adam_long.set_display(false);
@@ -664,7 +664,7 @@ TEST_F(AdaptiveMomentEstimationTest, TrainImageClassificationGPU)
 }
 #endif
 
-TEST_F(AdaptiveMomentEstimationTest, TrainTextClassificationCPU)
+TEST_F(AdamTest, TrainTextClassificationCPU)
 {
     const string file_path = write_text_classification_file();
 
@@ -683,7 +683,7 @@ TEST_F(AdaptiveMomentEstimationTest, TrainTextClassificationCPU)
         {dataset_short.get_maximum_target_sequence_length()});
     Loss loss_short(&network_short, &dataset_short);
     loss_short.set_error(Loss::Error::CrossEntropy);
-    AdaptiveMomentEstimation adam_short(&loss_short);
+    Adam adam_short(&loss_short);
     adam_short.set_maximum_epochs(2);
     adam_short.set_display(false);
     const type error_short = adam_short.train().get_training_error();
@@ -703,7 +703,7 @@ TEST_F(AdaptiveMomentEstimationTest, TrainTextClassificationCPU)
         {dataset_long.get_maximum_target_sequence_length()});
     Loss loss_long(&network_long, &dataset_long);
     loss_long.set_error(Loss::Error::CrossEntropy);
-    AdaptiveMomentEstimation adam_long(&loss_long);
+    Adam adam_long(&loss_long);
     adam_long.set_maximum_epochs(150);
     adam_long.set_display(false);
     const type error_long = adam_long.train().get_training_error();
@@ -714,7 +714,7 @@ TEST_F(AdaptiveMomentEstimationTest, TrainTextClassificationCPU)
 }
 
 #ifdef OPENNN_HAS_CUDA
-TEST_F(AdaptiveMomentEstimationTest, TrainTextClassificationGPU)
+TEST_F(AdamTest, TrainTextClassificationGPU)
 {
     Configuration::instance().set(Device::CUDA, Type::FP32);
 
@@ -735,7 +735,7 @@ TEST_F(AdaptiveMomentEstimationTest, TrainTextClassificationGPU)
         {dataset_short.get_maximum_target_sequence_length()});
     Loss loss_short(&network_short, &dataset_short);
     loss_short.set_error(Loss::Error::CrossEntropy);
-    AdaptiveMomentEstimation adam_short(&loss_short);
+    Adam adam_short(&loss_short);
     adam_short.set_maximum_epochs(2);
     adam_short.set_display(false);
     const type error_short = adam_short.train().get_training_error();
@@ -755,7 +755,7 @@ TEST_F(AdaptiveMomentEstimationTest, TrainTextClassificationGPU)
         {dataset_long.get_maximum_target_sequence_length()});
     Loss loss_long(&network_long, &dataset_long);
     loss_long.set_error(Loss::Error::CrossEntropy);
-    AdaptiveMomentEstimation adam_long(&loss_long);
+    Adam adam_long(&loss_long);
     adam_long.set_maximum_epochs(150);
     adam_long.set_display(false);
     const type error_long = adam_long.train().get_training_error();
@@ -766,7 +766,7 @@ TEST_F(AdaptiveMomentEstimationTest, TrainTextClassificationGPU)
 }
 #endif
 
-TEST_F(AdaptiveMomentEstimationTest, LearningRateEffect)
+TEST_F(AdamTest, LearningRateEffect)
 {
     set_seed(6);
     TabularDataset dataset_trained(16, {2}, {1});
@@ -775,7 +775,7 @@ TEST_F(AdaptiveMomentEstimationTest, LearningRateEffect)
     ApproximationNetwork network_trained({2}, {6}, {1});
     Loss loss_trained(&network_trained, &dataset_trained);
     loss_trained.set_error(Loss::Error::MeanSquaredError);
-    AdaptiveMomentEstimation adam_trained(&loss_trained);
+    Adam adam_trained(&loss_trained);
     adam_trained.set_learning_rate(0.01f);
     adam_trained.set_maximum_epochs(2);
     adam_trained.set_display(false);
@@ -791,7 +791,7 @@ TEST_F(AdaptiveMomentEstimationTest, LearningRateEffect)
     ApproximationNetwork network_frozen({2}, {6}, {1});
     Loss loss_frozen(&network_frozen, &dataset_frozen);
     loss_frozen.set_error(Loss::Error::MeanSquaredError);
-    AdaptiveMomentEstimation adam_frozen(&loss_frozen);
+    Adam adam_frozen(&loss_frozen);
     adam_frozen.set_learning_rate(0.0f);
     adam_frozen.set_maximum_epochs(2);
     adam_frozen.set_display(false);
@@ -801,7 +801,7 @@ TEST_F(AdaptiveMomentEstimationTest, LearningRateEffect)
     EXPECT_FLOAT_EQ(frozen_after, frozen_before);
 }
 
-TEST_F(AdaptiveMomentEstimationTest, BetaSettersConverge)
+TEST_F(AdamTest, BetaSettersConverge)
 {
     set_seed(7);
     TabularDataset dataset(16, {2}, {1});
@@ -810,21 +810,21 @@ TEST_F(AdaptiveMomentEstimationTest, BetaSettersConverge)
     ApproximationNetwork network({2}, {6}, {1});
     Loss loss(&network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);
-    AdaptiveMomentEstimation adaptive_moment_estimation(&loss);
-    adaptive_moment_estimation.set_beta_1(0.9f);
-    adaptive_moment_estimation.set_beta_2(0.999f);
-    adaptive_moment_estimation.set_learning_rate(0.01f);
-    adaptive_moment_estimation.set_display(false);
+    Adam adam(&loss);
+    adam.set_beta_1(0.9f);
+    adam.set_beta_2(0.999f);
+    adam.set_learning_rate(0.01f);
+    adam.set_display(false);
 
-    adaptive_moment_estimation.set_maximum_epochs(2);
-    const type error_short = adaptive_moment_estimation.train().get_training_error();
-    adaptive_moment_estimation.set_maximum_epochs(200);
-    const type error_long = adaptive_moment_estimation.train().get_training_error();
+    adam.set_maximum_epochs(2);
+    const type error_short = adam.train().get_training_error();
+    adam.set_maximum_epochs(200);
+    const type error_long = adam.train().get_training_error();
 
     EXPECT_LT(error_long, error_short);
 }
 
-TEST_F(AdaptiveMomentEstimationTest, StoppingMaximumEpochs)
+TEST_F(AdamTest, StoppingMaximumEpochs)
 {
     set_seed(8);
     TabularDataset dataset(16, {2}, {1});
@@ -833,17 +833,17 @@ TEST_F(AdaptiveMomentEstimationTest, StoppingMaximumEpochs)
     ApproximationNetwork network({2}, {6}, {1});
     Loss loss(&network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);
-    AdaptiveMomentEstimation adaptive_moment_estimation(&loss);
-    adaptive_moment_estimation.set_maximum_epochs(5);
-    adaptive_moment_estimation.set_display(false);
+    Adam adam(&loss);
+    adam.set_maximum_epochs(5);
+    adam.set_display(false);
 
-    const TrainingResult training_results = adaptive_moment_estimation.train();
+    const TrainingResult training_results = adam.train();
 
     EXPECT_EQ(training_results.get_epochs_number(), 5);
     EXPECT_EQ(training_results.get_epochs_number(), training_results.training_error_history.size());
 }
 
-TEST_F(AdaptiveMomentEstimationTest, StoppingLossGoal)
+TEST_F(AdamTest, StoppingLossGoal)
 {
     set_seed(9);
     TabularDataset dataset(4, {1}, {1});
@@ -852,21 +852,21 @@ TEST_F(AdaptiveMomentEstimationTest, StoppingLossGoal)
     ApproximationNetwork network({1}, {6}, {1});
     Loss loss(&network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);
-    AdaptiveMomentEstimation adaptive_moment_estimation(&loss);
+    Adam adam(&loss);
 
     const type training_loss_goal = type(0.1);
-    adaptive_moment_estimation.set_loss_goal(training_loss_goal);
-    adaptive_moment_estimation.set_learning_rate(0.05f);
-    adaptive_moment_estimation.set_maximum_epochs(10000);
-    adaptive_moment_estimation.set_maximum_time(1000.0);
-    adaptive_moment_estimation.set_display(false);
+    adam.set_loss_goal(training_loss_goal);
+    adam.set_learning_rate(0.05f);
+    adam.set_maximum_epochs(10000);
+    adam.set_maximum_time(1000.0);
+    adam.set_display(false);
 
-    const TrainingResult training_results = adaptive_moment_estimation.train();
+    const TrainingResult training_results = adam.train();
 
     EXPECT_LE(training_results.get_training_error(), training_loss_goal);
 }
 
-TEST_F(AdaptiveMomentEstimationTest, StoppingMaximumTime)
+TEST_F(AdamTest, StoppingMaximumTime)
 {
     set_seed(10);
     TabularDataset dataset(16, {2}, {1});
@@ -875,20 +875,20 @@ TEST_F(AdaptiveMomentEstimationTest, StoppingMaximumTime)
     ApproximationNetwork network({2}, {6}, {1});
     Loss loss(&network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);
-    AdaptiveMomentEstimation adaptive_moment_estimation(&loss);
-    adaptive_moment_estimation.set_maximum_epochs(1000000);
-    adaptive_moment_estimation.set_maximum_time(0.5);
-    adaptive_moment_estimation.set_display(false);
+    Adam adam(&loss);
+    adam.set_maximum_epochs(1000000);
+    adam.set_maximum_time(0.5);
+    adam.set_display(false);
 
     const time_t start = time(nullptr);
-    const TrainingResult training_results = adaptive_moment_estimation.train();
+    const TrainingResult training_results = adam.train();
     const double elapsed = difftime(time(nullptr), start);
 
     EXPECT_LT(training_results.get_epochs_number(), 1000000);
     EXPECT_LT(elapsed, 30.0);
 }
 
-TEST_F(AdaptiveMomentEstimationTest, Determinism)
+TEST_F(AdamTest, Determinism)
 {
     set_threads_number(1);
 
@@ -899,7 +899,7 @@ TEST_F(AdaptiveMomentEstimationTest, Determinism)
     ApproximationNetwork network_first({2}, {6}, {1});
     Loss loss_first(&network_first, &dataset_first);
     loss_first.set_error(Loss::Error::MeanSquaredError);
-    AdaptiveMomentEstimation adam_first(&loss_first);
+    Adam adam_first(&loss_first);
     adam_first.set_batch_size(16);
     adam_first.set_workers_number(1);
     adam_first.set_maximum_epochs(50);
@@ -913,7 +913,7 @@ TEST_F(AdaptiveMomentEstimationTest, Determinism)
     ApproximationNetwork network_second({2}, {6}, {1});
     Loss loss_second(&network_second, &dataset_second);
     loss_second.set_error(Loss::Error::MeanSquaredError);
-    AdaptiveMomentEstimation adam_second(&loss_second);
+    Adam adam_second(&loss_second);
     adam_second.set_batch_size(16);
     adam_second.set_workers_number(1);
     adam_second.set_maximum_epochs(50);
@@ -923,7 +923,7 @@ TEST_F(AdaptiveMomentEstimationTest, Determinism)
     EXPECT_FLOAT_EQ(error_first, error_second);
 }
 
-TEST_F(AdaptiveMomentEstimationTest, RepeatedTrainingResetsState)
+TEST_F(AdamTest, RepeatedTrainingResetsState)
 {
     set_threads_number(1);
     set_seed(17);
@@ -938,7 +938,7 @@ TEST_F(AdaptiveMomentEstimationTest, RepeatedTrainingResetsState)
     Loss loss(&network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);
 
-    AdaptiveMomentEstimation adam(&loss);
+    Adam adam(&loss);
     adam.set_batch_size(16);
     adam.set_workers_number(1);
     adam.set_maximum_epochs(20);

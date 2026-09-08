@@ -24,7 +24,7 @@
 #include "opennn/network/layers/embedding_layer.h"
 #include "opennn/network/layers/flatten_layer.h"
 #include "opennn/network/layers/grouped_query_attention_layer.h"
-#include "opennn/network/layers/long_short_term_memory_layer.h"
+#include "opennn/network/layers/lstm_layer.h"
 #include "opennn/network/layers/multihead_attention_layer.h"
 #include "opennn/network/layers/non_max_suppression_layer.h"
 #include "opennn/network/layers/normalization_layer_3d.h"
@@ -276,7 +276,7 @@ struct YoloBuilder
     const char* act;
     Shape stride;
     Index classes_number;
-    YoloNetwork::ClassActivation class_activation;
+    Yolo::ClassActivation class_activation;
     Index reg_max;
 
     Index add_layer(unique_ptr<Layer> layer, const vector<Index>& sources) const
@@ -432,7 +432,7 @@ struct YoloBuilder
         }
     }
 
-    void finish_yolo_network() const
+    void finish_yolo() const
     {
         network.compile();
         network.set_parameters_random();
@@ -580,22 +580,22 @@ struct YoloBuilder
         return features;
     }
 
-    Index scale_csp_v11_channels(Index base, YoloNetwork::ModelSize model_size) const
+    Index scale_csp_v11_channels(Index base, Yolo::ModelSize model_size) const
     {
-        const float width = model_size == YoloNetwork::ModelSize::n ? 0.25f
-                          : model_size == YoloNetwork::ModelSize::s ? 0.50f
-                          : model_size == YoloNetwork::ModelSize::m ? 0.75f
-                          : model_size == YoloNetwork::ModelSize::x ? 1.25f
+        const float width = model_size == Yolo::ModelSize::n ? 0.25f
+                          : model_size == Yolo::ModelSize::s ? 0.50f
+                          : model_size == Yolo::ModelSize::m ? 0.75f
+                          : model_size == Yolo::ModelSize::x ? 1.25f
                           :                                              1.00f;
 
         return max(Index(8), Index(round(float(base) * width / 8.f) * 8));
     }
 
-    Index scale_csp_v11_depth(Index base, YoloNetwork::ModelSize model_size) const
+    Index scale_csp_v11_depth(Index base, Yolo::ModelSize model_size) const
     {
-        const float depth = model_size == YoloNetwork::ModelSize::n ? 0.33f
-                          : model_size == YoloNetwork::ModelSize::s ? 0.33f
-                          : model_size == YoloNetwork::ModelSize::m ? 0.67f
+        const float depth = model_size == Yolo::ModelSize::n ? 0.33f
+                          : model_size == Yolo::ModelSize::s ? 0.33f
+                          : model_size == Yolo::ModelSize::m ? 0.67f
                           :                                              1.00f;
 
         return max(Index(1), Index(round(float(base) * depth)));
@@ -659,7 +659,7 @@ struct YoloBuilder
 
     BackboneFeatures add_csp_darknet53_v11_backbone(
         const Shape& input_shape,
-        YoloNetwork::ModelSize model_size) const
+        Yolo::ModelSize model_size) const
     {
         const Index c1 = scale_csp_v11_channels(64, model_size);
         const Index c2 = scale_csp_v11_channels(128, model_size);
@@ -760,7 +760,7 @@ struct YoloBuilder
     }
 };
 
-YoloNetwork::YoloNetwork(const Shape& input_shape,
+Yolo::Yolo(const Shape& input_shape,
                          Index classes_number,
                          const vector<array<float, 2>>& anchors,
                          Index grid_size,
@@ -774,27 +774,27 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
     : Network(NetworkTask::ObjectDetection),
       backbone(backbone)
 {
-    throw_if(input_shape.get_rank() != 3, "YoloNetwork: input shape must be rank 3 (H, W, C).");
+    throw_if(input_shape.get_rank() != 3, "Yolo: input shape must be rank 3 (H, W, C).");
     throw_if(classes_number <= 0 || anchors.empty(),
-             "YoloNetwork: classes_number and anchors must be valid.");
+             "Yolo: classes_number and anchors must be valid.");
     throw_if(input_shape[0] != grid_size * 32 || input_shape[1] != grid_size * 32,
-             "YoloNetwork: this minimal builder expects input H/W == grid_size * 32.");
+             "Yolo: this minimal builder expects input H/W == grid_size * 32.");
     if (head_style == HeadStyle::FPN)
     {
         throw_if(backbone != Backbone::DarknetTiny && backbone != Backbone::DarknetTinyV3
                  && backbone != Backbone::Darknet53 && backbone != Backbone::CSPDarknet53,
-                 "YoloNetwork: HeadStyle::FPN requires DarknetTiny, DarknetTinyV3, Darknet53, or CSPDarknet53.");
+                 "Yolo: HeadStyle::FPN requires DarknetTiny, DarknetTinyV3, Darknet53, or CSPDarknet53.");
         throw_if(ssize(anchors) != 9 && ssize(anchors) != 6,
-                 "YoloNetwork: HeadStyle::FPN expects 6 anchors (2-head) or 9 anchors (3-head).");
+                 "Yolo: HeadStyle::FPN expects 6 anchors (2-head) or 9 anchors (3-head).");
         throw_if(backbone == Backbone::DarknetTinyV3 && ssize(anchors) != 6,
-                 "YoloNetwork: DarknetTinyV3 with HeadStyle::FPN is 2-head and requires exactly 6 anchors.");
+                 "Yolo: DarknetTinyV3 with HeadStyle::FPN is 2-head and requires exactly 6 anchors.");
     }
     if (head_style == HeadStyle::PANet)
     {
         throw_if(backbone != Backbone::Darknet53 && backbone != Backbone::CSPDarknet53,
-                 "YoloNetwork: HeadStyle::PANet requires Backbone::Darknet53 or CSPDarknet53.");
+                 "Yolo: HeadStyle::PANet requires Backbone::Darknet53 or CSPDarknet53.");
         throw_if(ssize(anchors) != 9,
-                 "YoloNetwork: HeadStyle::PANet requires exactly 9 anchors.");
+                 "Yolo: HeadStyle::PANet requires exactly 9 anchors.");
     }
 
     const bool is_darknet53_family =
@@ -802,22 +802,22 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
 
     throw_if(head_style == HeadStyle::FPNv8
              && !is_darknet53_family && backbone != Backbone::CSPDarknet53v11,
-             "YoloNetwork: HeadStyle::FPNv8 requires Darknet53, CSPDarknet53 or CSPDarknet53v11.");
+             "Yolo: HeadStyle::FPNv8 requires Darknet53, CSPDarknet53 or CSPDarknet53v11.");
 
     throw_if(backbone == Backbone::CSPDarknet53v11 && head_style != HeadStyle::FPNv8,
-             "YoloNetwork: CSPDarknet53v11 backbone only supports FPNv8 head style.");
+             "Yolo: CSPDarknet53v11 backbone only supports FPNv8 head style.");
 
     throw_if(reg_max > 1 && head_style != HeadStyle::FPNv8,
-             "YoloNetwork: reg_max applies to HeadStyle::FPNv8 only; the anchor heads ignore it.");
+             "Yolo: reg_max applies to HeadStyle::FPNv8 only; the anchor heads ignore it.");
 
     throw_if(use_sppf && !((is_darknet53_family
                             && (head_style == HeadStyle::FPN || head_style == HeadStyle::PANet))
                            || (backbone == Backbone::CSPDarknet53v11 && head_style == HeadStyle::FPNv8)),
-             "YoloNetwork: use_sppf applies to Darknet53/CSPDarknet53 with FPN/PANet, "
+             "Yolo: use_sppf applies to Darknet53/CSPDarknet53 with FPN/PANet, "
              "or CSPDarknet53v11 with FPNv8.");
 
     throw_if(model_size != ModelSize::l && backbone != Backbone::CSPDarknet53v11,
-             "YoloNetwork: model_size applies to the CSPDarknet53v11 backbone only.");
+             "Yolo: model_size applies to the CSPDarknet53v11 backbone only.");
 
     const char* act = (body_activation == BodyActivation::LeakyReLU) ? "LeakyReLU"
                     : (body_activation == BodyActivation::SiLU)      ? "SiLU"
@@ -859,7 +859,7 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                 act, stride, BatchNormalization::Yes, "fpn_p4_conv");
             builder.add_det_head(p4_conv, anchors_small, "small");
 
-            builder.finish_yolo_network();
+            builder.finish_yolo();
             return;
         }
     }
@@ -955,7 +955,7 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
 
         if (head_style == HeadStyle::FPN || head_style == HeadStyle::PANet)
         {
-            throw_if(ssize(anchors) != 9, "YoloNetwork: Darknet53 FPN/PANet requires exactly 9 anchors.");
+            throw_if(ssize(anchors) != 9, "Yolo: Darknet53 FPN/PANet requires exactly 9 anchors.");
 
             const vector<array<float,2>> anchors_sorted = sort_anchors_by_area(anchors);
             const vector<array<float,2>> anchors_small (anchors_sorted.begin(),     anchors_sorted.begin()+3);
@@ -1010,7 +1010,7 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                 builder.add_det_head(n5d, anchors_large, "large");
             }
 
-            builder.finish_yolo_network();
+            builder.finish_yolo();
             return;
         }
 
@@ -1049,7 +1049,7 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
         if (head_style == HeadStyle::FPN)
         {
             throw_if(ssize(anchors) != 9,
-                     "YoloNetwork: DarknetTiny FPN (3-head) requires exactly 9 anchors.");
+                     "Yolo: DarknetTiny FPN (3-head) requires exactly 9 anchors.");
             const vector<array<float, 2>> anchors_sorted = sort_anchors_by_area(anchors);
 
             const vector<array<float, 2>> anchors_small (anchors_sorted.begin(),     anchors_sorted.begin() + 3);
@@ -1075,7 +1075,7 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                 act, stride, BatchNormalization::Yes, "fpn_p3_lateral");
             builder.add_det_head(p3_lateral, anchors_small, "small");
 
-            builder.finish_yolo_network();
+            builder.finish_yolo();
             return;
         }
     }
@@ -1097,10 +1097,10 @@ YoloNetwork::YoloNetwork(const Shape& input_shape,
                                              0.4f,
                                              "non_max_suppression_layer"));
 
-    builder.finish_yolo_network();
+    builder.finish_yolo();
 }
 
-Index YoloNetwork::load_pretrained_backbone(
+Index Yolo::load_pretrained_backbone(
     const filesystem::path& data_directory)
 {
     const auto download_weights = [&](const string_view filename,
@@ -1144,11 +1144,11 @@ Index YoloNetwork::load_pretrained_backbone(
         case Backbone::Vgg:
         case Backbone::DarknetTiny:
             throw runtime_error(
-                "YoloNetwork::load_pretrained_backbone: the selected backbone has no pretrained weights.");
+                "Yolo::load_pretrained_backbone: the selected backbone has no pretrained weights.");
     }
 
     throw runtime_error(
-        "YoloNetwork::load_pretrained_backbone: unsupported backbone.");
+        "Yolo::load_pretrained_backbone: unsupported backbone.");
 }
 
 #endif

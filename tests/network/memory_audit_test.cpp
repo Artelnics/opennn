@@ -15,7 +15,7 @@
 #include "opennn/network/back_propagation.h"
 #include "opennn/network/forward_propagation.h"
 #include "opennn/network/layers/dense_layer.h"
-#include "opennn/network/layers/long_short_term_memory_layer.h"
+#include "opennn/network/layers/lstm_layer.h"
 #include "opennn/network/network.h"
 #include "opennn/models/models.h"
 #include "opennn/training/loss.h"
@@ -107,7 +107,7 @@ void audit_lstm(const string& label)
     const Index batch_size = 64;
 
     Network network;
-    network.add_layer(make_unique<LongShortTermMemory>(
+    network.add_layer(make_unique<LSTM>(
                           Shape{time_steps, input_features}, Shape{hidden_features}),
                       {-1});
     network.add_layer(make_unique<opennn::Dense>(Shape{hidden_features}, Shape{1}, "Identity"),

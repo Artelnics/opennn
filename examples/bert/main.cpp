@@ -20,8 +20,8 @@
 #include "opennn/dataset/bert_dataset.h"
 #include "opennn/models/models.h"
 #include "opennn/training/training.h"
-#include "opennn/training/adaptive_moment_estimation.h"
-#include "opennn/testing_analysis/testing_analysis.h"
+#include "opennn/training/adam.h"
+#include "opennn/evaluation/evaluation.h"
 #include "opennn/core/configuration.h"
 
 using namespace opennn;
@@ -49,7 +49,7 @@ int main(int argc, char* argv[])
 
         Training training(&model, &dataset);
 
-        auto& optimizer = dynamic_cast<AdaptiveMomentEstimation&>(
+        auto& optimizer = dynamic_cast<Adam&>(
             *training.get_optimization_algorithm());
         optimizer.set_maximum_epochs(3);
         optimizer.set_batch_size(32);
@@ -57,9 +57,9 @@ int main(int argc, char* argv[])
 
         training.train();
 
-        TestingAnalysis testing_analysis(&model, &dataset);
-        testing_analysis.set_batch_size(256);
-        testing_analysis.print_binary_classification_tests();
+        Evaluation evaluation(&model, &dataset);
+        evaluation.set_batch_size(256);
+        evaluation.print_binary_classification_tests();
 
         cout << "Good bye!" << endl;
         return 0;

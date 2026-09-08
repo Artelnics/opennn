@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   A D A P T I V E   M O M E N T   E S T I M A T I O N
+//   A D A M
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -15,14 +15,14 @@ namespace opennn
 
 struct BackPropagation;
 
-class AdaptiveMomentEstimation final : public Optimizer
+class Adam final : public Optimizer
 {
 
 public:
 
     enum DataSlot { GradientMoment, SquareGradientMoment, GraphScalars };
 
-    explicit AdaptiveMomentEstimation(Loss* = nullptr);
+    explicit Adam(Loss* = nullptr);
 
     void configure_for_task(NetworkTask) override;
 

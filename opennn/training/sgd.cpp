@@ -1,12 +1,12 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   S T O C H A S T I C   G R A D I E N T   D E S C E N T   C L A S S
+//   S G D   C L A S S
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "opennn/training/stochastic_gradient_descent.h"
+#include "opennn/training/sgd.h"
 
 #include "opennn/core/device_backend.h"
 #include "opennn/core/profiler.h"
@@ -21,16 +21,16 @@
 namespace opennn
 {
 
-StochasticGradientDescent::StochasticGradientDescent(Loss* new_loss)
+SGD::SGD(Loss* new_loss)
     : Optimizer(new_loss)
 {
-    name = "StochasticGradientDescent";
+    name = "SGD";
     maximum_time = 3600.0f;
     maximum_epochs = 1000;
     display_period = 100;
 }
 
-void StochasticGradientDescent::update_parameters(BackPropagation& back_propagation,
+void SGD::update_parameters(BackPropagation& back_propagation,
                                                   OptimizerData& optimizer_data,
                                                   UpdateMode mode)
 {
@@ -75,7 +75,7 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
         return;
 
     throw_if(momentum > 0.0f && optimizer_data.views.empty(),
-             "StochasticGradientDescent::update_parameters: velocity buffer is not initialized.");
+             "SGD::update_parameters: velocity buffer is not initialized.");
 
     clip_gradient_norm(back_propagation, gradient_clip_norm);
 
@@ -150,7 +150,7 @@ void StochasticGradientDescent::update_parameters(BackPropagation& back_propagat
     }
 }
 
-void StochasticGradientDescent::setup_optimizer_data(OptimizerData& optimizer_data,
+void SGD::setup_optimizer_data(OptimizerData& optimizer_data,
                                                      Index parameters_number,
                                                      Device device)
 {
@@ -163,7 +163,7 @@ void StochasticGradientDescent::setup_optimizer_data(OptimizerData& optimizer_da
 
 }
 
-void StochasticGradientDescent::on_epoch_begin(Index epoch, OptimizerData& optimizer_data)
+void SGD::on_epoch_begin(Index epoch, OptimizerData& optimizer_data)
 {
     current_learning_rate = initial_learning_rate / (1.0f + float(epoch) * initial_decay);
 
@@ -175,9 +175,9 @@ void StochasticGradientDescent::on_epoch_begin(Index epoch, OptimizerData& optim
 #endif
 }
 
-void StochasticGradientDescent::to_JSON(JsonWriter& printer) const
+void SGD::to_JSON(JsonWriter& printer) const
 {
-    printer.open_element("StochasticGradientDescent");
+    printer.open_element("SGD");
 
     write_json(printer, {
         {"BatchSize", batch_size},
@@ -192,9 +192,9 @@ void StochasticGradientDescent::to_JSON(JsonWriter& printer) const
     printer.close_element();
 }
 
-void StochasticGradientDescent::from_JSON(const JsonDocument& document)
+void SGD::from_JSON(const JsonDocument& document)
 {
-    const Json* root_element = get_json_root(document, "StochasticGradientDescent");
+    const Json* root_element = get_json_root(document, "SGD");
 
     set_batch_size(read_json_index(root_element, "BatchSize"));
 

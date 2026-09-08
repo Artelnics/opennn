@@ -1,7 +1,7 @@
 ﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   I N P U T S   S E L E C T I O N   C L A S S   H E A D E R
+//   I N P U T   S E L E C T I O N   C L A S S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -19,10 +19,10 @@ class Network;
 class Dataset;
 
 struct TrainingResult;
-struct InputsSelectionResult;
+struct InputSelectionResult;
 struct Descriptives;
 
-class InputsSelection : public SelectionAlgorithm
+class InputSelection : public SelectionAlgorithm
 {
 public:
 
@@ -34,13 +34,13 @@ public:
         MaximumValidationFailures
     };
 
-    explicit InputsSelection(Training* = nullptr);
-    virtual ~InputsSelection() = default;
+    explicit InputSelection(Training* = nullptr);
+    virtual ~InputSelection() = default;
 
     virtual Index get_minimum_inputs_number() const = 0;
     virtual Index get_maximum_inputs_number() const = 0;
 
-    virtual InputsSelectionResult perform_input_selection() = 0;
+    virtual InputSelectionResult perform_input_selection() = 0;
 
     string get_name() const { return name; }
 
@@ -64,9 +64,9 @@ protected:
     string name;
 };
 
-struct InputsSelectionResult
+struct InputSelectionResult
 {
-    InputsSelectionResult(const Index = 0);
+    InputSelectionResult(const Index = 0);
 
     Index get_epochs_number() const { return training_error_history.size(); }
 
@@ -96,7 +96,7 @@ struct InputsSelectionResult
 
     VectorB optimal_inputs;
 
-    optional<InputsSelection::StoppingCondition> stopping_condition;
+    optional<InputSelection::StoppingCondition> stopping_condition;
 
     string elapsed_time;
 };

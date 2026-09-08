@@ -49,7 +49,7 @@ struct YoloLossFixture
     }
 };
 
-void build_yolo_network(Network& net, const YoloLossFixture& f)
+void build_yolo(Network& net, const YoloLossFixture& f)
 {
     net.add_layer(make_unique<Convolutional>(Shape{f.H, f.W, 3},
                                              Shape{1, 1, 3, f.channels},
@@ -206,7 +206,7 @@ TEST(YoloLoss, NoObjectGradientMatchesNumericalGradient)
     dataset.set_augmentation_policy(no_aug);
 
     Network network;
-    build_yolo_network(network, f);
+    build_yolo(network, f);
 
     Loss loss(&network, &dataset);
     loss.set_error(Loss::Error::Yolo);
@@ -236,7 +236,7 @@ TEST(YoloLoss, WithObjectGradientMatchesV1Approximation)
     dataset.set_augmentation_policy(no_aug);
 
     Network network;
-    build_yolo_network(network, f);
+    build_yolo(network, f);
 
     Loss loss(&network, &dataset);
     loss.set_error(Loss::Error::Yolo);

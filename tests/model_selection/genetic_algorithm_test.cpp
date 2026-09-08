@@ -19,8 +19,8 @@ TEST(GeneticAlgorithmTest, InitializationMethodRoundTripAndLegacyDefault)
 {
     TabularDataset dataset(10, {2}, {1});
     ApproximationNetwork network({2}, {2}, {1});
-    Training strategy(&network, &dataset);
-    GeneticAlgorithm algorithm(&strategy);
+    Training training(&network, &dataset);
+    GeneticAlgorithm algorithm(&training);
     for (const string method : {"Random", "Correlations"})
     {
         algorithm.set_initialization_method(method);
@@ -28,7 +28,7 @@ TEST(GeneticAlgorithmTest, InitializationMethodRoundTripAndLegacyDefault)
         algorithm.to_JSON(writer);
         JsonDocument document;
         document.set_root(Json::parse(writer.c_str()));
-        GeneticAlgorithm restored(&strategy);
+        GeneticAlgorithm restored(&training);
         restored.from_JSON(document);
         EXPECT_EQ(restored.get_initialization_method(), method);
     }
@@ -70,7 +70,7 @@ TEST(GeneticAlgorithmTest, InputSelection)
     ApproximationNetwork network(dataset.get_input_shape(), {2}, {1});
 
     Training training(&network, &dataset);
-    training.set_optimization_algorithm("AdaptiveMomentEstimation");
+    training.set_optimization_algorithm("Adam");
     training.get_optimization_algorithm()->set_display(false);
     training.get_optimization_algorithm()->set_maximum_epochs(10);
 
@@ -79,7 +79,7 @@ TEST(GeneticAlgorithmTest, InputSelection)
     genetic_algorithm.set_individuals_number(6);
     genetic_algorithm.set_maximum_epochs(3);
 
-    InputsSelectionResult results = genetic_algorithm.perform_input_selection();
+    InputSelectionResult results = genetic_algorithm.perform_input_selection();
 
     EXPECT_GE(results.get_epochs_number(), 1);
     EXPECT_GE(results.optimum_validation_error, type(0));
@@ -114,7 +114,7 @@ TEST(GeneticAlgorithmTest, SelectsParsimoniousSubset)
 
     ApproximationNetwork network(dataset.get_input_shape(), {2}, {1});
     Training training(&network, &dataset);
-    training.set_optimization_algorithm("AdaptiveMomentEstimation");
+    training.set_optimization_algorithm("Adam");
     training.get_optimization_algorithm()->set_display(false);
     training.get_optimization_algorithm()->set_maximum_epochs(10);
 
@@ -123,7 +123,7 @@ TEST(GeneticAlgorithmTest, SelectsParsimoniousSubset)
     genetic_algorithm.set_individuals_number(20);
     genetic_algorithm.set_maximum_epochs(5);
 
-    const InputsSelectionResult results = genetic_algorithm.perform_input_selection();
+    const InputSelectionResult results = genetic_algorithm.perform_input_selection();
 
     const Index selected_count = results.optimal_inputs.count();
 
@@ -172,7 +172,7 @@ TEST(GeneticAlgorithmTest, CrossValidationKeepsPersistentRoles)
 
     ApproximationNetwork network(dataset.get_input_shape(), {2}, {1});
     Training training(&network, &dataset);
-    training.set_optimization_algorithm("AdaptiveMomentEstimation");
+    training.set_optimization_algorithm("Adam");
     training.get_optimization_algorithm()->set_display(false);
     training.get_optimization_algorithm()->set_maximum_epochs(10);
 
@@ -182,7 +182,7 @@ TEST(GeneticAlgorithmTest, CrossValidationKeepsPersistentRoles)
     genetic_algorithm.set_maximum_epochs(3);
     genetic_algorithm.set_folds_number(3);
 
-    const InputsSelectionResult results = genetic_algorithm.perform_input_selection();
+    const InputSelectionResult results = genetic_algorithm.perform_input_selection();
 
     EXPECT_GE(results.get_epochs_number(), 1);
     EXPECT_GE(results.optimum_validation_error, type(0));
@@ -220,7 +220,7 @@ TEST(GeneticAlgorithmTest, CrossValidationDoesNotRequirePersistentValidation)
 
     ApproximationNetwork network(dataset.get_input_shape(), {2}, {1});
     Training training(&network, &dataset);
-    training.set_optimization_algorithm("AdaptiveMomentEstimation");
+    training.set_optimization_algorithm("Adam");
     training.get_optimization_algorithm()->set_display(false);
     training.get_optimization_algorithm()->set_maximum_epochs(10);
 
@@ -232,7 +232,7 @@ TEST(GeneticAlgorithmTest, CrossValidationDoesNotRequirePersistentValidation)
 
     const vector<SampleRole> roles_before = dataset.get_sample_roles();
 
-    InputsSelectionResult results;
+    InputSelectionResult results;
     EXPECT_NO_THROW(results = genetic_algorithm.perform_input_selection());
     EXPECT_GE(results.get_epochs_number(), 1);
 

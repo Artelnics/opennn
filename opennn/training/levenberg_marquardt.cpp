@@ -81,7 +81,7 @@ static void lm_activation_derivative(ActivationFunction activation_function, con
 {
     throw_if(activation_function == ActivationFunction::Softmax,
              "LevenbergMarquardt: Softmax activation is not supported "
-             "(non-diagonal Jacobian). Use AdaptiveMomentEstimation, SGD, or QuasiNewton.");
+             "(non-diagonal Jacobian). Use Adam, SGD, or QuasiNewton.");
 
     result = outputs.unaryExpr([activation_function](float value)
              { return activation_derivative_from_output_value(activation_function, value); });
@@ -111,7 +111,7 @@ void LevenbergMarquardt::compute_jacobian(const Batch&  ,
         const auto* dense = dynamic_cast<const Dense*>(layers[i].get());
         throw_if(!dense,
                  "LevenbergMarquardt: only Dense trainable layers are supported. "
-                 "Use AdaptiveMomentEstimation, SGD, or QuasiNewton instead.");
+                 "Use Adam, SGD, or QuasiNewton instead.");
 
         dense_indices.push_back(Index(i));
         parameter_offsets.push_back(offset);
@@ -124,14 +124,14 @@ void LevenbergMarquardt::compute_jacobian(const Batch&  ,
 
     throw_if(offset != network->get_parameters_buffer_size(),
              "LevenbergMarquardt: unsupported parameter layout (only plain Dense "
-             "layers without batch normalization are supported). Use AdaptiveMomentEstimation, "
+             "layers without batch normalization are supported). Use Adam, "
              "SGD, or QuasiNewton instead.");
 
     for (size_t n = 1; n < dense_indices.size(); ++n)
         throw_if(source_layers[dense_indices[n]].size() != 1
                  || source_layers[dense_indices[n]][0] != dense_indices[n - 1],
                  "LevenbergMarquardt: trainable Dense layers must form a sequential "
-                 "chain. Use AdaptiveMomentEstimation, SGD, or QuasiNewton instead.");
+                 "chain. Use Adam, SGD, or QuasiNewton instead.");
 
     const Index current_batch_size = forward_propagation.batch_size;
     const Index last_layer = dense_indices.back();
@@ -226,7 +226,7 @@ TrainingResult LevenbergMarquardt::train()
     throw_if(network->is_gpu(),
              "LevenbergMarquardt does not support GPU training: "
              "its Jacobian and gradient computation map device pointers as host memory. "
-             "Use AdaptiveMomentEstimation or StochasticGradientDescent on GPU.");
+             "Use Adam or SGD on GPU.");
 
     const string loss_name = loss->get_name();
     throw_if(loss_name == "MinkowskiError",

@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "opennn/model_selection/inputs_selection.h"
+#include "opennn/model_selection/input_selection.h"
 #include "opennn/model_selection/growing_neurons.h"
 
 namespace opennn
@@ -29,9 +29,9 @@ public:
 
     NeuronsSelectionResult perform_neurons_selection() { return neurons_selection.perform_neurons_selection(); }
 
-    InputsSelectionResult perform_input_selection() { return inputs_selection->perform_input_selection(); }
+    InputSelectionResult perform_input_selection() { return input_selection->perform_input_selection(); }
 
-    string get_inputs_selection_name() const { return inputs_selection ? inputs_selection->get_name() : string(); }
+    string get_input_selection_name() const { return input_selection ? input_selection->get_name() : string(); }
 
     void from_JSON(const JsonDocument&);
 
@@ -42,13 +42,13 @@ public:
 
 private:
 
-    void set_inputs_selection(const string&);
+    void set_input_selection(const string&);
 
     Training* training = nullptr;
 
     GrowingNeurons neurons_selection;
 
-    unique_ptr<InputsSelection> inputs_selection;
+    unique_ptr<InputSelection> input_selection;
 };
 
 }

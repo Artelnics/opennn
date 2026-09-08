@@ -19,7 +19,7 @@ namespace opennn
 {
 
 GeneticAlgorithm::GeneticAlgorithm(Training* new_training)
-    : InputsSelection(new_training)
+    : InputSelection(new_training)
 {
     set_default();
 }
@@ -483,7 +483,7 @@ void GeneticAlgorithm::perform_mutation()
     }
 }
 
-InputsSelectionResult GeneticAlgorithm::perform_input_selection()
+InputSelectionResult GeneticAlgorithm::perform_input_selection()
 {
     Loss* loss = training->get_loss();
 
@@ -497,7 +497,7 @@ InputsSelectionResult GeneticAlgorithm::perform_input_selection()
              "dataset has no validation samples. "
              "The genetic algorithm uses validation error to rank individuals.");
 
-    InputsSelectionResult input_selection_results(maximum_epochs);
+    InputSelectionResult input_selection_results(maximum_epochs);
 
     if (display) logging::info() << "Performing genetic input selection...\n" << "\n";
 

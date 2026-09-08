@@ -11,7 +11,7 @@
 #include "opennn/dataset/image_dataset.h"
 #include "opennn/models/models.h"
 #include "opennn/training/training.h"
-#include "opennn/testing_analysis/testing_analysis.h"
+#include "opennn/evaluation/evaluation.h"
 #include "opennn/core/random_utilities.h"
 
 using namespace opennn;
@@ -35,9 +35,9 @@ int main()
 
         training.train();
 
-        const TestingAnalysis testing_analysis(&network, &dataset);
+        const Evaluation evaluation(&network, &dataset);
 
-        testing_analysis.print_multiple_classification_tests();
+        evaluation.print_multiple_classification_tests();
 
         return 0;
     }

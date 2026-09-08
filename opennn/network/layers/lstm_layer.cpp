@@ -1,12 +1,12 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   L O N G   S H O R T   T E R M   M E M O R Y   L A Y E R
+//   L S T M   L A Y E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "opennn/network/layers/long_short_term_memory_layer.h"
+#include "opennn/network/layers/lstm_layer.h"
 #include "opennn/registry.h"
 
 #include "opennn/core/device_backend.h"
@@ -103,7 +103,7 @@ void set_random_uniform_linked(span<const TensorView* const> views, float min, f
 
 }
 
-void LongShortTermMemoryOperator::set(Index new_input_features,
+void LSTMOperator::set(Index new_input_features,
                                 Index new_output_features,
                                 Index new_time_steps,
                                 ActivationFunction new_activation_function,
@@ -118,7 +118,7 @@ void LongShortTermMemoryOperator::set(Index new_input_features,
     compute_dtype = new_compute_dtype;
 }
 
-vector<TensorSpec> LongShortTermMemoryOperator::parameter_specs() const
+vector<TensorSpec> LSTMOperator::parameter_specs() const
 {
     if (output_features == 0)
         return {};
@@ -136,7 +136,7 @@ vector<TensorSpec> LongShortTermMemoryOperator::parameter_specs() const
     return specs;
 }
 
-vector<Operator::ParameterSlot> LongShortTermMemoryOperator::parameter_slots()
+vector<Operator::ParameterSlot> LSTMOperator::parameter_slots()
 {
     return {
         {&forget_bias,    &forget_bias_gradient},
@@ -156,7 +156,7 @@ vector<Operator::ParameterSlot> LongShortTermMemoryOperator::parameter_slots()
     };
 }
 
-void LongShortTermMemoryOperator::set_parameters_random()
+void LSTMOperator::set_parameters_random()
 {
     // The forget gate starts biased open; the other three start at zero.
     if (forget_bias.get_data()) forget_bias.fill(1.0f);
@@ -170,7 +170,7 @@ void LongShortTermMemoryOperator::set_parameters_random()
         set_random_uniform_linked(gate_recurrent_weights(), -0.1f, 0.1f);
 }
 
-void LongShortTermMemoryOperator::set_parameters_glorot()
+void LSTMOperator::set_parameters_glorot()
 {
     if (forget_bias.get_data()) forget_bias.fill(1.0f);
     const GateViews biases = gate_biases();
@@ -187,7 +187,7 @@ void LongShortTermMemoryOperator::set_parameters_glorot()
             set_random_orthogonal(recurrent->as_matrix());
 }
 
-void LongShortTermMemoryOperator::set_parameters_pytorch()
+void LSTMOperator::set_parameters_pytorch()
 {
     const float limit = 1.0f / sqrt(float(output_features > 0 ? output_features : 1));
 
@@ -531,7 +531,7 @@ bool onednn_lstm_supported(const TensorView& input,
 
 #endif
 
-bool LongShortTermMemoryOperator::apply_onednn(
+bool LSTMOperator::apply_onednn(
     const TensorView& input,
     TensorView& output,
     TensorView& sequence_output,
@@ -751,7 +751,7 @@ bool LongShortTermMemoryOperator::apply_onednn(
 #endif
 }
 
-bool LongShortTermMemoryOperator::apply_delta_onednn(
+bool LSTMOperator::apply_delta_onednn(
     const TensorView& input,
     const TensorView& input_sequence,
     const TensorView& sequence_output,
@@ -951,7 +951,7 @@ bool LongShortTermMemoryOperator::apply_delta_onednn(
 #endif
 }
 
-void LongShortTermMemoryOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, ForwardPropagationMode pass)
+void LSTMOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, ForwardPropagationMode pass)
 {
     auto& forward_slots = forward_propagation.slots[layer];
 
@@ -986,7 +986,7 @@ void LongShortTermMemoryOperator::forward_propagate(ForwardPropagation& forward_
           cell_state, hidden_state, cell_activation, is_training(pass));
 }
 
-void LongShortTermMemoryOperator::apply(const TensorView& input,
+void LSTMOperator::apply(const TensorView& input,
                                       TensorView& output,
                                       TensorView& forget_gate,
                                       TensorView& input_gate,
@@ -1323,7 +1323,7 @@ void LongShortTermMemoryOperator::apply(const TensorView& input,
     }
 }
 
-void LongShortTermMemoryOperator::back_propagate(ForwardPropagation& forward_propagation, BackPropagation& back_propagation, size_t layer) const
+void LSTMOperator::back_propagate(ForwardPropagation& forward_propagation, BackPropagation& back_propagation, size_t layer) const
 {
     auto& backward_slots = back_propagation.slots[layer];
     if (backward_slots.size() <= OutputDeltaScratchSlot) return;
@@ -1379,7 +1379,7 @@ void LongShortTermMemoryOperator::back_propagate(ForwardPropagation& forward_pro
                 hidden_state, cell_activation);
 }
 
-void LongShortTermMemoryOperator::apply_delta(const TensorView& input,
+void LSTMOperator::apply_delta(const TensorView& input,
                                         const TensorView& output_delta,
                                         TensorView& input_delta,
                                         TensorView& hidden_delta_scratch,
@@ -1755,7 +1755,7 @@ void LongShortTermMemoryOperator::apply_delta(const TensorView& input,
 
 #ifdef OPENNN_HAS_CUDA
 
-CudnnRnnShapeSlot& LongShortTermMemoryOperator::ensure_cudnn_setup_(
+CudnnRnnShapeSlot& LSTMOperator::ensure_cudnn_setup_(
     Index batch_size, bool for_training) const
 {
     using F_ = ActivationFunction;
@@ -1763,7 +1763,7 @@ CudnnRnnShapeSlot& LongShortTermMemoryOperator::ensure_cudnn_setup_(
         || recurrent_activation_function != F_::Sigmoid)
     {
         throw runtime_error(
-            "LongShortTermMemoryOperator::apply_gpu: cuDNN CUDNN_LSTM only supports "
+            "LSTMOperator::apply_gpu: cuDNN CUDNN_LSTM only supports "
             "Tanh cell activation + Sigmoid gate activation. "
             "Reconfigure the layer or fall back to CPU.");
     }
@@ -1773,7 +1773,7 @@ CudnnRnnShapeSlot& LongShortTermMemoryOperator::ensure_cudnn_setup_(
                         batch_size, for_training);
 }
 
-void LongShortTermMemoryOperator::pack_weights_to_cudnn_(Buffer& forward_state,
+void LSTMOperator::pack_weights_to_cudnn_(Buffer& forward_state,
                                                         uint64_t parameters_version) const
 {
     const TensorView* weights[8] = {
@@ -1797,7 +1797,7 @@ void LongShortTermMemoryOperator::pack_weights_to_cudnn_(Buffer& forward_state,
                         weights, biases, forward_state, parameters_version);
 }
 
-void LongShortTermMemoryOperator::unpack_gradients_from_cudnn_(Buffer& backward_scratch) const
+void LSTMOperator::unpack_gradients_from_cudnn_(Buffer& backward_scratch) const
 {
     const TensorView* weight_gradients[8] = {
         &input_weight_gradient,
@@ -1820,7 +1820,7 @@ void LongShortTermMemoryOperator::unpack_gradients_from_cudnn_(Buffer& backward_
                             weight_gradients, bias_gradients,
                             backward_scratch);
 }
-void LongShortTermMemoryOperator::apply_gpu(const TensorView& input,
+void LSTMOperator::apply_gpu(const TensorView& input,
                                       TensorView& output,
                                       TensorView& sequence_output_scratch,
                                       TensorView& cudnn_input_sequence,
@@ -1839,7 +1839,7 @@ void LongShortTermMemoryOperator::apply_gpu(const TensorView& input,
                          forward_state, is_training, parameters_version);
 }
 
-void LongShortTermMemoryOperator::apply_delta_gpu(const TensorView& input,
+void LSTMOperator::apply_delta_gpu(const TensorView& input,
                                             const TensorView& sequence_output,
                                             const TensorView& output_delta,
                                             const TensorView& cudnn_input_sequence,
@@ -1865,23 +1865,23 @@ void LongShortTermMemoryOperator::apply_delta_gpu(const TensorView& input,
 
 #else
 
-void LongShortTermMemoryOperator::apply_gpu(const TensorView&, TensorView&, TensorView&,
+void LSTMOperator::apply_gpu(const TensorView&, TensorView&, TensorView&,
                                             TensorView&, TensorView&, Buffer&, bool, bool,
                                             uint64_t) const OPENNN_CUDA_STUB_BODY(apply_gpu)
 
-void LongShortTermMemoryOperator::apply_delta_gpu(
+void LSTMOperator::apply_delta_gpu(
     const TensorView&, const TensorView&, const TensorView&, const TensorView&,
     const TensorView&, TensorView&, TensorView&, TensorView&,
     const Buffer&, Buffer&, bool) const OPENNN_CUDA_STUB_BODY(apply_delta_gpu)
 
 #endif
 
-LongShortTermMemory::LongShortTermMemory(const Shape& new_input_shape,
+LSTM::LSTM(const Shape& new_input_shape,
                                          const Shape& new_output_shape,
                                          const string& new_activation_function,
                                          const string& new_recurrent_activation_function,
                                          const string& new_label)
-    : Layer(LayerType::LongShortTermMemory)
+    : Layer(LayerType::LSTM)
 {
     operators = {&lstm_op};
 
@@ -1892,7 +1892,7 @@ LongShortTermMemory::LongShortTermMemory(const Shape& new_input_shape,
         new_label);
 }
 
-vector<TensorSpec> LongShortTermMemory::get_forward_specs(Index batch_size) const
+vector<TensorSpec> LSTM::get_forward_specs(Index batch_size) const
 {
     const Index T = get_time_steps();
     const Shape sequence_shape{batch_size, T, output_features};
@@ -1913,7 +1913,7 @@ vector<TensorSpec> LongShortTermMemory::get_forward_specs(Index batch_size) cons
     };
 }
 
-vector<TensorSpec> LongShortTermMemory::get_backward_specs(Index batch_size) const
+vector<TensorSpec> LSTM::get_backward_specs(Index batch_size) const
 {
     if (!is_trainable) return {};
 
@@ -1933,7 +1933,7 @@ vector<TensorSpec> LongShortTermMemory::get_backward_specs(Index batch_size) con
     };
 }
 
-void LongShortTermMemory::configure_operators()
+void LSTM::configure_operators()
 {
     lstm_op.set(get_input_features(),
                 output_features,
@@ -1944,8 +1944,8 @@ void LongShortTermMemory::configure_operators()
 
     lstm_op.return_sequences = return_sequences;
 
-    using enum LongShortTermMemoryOperator::ForwardSlot;
-    using enum LongShortTermMemoryOperator::BackwardSlot;
+    using enum LSTMOperator::ForwardSlot;
+    using enum LSTMOperator::BackwardSlot;
 
     lstm_op.input_slots = {InputSlot};
     lstm_op.output_slots = {
@@ -1962,14 +1962,14 @@ void LongShortTermMemory::configure_operators()
     lstm_op.input_delta_slots = {InputDeltaSlot};
 }
 
-void LongShortTermMemory::set_return_sequences(bool value)
+void LSTM::set_return_sequences(bool value)
 {
     if (return_sequences == value) return;
     return_sequences = value;
     configure_operators();
 }
 
-void LongShortTermMemory::set(const Shape& new_input_shape,
+void LSTM::set(const Shape& new_input_shape,
                               const Shape& new_output_shape,
                               const string& new_activation_function,
                               const string& new_recurrent_activation_function,
@@ -1986,8 +1986,8 @@ void LongShortTermMemory::set(const Shape& new_input_shape,
         return configure_operators();
     }
 
-    check_rank(new_input_shape, {2}, "LongShortTermMemory", "input");
-    check_rank(new_output_shape, {1}, "LongShortTermMemory", "output");
+    check_rank(new_input_shape, {2}, "LSTM", "input");
+    check_rank(new_output_shape, {1}, "LSTM", "output");
 
     input_shape = new_input_shape;
     output_features = new_output_shape[0];
@@ -1995,44 +1995,44 @@ void LongShortTermMemory::set(const Shape& new_input_shape,
     configure_operators();
 }
 
-void LongShortTermMemory::apply_input_shape(const Shape& new_input_shape)
+void LSTM::apply_input_shape(const Shape& new_input_shape)
 {
-    check_rank(new_input_shape, {2}, "LongShortTermMemory", "input");
+    check_rank(new_input_shape, {2}, "LSTM", "input");
     input_shape = new_input_shape;
     configure_operators();
 }
 
-void LongShortTermMemory::set_output_shape(const Shape& new_output_shape)
+void LSTM::set_output_shape(const Shape& new_output_shape)
 {
-    check_rank(new_output_shape, {1, 2}, "LongShortTermMemory", "output");
+    check_rank(new_output_shape, {1, 2}, "LSTM", "output");
     output_features = new_output_shape[new_output_shape.get_rank() - 1];
     configure_operators();
 }
 
-void LongShortTermMemory::set_activation_function(const string& new_activation_function)
+void LSTM::set_activation_function(const string& new_activation_function)
 {
     const ActivationFunction function = ActivationOperator::from_string(new_activation_function);
 
     using enum ActivationFunction;
     throw_if(function != Identity && function != Sigmoid && function != Tanh && function != ReLU,
-             "LongShortTermMemory: unsupported activation function \"{}\".", new_activation_function);
+             "LSTM: unsupported activation function \"{}\".", new_activation_function);
 
     lstm_op.activation_function = function;
 }
 
-void LongShortTermMemory::set_recurrent_activation_function(const string& new_recurrent_activation_function)
+void LSTM::set_recurrent_activation_function(const string& new_recurrent_activation_function)
 {
     const ActivationFunction function = ActivationOperator::from_string(new_recurrent_activation_function);
 
     using enum ActivationFunction;
     throw_if(function != Identity && function != Sigmoid && function != Tanh && function != ReLU,
-             "LongShortTermMemory: unsupported recurrent activation function \"{}\".",
+             "LSTM: unsupported recurrent activation function \"{}\".",
                     new_recurrent_activation_function);
 
     lstm_op.recurrent_activation_function = function;
 }
 
-void LongShortTermMemory::read_JSON_body(const Json* lstm_layer_element)
+void LSTM::read_JSON_body(const Json* lstm_layer_element)
 {
     set_activation_function(read_json_string(lstm_layer_element, "Activation"));
     set_recurrent_activation_function(read_json_string(lstm_layer_element, "RecurrentActivation"));
@@ -2040,14 +2040,14 @@ void LongShortTermMemory::read_JSON_body(const Json* lstm_layer_element)
     configure_operators();
 }
 
-void LongShortTermMemory::write_JSON_body(JsonWriter& printer) const
+void LSTM::write_JSON_body(JsonWriter& printer) const
 {
     add_json_field(printer, "Activation", ActivationOperator::to_string(lstm_op.activation_function));
     add_json_field(printer, "RecurrentActivation", ActivationOperator::to_string(lstm_op.recurrent_activation_function));
     add_json_field(printer, "ReturnSequences", return_sequences);
 }
 
-string LongShortTermMemory::write_expression(const vector<string>& feature_names,
+string LSTM::write_expression(const vector<string>& feature_names,
                                              const vector<string>& output_names) const
 {
     if (parameters.size() < 12) return {};

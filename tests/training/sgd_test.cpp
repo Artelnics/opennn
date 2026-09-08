@@ -5,7 +5,7 @@
 #include "opennn/network/back_propagation.h"
 #include "opennn/network/layers/dense_layer.h"
 #include "opennn/models/models.h"
-#include "opennn/training/stochastic_gradient_descent.h"
+#include "opennn/training/sgd.h"
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/dataset/time_series_dataset.h"
 #include "opennn/dataset/image_dataset.h"
@@ -100,7 +100,7 @@ namespace
     };
 }
 
-class StochasticGradientDescentTest : public ::testing::Test
+class SGDTest : public ::testing::Test
 {
 protected:
     int previous_threads = 0;
@@ -117,7 +117,7 @@ protected:
     }
 };
 
-TEST_F(StochasticGradientDescentTest, GpuClipWorkspaceIsBackwardOwned)
+TEST_F(SGDTest, GpuClipWorkspaceIsBackwardOwned)
 {
     if (!device::has_cuda_device())
         GTEST_SKIP() << "No CUDA device.";
@@ -159,7 +159,7 @@ TEST_F(StochasticGradientDescentTest, GpuClipWorkspaceIsBackwardOwned)
     EXPECT_NEAR(clipped_norm, 1.0f, 1.0e-5f);
 }
 
-TEST_F(StochasticGradientDescentTest, GpuClipSupportsTailAndCudaGraph)
+TEST_F(SGDTest, GpuClipSupportsTailAndCudaGraph)
 {
     if (!device::has_cuda_device())
         GTEST_SKIP() << "No CUDA device.";
@@ -174,7 +174,7 @@ TEST_F(StochasticGradientDescentTest, GpuClipSupportsTailAndCudaGraph)
     Loss loss(&network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);
 
-    StochasticGradientDescent optimizer(&loss);
+    SGD optimizer(&loss);
     optimizer.set_initial_learning_rate(0.01f);
     optimizer.set_batch_size(4);
     optimizer.set_gradient_clip_norm(0.5f);
@@ -185,22 +185,22 @@ TEST_F(StochasticGradientDescentTest, GpuClipSupportsTailAndCudaGraph)
     EXPECT_TRUE(isfinite(optimizer.train().get_training_error()));
 }
 
-TEST_F(StochasticGradientDescentTest, DefaultConstructor)
+TEST_F(SGDTest, DefaultConstructor)
 {
-    StochasticGradientDescent stochastic_gradient_descent;
+    SGD sgd;
 
-    EXPECT_TRUE(stochastic_gradient_descent.get_loss() == nullptr);
+    EXPECT_TRUE(sgd.get_loss() == nullptr);
 }
 
-TEST_F(StochasticGradientDescentTest, GeneralConstructor)
+TEST_F(SGDTest, GeneralConstructor)
 {
     Loss loss;
-    StochasticGradientDescent stochastic_gradient_descent(&loss);
+    SGD sgd(&loss);
 
-    EXPECT_TRUE(stochastic_gradient_descent.get_loss() != nullptr);
+    EXPECT_TRUE(sgd.get_loss() != nullptr);
 }
 
-TEST_F(StochasticGradientDescentTest, TrainApproximationCPU)
+TEST_F(SGDTest, TrainApproximationCPU)
 {
     set_seed(1);
     TabularDataset dataset_short(16, {2}, {1});
@@ -209,7 +209,7 @@ TEST_F(StochasticGradientDescentTest, TrainApproximationCPU)
     ApproximationNetwork network_short({2}, {6}, {1});
     Loss loss_short(&network_short, &dataset_short);
     loss_short.set_error(Loss::Error::MeanSquaredError);
-    StochasticGradientDescent sgd_short(&loss_short);
+    SGD sgd_short(&loss_short);
     sgd_short.set_initial_learning_rate(0.05f);
     sgd_short.set_maximum_epochs(2);
     sgd_short.set_display(false);
@@ -222,7 +222,7 @@ TEST_F(StochasticGradientDescentTest, TrainApproximationCPU)
     ApproximationNetwork network_long({2}, {6}, {1});
     Loss loss_long(&network_long, &dataset_long);
     loss_long.set_error(Loss::Error::MeanSquaredError);
-    StochasticGradientDescent sgd_long(&loss_long);
+    SGD sgd_long(&loss_long);
     sgd_long.set_initial_learning_rate(0.05f);
     sgd_long.set_maximum_epochs(300);
     sgd_long.set_display(false);
@@ -232,7 +232,7 @@ TEST_F(StochasticGradientDescentTest, TrainApproximationCPU)
 }
 
 #ifdef OPENNN_HAS_CUDA
-TEST_F(StochasticGradientDescentTest, TrainApproximationGPU)
+TEST_F(SGDTest, TrainApproximationGPU)
 {
     Configuration::instance().set(Device::CUDA, Type::FP32);
 
@@ -243,7 +243,7 @@ TEST_F(StochasticGradientDescentTest, TrainApproximationGPU)
     ApproximationNetwork network_short({2}, {6}, {1});
     Loss loss_short(&network_short, &dataset_short);
     loss_short.set_error(Loss::Error::MeanSquaredError);
-    StochasticGradientDescent sgd_short(&loss_short);
+    SGD sgd_short(&loss_short);
     sgd_short.set_initial_learning_rate(0.05f);
     sgd_short.set_maximum_epochs(2);
     sgd_short.set_display(false);
@@ -256,7 +256,7 @@ TEST_F(StochasticGradientDescentTest, TrainApproximationGPU)
     ApproximationNetwork network_long({2}, {6}, {1});
     Loss loss_long(&network_long, &dataset_long);
     loss_long.set_error(Loss::Error::MeanSquaredError);
-    StochasticGradientDescent sgd_long(&loss_long);
+    SGD sgd_long(&loss_long);
     sgd_long.set_initial_learning_rate(0.05f);
     sgd_long.set_maximum_epochs(300);
     sgd_long.set_display(false);
@@ -265,7 +265,7 @@ TEST_F(StochasticGradientDescentTest, TrainApproximationGPU)
     EXPECT_LT(error_long, error_short);
 }
 
-TEST_F(StochasticGradientDescentTest, JointGradientArenaMatchesContiguousSgdGPU)
+TEST_F(SGDTest, JointGradientArenaMatchesContiguousSgdGPU)
 {
     Configuration::instance().set(Device::CUDA, Type::BF16);
 
@@ -285,7 +285,7 @@ TEST_F(StochasticGradientDescentTest, JointGradientArenaMatchesContiguousSgdGPU)
         Loss loss(&network, &dataset);
         loss.set_error(Loss::Error::MeanSquaredError);
 
-        StochasticGradientDescent sgd(&loss);
+        SGD sgd(&loss);
         sgd.set_initial_learning_rate(0.01f);
         sgd.set_momentum(0.9f);
         sgd.set_nesterov(true);
@@ -309,7 +309,7 @@ TEST_F(StochasticGradientDescentTest, JointGradientArenaMatchesContiguousSgdGPU)
         joint_parameters, contiguous_parameters, 1.0e-7f));
 }
 
-TEST_F(StochasticGradientDescentTest, JointGradientArenaSupportsCudaGraphRemainderGPU)
+TEST_F(SGDTest, JointGradientArenaSupportsCudaGraphRemainderGPU)
 {
     Configuration::instance().set(Device::CUDA, Type::BF16);
 
@@ -322,7 +322,7 @@ TEST_F(StochasticGradientDescentTest, JointGradientArenaSupportsCudaGraphRemaind
     Loss loss(&network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);
 
-    StochasticGradientDescent sgd(&loss);
+    SGD sgd(&loss);
     sgd.set_initial_learning_rate(0.01f);
     sgd.set_momentum(0.9f);
     sgd.set_nesterov(true);
@@ -341,7 +341,7 @@ TEST_F(StochasticGradientDescentTest, JointGradientArenaSupportsCudaGraphRemaind
 }
 #endif
 
-TEST_F(StochasticGradientDescentTest, TrainClassificationCPU)
+TEST_F(SGDTest, TrainClassificationCPU)
 {
     const MatrixR classification_data = separable_classification_data(16, 3);
 
@@ -352,7 +352,7 @@ TEST_F(StochasticGradientDescentTest, TrainClassificationCPU)
     ClassificationNetwork network_short({3}, {6}, {1});
     Loss loss_short(&network_short, &dataset_short);
     loss_short.set_error(Loss::Error::CrossEntropy);
-    StochasticGradientDescent sgd_short(&loss_short);
+    SGD sgd_short(&loss_short);
     sgd_short.set_initial_learning_rate(0.1f);
     sgd_short.set_maximum_epochs(2);
     sgd_short.set_display(false);
@@ -365,7 +365,7 @@ TEST_F(StochasticGradientDescentTest, TrainClassificationCPU)
     ClassificationNetwork network_long({3}, {6}, {1});
     Loss loss_long(&network_long, &dataset_long);
     loss_long.set_error(Loss::Error::CrossEntropy);
-    StochasticGradientDescent sgd_long(&loss_long);
+    SGD sgd_long(&loss_long);
     sgd_long.set_initial_learning_rate(0.1f);
     sgd_long.set_maximum_epochs(400);
     sgd_long.set_display(false);
@@ -375,7 +375,7 @@ TEST_F(StochasticGradientDescentTest, TrainClassificationCPU)
 }
 
 #ifdef OPENNN_HAS_CUDA
-TEST_F(StochasticGradientDescentTest, TrainClassificationGPU)
+TEST_F(SGDTest, TrainClassificationGPU)
 {
     Configuration::instance().set(Device::CUDA, Type::FP32);
 
@@ -388,7 +388,7 @@ TEST_F(StochasticGradientDescentTest, TrainClassificationGPU)
     ClassificationNetwork network_short({3}, {6}, {1});
     Loss loss_short(&network_short, &dataset_short);
     loss_short.set_error(Loss::Error::CrossEntropy);
-    StochasticGradientDescent sgd_short(&loss_short);
+    SGD sgd_short(&loss_short);
     sgd_short.set_initial_learning_rate(0.1f);
     sgd_short.set_maximum_epochs(2);
     sgd_short.set_display(false);
@@ -401,7 +401,7 @@ TEST_F(StochasticGradientDescentTest, TrainClassificationGPU)
     ClassificationNetwork network_long({3}, {6}, {1});
     Loss loss_long(&network_long, &dataset_long);
     loss_long.set_error(Loss::Error::CrossEntropy);
-    StochasticGradientDescent sgd_long(&loss_long);
+    SGD sgd_long(&loss_long);
     sgd_long.set_initial_learning_rate(0.1f);
     sgd_long.set_maximum_epochs(400);
     sgd_long.set_display(false);
@@ -411,7 +411,7 @@ TEST_F(StochasticGradientDescentTest, TrainClassificationGPU)
 }
 #endif
 
-TEST_F(StochasticGradientDescentTest, TrainForecastingCPU)
+TEST_F(SGDTest, TrainForecastingCPU)
 {
     set_seed(3);
     TimeSeriesDataset dataset_short(24, {1}, {1});
@@ -422,7 +422,7 @@ TEST_F(StochasticGradientDescentTest, TrainForecastingCPU)
     ForecastingNetwork network_short(dataset_short.get_input_shape(), {4}, dataset_short.get_target_shape());
     Loss loss_short(&network_short, &dataset_short);
     loss_short.set_error(Loss::Error::MeanSquaredError);
-    StochasticGradientDescent sgd_short(&loss_short);
+    SGD sgd_short(&loss_short);
     sgd_short.set_initial_learning_rate(0.05f);
     sgd_short.set_maximum_epochs(2);
     sgd_short.set_display(false);
@@ -437,7 +437,7 @@ TEST_F(StochasticGradientDescentTest, TrainForecastingCPU)
     ForecastingNetwork network_long(dataset_long.get_input_shape(), {4}, dataset_long.get_target_shape());
     Loss loss_long(&network_long, &dataset_long);
     loss_long.set_error(Loss::Error::MeanSquaredError);
-    StochasticGradientDescent sgd_long(&loss_long);
+    SGD sgd_long(&loss_long);
     sgd_long.set_initial_learning_rate(0.05f);
     sgd_long.set_maximum_epochs(300);
     sgd_long.set_display(false);
@@ -447,7 +447,7 @@ TEST_F(StochasticGradientDescentTest, TrainForecastingCPU)
 }
 
 #ifdef OPENNN_HAS_CUDA
-TEST_F(StochasticGradientDescentTest, TrainForecastingGPU)
+TEST_F(SGDTest, TrainForecastingGPU)
 {
     Configuration::instance().set(Device::CUDA, Type::FP32);
 
@@ -460,7 +460,7 @@ TEST_F(StochasticGradientDescentTest, TrainForecastingGPU)
     ForecastingNetwork network_short(dataset_short.get_input_shape(), {4}, dataset_short.get_target_shape());
     Loss loss_short(&network_short, &dataset_short);
     loss_short.set_error(Loss::Error::MeanSquaredError);
-    StochasticGradientDescent sgd_short(&loss_short);
+    SGD sgd_short(&loss_short);
     sgd_short.set_initial_learning_rate(0.05f);
     sgd_short.set_maximum_epochs(2);
     sgd_short.set_display(false);
@@ -475,7 +475,7 @@ TEST_F(StochasticGradientDescentTest, TrainForecastingGPU)
     ForecastingNetwork network_long(dataset_long.get_input_shape(), {4}, dataset_long.get_target_shape());
     Loss loss_long(&network_long, &dataset_long);
     loss_long.set_error(Loss::Error::MeanSquaredError);
-    StochasticGradientDescent sgd_long(&loss_long);
+    SGD sgd_long(&loss_long);
     sgd_long.set_initial_learning_rate(0.05f);
     sgd_long.set_maximum_epochs(300);
     sgd_long.set_display(false);
@@ -485,7 +485,7 @@ TEST_F(StochasticGradientDescentTest, TrainForecastingGPU)
 }
 #endif
 
-TEST_F(StochasticGradientDescentTest, TrainImageClassificationCPU)
+TEST_F(SGDTest, TrainImageClassificationCPU)
 {
     const filesystem::path root = write_sgd_image_classification_dataset();
 
@@ -495,7 +495,7 @@ TEST_F(StochasticGradientDescentTest, TrainImageClassificationCPU)
     ImageClassificationNetwork network_short(dataset_short.get_input_shape(), {4}, dataset_short.get_target_shape());
     Loss loss_short(&network_short, &dataset_short);
     loss_short.set_error(Loss::Error::CrossEntropy);
-    StochasticGradientDescent sgd_short(&loss_short);
+    SGD sgd_short(&loss_short);
     sgd_short.set_initial_learning_rate(0.05f);
     sgd_short.set_maximum_epochs(1);
     sgd_short.set_display(false);
@@ -507,7 +507,7 @@ TEST_F(StochasticGradientDescentTest, TrainImageClassificationCPU)
     ImageClassificationNetwork network_long(dataset_long.get_input_shape(), {4}, dataset_long.get_target_shape());
     Loss loss_long(&network_long, &dataset_long);
     loss_long.set_error(Loss::Error::CrossEntropy);
-    StochasticGradientDescent sgd_long(&loss_long);
+    SGD sgd_long(&loss_long);
     sgd_long.set_initial_learning_rate(0.05f);
     sgd_long.set_maximum_epochs(80);
     sgd_long.set_display(false);
@@ -519,7 +519,7 @@ TEST_F(StochasticGradientDescentTest, TrainImageClassificationCPU)
 }
 
 #ifdef OPENNN_HAS_CUDA
-TEST_F(StochasticGradientDescentTest, TrainImageClassificationGPU)
+TEST_F(SGDTest, TrainImageClassificationGPU)
 {
     Configuration::instance().set(Device::CUDA, Type::FP32);
 
@@ -531,7 +531,7 @@ TEST_F(StochasticGradientDescentTest, TrainImageClassificationGPU)
     ImageClassificationNetwork network_short(dataset_short.get_input_shape(), {4}, dataset_short.get_target_shape());
     Loss loss_short(&network_short, &dataset_short);
     loss_short.set_error(Loss::Error::CrossEntropy);
-    StochasticGradientDescent sgd_short(&loss_short);
+    SGD sgd_short(&loss_short);
     sgd_short.set_initial_learning_rate(0.05f);
     sgd_short.set_maximum_epochs(1);
     sgd_short.set_display(false);
@@ -543,7 +543,7 @@ TEST_F(StochasticGradientDescentTest, TrainImageClassificationGPU)
     ImageClassificationNetwork network_long(dataset_long.get_input_shape(), {4}, dataset_long.get_target_shape());
     Loss loss_long(&network_long, &dataset_long);
     loss_long.set_error(Loss::Error::CrossEntropy);
-    StochasticGradientDescent sgd_long(&loss_long);
+    SGD sgd_long(&loss_long);
     sgd_long.set_initial_learning_rate(0.05f);
     sgd_long.set_maximum_epochs(80);
     sgd_long.set_display(false);
@@ -555,7 +555,7 @@ TEST_F(StochasticGradientDescentTest, TrainImageClassificationGPU)
 }
 #endif
 
-TEST_F(StochasticGradientDescentTest, TrainTextClassificationCPU)
+TEST_F(SGDTest, TrainTextClassificationCPU)
 {
     const string file_path = write_sgd_text_classification_file();
 
@@ -574,7 +574,7 @@ TEST_F(StochasticGradientDescentTest, TrainTextClassificationCPU)
         {dataset_short.get_maximum_target_sequence_length()});
     Loss loss_short(&network_short, &dataset_short);
     loss_short.set_error(Loss::Error::CrossEntropy);
-    StochasticGradientDescent sgd_short(&loss_short);
+    SGD sgd_short(&loss_short);
     sgd_short.set_initial_learning_rate(0.05f);
     sgd_short.set_maximum_epochs(2);
     sgd_short.set_display(false);
@@ -595,7 +595,7 @@ TEST_F(StochasticGradientDescentTest, TrainTextClassificationCPU)
         {dataset_long.get_maximum_target_sequence_length()});
     Loss loss_long(&network_long, &dataset_long);
     loss_long.set_error(Loss::Error::CrossEntropy);
-    StochasticGradientDescent sgd_long(&loss_long);
+    SGD sgd_long(&loss_long);
     sgd_long.set_initial_learning_rate(0.05f);
     sgd_long.set_maximum_epochs(200);
     sgd_long.set_display(false);
@@ -607,7 +607,7 @@ TEST_F(StochasticGradientDescentTest, TrainTextClassificationCPU)
 }
 
 #ifdef OPENNN_HAS_CUDA
-TEST_F(StochasticGradientDescentTest, TrainTextClassificationGPU)
+TEST_F(SGDTest, TrainTextClassificationGPU)
 {
     Configuration::instance().set(Device::CUDA, Type::FP32);
 
@@ -628,7 +628,7 @@ TEST_F(StochasticGradientDescentTest, TrainTextClassificationGPU)
         {dataset_short.get_maximum_target_sequence_length()});
     Loss loss_short(&network_short, &dataset_short);
     loss_short.set_error(Loss::Error::CrossEntropy);
-    StochasticGradientDescent sgd_short(&loss_short);
+    SGD sgd_short(&loss_short);
     sgd_short.set_initial_learning_rate(0.05f);
     sgd_short.set_maximum_epochs(2);
     sgd_short.set_display(false);
@@ -649,7 +649,7 @@ TEST_F(StochasticGradientDescentTest, TrainTextClassificationGPU)
         {dataset_long.get_maximum_target_sequence_length()});
     Loss loss_long(&network_long, &dataset_long);
     loss_long.set_error(Loss::Error::CrossEntropy);
-    StochasticGradientDescent sgd_long(&loss_long);
+    SGD sgd_long(&loss_long);
     sgd_long.set_initial_learning_rate(0.05f);
     sgd_long.set_maximum_epochs(200);
     sgd_long.set_display(false);
@@ -661,7 +661,7 @@ TEST_F(StochasticGradientDescentTest, TrainTextClassificationGPU)
 }
 #endif
 
-TEST_F(StochasticGradientDescentTest, MomentumConverges)
+TEST_F(SGDTest, MomentumConverges)
 {
     set_seed(6);
     TabularDataset dataset(16, {2}, {1});
@@ -670,20 +670,20 @@ TEST_F(StochasticGradientDescentTest, MomentumConverges)
     ApproximationNetwork network({2}, {6}, {1});
     Loss loss(&network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);
-    StochasticGradientDescent stochastic_gradient_descent(&loss);
-    stochastic_gradient_descent.set_initial_learning_rate(0.05f);
-    stochastic_gradient_descent.set_momentum(0.9f);
-    stochastic_gradient_descent.set_display(false);
+    SGD sgd(&loss);
+    sgd.set_initial_learning_rate(0.05f);
+    sgd.set_momentum(0.9f);
+    sgd.set_display(false);
 
-    stochastic_gradient_descent.set_maximum_epochs(2);
-    const type error_short = stochastic_gradient_descent.train().get_training_error();
-    stochastic_gradient_descent.set_maximum_epochs(300);
-    const type error_long = stochastic_gradient_descent.train().get_training_error();
+    sgd.set_maximum_epochs(2);
+    const type error_short = sgd.train().get_training_error();
+    sgd.set_maximum_epochs(300);
+    const type error_long = sgd.train().get_training_error();
 
     EXPECT_LT(error_long, error_short);
 }
 
-TEST_F(StochasticGradientDescentTest, NesterovConverges)
+TEST_F(SGDTest, NesterovConverges)
 {
     set_seed(7);
     TabularDataset dataset(16, {2}, {1});
@@ -692,21 +692,21 @@ TEST_F(StochasticGradientDescentTest, NesterovConverges)
     ApproximationNetwork network({2}, {6}, {1});
     Loss loss(&network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);
-    StochasticGradientDescent stochastic_gradient_descent(&loss);
-    stochastic_gradient_descent.set_initial_learning_rate(0.05f);
-    stochastic_gradient_descent.set_momentum(0.9f);
-    stochastic_gradient_descent.set_nesterov(true);
-    stochastic_gradient_descent.set_display(false);
+    SGD sgd(&loss);
+    sgd.set_initial_learning_rate(0.05f);
+    sgd.set_momentum(0.9f);
+    sgd.set_nesterov(true);
+    sgd.set_display(false);
 
-    stochastic_gradient_descent.set_maximum_epochs(2);
-    const type error_short = stochastic_gradient_descent.train().get_training_error();
-    stochastic_gradient_descent.set_maximum_epochs(300);
-    const type error_long = stochastic_gradient_descent.train().get_training_error();
+    sgd.set_maximum_epochs(2);
+    const type error_short = sgd.train().get_training_error();
+    sgd.set_maximum_epochs(300);
+    const type error_long = sgd.train().get_training_error();
 
     EXPECT_LT(error_long, error_short);
 }
 
-TEST_F(StochasticGradientDescentTest, InitialDecayConverges)
+TEST_F(SGDTest, InitialDecayConverges)
 {
     set_seed(8);
     TabularDataset dataset(16, {2}, {1});
@@ -715,20 +715,20 @@ TEST_F(StochasticGradientDescentTest, InitialDecayConverges)
     ApproximationNetwork network({2}, {6}, {1});
     Loss loss(&network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);
-    StochasticGradientDescent stochastic_gradient_descent(&loss);
-    stochastic_gradient_descent.set_initial_learning_rate(0.05f);
-    stochastic_gradient_descent.set_initial_decay(0.01f);
-    stochastic_gradient_descent.set_display(false);
+    SGD sgd(&loss);
+    sgd.set_initial_learning_rate(0.05f);
+    sgd.set_initial_decay(0.01f);
+    sgd.set_display(false);
 
-    stochastic_gradient_descent.set_maximum_epochs(2);
-    const type error_short = stochastic_gradient_descent.train().get_training_error();
-    stochastic_gradient_descent.set_maximum_epochs(300);
-    const type error_long = stochastic_gradient_descent.train().get_training_error();
+    sgd.set_maximum_epochs(2);
+    const type error_short = sgd.train().get_training_error();
+    sgd.set_maximum_epochs(300);
+    const type error_long = sgd.train().get_training_error();
 
     EXPECT_LT(error_long, error_short);
 }
 
-TEST_F(StochasticGradientDescentTest, BatchSizeConverges)
+TEST_F(SGDTest, BatchSizeConverges)
 {
     set_seed(9);
     TabularDataset dataset(16, {2}, {1});
@@ -737,20 +737,20 @@ TEST_F(StochasticGradientDescentTest, BatchSizeConverges)
     ApproximationNetwork network({2}, {6}, {1});
     Loss loss(&network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);
-    StochasticGradientDescent stochastic_gradient_descent(&loss);
-    stochastic_gradient_descent.set_initial_learning_rate(0.05f);
-    stochastic_gradient_descent.set_batch_size(4);
-    stochastic_gradient_descent.set_display(false);
+    SGD sgd(&loss);
+    sgd.set_initial_learning_rate(0.05f);
+    sgd.set_batch_size(4);
+    sgd.set_display(false);
 
-    stochastic_gradient_descent.set_maximum_epochs(2);
-    const type error_short = stochastic_gradient_descent.train().get_training_error();
-    stochastic_gradient_descent.set_maximum_epochs(300);
-    const type error_long = stochastic_gradient_descent.train().get_training_error();
+    sgd.set_maximum_epochs(2);
+    const type error_short = sgd.train().get_training_error();
+    sgd.set_maximum_epochs(300);
+    const type error_long = sgd.train().get_training_error();
 
     EXPECT_LT(error_long, error_short);
 }
 
-TEST_F(StochasticGradientDescentTest, StoppingMaximumEpochs)
+TEST_F(SGDTest, StoppingMaximumEpochs)
 {
     set_seed(10);
     TabularDataset dataset(16, {2}, {1});
@@ -759,17 +759,17 @@ TEST_F(StochasticGradientDescentTest, StoppingMaximumEpochs)
     ApproximationNetwork network({2}, {6}, {1});
     Loss loss(&network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);
-    StochasticGradientDescent stochastic_gradient_descent(&loss);
-    stochastic_gradient_descent.set_maximum_epochs(5);
-    stochastic_gradient_descent.set_display(false);
+    SGD sgd(&loss);
+    sgd.set_maximum_epochs(5);
+    sgd.set_display(false);
 
-    const TrainingResult training_results = stochastic_gradient_descent.train();
+    const TrainingResult training_results = sgd.train();
 
     EXPECT_EQ(training_results.get_epochs_number(), 5);
     EXPECT_EQ(training_results.get_epochs_number(), training_results.training_error_history.size());
 }
 
-TEST_F(StochasticGradientDescentTest, StoppingLossGoal)
+TEST_F(SGDTest, StoppingLossGoal)
 {
     set_seed(11);
     TabularDataset dataset(4, {1}, {1});
@@ -778,21 +778,21 @@ TEST_F(StochasticGradientDescentTest, StoppingLossGoal)
     ApproximationNetwork network({1}, {6}, {1});
     Loss loss(&network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);
-    StochasticGradientDescent stochastic_gradient_descent(&loss);
+    SGD sgd(&loss);
 
     const type training_loss_goal = type(0.1);
-    stochastic_gradient_descent.set_loss_goal(training_loss_goal);
-    stochastic_gradient_descent.set_initial_learning_rate(0.1f);
-    stochastic_gradient_descent.set_maximum_epochs(10000);
-    stochastic_gradient_descent.set_maximum_time(1000.0);
-    stochastic_gradient_descent.set_display(false);
+    sgd.set_loss_goal(training_loss_goal);
+    sgd.set_initial_learning_rate(0.1f);
+    sgd.set_maximum_epochs(10000);
+    sgd.set_maximum_time(1000.0);
+    sgd.set_display(false);
 
-    const TrainingResult training_results = stochastic_gradient_descent.train();
+    const TrainingResult training_results = sgd.train();
 
     EXPECT_LE(training_results.get_training_error(), training_loss_goal);
 }
 
-TEST_F(StochasticGradientDescentTest, StoppingMaximumTime)
+TEST_F(SGDTest, StoppingMaximumTime)
 {
     set_seed(12);
     TabularDataset dataset(16, {2}, {1});
@@ -801,20 +801,20 @@ TEST_F(StochasticGradientDescentTest, StoppingMaximumTime)
     ApproximationNetwork network({2}, {6}, {1});
     Loss loss(&network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);
-    StochasticGradientDescent stochastic_gradient_descent(&loss);
-    stochastic_gradient_descent.set_maximum_epochs(1000000);
-    stochastic_gradient_descent.set_maximum_time(0.5);
-    stochastic_gradient_descent.set_display(false);
+    SGD sgd(&loss);
+    sgd.set_maximum_epochs(1000000);
+    sgd.set_maximum_time(0.5);
+    sgd.set_display(false);
 
     const time_t start = time(nullptr);
-    const TrainingResult training_results = stochastic_gradient_descent.train();
+    const TrainingResult training_results = sgd.train();
     const double elapsed = difftime(time(nullptr), start);
 
     EXPECT_LT(training_results.get_epochs_number(), 1000000);
     EXPECT_LT(elapsed, 30.0);
 }
 
-TEST_F(StochasticGradientDescentTest, Determinism)
+TEST_F(SGDTest, Determinism)
 {
     set_threads_number(1);
 
@@ -825,7 +825,7 @@ TEST_F(StochasticGradientDescentTest, Determinism)
     ApproximationNetwork network_first({2}, {6}, {1});
     Loss loss_first(&network_first, &dataset_first);
     loss_first.set_error(Loss::Error::MeanSquaredError);
-    StochasticGradientDescent sgd_first(&loss_first);
+    SGD sgd_first(&loss_first);
     sgd_first.set_initial_learning_rate(0.05f);
     sgd_first.set_batch_size(16);
     sgd_first.set_workers_number(1);
@@ -840,7 +840,7 @@ TEST_F(StochasticGradientDescentTest, Determinism)
     ApproximationNetwork network_second({2}, {6}, {1});
     Loss loss_second(&network_second, &dataset_second);
     loss_second.set_error(Loss::Error::MeanSquaredError);
-    StochasticGradientDescent sgd_second(&loss_second);
+    SGD sgd_second(&loss_second);
     sgd_second.set_initial_learning_rate(0.05f);
     sgd_second.set_batch_size(16);
     sgd_second.set_workers_number(1);
@@ -851,7 +851,7 @@ TEST_F(StochasticGradientDescentTest, Determinism)
     EXPECT_FLOAT_EQ(error_first, error_second);
 }
 
-TEST_F(StochasticGradientDescentTest, RepeatedTrainingResetsState)
+TEST_F(SGDTest, RepeatedTrainingResetsState)
 {
     set_threads_number(1);
     set_seed(23);
@@ -866,7 +866,7 @@ TEST_F(StochasticGradientDescentTest, RepeatedTrainingResetsState)
     Loss loss(&network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);
 
-    StochasticGradientDescent sgd(&loss);
+    SGD sgd(&loss);
     sgd.set_initial_learning_rate(0.05f);
     sgd.set_initial_decay(0.01f);
     sgd.set_momentum(0.9f);
@@ -890,13 +890,13 @@ TEST_F(StochasticGradientDescentTest, RepeatedTrainingResetsState)
 // initialiser and filled in by set_default(). They now carry their values in
 // the header, so this pins them: a default-constructed SGD must still report
 // what set_default() used to assign.
-TEST_F(StochasticGradientDescentTest, HeaderDefaultsMatchWhatSetDefaultUsedToAssign)
+TEST_F(SGDTest, HeaderDefaultsMatchWhatSetDefaultUsedToAssign)
 {
-    const StochasticGradientDescent stochastic_gradient_descent;
+    const SGD sgd;
 
-    EXPECT_FLOAT_EQ(stochastic_gradient_descent.get_initial_learning_rate(), 0.001f);
-    EXPECT_EQ(stochastic_gradient_descent.get_batch_size(), 0);
-    EXPECT_EQ(stochastic_gradient_descent.get_maximum_epochs(), 1000);
+    EXPECT_FLOAT_EQ(sgd.get_initial_learning_rate(), 0.001f);
+    EXPECT_EQ(sgd.get_batch_size(), 0);
+    EXPECT_EQ(sgd.get_maximum_epochs(), 1000);
 }
 
 // Optimizer::set_validation_period had no caller anywhere in opennn, its tests,
@@ -920,7 +920,7 @@ TEST(OptimizerKnobsTest, ValidationPeriodSkipsTheEpochsInBetween)
         Loss loss(&network, &dataset);
         loss.set_error(Loss::Error::MeanSquaredError);
 
-        StochasticGradientDescent optimizer(&loss);
+        SGD optimizer(&loss);
         optimizer.set_initial_learning_rate(0.01f);
         optimizer.set_maximum_epochs(6);
         optimizer.set_validation_period(period);

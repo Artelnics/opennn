@@ -1,7 +1,7 @@
 ﻿//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   S T O C H A S T I C   G R A D I E N T   D E S C E N T   C L A S S   H E A D E R
+//   S G D   C L A S S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -15,14 +15,14 @@ namespace opennn
 
 struct BackPropagation;
 
-class StochasticGradientDescent final : public Optimizer
+class SGD final : public Optimizer
 {
 
 public:
 
     enum DataSlot { Velocity, GraphLearningRate };
 
-    explicit StochasticGradientDescent(Loss* = nullptr);
+    explicit SGD(Loss* = nullptr);
 
     void set_initial_learning_rate(const float new_learning_rate) { initial_learning_rate = new_learning_rate; }
     float get_initial_learning_rate() const { return initial_learning_rate; }

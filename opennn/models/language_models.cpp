@@ -24,7 +24,7 @@
 #include "opennn/network/layers/embedding_layer.h"
 #include "opennn/network/layers/flatten_layer.h"
 #include "opennn/network/layers/grouped_query_attention_layer.h"
-#include "opennn/network/layers/long_short_term_memory_layer.h"
+#include "opennn/network/layers/lstm_layer.h"
 #include "opennn/network/layers/multihead_attention_layer.h"
 #include "opennn/network/layers/non_max_suppression_layer.h"
 #include "opennn/network/layers/normalization_layer_3d.h"

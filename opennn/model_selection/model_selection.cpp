@@ -24,21 +24,21 @@ void ModelSelection::set(Training* new_training)
 {
     training = new_training;
     neurons_selection.set_training(new_training);
-    if (inputs_selection) inputs_selection->set(new_training);
+    if (input_selection) input_selection->set(new_training);
 }
 
 void ModelSelection::set_default()
 {
     neurons_selection.set(training);
 
-    set_inputs_selection("GrowingInputs");
+    set_input_selection("GrowingInputs");
 }
 
-void ModelSelection::set_inputs_selection(const string& new_inputs_selection)
+void ModelSelection::set_input_selection(const string& new_input_selection)
 {
-    inputs_selection = create_inputs_selection(new_inputs_selection);
+    input_selection = create_input_selection(new_input_selection);
 
-    inputs_selection->set(training);
+    input_selection->set(training);
 }
 
 void ModelSelection::to_JSON(JsonWriter& printer) const
@@ -53,11 +53,11 @@ void ModelSelection::to_JSON(JsonWriter& printer) const
 
     printer.close_element();
 
-    printer.open_element("InputsSelection");
+    printer.open_element("InputSelection");
 
-    add_json_field(printer, "InputsSelectionMethod", inputs_selection->get_name());
+    add_json_field(printer, "InputSelectionMethod", input_selection->get_name());
 
-    inputs_selection->to_JSON(printer);
+    input_selection->to_JSON(printer);
 
     printer.close_element();
 
@@ -80,17 +80,17 @@ void ModelSelection::from_JSON(const JsonDocument& document)
     neurons_selection.set(training);
     neurons_selection.from_JSON(JsonDocument::wrap(selection_method, *neurons_selection_method_element));
 
-    const Json* inputs_selection_element = require_json_field(root_element, "InputsSelection");
+    const Json* input_selection_element = require_json_field(root_element, "InputSelection");
 
-    const string inputs_method = read_json_string(inputs_selection_element, "InputsSelectionMethod");
+    const string inputs_method = read_json_string(input_selection_element, "InputSelectionMethod");
 
-    const Json* inputs_selection_method_element = inputs_selection_element->find(inputs_method.c_str());
+    const Json* input_selection_method_element = input_selection_element->find(inputs_method.c_str());
 
-    throw_if(!inputs_selection_method_element,
+    throw_if(!input_selection_method_element,
              "{} element is nullptr.\n", inputs_method);
 
-    set_inputs_selection(inputs_method);
-    inputs_selection->from_JSON(JsonDocument::wrap(inputs_method, *inputs_selection_method_element));
+    set_input_selection(inputs_method);
+    input_selection->from_JSON(JsonDocument::wrap(inputs_method, *input_selection_method_element));
 }
 
 void ModelSelection::save(const filesystem::path& file_name) const

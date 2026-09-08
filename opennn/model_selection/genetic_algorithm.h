@@ -8,12 +8,12 @@
 
 #pragma once
 
-#include "opennn/model_selection/inputs_selection.h"
+#include "opennn/model_selection/input_selection.h"
 
 namespace opennn
 {
 
-class GeneticAlgorithm final : public InputsSelection
+class GeneticAlgorithm final : public InputSelection
 {
 
 public:
@@ -39,7 +39,7 @@ public:
 
     void set_elitism_size(const Index size) { elitism_size = clamp<Index>(size, 0, get_individuals_number()); }
 
-    InputsSelectionResult perform_input_selection() override;
+    InputSelectionResult perform_input_selection() override;
 
     void from_JSON(const JsonDocument&) override;
 

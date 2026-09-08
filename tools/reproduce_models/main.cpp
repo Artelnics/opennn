@@ -5,7 +5,7 @@
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/models/models.h"
 #include "opennn/network/model_expression.h"
-#include "opennn/training/adaptive_moment_estimation.h"
+#include "opennn/training/adam.h"
 #include "opennn/training/training.h"
 
 #include <cstdlib>
@@ -47,9 +47,9 @@ int main(int argc, char** argv)
         else
             network = make_unique<ApproximationNetwork>(dataset.get_input_shape(), Shape{32,16}, dataset.get_target_shape());
 
-        Training strategy(network.get(), &dataset);
-        strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
-        auto* optimizer = dynamic_cast<AdaptiveMomentEstimation*>(strategy.get_optimization_algorithm());
+        Training training(network.get(), &dataset);
+        training.set_optimization_algorithm("Adam");
+        auto* optimizer = dynamic_cast<Adam*>(training.get_optimization_algorithm());
         optimizer->set_learning_rate(0.01f);
         optimizer->set_beta_1(0.9f);
         optimizer->set_beta_2(0.999f);
@@ -62,8 +62,8 @@ int main(int argc, char** argv)
         optimizer->set_maximum_time(3600);
         optimizer->set_restore_best(true);
         optimizer->set_display(false);
-        strategy.save(output / "training.json");
-        const TrainingResult result = strategy.train();
+        training.save(output / "training.json");
+        const TrainingResult result = training.train();
 
         const MatrixR inputs = dataset.get_data("Testing", "Input");
         const MatrixR targets = dataset.get_data("Testing", "Target");

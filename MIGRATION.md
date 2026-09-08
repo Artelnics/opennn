@@ -84,6 +84,43 @@ training configurations; standalone optimizer JSON uses the new root as well.
 The old factory name is rejected. The existing `LevenbergMarquardt` factory/JSON
 name stays the same.
 
+## Further naming simplifications
+
+The following public C++ names replace the earlier 9.0 candidate names:
+
+| Previous class | Current class | Current header |
+| --- | --- | --- |
+| `AdaptiveMomentEstimation` | `Adam` | `opennn/training/adam.h` |
+| `StochasticGradientDescent` | `SGD` | `opennn/training/sgd.h` |
+| `LongShortTermMemory` | `LSTM` | `opennn/network/layers/lstm_layer.h` |
+| `AutoencoderNetwork` | `Autoencoder` | `opennn/models/models.h` |
+| `YoloNetwork` | `Yolo` | `opennn/models/models.h` |
+| `InputsSelection` | `InputSelection` | `opennn/model_selection/input_selection.h` |
+| `TestingAnalysis` | `Evaluation` | `opennn/evaluation/evaluation.h` |
+
+Rename the corresponding old header basenames and change the
+`opennn/testing_analysis/` include directory to `opennn/evaluation/`.
+`LongShortTermMemoryOperator` becomes `LSTMOperator`, and
+`LayerType::LongShortTermMemory` becomes `LayerType::LSTM`.
+`InputsSelectionResult` becomes `InputSelectionResult`; rename
+`get_inputs_selection_name` and `create_inputs_selection`
+to their singular `input_selection` spellings. In model-selection JSON, rename
+the `InputsSelection` object to `InputSelection` and its `InputsSelectionMethod`
+field to `InputSelectionMethod`.
+
+For saved training configurations, replace the optimizer `OptimizationMethod`
+value and its nested object key from `AdaptiveMomentEstimation` to `Adam`, or
+from `StochasticGradientDescent` to `SGD`. Standalone optimizer JSON uses the
+new root names too. In network JSON, rename each LSTM configuration object key
+inside `Network.Layers.Items` from `LongShortTermMemory` to `LSTM`; standalone
+LSTM layer JSON also uses the new root. Former factory names are rejected.
+Keep custom layer labels and their connection references consistent; the
+default label for newly constructed LSTM layers is now `lstm_layer`.
+
+There are no old-name aliases or forwarding headers. Rebuild consumers for
+the new symbols. These renames do not change tensor layouts, weights, numerical
+algorithms or memory ownership. `ModelExpression` keeps its existing name.
+
 ## Models and parameters
 
 9.x uses JSON configuration and binary parameter storage. It does not provide

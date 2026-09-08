@@ -74,7 +74,7 @@ void Training::set_default()
         return;
 
     const char* loss_name = "MeanSquaredError";
-    const char* optimizer_name = "AdaptiveMomentEstimation";
+    const char* optimizer_name = "Adam";
 
     switch (network->get_task())
     {

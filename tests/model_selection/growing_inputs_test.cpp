@@ -36,7 +36,7 @@ TEST(GrowingInputsTest, InputSelection)
     GrowingInputs growing_inputs(&training);
     growing_inputs.set_display(false);
 
-    InputsSelectionResult input_selection_results = growing_inputs.perform_input_selection();
+    InputSelectionResult input_selection_results = growing_inputs.perform_input_selection();
     EXPECT_GE(input_selection_results.optimal_input_variables_indices[0], 0);
 }
 
@@ -65,7 +65,7 @@ TEST(GrowingInputsTest, InputSelectionKnownResult)
     growing_inputs.set_display(false);
 
     growing_inputs.set_maximum_inputs_number(1);
-    InputsSelectionResult results = growing_inputs.perform_input_selection();
+    InputSelectionResult results = growing_inputs.perform_input_selection();
 
     EXPECT_EQ(results.optimal_input_variables_indices.size(), 1);
     EXPECT_EQ(results.optimal_input_variables_indices[0], 0);
@@ -97,7 +97,7 @@ TEST(GrowingInputsTest, CrossValidationKeepsPersistentRoles)
     growing_inputs.set_maximum_inputs_number(1);
     growing_inputs.set_folds_number(3);
 
-    InputsSelectionResult results = growing_inputs.perform_input_selection();
+    InputSelectionResult results = growing_inputs.perform_input_selection();
 
     EXPECT_EQ(results.optimal_input_variables_indices.size(), 1);
     EXPECT_EQ(results.optimal_input_variables_indices[0], 0);

@@ -23,7 +23,7 @@
 #endif
 #include "opennn/registry.h"
 #include "opennn/dataset/image_processing.h"
-#include "opennn/training/adaptive_moment_estimation.h"
+#include "opennn/training/adam.h"
 #include "opennn/core/configuration.h"
 #include "opennn/network/forward_propagation.h"
 #include "opennn/network/layers/layer.h"
@@ -344,7 +344,7 @@ int main(int argc, char* argv[])
 
         Configuration::instance().set(Device::CUDA, Type::FP32);
 
-        const auto class_activation = YoloNetwork::ClassActivation::Sigmoid;
+        const auto class_activation = Yolo::ClassActivation::Sigmoid;
 
         // Experiment selection — pass as first command-line argument:
         //   v3-pretrained  YOLOv3 + Darknet53 backbone loaded from darknet53.conv.74
@@ -381,23 +381,23 @@ int main(int argc, char* argv[])
         // reg_max=1: sigmoid box (Phase 5a). reg_max=16: DFL (Phase 5b, default).
         const Index reg_max    = 16;
 
-        const auto backbone = use_c11 ? YoloNetwork::Backbone::CSPDarknet53v11
-                           : use_csp ? YoloNetwork::Backbone::CSPDarknet53
-                           :           YoloNetwork::Backbone::Darknet53;
+        const auto backbone = use_c11 ? Yolo::Backbone::CSPDarknet53v11
+                           : use_csp ? Yolo::Backbone::CSPDarknet53
+                           :           Yolo::Backbone::Darknet53;
 
-        const auto head_style = use_panet ? YoloNetwork::HeadStyle::PANet
-                              : use_v8    ? YoloNetwork::HeadStyle::FPNv8
-                              :             YoloNetwork::HeadStyle::FPN;
+        const auto head_style = use_panet ? Yolo::HeadStyle::PANet
+                              : use_v8    ? Yolo::HeadStyle::FPNv8
+                              :             Yolo::HeadStyle::FPN;
 
         // use_v8 only reaches the head through the ternary above, which the
         // synthetic configuration never takes - it always gets the anchor-based
         // Single head. Everything downstream must therefore follow the head that
         // was actually chosen: asking for v8 geometry (no anchors, no boxes per
         // cell, DFL with reg_max 16) around a Single head trains straight to NaN.
-        const bool is_v8_head = (head_style == YoloNetwork::HeadStyle::FPNv8);
+        const bool is_v8_head = (head_style == Yolo::HeadStyle::FPNv8);
 
-        const auto body_activation = use_v8 ? YoloNetwork::BodyActivation::SiLU
-                                            : YoloNetwork::BodyActivation::LeakyReLU;
+        const auto body_activation = use_v8 ? Yolo::BodyActivation::SiLU
+                                            : Yolo::BodyActivation::LeakyReLU;
 
         const filesystem::path voc_root =
             resolve_data_path("VOC_ROOT", {"VOCdevkit/VOC2007",
@@ -622,12 +622,12 @@ int main(int argc, char* argv[])
             anchors        = {{0.15f, 0.15f}, {0.35f, 0.35f}, {0.60f, 0.60f}};
         }
 
-        const bool is_v3std     = (backbone == YoloNetwork::Backbone::DarknetTinyV3);
-        const bool is_darknet53 = (backbone == YoloNetwork::Backbone::Darknet53);
-        const bool is_csp53     = (backbone == YoloNetwork::Backbone::CSPDarknet53);
-        const bool is_csp53v11  = (backbone == YoloNetwork::Backbone::CSPDarknet53v11);
+        const bool is_v3std     = (backbone == Yolo::Backbone::DarknetTinyV3);
+        const bool is_darknet53 = (backbone == Yolo::Backbone::Darknet53);
+        const bool is_csp53     = (backbone == Yolo::Backbone::CSPDarknet53);
+        const bool is_csp53v11  = (backbone == Yolo::Backbone::CSPDarknet53v11);
         const bool is_large_backbone = is_darknet53 || is_csp53 || is_csp53v11;
-        if (!use_v8 && (head_style == YoloNetwork::HeadStyle::FPN || head_style == YoloNetwork::HeadStyle::PANet))
+        if (!use_v8 && (head_style == Yolo::HeadStyle::FPN || head_style == Yolo::HeadStyle::PANet))
         {
             if (is_v3std)
             {
@@ -670,7 +670,7 @@ int main(int argc, char* argv[])
 
         const vector<std::array<float, 2>> ctor_anchors = is_v8_head
             ? vector<std::array<float, 2>>{}
-            : (head_style == YoloNetwork::HeadStyle::FPN || head_style == YoloNetwork::HeadStyle::PANet)
+            : (head_style == Yolo::HeadStyle::FPN || head_style == Yolo::HeadStyle::PANet)
                 ? vector<std::array<float, 2>>{anchors[0], anchors[1], anchors[2]}
                 : anchors;
         const Index ctor_bpc = is_v8_head ? 0 : boxes_per_cell;
@@ -678,7 +678,7 @@ int main(int argc, char* argv[])
         YoloDataset dataset(images_dir, labels_dir, input_shape,
                             grid_size, ctor_bpc, ctor_anchors);
 
-        if (head_style == YoloNetwork::HeadStyle::FPNv8)
+        if (head_style == Yolo::HeadStyle::FPNv8)
         {
 
             const vector<Index> head_grids = {grid_size, grid_size * 2, grid_size * 4};
@@ -687,7 +687,7 @@ int main(int argc, char* argv[])
             dataset.set_multi_scale_heads(head_grids, dummy_anchors);
             dataset.set_v8_mode(true);
         }
-        else if (head_style == YoloNetwork::HeadStyle::FPN || head_style == YoloNetwork::HeadStyle::PANet)
+        else if (head_style == Yolo::HeadStyle::FPN || head_style == Yolo::HeadStyle::PANet)
         {
             if (is_v3std)
             {
@@ -751,14 +751,14 @@ int main(int argc, char* argv[])
 
         const vector<std::array<float, 2>>& network_anchors = is_v8_head
             ? anchors
-            : (head_style == YoloNetwork::HeadStyle::FPN || head_style == YoloNetwork::HeadStyle::PANet)
+            : (head_style == Yolo::HeadStyle::FPN || head_style == Yolo::HeadStyle::PANet)
                 ? anchors : dataset.get_anchors();
 
         const auto model_size = is_csp53v11
-            ? YoloNetwork::ModelSize::s
-            : YoloNetwork::ModelSize::l;
+            ? Yolo::ModelSize::s
+            : Yolo::ModelSize::l;
 
-        YoloNetwork yolo_network(input_shape,
+        Yolo yolo(input_shape,
                                  dataset.get_classes_number(),
                                  network_anchors,
                                  grid_size,
@@ -770,43 +770,43 @@ int main(int argc, char* argv[])
                                  is_v8_head ? reg_max : Index(1),
                                  model_size);
 
-        cout << "Device: " << (yolo_network.is_gpu() ? "GPU" : "CPU")
+        cout << "Device: " << (yolo.is_gpu() ? "GPU" : "CPU")
                   << "  " << device::gpu_info_string() << "\n";
         cout << "Network: backbone="
-                  << (backbone == YoloNetwork::Backbone::Vgg              ? "Vgg"
-                    : backbone == YoloNetwork::Backbone::DarknetTinyV3    ? "DarknetTinyV3"
-                    : backbone == YoloNetwork::Backbone::Darknet53        ? "Darknet53"
-                    : backbone == YoloNetwork::Backbone::CSPDarknet53     ? "CSPDarknet53"
-                    : backbone == YoloNetwork::Backbone::CSPDarknet53v11  ? "CSPDarknet53v11"
+                  << (backbone == Yolo::Backbone::Vgg              ? "Vgg"
+                    : backbone == Yolo::Backbone::DarknetTinyV3    ? "DarknetTinyV3"
+                    : backbone == Yolo::Backbone::Darknet53        ? "Darknet53"
+                    : backbone == Yolo::Backbone::CSPDarknet53     ? "CSPDarknet53"
+                    : backbone == Yolo::Backbone::CSPDarknet53v11  ? "CSPDarknet53v11"
                     :                                                        "DarknetTiny")
                   << ", class_activation="
-                  << (class_activation == YoloNetwork::ClassActivation::Sigmoid ? "Sigmoid" : "Softmax")
+                  << (class_activation == Yolo::ClassActivation::Sigmoid ? "Sigmoid" : "Softmax")
                   << ", head_style="
-                  << (head_style == YoloNetwork::HeadStyle::FPN    ? "FPN"    :
-                      head_style == YoloNetwork::HeadStyle::PANet   ? "PANet"  :
-                      head_style == YoloNetwork::HeadStyle::FPNv8   ? "FPNv8"  : "Single")
+                  << (head_style == Yolo::HeadStyle::FPN    ? "FPN"    :
+                      head_style == Yolo::HeadStyle::PANet   ? "PANet"  :
+                      head_style == Yolo::HeadStyle::FPNv8   ? "FPNv8"  : "Single")
                   << ", body_activation="
-                  << (body_activation == YoloNetwork::BodyActivation::SiLU      ? "SiLU"
-                    : body_activation == YoloNetwork::BodyActivation::LeakyReLU ? "LeakyReLU" : "ReLU")
+                  << (body_activation == Yolo::BodyActivation::SiLU      ? "SiLU"
+                    : body_activation == Yolo::BodyActivation::LeakyReLU ? "LeakyReLU" : "ReLU")
                   << (use_c11 ? ", c3k2=on" : use_csp ? ", csp=on" : "")
                   << (use_sppf && is_large_backbone ? ", sppf=on" : "")
-                  << ", layers=" << yolo_network.get_layers_number()
-                  << ", parameters=" << yolo_network.get_parameters_number() << "\n";
+                  << ", layers=" << yolo.get_layers_number()
+                  << ", parameters=" << yolo.get_parameters_number() << "\n";
 
-        if (head_style != YoloNetwork::HeadStyle::FPN && head_style != YoloNetwork::HeadStyle::PANet
-        &&  head_style != YoloNetwork::HeadStyle::FPNv8)
+        if (head_style != Yolo::HeadStyle::FPN && head_style != Yolo::HeadStyle::PANet
+        &&  head_style != Yolo::HeadStyle::FPNv8)
         {
             auto* nms_layer = dynamic_cast<NonMaxSuppression*>(
-                yolo_network.get_layer("non_max_suppression_layer").get());
+                yolo.get_layer("non_max_suppression_layer").get());
             if (nms_layer)
-                nms_layer->set(yolo_network.get_layer(yolo_network.get_layers_number() - 2)->get_output_shape(),
+                nms_layer->set(yolo.get_layer(yolo.get_layers_number() - 2)->get_output_shape(),
                                boxes_per_cell, /*confidence=*/0.25f, /*iou=*/0.4f,
                                "non_max_suppression_layer");
         }
 
-        Training training(&yolo_network, &dataset);
+        Training training(&yolo, &dataset);
         training.set_loss("Yolo");
-        training.set_optimization_algorithm("AdaptiveMomentEstimation");
+        training.set_optimization_algorithm("Adam");
 
         training.get_loss()->set_regularization("L2");
 
@@ -823,7 +823,7 @@ int main(int argc, char* argv[])
             training.get_loss()->set_yolo_obj_focal_gamma(0.0f);
         }
 
-        auto* adam = dynamic_cast<AdaptiveMomentEstimation*>(
+        auto* adam = dynamic_cast<Adam*>(
             training.get_optimization_algorithm());
         // Raccoon/VOC: real photos need a smaller batch (GPU memory) and more
         // patience before early stop fires (loss is noisier on small real datasets).
@@ -844,26 +844,26 @@ int main(int argc, char* argv[])
         const string filter_tag   = voc_class_filter.empty() ? "" :
             "_" + to_string(voc_class_filter.size()) + "cls";
         const string weights_filename = string("yolo_weights_") + dataset_tag + "_" +
-            (backbone == YoloNetwork::Backbone::Vgg              ? "vgg"
-           : backbone == YoloNetwork::Backbone::DarknetTinyV3    ? "darknet_v3std"
-           : backbone == YoloNetwork::Backbone::CSPDarknet53     ? "csp53"
-           : backbone == YoloNetwork::Backbone::CSPDarknet53v11  ? "c11"
-           : backbone == YoloNetwork::Backbone::Darknet53        ? "darknet53"
+            (backbone == Yolo::Backbone::Vgg              ? "vgg"
+           : backbone == Yolo::Backbone::DarknetTinyV3    ? "darknet_v3std"
+           : backbone == Yolo::Backbone::CSPDarknet53     ? "csp53"
+           : backbone == Yolo::Backbone::CSPDarknet53v11  ? "c11"
+           : backbone == Yolo::Backbone::Darknet53        ? "darknet53"
            :                                                        "darknet") +
-            (head_style == YoloNetwork::HeadStyle::FPN    ? "_fpn"    :
-             head_style == YoloNetwork::HeadStyle::PANet  ? "_panet"  :
-             head_style == YoloNetwork::HeadStyle::FPNv8  ? "_fpnv8"  : "") +
+            (head_style == Yolo::HeadStyle::FPN    ? "_fpn"    :
+             head_style == Yolo::HeadStyle::PANet  ? "_panet"  :
+             head_style == Yolo::HeadStyle::FPNv8  ? "_fpnv8"  : "") +
             (use_sppf && is_large_backbone ? "_sppf" : "") +
-            (body_activation == YoloNetwork::BodyActivation::LeakyReLU ? "_leaky" : "") +
-            (class_activation == YoloNetwork::ClassActivation::Sigmoid ? "_sigmoid" : "") +
+            (body_activation == Yolo::BodyActivation::LeakyReLU ? "_leaky" : "") +
+            (class_activation == Yolo::ClassActivation::Sigmoid ? "_sigmoid" : "") +
             (is_v8_head && reg_max > 1 ? "_dfl" : "") +
-            (model_size == YoloNetwork::ModelSize::s ? "_s" : "") +
+            (model_size == Yolo::ModelSize::s ? "_s" : "") +
             filter_tag +
             string("_bce_ig_bgfocal.bin");
         filesystem::path weights_path = data_dir / weights_filename;
 
         const filesystem::path legacy_weights = data_dir / "yolo_weights.bin";
-        if (backbone == YoloNetwork::Backbone::Vgg
+        if (backbone == Yolo::Backbone::Vgg
         &&  !filesystem::exists(weights_path)
         &&   filesystem::exists(legacy_weights))
             weights_path = legacy_weights;
@@ -874,24 +874,24 @@ int main(int argc, char* argv[])
         const bool weights_exist = filesystem::exists(weights_path);
         if (weights_exist)
         {
-            yolo_network.load_parameters_binary(weights_path);
+            yolo.load_parameters_binary(weights_path);
             if (filesystem::exists(states_path))
-                yolo_network.load_states_binary(states_path);
+                yolo.load_states_binary(states_path);
             cout << "\nLoaded weights from \"" << weights_path.string() << "\".\n";
         }
 
         const bool needs_darknet_backbone =
             !from_scratch &&
-            (backbone == YoloNetwork::Backbone::DarknetTinyV3 ||
-             backbone == YoloNetwork::Backbone::Darknet53 ||
-             backbone == YoloNetwork::Backbone::CSPDarknet53 ||
-             backbone == YoloNetwork::Backbone::CSPDarknet53v11) && !weights_exist;
+            (backbone == Yolo::Backbone::DarknetTinyV3 ||
+             backbone == Yolo::Backbone::Darknet53 ||
+             backbone == Yolo::Backbone::CSPDarknet53 ||
+             backbone == Yolo::Backbone::CSPDarknet53v11) && !weights_exist;
         bool backbone_pretrained_loaded = false;
         if (needs_darknet_backbone)
         {
-            const bool is53    = (backbone == YoloNetwork::Backbone::Darknet53);
-            const bool iscsp   = (backbone == YoloNetwork::Backbone::CSPDarknet53);
-            const bool isv11   = (backbone == YoloNetwork::Backbone::CSPDarknet53v11);
+            const bool is53    = (backbone == Yolo::Backbone::Darknet53);
+            const bool iscsp   = (backbone == Yolo::Backbone::CSPDarknet53);
+            const bool isv11   = (backbone == Yolo::Backbone::CSPDarknet53v11);
 
             const string darknet_filename = is53 ? "darknet53.conv.74"
                                                : (iscsp || isv11) ? "yolov4.conv.137"
@@ -908,13 +908,13 @@ int main(int argc, char* argv[])
                 if (isv11)
                 {
 
-                    loaded = load_darknet_backbone_v11(yolo_network, darknet_weights);
+                    loaded = load_darknet_backbone_v11(yolo, darknet_weights);
                 }
                 else
                 {
                     const Index n_backbone_convs = is53 ? 52 : iscsp ? 72 : 8;
                     loaded = load_darknet_backbone(
-                        yolo_network, darknet_weights, n_backbone_convs);
+                        yolo, darknet_weights, n_backbone_convs);
                 }
                 cout << "Loaded " << loaded
                           << " backbone layers from " << darknet_weights << "\n";
@@ -937,12 +937,12 @@ int main(int argc, char* argv[])
 
         bool backbone_frozen = false;
         auto set_backbone_trainable = [&](bool trainable) {
-            const string prefix = (backbone == YoloNetwork::Backbone::Darknet53)      ? "dn53_"  :
-                                       (backbone == YoloNetwork::Backbone::CSPDarknet53)   ? "csp53_" :
-                                       (backbone == YoloNetwork::Backbone::CSPDarknet53v11)? "c11_"   :
-                                       (backbone == YoloNetwork::Backbone::DarknetTinyV3)  ? "dntv3_" : "";
+            const string prefix = (backbone == Yolo::Backbone::Darknet53)      ? "dn53_"  :
+                                       (backbone == Yolo::Backbone::CSPDarknet53)   ? "csp53_" :
+                                       (backbone == Yolo::Backbone::CSPDarknet53v11)? "c11_"   :
+                                       (backbone == Yolo::Backbone::DarknetTinyV3)  ? "dntv3_" : "";
             if (prefix.empty()) return;
-            for (auto& layer : yolo_network.get_layers())
+            for (auto& layer : yolo.get_layers())
                 if (layer && layer->get_label().rfind(prefix, 0) == 0)
                     layer->set_is_trainable(trainable);
             cout << (trainable ? "Unfreezing" : "Freezing") << " backbone layers (" << prefix << "*).\n";
@@ -979,7 +979,7 @@ int main(int argc, char* argv[])
             p.replace_filename(weights_path.stem().string() + "_ema.bin");
             return p;
         }();
-        const Index n_params = yolo_network.get_parameters_buffer_size();
+        const Index n_params = yolo.get_parameters_buffer_size();
 
         vector<float> ema_params(static_cast<size_t>(n_params));
         bool ema_updated_this_run = false;
@@ -987,10 +987,10 @@ int main(int argc, char* argv[])
         constexpr float EMA_DECAY = 0.9999f;
 
         vector<float> ema_live_cpu(static_cast<size_t>(n_params));
-        adam->post_batch_callback = [&](Network* nn) {
-            const float* src = nn->get_parameters_data();
+        adam->post_batch_callback = [&](Network* network) {
+            const float* src = network->get_parameters_data();
 #ifdef OPENNN_HAS_CUDA
-            if (nn->get_parameters_device() == Device::CUDA)
+            if (network->get_parameters_device() == Device::CUDA)
             {
                 cudaMemcpy(ema_live_cpu.data(), src,
                            size_t(n_params) * sizeof(float), cudaMemcpyDeviceToHost);
@@ -1004,19 +1004,19 @@ int main(int argc, char* argv[])
         };
 
         adam->post_best_callback = [&](Index epoch, float val_error) {
-            yolo_network.save_parameters_binary(weights_path);
-            yolo_network.save_states_binary(states_path);
+            yolo.save_parameters_binary(weights_path);
+            yolo.save_states_binary(states_path);
             { ofstream ef(epochs_file); ef << (epochs_done + static_cast<int>(epoch) + 1); }
             cout << "Best checkpoint saved at epoch "
                       << (epochs_done + static_cast<int>(epoch) + 1)
                       << " (val=" << val_error << ")\n";
 
             if (ema_updated_this_run) {
-                yolo_network.set_parameters(as_vector_map(ema_params));
-                yolo_network.save_parameters_binary(ema_weights_path);
-                yolo_network.load_parameters_binary(weights_path);
+                yolo.set_parameters(as_vector_map(ema_params));
+                yolo.save_parameters_binary(ema_weights_path);
+                yolo.load_parameters_binary(weights_path);
                 if (filesystem::exists(states_path))
-                    yolo_network.load_states_binary(states_path);
+                    yolo.load_states_binary(states_path);
             }
         };
 
@@ -1041,16 +1041,16 @@ int main(int argc, char* argv[])
         {
 
             {
-                const float* live = yolo_network.get_parameters_data();
+                const float* live = yolo.get_parameters_data();
                 copy(live, live + n_params, ema_params.begin());
             }
             if (filesystem::exists(ema_weights_path))
             {
                 vector<float> live_snapshot(ema_params);
-                yolo_network.load_parameters_binary(ema_weights_path);
-                const float* saved_ema = yolo_network.get_parameters_data();
+                yolo.load_parameters_binary(ema_weights_path);
+                const float* saved_ema = yolo.get_parameters_data();
                 copy(saved_ema, saved_ema + n_params, ema_params.begin());
-                yolo_network.set_parameters(as_vector_map(live_snapshot));
+                yolo.set_parameters(as_vector_map(live_snapshot));
                 cout << "Resumed EMA weights from \"" << ema_weights_path.string() << "\".\n";
             }
 
@@ -1068,7 +1068,7 @@ int main(int argc, char* argv[])
                 adam->set_maximum_epochs(backbone_freeze_epochs - epochs_done);
 
                 {
-                    const float* live = yolo_network.get_parameters_data();
+                    const float* live = yolo.get_parameters_data();
                     copy(live, live + n_params, ema_params.begin());
                 }
 
@@ -1080,8 +1080,8 @@ int main(int argc, char* argv[])
                 set_backbone_trainable(true);
                 backbone_frozen = false;
 
-                yolo_network.save_parameters_binary(weights_path);
-                yolo_network.save_states_binary(states_path);
+                yolo.save_parameters_binary(weights_path);
+                yolo.save_states_binary(states_path);
                 { ofstream ef(epochs_file); ef << epochs_done; }
                 cout << "Checkpoint saved: " << epochs_done << " total epochs.\n";
             }
@@ -1097,7 +1097,7 @@ int main(int argc, char* argv[])
                 adam->set_maximum_epochs(to_run);
 
                 {
-                    const float* live = yolo_network.get_parameters_data();
+                    const float* live = yolo.get_parameters_data();
                     copy(live, live + n_params, ema_params.begin());
                 }
 
@@ -1108,27 +1108,27 @@ int main(int argc, char* argv[])
                 epochs_done += static_cast<int>(train_result.get_epochs_number());
                 cumulative   = round_end;
 
-                yolo_network.save_parameters_binary(weights_path);
-                yolo_network.save_states_binary(states_path);
+                yolo.save_parameters_binary(weights_path);
+                yolo.save_states_binary(states_path);
                 { ofstream ef(epochs_file); ef << epochs_done; }
                 cout << "Checkpoint saved: " << epochs_done << " total epochs.\n";
 
                 {
-                    yolo_network.set_parameters(as_vector_map(ema_params));
-                    yolo_network.save_parameters_binary(ema_weights_path);
+                    yolo.set_parameters(as_vector_map(ema_params));
+                    yolo.save_parameters_binary(ema_weights_path);
 
-                    yolo_network.load_parameters_binary(weights_path);
+                    yolo.load_parameters_binary(weights_path);
                     if (filesystem::exists(states_path))
-                        yolo_network.load_states_binary(states_path);
+                        yolo.load_states_binary(states_path);
                 }
                 cout << "EMA checkpoint saved: \"" << ema_weights_path.string() << "\".\n";
             }
             cout << "Training complete (" << epochs_done << " total epochs).\n";
         }
 
-        const bool is_fpn = (head_style == YoloNetwork::HeadStyle::FPN ||
-                              head_style == YoloNetwork::HeadStyle::PANet ||
-                              head_style == YoloNetwork::HeadStyle::FPNv8);
+        const bool is_fpn = (head_style == Yolo::HeadStyle::FPN ||
+                              head_style == Yolo::HeadStyle::PANet ||
+                              head_style == Yolo::HeadStyle::FPNv8);
 
         const filesystem::path output_dir = data_dir / "annotated";
 
@@ -1199,18 +1199,18 @@ int main(int argc, char* argv[])
             {
 
                 ForwardPropagation forward_propagation(
-1, &yolo_network,
+1, &yolo,
                     ForwardPropagationMode::Inference);
                 const vector<TensorView> input_views = {
                     TensorView(input.data(),
                                {1, input.dimension(1), input.dimension(2), input.dimension(3)},
                                Type::FP32)
                 };
-                yolo_network.forward_propagate(input_views, forward_propagation, ForwardPropagationMode::Inference);
+                yolo.forward_propagate(input_views, forward_propagation, ForwardPropagationMode::Inference);
 
                 vector<vector<float>> fpn_cpu_buffers;
                 const vector<YoloFpnHead> fpn_heads =
-                    collect_fpn_heads(yolo_network, forward_propagation, is_v8_head,
+                    collect_fpn_heads(yolo, forward_propagation, is_v8_head,
                                       Index(dataset.get_classes_number()), fpn_cpu_buffers);
 
                 {
@@ -1283,7 +1283,7 @@ input_shape[1],
             }
             else
             {
-                const MatrixR outputs = yolo_network.calculate_outputs(input);
+                const MatrixR outputs = yolo.calculate_outputs(input);
                 detections = decode_yolo_detections(
                     span<const float>(outputs.data(), size_t(outputs.size())),
                     input_shape[0],
@@ -1544,13 +1544,13 @@ input_shape[1],
         // until N >> 10k batches. With prior bias and EMA≈init, all scores ≈ 0.0001 < mAP threshold.
         if (eval_only && filesystem::exists(ema_weights_path) && !is_synthetic && !quick_test)
         {
-            yolo_network.load_parameters_binary(ema_weights_path);
+            yolo.load_parameters_binary(ema_weights_path);
             cout << "Eval-only mode: loaded EMA weights from \"" << ema_weights_path.string() << "\".\n";
         }
         const bool use_ema_for_map = ema_updated_this_run && !is_synthetic && !quick_test;
         if (use_ema_for_map)
         {
-            yolo_network.set_parameters(as_vector_map(ema_params));
+            yolo.set_parameters(as_vector_map(ema_params));
             cout << "Using in-memory EMA weights for final mAP evaluation.\n";
         }
         else
@@ -1564,7 +1564,7 @@ input_shape[1],
             // FPN path bypasses NMS entirely via forward_slots, so no change needed there.
             auto* map_nms = !is_fpn
                 ? dynamic_cast<NonMaxSuppression*>(
-                    yolo_network.get_layer("non_max_suppression_layer").get())
+                    yolo.get_layer("non_max_suppression_layer").get())
                 : nullptr;
             const float vis_conf = map_nms ? map_nms->get_confidence_threshold() : 0.25f;
             if (map_nms) map_nms->set_confidence_threshold(0.001f);
@@ -1660,19 +1660,19 @@ input_shape[1],
                 vector<YoloDetection> dets;
                 if (is_fpn)
                 {
-                    ForwardPropagation fp_m(1, &yolo_network,
+                    ForwardPropagation fp_m(1, &yolo,
                                             ForwardPropagationMode::Inference);
                     const vector<TensorView> iv = {
                         TensorView(input.data(),
                                    {1, input.dimension(1), input.dimension(2), input.dimension(3)},
                                    Type::FP32)
                     };
-                    yolo_network.forward_propagate(iv, fp_m, ForwardPropagationMode::Inference);
+                    yolo.forward_propagate(iv, fp_m, ForwardPropagationMode::Inference);
 
                     vector<vector<float>> cpu_bufs;
-                    const bool is_v8_map = (head_style == YoloNetwork::HeadStyle::FPNv8);
+                    const bool is_v8_map = (head_style == Yolo::HeadStyle::FPNv8);
                     const vector<YoloFpnHead> heads =
-                        collect_fpn_heads(yolo_network, fp_m, is_v8_map,
+                        collect_fpn_heads(yolo, fp_m, is_v8_map,
                                           Index(N_cls), cpu_bufs);
                     dets = is_v8_map
                         ? decode_yolo_v8_fpn_detections(heads,
@@ -1686,7 +1686,7 @@ input_shape[1],
                 }
                 else
                 {
-                    const MatrixR outputs = yolo_network.calculate_outputs(input);
+                    const MatrixR outputs = yolo.calculate_outputs(input);
                     dets = decode_yolo_detections(
                                span<const float>(outputs.data(), size_t(outputs.size())),
                                input_shape[0], input_shape[1],

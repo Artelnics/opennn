@@ -13,7 +13,7 @@
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/models/models.h"
 #include "opennn/network/model_expression.h"
-#include "opennn/testing_analysis/testing_analysis.h"
+#include "opennn/evaluation/evaluation.h"
 #include "opennn/training/training.h"
 
 using namespace opennn;
@@ -75,8 +75,8 @@ int main()
         Training training(&network, &dataset);
         training.train();
 
-        TestingAnalysis testing_analysis(&network, &dataset);
-        testing_analysis.print_multiple_classification_tests();
+        Evaluation evaluation(&network, &dataset);
+        evaluation.print_multiple_classification_tests();
 
         export_tinyml_artifacts(network);
 

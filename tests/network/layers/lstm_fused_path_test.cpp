@@ -5,7 +5,7 @@
 
 #include "opennn/core/tensor_types.h"
 #include "opennn/core/profiler.h"
-#include "opennn/network/layers/long_short_term_memory_layer.h"
+#include "opennn/network/layers/lstm_layer.h"
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/network/network.h"
 #include "opennn/training/loss.h"
@@ -56,7 +56,7 @@ void check_constant_forward(const Index neurons, const string& cell_activation)
     const type  c              = type(0.02);
 
     Network network;
-    auto layer = make_unique<LongShortTermMemory>(
+    auto layer = make_unique<LSTM>(
         Shape{time_steps, features}, Shape{neurons});
     layer->set_activation_function(cell_activation);
     layer->set_recurrent_activation_function("Sigmoid");
@@ -116,7 +116,7 @@ void check_gradient(const Index neurons, const bool return_sequences)
     dataset.set_sample_roles("Training");
 
     Network network;
-    auto layer = make_unique<LongShortTermMemory>(
+    auto layer = make_unique<LSTM>(
         Shape{time_steps, inputs_number}, Shape{neurons});
     layer->set_return_sequences(return_sequences);
     network.add_layer(std::move(layer));
@@ -203,7 +203,7 @@ void check_onednn_gradient_against_scalar(const bool return_sequences)
     dataset.set_sample_roles("Training");
 
     Network network;
-    auto layer = make_unique<LongShortTermMemory>(
+    auto layer = make_unique<LSTM>(
         Shape{time_steps, inputs_number}, Shape{neurons});
     layer->set_return_sequences(return_sequences);
     network.add_layer(std::move(layer));
@@ -251,7 +251,7 @@ void check_onednn_inference_cache(const bool return_sequences)
     const Index neurons        = 128;
 
     Network network;
-    auto layer = make_unique<LongShortTermMemory>(
+    auto layer = make_unique<LSTM>(
         Shape{time_steps, inputs_number}, Shape{neurons});
     layer->set_return_sequences(return_sequences);
     network.add_layer(std::move(layer));
@@ -419,7 +419,7 @@ TEST(LstmFusedPath, DISABLED_BenchmarkBoundary)
         dataset.set_sample_roles("Training");
 
         Network network;
-        network.add_layer(make_unique<LongShortTermMemory>(
+        network.add_layer(make_unique<LSTM>(
             Shape{time_steps, features}, Shape{neurons}));
         network.compile();
         network.set_parameters_glorot();

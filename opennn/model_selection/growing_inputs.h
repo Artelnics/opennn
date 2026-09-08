@@ -8,12 +8,12 @@
 
 #pragma once
 
-#include "opennn/model_selection/inputs_selection.h"
+#include "opennn/model_selection/input_selection.h"
 
 namespace opennn
 {
 
-class GrowingInputs final : public InputsSelection
+class GrowingInputs final : public InputSelection
 {
 
 public:
@@ -30,7 +30,7 @@ public:
 
     void set_warm_start(bool new_warm_start) { warm_start = new_warm_start; }
 
-    InputsSelectionResult perform_input_selection() override;
+    InputSelectionResult perform_input_selection() override;
 
     void from_JSON(const JsonDocument&) override;
 

@@ -167,7 +167,7 @@ TrainingResult QuasiNewton::train()
     throw_if(network->is_gpu(),
              "QuasiNewton does not support GPU training: "
              "its update path maps device pointers as host memory. "
-             "Use AdaptiveMomentEstimation or StochasticGradientDescent on GPU.");
+             "Use Adam or SGD on GPU.");
 
     FullBatchContext context;
     prepare_full_batch_training(context, "Training with quasi-Newton method...");

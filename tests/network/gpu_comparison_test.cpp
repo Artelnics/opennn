@@ -18,7 +18,7 @@
 #include "opennn/network/layers/dense_layer.h"
 #include "opennn/network/layers/embedding_layer.h"
 #include "opennn/network/layers/flatten_layer.h"
-#include "opennn/network/layers/long_short_term_memory_layer.h"
+#include "opennn/network/layers/lstm_layer.h"
 #include "opennn/network/layers/multihead_attention_layer.h"
 #include "opennn/network/layers/normalization_layer_3d.h"
 #include "opennn/network/layers/pooling_layer_3d.h"
@@ -1473,10 +1473,10 @@ TEST_F(GpuComparison, RnnDescriptorCacheSupportsConcurrentMixedBatches)
     }
 
     {
-        SCOPED_TRACE("LongShortTermMemory");
+        SCOPED_TRACE("LSTM");
         const auto build_network = [&](Network& network)
         {
-            network.add_layer(make_unique<LongShortTermMemory>(
+            network.add_layer(make_unique<LSTM>(
                                   Shape{time_steps, input_features},
                                   Shape{output_features}, "Tanh", "Sigmoid"),
                               {-1});
@@ -1580,7 +1580,7 @@ TEST_F(GpuComparison, RnnStateSurvivesRepeatedShapeChanges)
 
     const auto check = [&](bool lstm)
     {
-        SCOPED_TRACE(lstm ? "LongShortTermMemory" : "Recurrent");
+        SCOPED_TRACE(lstm ? "LSTM" : "Recurrent");
 
         const auto build = [&]() -> unique_ptr<Network>
         {

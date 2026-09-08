@@ -10,12 +10,12 @@ hardening results are recorded in `RELEASE_VERIFICATION.md`.
 **Code.** `opennn/` is 253 files, 83,000 lines of C++20 (GCC 13+, Clang 17+;
 `std::format`), in eight modules: core 18.9k lines, network 32.5k,
 dataset 13.1k, training 9.3k, model_selection 2.5k,
-response_optimization 2.7k, models 2.7k, testing_analysis 1.2k. CUDA is 21
+response_optimization 2.7k, models 2.7k, evaluation 1.2k. CUDA is 21
 `.cu` and 24 `.cuh` files under `core/cuda`. Eight source files exceed 2,000
 lines (`network.cpp` 2,990, `tabular_dataset.cpp` 2,853,
 `device_backend.cpp` 2,756, `optimizer.cpp` 2,421, `tensor_operations.cpp`
 2,368, `model_expression.cpp` 2,238, `yolo_dataset.cpp` 2,231,
-`long_short_term_memory_layer.cpp` 2,146). There are no TODO/FIXME markers
+`lstm_layer.cpp` 2,146). There are no TODO/FIXME markers
 left in the library. One header still has `using namespace std`. All 107
 public headers compile in isolation (`tools/check_headers.sh`, run on this
 tree with the build's Eigen): the include discipline is already there.
@@ -181,7 +181,7 @@ The release is done when all of these hold and CI proves the ones it can:
 ### Phase 5 — Documentation (1 week, parallel with 3–4)
 - API reference: Doxygen over the 107 public headers, user-facing classes
   first (datasets, `Network`, layers, `Training` and
-  optimizers, `TestingAnalysis`, model selection, `Configuration`,
+  optimizers, `Evaluation`, model selection, `Configuration`,
   `ModelExpression`); published with the docs site.
 - User guide: install; data → model → training → testing → export;
   CPU/CUDA and FP32/BF16/INT8 settings; the environment-variable reference;

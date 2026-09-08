@@ -10,7 +10,7 @@
 #include "opennn/network/layers/activation_layer.h"
 #include "opennn/network/network.h"
 #include "opennn/training/loss.h"
-#include "opennn/training/adaptive_moment_estimation.h"
+#include "opennn/training/adam.h"
 
 #include "tests/test_helpers.h"
 
@@ -77,7 +77,7 @@ TEST(YoloOverfit, SingleImageSingleClassLossDecreases)
         Loss loss(net.get(), &ds);
         loss.set_error(Loss::Error::Yolo);
         loss.set_regularization(Loss::Regularization::NoRegularization);
-        AdaptiveMomentEstimation adam(&loss);
+        Adam adam(&loss);
         adam.set_maximum_epochs(2);
         adam.set_display(false);
         error_short = adam.train().get_training_error();
@@ -93,7 +93,7 @@ TEST(YoloOverfit, SingleImageSingleClassLossDecreases)
         Loss loss(net.get(), &ds);
         loss.set_error(Loss::Error::Yolo);
         loss.set_regularization(Loss::Regularization::NoRegularization);
-        AdaptiveMomentEstimation adam(&loss);
+        Adam adam(&loss);
         adam.set_maximum_epochs(200);
         adam.set_display(false);
         error_long = adam.train().get_training_error();
@@ -172,7 +172,7 @@ TEST(YoloOverfit, SPPFGradientFlowsAndLossDecreases)
         Loss loss(net.get(), &ds);
         loss.set_error(Loss::Error::Yolo);
         loss.set_regularization(Loss::Regularization::NoRegularization);
-        AdaptiveMomentEstimation adam(&loss);
+        Adam adam(&loss);
         adam.set_maximum_epochs(epochs);
         adam.set_display(false);
         return adam.train().get_training_error();
@@ -261,7 +261,7 @@ TEST(YoloOverfit, CSPGradientFlowsAndLossDecreases)
         Loss loss(net.get(), &ds);
         loss.set_error(Loss::Error::Yolo);
         loss.set_regularization(Loss::Regularization::NoRegularization);
-        AdaptiveMomentEstimation adam(&loss);
+        Adam adam(&loss);
         adam.set_maximum_epochs(epochs);
         adam.set_display(false);
         return adam.train().get_training_error();
@@ -348,7 +348,7 @@ TEST(YoloOverfit, V8AnchorFreeGradientFlowsAndLossDecreases)
         loss.set_regularization(Loss::Regularization::NoRegularization);
         loss.set_yolo_focal_gamma(2.0f);
         loss.set_yolo_lambda_class(0.01f);
-        AdaptiveMomentEstimation adam(&loss);
+        Adam adam(&loss);
         adam.set_maximum_epochs(epochs);
         adam.set_learning_rate(1e-3f);
         adam.set_display(false);

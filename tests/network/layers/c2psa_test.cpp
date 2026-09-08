@@ -21,32 +21,32 @@ static constexpr Index SAMPLES = 3;
 struct C2PSANet
 {
     TabularDataset dataset{SAMPLES, Shape{H_GRID, W_GRID, CHAN}, Shape{TARGETS}};
-    Network  nn;
+    Network  network;
 
     C2PSANet()
     {
         dataset.set_data_random();
         dataset.set_sample_roles("Training");
 
-        nn.add_layer(make_unique<C2PSA>(Shape{H_GRID, W_GRID, CHAN}, "c2psa"));
+        network.add_layer(make_unique<C2PSA>(Shape{H_GRID, W_GRID, CHAN}, "c2psa"));
 
-        const Shape c2psa_out = nn.get_layer(0)->get_output_shape();
-        nn.add_layer(make_unique<Flatten>(c2psa_out));
+        const Shape c2psa_out = network.get_layer(0)->get_output_shape();
+        network.add_layer(make_unique<Flatten>(c2psa_out));
 
-        const Shape flat_out = nn.get_layer(1)->get_output_shape();
-        nn.add_layer(make_unique<opennn::Dense>(flat_out, Shape{TARGETS}));
+        const Shape flat_out = network.get_layer(1)->get_output_shape();
+        network.add_layer(make_unique<opennn::Dense>(flat_out, Shape{TARGETS}));
 
-        nn.compile();
+        network.compile();
 
         // Without this every parameter is zero, and a C2PSA with zero weights
         // emits zeros: Q, K and V are zero, so the attention gradient is zero
         // too and every check below compares zero against zero.
-        nn.set_parameters_random();
+        network.set_parameters_random();
     }
 
     unique_ptr<Loss> make_loss()
     {
-        auto l = make_unique<Loss>(&nn, &dataset);
+        auto l = make_unique<Loss>(&network, &dataset);
         l->set_error(Loss::Error::MeanSquaredError);
         return l;
     }
@@ -97,14 +97,14 @@ TEST(C2PSA, CpuAndGpuForwardOutputsMatch)
     Configuration::instance().set(Device::CPU, Type::FP32);
 
     C2PSANet cpu_net;
-    const VectorR parameters = cpu_net.nn.get_parameters_map();
+    const VectorR parameters = cpu_net.network.get_parameters_map();
     const vector<Index> training_idx = cpu_net.dataset.get_sample_indices("Training");
     const vector<Index> input_idx    = cpu_net.dataset.get_feature_indices("Input");
 
-    Batch batch(batch_size, &cpu_net.dataset, cpu_net.nn.get_config());
+    Batch batch(batch_size, &cpu_net.dataset, cpu_net.network.get_config());
     batch.fill(training_idx, FeatureSelection{input_idx, {}, {}});
-    ForwardPropagation fp(batch_size, &cpu_net.nn);
-    cpu_net.nn.forward_propagate(batch.get_inputs(), fp, ForwardPropagationMode::Inference);
+    ForwardPropagation fp(batch_size, &cpu_net.network);
+    cpu_net.network.forward_propagate(batch.get_inputs(), fp, ForwardPropagationMode::Inference);
 
     const TensorView out = fp.get_outputs();
     const Index n = out.size();
@@ -114,12 +114,12 @@ TEST(C2PSA, CpuAndGpuForwardOutputsMatch)
     Configuration::instance().set(Device::CUDA, Type::FP32);
 
     C2PSANet gpu_net;
-    gpu_net.nn.set_parameters(parameters);
+    gpu_net.network.set_parameters(parameters);
 
-    Batch batch_gpu(batch_size, &cpu_net.dataset, gpu_net.nn.get_config());
+    Batch batch_gpu(batch_size, &cpu_net.dataset, gpu_net.network.get_config());
     batch_gpu.fill(training_idx, FeatureSelection{input_idx, {}, {}});
-    ForwardPropagation fp_gpu(batch_size, &gpu_net.nn);
-    gpu_net.nn.forward_propagate(batch_gpu.get_inputs(), fp_gpu, ForwardPropagationMode::Inference);
+    ForwardPropagation fp_gpu(batch_size, &gpu_net.network);
+    gpu_net.network.forward_propagate(batch_gpu.get_inputs(), fp_gpu, ForwardPropagationMode::Inference);
     const TensorView out_gpu = fp_gpu.get_outputs();
 
     vector<float> gpu_out(n);
@@ -147,8 +147,8 @@ TEST(C2PSA, GpuScratchIsPropagationOwned)
     C2PSANet net;
     auto loss = net.make_loss();
 
-    ForwardPropagation first_forward(SAMPLES, &net.nn);
-    ForwardPropagation second_forward(SAMPLES, &net.nn);
+    ForwardPropagation first_forward(SAMPLES, &net.network);
+    ForwardPropagation second_forward(SAMPLES, &net.network);
     BackPropagation first_backward(SAMPLES, *loss);
     BackPropagation second_backward(SAMPLES, *loss);
 
@@ -187,16 +187,16 @@ TEST(C2PSA, CpuAndGpuGradientsMatch)
     Configuration::instance().set(Device::CPU, Type::FP32);
 
     C2PSANet cpu_net;
-    const VectorR parameters = cpu_net.nn.get_parameters_map();
+    const VectorR parameters = cpu_net.network.get_parameters_map();
     auto cpu_loss = cpu_net.make_loss();
     const VectorR cpu_gradient = calculate_gradient(*cpu_loss);
 
     Configuration::instance().set(Device::CUDA, Type::FP32);
 
     C2PSANet gpu_net;
-    gpu_net.nn.set_parameters(parameters);
+    gpu_net.network.set_parameters(parameters);
 
-    Loss gpu_loss(&gpu_net.nn, &cpu_net.dataset);
+    Loss gpu_loss(&gpu_net.network, &cpu_net.dataset);
     gpu_loss.set_error(Loss::Error::MeanSquaredError);
     const VectorR gpu_gradient = calculate_gradient(gpu_loss);
 

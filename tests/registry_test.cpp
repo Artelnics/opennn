@@ -15,7 +15,7 @@
 #include "opennn/network/layers/flatten_layer.h"
 #include "opennn/network/layers/grouped_query_attention_layer.h"
 #include "opennn/network/layers/layer.h"
-#include "opennn/network/layers/long_short_term_memory_layer.h"
+#include "opennn/network/layers/lstm_layer.h"
 #include "opennn/network/layers/multihead_attention_layer.h"
 #include "opennn/network/layers/non_max_suppression_layer.h"
 #include "opennn/network/layers/normalization_layer_3d.h"
@@ -27,7 +27,7 @@
 #include "opennn/network/layers/unscaling_layer.h"
 #include "opennn/network/layers/upsampling_layer.h"
 #include "opennn/training/optimizer.h"
-#include "opennn/model_selection/inputs_selection.h"
+#include "opennn/model_selection/input_selection.h"
 
 using namespace opennn;
 
@@ -104,9 +104,9 @@ unique_ptr<Layer> make_serializable_layer(LayerType type)
     case Flatten:
         return make_unique<opennn::Flatten>(Shape{2, 3, 4}, "flatten_roundtrip");
 
-    case LongShortTermMemory:
+    case LSTM:
     {
-        auto layer = make_unique<opennn::LongShortTermMemory>(
+        auto layer = make_unique<opennn::LSTM>(
             Shape{3, 2}, Shape{4}, "ReLU", "Sigmoid", "lstm_roundtrip");
         layer->set_return_sequences(true);
         return layer;
@@ -250,13 +250,13 @@ void expect_nondefault_fields(const LayerType type, const JsonDocument& document
 TEST(RegistryTest, AllComponentNamesConstruct)
 {
     const vector<string> optimizer_names = {
-        "AdaptiveMomentEstimation",
+        "Adam",
         "LevenbergMarquardt",
         "QuasiNewton",
-        "StochasticGradientDescent"
+        "SGD"
     };
 
-    const vector<string> inputs_selection_names = {
+    const vector<string> input_selection_names = {
         "GeneticAlgorithm",
         "GrowingInputs"
     };
@@ -280,8 +280,8 @@ TEST(RegistryTest, AllComponentNamesConstruct)
     for (const string& name : optimizer_names)
         EXPECT_NE(create_optimizer(name), nullptr) << name;
 
-    for (const string& name : inputs_selection_names)
-        EXPECT_NE(create_inputs_selection(name), nullptr) << name;
+    for (const string& name : input_selection_names)
+        EXPECT_NE(create_input_selection(name), nullptr) << name;
 }
 
 TEST(RegistryTest, AliasesConstructConfiguredComponents)
@@ -422,6 +422,8 @@ TEST(RegistryTest, UnknownComponentThrows)
     EXPECT_THROW(layer_type_to_string(LayerType::Count), runtime_error);
     EXPECT_THROW(string_to_layer_type("Unknown"), runtime_error);
     EXPECT_THROW(create_layer("Unknown"), runtime_error);
+    EXPECT_THROW(create_layer("LongShortTermMemory"), runtime_error);
+    EXPECT_THROW(string_to_layer_type("LongShortTermMemory"), runtime_error);
     EXPECT_THROW(create_optimizer("Unknown"), runtime_error);
-    EXPECT_THROW(create_inputs_selection("Unknown"), runtime_error);
+    EXPECT_THROW(create_input_selection("Unknown"), runtime_error);
 }

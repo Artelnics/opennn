@@ -85,12 +85,12 @@ TEST(MeanAbsoluteErrorTest, TrainingSerialization)
 {
     TabularDataset dataset(2, { 1 }, { 1 });
     ApproximationNetwork network({ 1 }, { 2 }, { 1 });
-    Training strategy(&network, &dataset);
-    strategy.set_loss("MeanAbsoluteError");
+    Training training(&network, &dataset);
+    training.set_loss("MeanAbsoluteError");
 
     const filesystem::path path =
         filesystem::temp_directory_path() / "opennn_mean_absolute_error.json";
-    strategy.save(path);
+    training.save(path);
 
     Training loaded(&network, &dataset);
     loaded.load(path);
@@ -98,7 +98,7 @@ TEST(MeanAbsoluteErrorTest, TrainingSerialization)
     ASSERT_NE(loaded.get_loss(), nullptr);
     EXPECT_EQ(loaded.get_loss()->get_error(), Loss::Error::MeanAbsoluteError);
     JsonWriter original_optimizer, restored_optimizer;
-    strategy.get_optimization_algorithm()->to_JSON(original_optimizer);
+    training.get_optimization_algorithm()->to_JSON(original_optimizer);
     loaded.get_optimization_algorithm()->to_JSON(restored_optimizer);
     EXPECT_EQ(restored_optimizer.c_str(), original_optimizer.c_str());
 

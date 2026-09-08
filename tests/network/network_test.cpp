@@ -6,7 +6,7 @@
 #include "opennn/network/layers/dense_layer.h"
 #include "opennn/network/layers/embedding_layer.h"
 #include "opennn/network/layers/layer.h"
-#include "opennn/network/layers/long_short_term_memory_layer.h"
+#include "opennn/network/layers/lstm_layer.h"
 #include "opennn/network/layers/recurrent_layer.h"
 #include "opennn/network/layers/scaling_layer.h"
 #include "opennn/network/layers/tokenizer_layer.h"
@@ -265,7 +265,7 @@ TEST(NetworkTest, DetectsRecurrentLayersByCapability)
     EXPECT_TRUE(has_recurrent_layer(
         make_unique<Recurrent>(Shape{4, 3}, Shape{2})));
     EXPECT_TRUE(has_recurrent_layer(
-        make_unique<LongShortTermMemory>(Shape{4, 3}, Shape{2})));
+        make_unique<LSTM>(Shape{4, 3}, Shape{2})));
 }
 
 TEST(NetworkTest, InputCountIsTheExternalShapeSize)
@@ -282,7 +282,7 @@ TEST(NetworkTest, InputCountIsTheExternalShapeSize)
     EXPECT_EQ(inputs_number(
         make_unique<Recurrent>(Shape{4, 3}, Shape{2})), 12);
     EXPECT_EQ(inputs_number(
-        make_unique<LongShortTermMemory>(Shape{4, 3}, Shape{2})), 12);
+        make_unique<LSTM>(Shape{4, 3}, Shape{2})), 12);
     EXPECT_EQ(inputs_number(
         make_unique<Scaling>(Shape{2, 3, 4})), 24);
     EXPECT_EQ(inputs_number(
@@ -1041,7 +1041,7 @@ TEST(NetworkTest, ForecastingConstructor)
 
 TEST(NetworkTest, AnomalyDetectionConstructor)
 {
-    AutoencoderNetwork network({ 1 }, { 4 }, { 2 });
+    Autoencoder network({ 1 }, { 4 }, { 2 });
 
     EXPECT_EQ(network.get_layers_number(), 6);
     EXPECT_EQ(network.get_layer(0)->get_name(), "Scaling");
@@ -1055,7 +1055,7 @@ TEST(NetworkTest, AnomalyDetectionConstructor)
 
 TEST(NetworkTest, AnomalyDetectionSymmetricEncoderConstructor)
 {
-    AutoencoderNetwork network({140}, {32, 16, 8}, "ReLU", "Sigmoid");
+    Autoencoder network({140}, {32, 16, 8}, "ReLU", "Sigmoid");
 
     ASSERT_EQ(network.get_layers_number(), 8);
     EXPECT_EQ(network.get_input_shape(), Shape({140}));
@@ -1089,7 +1089,7 @@ TEST(NetworkTest, AnomalyDetectionSymmetricEncoderConstructor)
 
 TEST(NetworkTest, AnomalyDetectionSymmetricEncoderRejectsEmptyEncoder)
 {
-    EXPECT_THROW(AutoencoderNetwork({140}, {}, "ReLU", "Sigmoid"), runtime_error);
+    EXPECT_THROW(Autoencoder({140}, {}, "ReLU", "Sigmoid"), runtime_error);
 }
 
 TEST(NetworkTest, ImageClassificationConstructor)
