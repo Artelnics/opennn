@@ -96,7 +96,9 @@ jobs:
   sanitizers:
     name: Linux Clang (ASan, UBSan)
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    # A clean instrumented build took 48 minutes on a hosted worker. Allow
+    # both test executables to finish; their individual CTest limits still apply.
+    timeout-minutes: 120
     env:
       CC: clang-17
       CXX: clang++-17
@@ -122,7 +124,11 @@ jobs:
       - name: Configure sanitizers
         run: cmake --preset verify-sanitizers -B build-sanitizers
       - name: Build both test executables
-        run: cmake --build build-sanitizers --target opennn_tests opennn_response_tests --parallel 2
+        run: |
+          nproc
+          free -h
+          /usr/bin/time -v -o build-sanitizers/build-resources.txt \
+            cmake --build build-sanitizers --target opennn_tests opennn_response_tests --parallel 2
       - name: Check memory and undefined behavior
         run: ctest --test-dir build-sanitizers --output-on-failure
       - name: Preserve test log
@@ -130,7 +136,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: sanitizer-test-log
-          path: build-sanitizers/Testing/Temporary/LastTest.log
+          include-hidden-files: true
+          path: |
+            build-sanitizers/Testing/Temporary/
+            build-sanitizers/build-resources.txt
+            build-sanitizers/.ninja_log
 
   cuda-compile:
     name: Linux CUDA 12.9 (compile)
