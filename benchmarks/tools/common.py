@@ -1,14 +1,4 @@
-"""Everything the suite needs that is not a model definition.
-
-Shared support for the contract in PROTOCOL.md: where a result came from, where the
-binaries are, what the GPU was doing, and how a prediction is scored.
-
-It is one file because the alternative was five, and because none of these is
-big enough to be worth finding. What matters is that each fact has exactly one
-implementation -- the suite it replaces had `versions()` in nine forms and a
-binary lookup copied into eighteen files, none of which knew about the build
-directory the instructions told you to create.
-"""
+"""Shared provenance, binary discovery, monitoring and scoring for PROTOCOL.md."""
 
 from __future__ import annotations
 
@@ -149,14 +139,8 @@ def session_id() -> str:
     return os.environ.get(SESSION_ENV) or f"adhoc-{os.getpid()}"
 
 def clocks_locked() -> bool:
-    """Whether the GPU clock has been pinned for measurement.
-
-    Inferred from persistence mode, which `gpu_clocks.sh lock` enables
-    alongside `-lgc`. It is a proxy rather than a direct read: the applications
-    -clock query this would otherwise use reports "Requested functionality has
-    been deprecated" on this driver. A false positive needs someone to enable
-    persistence by hand and not lock the clock, which is not an accident
-    anyone has.
+    """Read the Windows harness flag or use Linux persistence mode as a clock-lock proxy.
+    Persistence mode alone does not prove that clocks are locked.
     """
     if os.name == "nt":
         return os.environ.get("OPENNN_BENCH_CLOCKS_LOCKED") == "1"
@@ -166,24 +150,7 @@ def clocks_locked() -> bool:
 
 def cpu_busy_fraction(seconds: float = 1.0,
                      cores: list[int] | None = None) -> float:
-    """How much of the machine is already working, sampled now.
-
-    Not the load average, which is useless here: it decays over minutes, so
-    after the suite's own previous launch it reads 21 on a machine that is
-    idle. This is the instantaneous non-idle fraction, quiet measuring under
-    0.01 and one saturated core about one over the thread count.
-
-    `cores` narrows it to the ones the run can actually be disturbed by. A CPU
-    cell is `taskset`-pinned to the P-cores, so work stranded on an E-core
-    cannot touch it -- but the aggregate line counts that work anyway, and the
-    cell is then filed as scratch for interference it was structurally immune
-    to. That is not hypothetical: a browser parked on the E-cores sent
-    cpu-lstm-infer and cuda-transformer-infer to scratch on 2026-09-01 at 6.0%
-    and 3.7%, with every other gate passing.
-
-    Left as the whole machine when `cores` is None, which is right for a CUDA
-    cell: nothing pins those, and their input pipeline can use any core.
-    """
+    """Sample non-idle CPU time, optionally restricted to the selected cores."""
     if os.name == "nt":
         class FileTime(ctypes.Structure):
             _fields_ = [("low", ctypes.c_uint32), ("high", ctypes.c_uint32)]
@@ -237,8 +204,6 @@ def cpu_busy_fraction(seconds: float = 1.0,
     return max(0.0, 1.0 - (idle_after - idle_before) / elapsed)
 
 
-# One busy core on this 28-thread part is about 0.036, and a quiet machine
-# measures under 0.01, so this trips on roughly a single competing process.
 BUSY_THRESHOLD = float(os.environ.get("OPENNN_BENCH_BUSY_THRESHOLD", "0.03"))
 
 
@@ -344,28 +309,7 @@ class ForeignActivity:
 
 def result_destination(dirty: bool | None = None, device: str = "cuda",
                        busy: bool = False) -> Path:
-    """The evidence store, or `scratch/` when the run cannot be evidence.
-
-    Two conditions, both enforced here rather than asked for in prose.
-
-    A dirty tree, because a result that cannot be regenerated is not evidence.
-    The suite this replaces stated that rule and checked it nowhere, which is
-    how 39 of its 107 artifacts came to be dirty-tree results filed as
-    reproducible ones.
-
-    And a machine that was not quiet, because a competing process does not
-    slow both engines equally -- a single browser tab at one core cost 35% of
-    achievable memory bandwidth here, which moved a bandwidth-bound GEMM step
-    by that much while leaving cache-resident ones untouched.
-
-    And an unlocked GPU clock, for the same reason at one remove: this card
-    drifts about 8% across a day, so margins under ~2% are not resolvable while
-    it floats, and a transformer run read 986 and 482 samples/s for identical
-    work fifteen minutes apart. Numbers taken that way are worth having --
-    they catch gross regressions and prove the plumbing -- but they are not
-    worth citing, and the filesystem should be the thing that remembers the
-    difference.
-    """
+    """Select local results or scratch for dirty, busy or unlocked-GPU runs."""
     if dirty is None:
         dirty = bool(git_metadata().get("dirty", True))
 
@@ -522,30 +466,8 @@ def read_rapl_uj(domain: dict[str, Any]) -> int | None:
 # --------------------------------------------------------------------------
 
 class Nvml:
-    """The NVML calls the monitor needs, bound with ctypes.
-
-    This replaces `nvidia-smi --query-gpu=power.draw -lms 20`, and the reason
-    is what `power.draw` is: on Ampere and later it is the driver's
-    *one-second moving average* (`power.draw.average`; nvidia-smi documents
-    it). Polled at 20 ms it still cannot see inside a second, so a 70 ms
-    burst of GEMMs in an otherwise idle second reads as 45 W however finely
-    it is sampled -- which is what every sub-second cell in the store had
-    been reporting as its energy, memory-bound bursts at 200+ W included.
-
-    The driver keeps its own ring of about 120 instantaneous board-power
-    samples, one every 20 ms, timestamped by it (`nvmlDeviceGetSamples`,
-    `NVML_TOTAL_POWER_SAMPLES`). Draining that ring is the one user-space
-    source of sub-second power on this driver, and it is what the monitor
-    integrates. The alternatives were measured and rejected on the
-    reference machine, driver 610.43:
-
-    - `power.draw.instant` (`NVML_FI_DEV_POWER_INSTANT`) refreshes every
-      500 ms, as does `nvmlDeviceGetPowerUsage`.
-    - `nvmlDeviceGetTotalEnergyConsumption` is a synchronous firmware query
-      (~4 ms) that stalls the accumulator it reads: polled every 10 ms it
-      under-counts a steady 233 W load by 60%, every 100 ms by 10%, every
-      500 ms by 1%. Read once at each end of a run it is right, and that is
-      the only way it is used here -- as a whole-run cross-check.
+    """Bind NVML memory, timestamped power samples and energy counters through ctypes.
+    Availability and sampling frequency depend on the device and driver.
     """
 
     TOTAL_POWER_SAMPLES = 0          # nvmlSamplingType_t
@@ -634,37 +556,10 @@ class Nvml:
 # subtracted at all.
 HOST_MEMORY_METRIC = "process_peak_anonymous_rss"
 
-# The stdout field a driver has to print for `workload_mib` to be computable:
-# the framework baseline in the *same* quantity the peak is read in, anonymous
-# resident pages, sampled once before the framework does any work.
-#
-# Deliberately not `baseline_rss_mib`, which the eight family drivers print
-# today from /proc/self/statm's resident field (footprint's pair prints the
-# same reading as `baseline_ram_mb`) -- that is total RSS, and total-minus-
-# anonymous is not a workload figure but a negative number. On the 2026-09-03
-# publish round it is negative for at least one engine on every cpu-* cell
-# (cpu-lstm-infer: OpenNN 189.2 MiB peak against a 218.6 MiB baseline, PyTorch
-# 458.7 against 671.9), so subtracting it would clamp the published workload to
-# zero rather than correct it. Until a driver emits this field the runner says
-# so in the artifact instead of subtracting the wrong one.
 HOST_BASELINE_FIELD = "baseline_anonymous_rss_mib"
 
 class Monitor:
-    """Samples memory and power for the life of a run.
-
-    This is what lets speed, peak memory and energy come from one execution
-    instead of three. The suite this replaces ran the same binary twice --
-    once timed, once with a power meter attached -- and filed the results in
-    two folders, in two thermal states, as two numbers that could not be
-    cross-referenced.
-
-    Sampling always runs, because the cost is one thread and the alternative
-    is how the separate energy benchmark came to exist.
-
-        with Monitor() as monitor:
-            ... run the engine ...
-        monitor.peak_mib, monitor.energy_joules(start, end)
-    """
+    """Sample memory and power during the same execution as throughput."""
 
     # Below this many power samples inside the window, energy is reported as
     # unmeasured rather than as a number. The driver samples every 20 ms, so
@@ -676,12 +571,6 @@ class Monitor:
 
     def __init__(self, interval_ms: int = 20, measure_idle_first: bool = True,
                  device: str = "cuda"):
-        # Memory is polled every `interval_ms`; the driver's power ring is
-        # drained every `power_drain_ms`. The ring keeps ~2.4 s of 20 ms
-        # samples, so one drain a second loses nothing and costs a fiftieth
-        # of the calls. Neither rate moves a result: drained at 20 ms, at
-        # 1 s and not at all, a launch-bound dense cell read the same
-        # throughput (interleaved, 2026-09-02).
         self.interval_ms = int(os.environ.get("OPENNN_BENCH_MONITOR_MS", interval_ms))
         self.power_drain_ms = int(os.environ.get("OPENNN_BENCH_POWER_DRAIN_MS", 1000))
         self.device = device
@@ -708,21 +597,8 @@ class Monitor:
         self.rapl: dict[str, Any] | None = None
 
     def watch_rss(self, pid: int) -> None:
-        """Track a child's peak *anonymous* resident set, for CPU runs.
-
-        Anonymous, not total. RssFile counts pages backed by a mapped file,
-        and OpenNN's CSV reader mmaps its input rather than copying it -- so
-        total RSS charges it ~150 MiB for a 151 MB file it never allocated,
-        while an engine that reads the same file into heap is charged the same
-        amount for memory the kernel cannot reclaim. Counting mapped pages
-        penalises the cheaper strategy.
-
-        Measured on the same 500k-row cell: by total RSS, OpenNN 428 MiB and
-        PyTorch 875; by anonymous, 270 and 563. Same runs, and only the second
-        pair answers "how much memory does this demand".
-
-        RssAnon has no kernel-maintained high-water mark, so unlike VmHWM this
-        has to be sampled -- hence polling rather than one read at the end.
+        """Sample anonymous resident memory and record file-backed pages separately. Linux
+        RssAnon has no high-water mark, so the peak requires polling.
         """
         try:
             with open(f"/proc/{pid}/status") as handle:
@@ -1060,10 +936,6 @@ class Monitor:
             "window_samples": len(window),
             "energy_measurable": measurable,
             "energy_note": "; ".join(notes) or None,
-            # Board, and which reading of it: the driver's own 20 ms samples
-            # or nvidia-smi's one-second average. They are not the same
-            # instrument below a window of many seconds, and the artifact
-            # says which one a figure came from.
             "energy_domain": "board",
             "energy_metric": self.power_metric,
             "run_energy_joules": (round(self.run_energy_joules, 1)
@@ -1096,15 +968,7 @@ class Monitor:
 # --------------------------------------------------------------------------
 
 def core_layout() -> dict[str, list[int]]:
-    """Split the CPUs into performance and efficiency cores by peak frequency.
-
-    A hybrid Intel part runs its E-cores materially slower than its P-cores --
-    4,200 MHz against 5,400 on this machine, about 22% -- and the scheduler
-    decides which a thread gets. That is worse than clock drift for a
-    benchmark, because it is discrete and per-thread: two identical runs can
-    differ by a fifth purely on placement, and nothing in the result would say
-    so. Pinning to P-cores removes the variable rather than averaging it.
-    """
+    """Classify performance and efficiency cores by maximum frequency for CPU affinity."""
     frequencies: dict[int, int] = {}
 
     for path in Path("/sys/devices/system/cpu").glob("cpu[0-9]*/cpufreq/cpuinfo_max_freq"):
@@ -1118,8 +982,6 @@ def core_layout() -> dict[str, list[int]]:
 
     fastest = max(frequencies.values())
 
-    # 100 MHz of slack: P-cores in one package differ slightly from each other
-    # (5,400 and 5,300 here), and that is not the split being looked for.
     return {
         "performance": sorted(c for c, f in frequencies.items() if f >= fastest - 100_000),
         "efficiency": sorted(c for c, f in frequencies.items() if f < fastest - 100_000),

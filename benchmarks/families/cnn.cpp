@@ -159,26 +159,6 @@ int main(int argc, char* argv[])
 
         Configuration::instance().set(options.device, options.precision);
 
-        // Inference autotunes its convolution plans a few lines below; training
-        // never did, so the 69% of the training step that is convolution ran on
-        // whatever cuDNN's heuristic picked first. The cold-start cost amortizes
-        // here for the same reason it does there: a training cell reuses the
-        // plan across every batch of the corpus.
-        //
-        // No workspace cap is set, and now for a measured reason rather than
-        // an absent one. The sweep below is indicative, not evidence: it was
-        // taken under WSL on floating clocks, which PROTOCOL 1 and 7 both
-        // exclude, so it is recorded to show the shape of the trade and wants
-        // repeating on the reference machine before anything is claimed from
-        // it. Swept at batch 128 on the 5070 Ti, samples/s against
-        // steady device MiB: uncapped 1660/7578, 256 MiB 1660/7569, 128 MiB
-        // 1658/7569, 64 MiB 1610/7474, 16 MiB 1610/7934. Memory only falls
-        // once throughput does -- every cap that keeps full speed also keeps
-        // the same footprint, because training memory is activations, not
-        // workspace: the arena is 5,335 MiB against a lifetime lower bound of
-        // 5,335 MiB, so there is nothing for a cap to reclaim. The 16 MiB rung
-        // is the warning: it costs 3% throughput and raises the peak, cuDNN
-        // having fallen back to plans that want more scratch elsewhere.
         if (options.device == Device::CUDA)
         {
             const char* const autotune = getenv("OPENNN_CONV_AUTOTUNE");
@@ -284,9 +264,6 @@ int main(int argc, char* argv[])
             // measurable rather than baked in.
             const char* const autotune = getenv("OPENNN_CONV_AUTOTUNE");
             device::set_conv_autotune(!autotune || string(autotune) != "0");
-            // The winning ResNet-50 plans fit below 16 MiB on the benchmark
-            // GPUs. Excluding larger candidates before autotuning keeps the
-            // same measured throughput while removing their cold-start peak.
             const char* workspace_mb = getenv("OPENNN_CONV_WORKSPACE_MB");
             device::set_conv_workspace_cap(stoll(workspace_mb ? workspace_mb : "16")
                                            * 1024 * 1024);
@@ -420,7 +397,7 @@ int main(int argc, char* argv[])
         }
         catch (const exception& error)
         {
-            cout << "fits=0\nreason=" << error.what() << "\nRESULT=OOM\n" << flush;
+            cout << "fits=0\nreason=" << error.what() << "\nRESULT=ERROR\n" << flush;
             return 1;
         }
 

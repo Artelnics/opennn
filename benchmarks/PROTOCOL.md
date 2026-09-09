@@ -141,6 +141,21 @@ reported duration measures completed GPU work rather than command submission.
 For footprint startup measurements, the process lifetime is itself the work;
 do not amortize startup by placing several questions in one process.
 
+Footprint memory/startup run on CPU FP32. Record internal prediction timers
+with their scope: OpenNN starts at main entry, after dynamic loading; PyTorch
+starts inside the script before importing torch, after interpreter startup.
+They are diagnostic, not equivalent end-to-end boundaries. The parent's
+monotonic `process_lifetime_seconds` spans process creation, execution,
+teardown and output collection, excluding monitor shutdown. It is the common
+external metric, not first-response latency. `wall_seconds` is its rounded
+legacy alias.
+
+Footprint's typed `baseline_ram_mib` is a point-in-time resident-set reading:
+Linux RSS or Windows working set, including file-backed resident pages. Do not
+compare it to anonymous-RSS peak or private commit. Missing measurements are
+JSON null with a note. Rerun comparisons affected by these scope clarifications;
+older artifacts and reviewed reports retain their original interpretation.
+
 For language-model inference, report the phases separately:
 
 - **load/ready time:** runtime startup, model initialization and transfer until
@@ -205,9 +220,13 @@ failure. An unlocked-clock run is diagnostic and belongs in `scratch/`.
 
 Linux provides [`tools/gpu_clocks.sh`](tools/gpu_clocks.sh). The Qwen Windows
 wrapper performs its own lock and always attempts `-rgc` and `-rmc` in a
-`finally` block. Clock values embedded in a platform wrapper are defaults for
-that reference setup, not universal requirements; another GPU needs values it
-supports and a separately identified result set.
+`finally` block. Qwen requires explicit `OPENNN_BENCH_SM_CLOCK_MHZ` and
+`OPENNN_BENCH_MEMORY_CLOCK_MHZ` values (positive integer MHz); it has no
+machine-specific defaults. Select sustainable supported values before the
+session. Missing targets, failed locks or missing clock telemetry invalidate
+the affected cells. Each measured clock must remain within the protocol's
+15 MHz tolerance of its target. Another GPU needs its own supported values
+and a separately identified result set.
 
 Before a Qwen round, the strict environmental gate requires:
 
@@ -272,6 +291,12 @@ An explicit comma-separated batch list produces a throughput curve. A value
 such as `1024:OOM` doubles the batch until a normal out-of-memory response. A
 crash or signal is not an OOM frontier and must be reported as a failure.
 
+The runner records `failure_kind` as `oom`, `error`, `crash`, or null on success.
+Only a confirmed allocation failure after a successful batch validates the
+frontier. Other failures leave `max_batch` as an observation, not a limit;
+without a successful batch it is null. Unknown frontiers go to scratch and
+the runner returns status 3. Generic C++ exceptions emit ERROR, not OOM.
+
 ## 10. Qwen3 procedure
 
 On the supported Windows path, run:
@@ -285,6 +310,20 @@ On the supported Windows path, run:
 
 Use `unlock` only to restore clocks explicitly after an interrupted external
 session; normal `smoke` and `run` actions restore them automatically.
+
+The wrapper builds for the detected GPU (`CMAKE_CUDA_ARCHITECTURES=native`),
+or the explicit `OPENNN_CUDA_ARCHITECTURES` override. It does not assume a GPU
+model or memory size. Configure both clock-target environment variables before
+`smoke` or `run`; otherwise output remains diagnostic. The current comparison
+expects a single GPU (NVIDIA device 0). The portable dependencies provisioned
+by this wrapper are Windows x64 assets, not a cross-platform installer.
+
+Qwen remains a family under `families/`, dispatched by the common `run.py`
+and prepared by `prepare.py`. It reuses the common provenance, monitoring and
+result destination helpers. Generated reports obtain hardware and operating
+system identity from the execution, never from a hard-coded reference system.
+Artifact schema version 3 records `platform` and `clock_targets`; older
+artifacts and reviewed reports retain their original provenance unchanged.
 
 Preparation reads `manifests/qwen_manifest.json`, downloads pinned OpenNN and
 canonical Qwen assets, builds one BF16 GGUF with the pinned converter, prepares

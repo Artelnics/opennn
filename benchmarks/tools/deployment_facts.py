@@ -1,37 +1,8 @@
 #!/usr/bin/env python3
-"""Deployment facts: what OpenNN costs before it computes anything.
-
-The twelve performance cells have `reports/*.md` behind them, and every figure
-in those documents traces to an artifact under `results/`.  The claims that
-live beside them -- how large the library is, how much you write to use it,
-what has to be installed, what a deployment weighs -- had no such document, and
-they drifted.  A deck carried a first-prediction time of 36 ms against the
-569 ms the footprint family measures, and an application-line count that no
-file in this repository supported.  Neither was reproducible, so neither was
-checkable, so nobody caught them.
-
-This tool exists so that cannot recur.  It emits the same shape of artifact the
-runner emits, under one rule: **nothing here is estimated.**  A fact this host
-cannot measure is recorded as null with a note saying why, exactly as
-`footprint.md` leaves the split of its 202 MiB unmeasured rather than guessing.
-
-Two groups, because they have different validity:
-
-  source   read from the repository tree.  The same on every machine, so they
-           can be taken on a laptop and quoted anywhere.
-
-  machine  read from this host.  Only valid for the machine that will deploy,
-           and absent entirely on a checkout with no build.
-
-Every count carries its `method` string in the artifact.  That is the point:
-the previous numbers were unfalsifiable because nobody could say what they had
-counted.
-
-Usage:
-
-    python3 tools/deployment_facts.py
-    python3 tools/deployment_facts.py --binary ../build-bench/bin/footprint_opennn
-    python3 tools/deployment_facts.py --binary ... --pip /path/to/venv/bin/pip
+"""Collect deployment facts with recorded measurement methods. Source facts describe the
+repository; machine facts describe the current host and build. Unavailable measurements
+are null. Usage: python benchmarks/tools/deployment_facts.py [--binary PATH] [--pip
+PATH]
 """
 
 from __future__ import annotations
@@ -326,19 +297,8 @@ def read_needed_libraries(binary: Path | None) -> dict[str, Any]:
 
 
 def read_packages(pip: Path | None, requirement: str) -> dict[str, Any]:
-    """What one `pip install` brings in, resolved without installing anything.
-
-    The obvious method -- count what is installed in the environment that runs
-    the PyTorch side -- is wrong here, and measurably so: `benchenv` holds 89
-    packages because it carries both engines plus TensorFlow and the Intel
-    oneAPI runtimes, and reporting that as PyTorch's cost would overstate it
-    threefold.  A resolve answers the question actually being asked, which is
-    what a machine has to take on to run PyTorch.
-
-    The version is pinned by the caller so the figure matches the engine the
-    twelve cells were measured against; an unpinned resolve reports whatever
-    the index offers today, which moves.  `--ignore-installed` makes the answer
-    independent of what the environment already has.
+    """Resolve the requested package and its dependencies without installation. Ignore
+    installed packages so the result is independent of the local environment.
     """
     if pip is None:
         return {"count": None, "note": "no --pip given"}
@@ -428,7 +388,7 @@ def main() -> int:
                         help="pip of the environment that runs the PyTorch side")
     parser.add_argument("--requirement", default="torch==2.13.0",
                         help="what to resolve for the package count; pinned by "
-                             "default to the engine the twelve cells measured")
+                             "default package requirement")
     parser.add_argument("--label", default=None, help="artifact label")
     parser.add_argument("--out", type=Path, default=BENCHMARKS / "results",
                         help="where the artifact lands")

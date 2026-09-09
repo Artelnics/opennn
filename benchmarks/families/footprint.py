@@ -5,7 +5,7 @@ The counterpart of footprint.cpp.
 
   footprint.py memory    resident set after importing and declaring intent
   footprint.py startup   time to first prediction
-  footprint.py export    write the trained model as standalone source
+  footprint.py export    write a TorchScript model requiring its runtime
 
 Each mode is its own process. A cost paid at startup is already paid by
 anything sharing a process with it, so measuring two in one run measures
@@ -20,20 +20,36 @@ is available and an empty model exists. That is the comparable quantity.
 from __future__ import annotations
 
 import os
+import ctypes
 import sys
 import time
 from pathlib import Path
 
 ENTERED = time.perf_counter()
 
-def resident_mb() -> float:
-    """Resident set, MiB. /proc/self/statm's second field is resident pages."""
+def resident_mb() -> float | None:
+    """Current Windows working set or Linux resident set, in MiB."""
     try:
+        if os.name == "nt":
+            class Counters(ctypes.Structure):
+                _fields_ = [("cb", ctypes.c_ulong), ("faults", ctypes.c_ulong)] + [
+                    (name, ctypes.c_size_t) for name in (
+                        "peak_working_set", "working_set", "peak_paged_pool", "paged_pool",
+                        "peak_nonpaged_pool", "nonpaged_pool", "pagefile", "peak_pagefile")]
+            kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+            kernel.GetCurrentProcess.restype = ctypes.c_void_p
+            kernel.K32GetProcessMemoryInfo.argtypes = [ctypes.c_void_p,
+                                                       ctypes.POINTER(Counters), ctypes.c_ulong]
+            counters = Counters()
+            counters.cb = ctypes.sizeof(counters)
+            if kernel.K32GetProcessMemoryInfo(kernel.GetCurrentProcess(), ctypes.byref(counters), counters.cb):
+                return counters.working_set / (1024.0 * 1024.0)
+            return None
         with open("/proc/self/statm") as handle:
             resident = int(handle.read().split()[1])
         return resident * os.sysconf("SC_PAGE_SIZE") / (1024.0 * 1024.0)
-    except Exception:
-        return 0.0
+    except (OSError, ValueError, IndexError, AttributeError):
+        return None
 
 def measure_memory() -> int:
     import torch                                        # noqa: F401  the cost being measured
@@ -42,7 +58,12 @@ def measure_memory() -> int:
     optimizer = torch.optim.Adam(list(model.parameters()) or [torch.zeros(1, requires_grad=True)])
     _ = (model, optimizer)
 
-    print(f"baseline_ram_mb={resident_mb():.3f}")
+    memory = resident_mb()
+    print(f"baseline_ram_mb={memory:.3f}" if memory is not None else "baseline_ram_mb=null")
+    print("baseline_ram_metric=process_resident_set_mib")
+    print("baseline_ram_note=available" if memory is not None
+          else "baseline_ram_note=resident_memory_query_unavailable")
+    print("device=cpu")
     return 0
 
 def measure_startup() -> int:
@@ -55,8 +76,11 @@ def measure_startup() -> int:
     with torch.no_grad():
         output = model(torch.ones(1, 10))
 
+    seconds = time.perf_counter() - ENTERED
     print(f"prediction={output.item():.6g}")
-    print(f"first_prediction_s={time.perf_counter() - ENTERED:.6g}")
+    print(f"first_prediction_s={seconds:.6g}")
+    print("first_prediction_scope=script_timer_to_completed_prediction_includes_torch_import_excludes_interpreter_start")
+    print("device=cpu")
     return 0
 
 def measure_export() -> int:

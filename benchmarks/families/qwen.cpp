@@ -351,9 +351,6 @@ int core_mode(const filesystem::path& directory, const Index prompt_tokens,
     const ModelConfig config = read_config(directory);
     LlamaBenchRandom random;
 
-    // Match llama-bench's exact random-number consumption: a complete pp
-    // warm-up, all timed pp repetitions, then a one-token tg warm-up (which
-    // consumes the following, unused token) and all timed tg repetitions.
     const vector<Index> warm_prompt = random.take(prompt_tokens, config.vocabulary);
     vector<vector<Index>> prompts;
     prompts.reserve(size_t(repeats));

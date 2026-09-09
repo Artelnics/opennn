@@ -1,34 +1,3 @@
-// The dense family, defined once, driven four ways.
-//
-// This replaces the model
-// construction that stood in six programs -- opennn_speed, opennn_higgs_cpu,
-// opennn_higgs_infer, opennn_higgs_maxbatch_trial, opennn_accuracy and
-// opennn_convergence, 1,717 lines between them. Only ~100 of those lines were
-// the model; the rest is driver logic, which becomes the modes below rather
-// than disappearing.
-//
-// The point of one definition is that the definitions had already drifted.
-// The old capacity site seeded with 0 while the
-// other five seeded with 42, so the capacity benchmark had never measured the
-// same initialised network as the speed and quality ones. Here `build` is the
-// only way to make the network, so that cannot recur.
-//
-//   model_opennn train    <train_csv> <test_csv> [epochs] [batch,...] [opts]
-//   model_opennn infer    <test_csv>             [reps]   [batch,...] [opts]
-//   model_opennn capacity <train_csv>            [batch]              [opts]
-//   model_opennn quality  <train_csv> <test_csv> [epochs] [batch]     [opts]
-//
-//   opts: [hidden] [layers] [relu|tanh] [cpu|cuda] [fp32|bf16]
-//
-// train and infer take a comma-separated batch list and run it inside one
-// process, so every batch shares one data load and one thermal window --
-// section 6 only trusts comparisons taken back to back.
-//
-// capacity takes exactly one batch and exits, because a CUDA out-of-memory
-// fault leaves the context unusable: the next attempt in the same process
-// would measure the wreckage of the last one. The runner re-launches per
-// attempt and reads the exit code -- 0 fits, 1 does not.
-
 #include <algorithm>
 #include <chrono>
 #include <filesystem>
@@ -79,7 +48,7 @@ double resident_mb()
     return 0.0;
 }
 
-constexpr Index SEED = 42;        // the value five of six sites already used
+constexpr Index SEED = 42;
 
 struct Options
 {
@@ -90,20 +59,6 @@ struct Options
     Type precision = Type::FP32;
 };
 
-// The dense family. Every mode below goes through here, and nothing else
-// constructs the network.
-//
-// Layers only, no Scaling: the six sites disagreed on this too. Four reached
-// for `ClassificationNetwork`, which prepends a Scaling layer, while
-// opennn_speed built the layers directly. PyTorch's definition is
-// `Linear -> activation -> ... -> Linear(1)` with no scaling stage, so the
-// bare stack is the like-for-like one and the wrapper was quietly measuring a
-// layer the other engine did not have. prepare_higgs.py normalises the CSV
-// beforehand, so the layer was a passthrough that still cost per batch.
-//
-// Glorot initialisation is set explicitly rather than left to whatever the
-// wrapper defaulted to, for the same reason: it is a property of the
-// comparison, so it belongs where the comparison can see it.
 unique_ptr<Network> build(const Shape& inputs, const Shape& targets, const Options& options)
 {
     set_seed(SEED);
@@ -168,10 +123,10 @@ Adam* configure(Training& training, Index batch)
 
 int usage()
 {
-    cerr << "usage: model_opennn train    <train_csv> <test_csv> [epochs] [batch,...] [opts]\n"
-            "       model_opennn infer    <test_csv>             [reps]   [batch,...] [opts]\n"
-            "       model_opennn capacity <train_csv>            [batch]              [opts]\n"
-            "       model_opennn quality  <train_csv> <test_csv> [epochs] [batch]     [opts]\n"
+    cerr << "usage: dense_opennn train    <train_csv> <test_csv> [epochs] [batch,...] [opts]\n"
+            "       dense_opennn infer    <test_csv>             [reps]   [batch,...] [opts]\n"
+            "       dense_opennn capacity <train_csv>            [batch]              [opts]\n"
+            "       dense_opennn quality  <train_csv> <test_csv> [epochs] [batch]     [opts]\n"
             "       opts: [hidden] [layers] [relu|tanh] [cpu|cuda] [fp32|bf16]\n";
     return 2;
 }
@@ -204,14 +159,11 @@ int main(int argc, char* argv[])
         cout << "dataset_train=" << filesystem::absolute(argv[2]).string() << "\n" << flush;
         TabularDataset dataset(argv[2], ",", false, false);
 
-        // Contract item 3 again: the training split lives on the device, so an
-        // epoch is not measuring the host-to-device copy. Without this the
-        // same model measured 9.41M samples/s against 11.32M.
         if (options.device == Device::CUDA)
             dataset.set_storage_mode(Dataset::StorageMode::GPUPersistantData);
 
         dataset.set_sample_roles("Training");
-        dataset.set_variable_scalers("None");     // prepare_higgs.py already normalised
+        dataset.set_variable_scalers("None");     // prepare.py already normalised
 
         cout << "dataset_test=" << filesystem::absolute(argv[3]).string() << "\n" << flush;
         TabularDataset test_dataset(argv[3], ",", false, false);
@@ -233,14 +185,6 @@ int main(int argc, char* argv[])
                 dataset.set_sample_role(sample, SampleRole::None);
         };
 
-        // Contract item 3: OpenNN is timed at its best, which means the
-        // captured CUDA graph and warmup epochs excluded from the window.
-        // Dropping either understates it badly -- the first epoch carries
-        // allocation and graph capture, and without this the same model
-        // measured 1.51M samples/s against 11.3M.
-        //
-        // quality takes neither: warmup epochs would train a different network
-        // than the one whose accuracy is being reported.
         const bool timing = mode == "train";
         const Index warmup = timing ? 2 : 0;
 
@@ -307,18 +251,11 @@ int main(int argc, char* argv[])
             sort(epoch_seconds.begin(), epoch_seconds.end());
             const double median_epoch_s = epoch_seconds[epoch_seconds.size() / 2];
 
-            // An epoch runs whole batches only and drops the remainder, so
-            // dividing the full split by the epoch time overstates throughput
-            // by up to one batch -- 6.5% at batch 896,000.
+            // Count only the full batches processed during the epoch.
             const Index samples_per_epoch = (samples / batch) * batch;
 
             Evaluation analysis(network.get(), &test_dataset);
 
-            // Evaluate at the training batch, which is what the PyTorch driver
-            // does. Left alone, Evaluation defaults to the whole split in
-            // one batch on CPU, so a 500,000-row test set built a 1,024 MiB
-            // activation arena against PyTorch's 64 MiB -- a 16x difference in
-            // the memory column that had nothing to do with training.
             analysis.set_batch_size(batch);
 
             cout << "batch_" << batch << "_samples_per_sec="
@@ -353,17 +290,6 @@ int main(int argc, char* argv[])
         cout << "dataset_test=" << filesystem::absolute(argv[2]).string() << "\n" << flush;
         TabularDataset dataset(argv[2], ",", false, false);
 
-        // The PyTorch driver uploads the whole test split once, before the
-        // timed window, and slices it on the device; streaming it per batch
-        // instead times PCIe rather than the network. Profiled on this cell
-        // the per-batch copy and the synchronisation behind it left the GPU
-        // idle for 39% of the pass -- 12.9 ms of kernels inside a 21.3 ms
-        // pass. The training path above already keeps its split resident for
-        // exactly this reason, and so does the recurrent family.
-        //
-        // set_storage_mode only requests residency; the optimizer is what
-        // enables it for training, and drops it when it returns. Inference
-        // has no optimizer, so it asks here, after the roles are set.
         if (options.device == Device::CUDA)
             dataset.set_storage_mode(Dataset::StorageMode::GPUPersistantData);
 
@@ -383,10 +309,6 @@ int main(int argc, char* argv[])
         for (const Index batch : batches)
         {
             const Index processed = (samples / batch) * batch;
-            // Inference mode, not the default. A training arena keeps every
-            // layer's activations alive for the backward pass that never
-            // comes; inference can reuse buffers between layers. Measured on
-            // this cell the difference is 32 MiB against 16.
             ForwardPropagation forward_propagation(batch, network.get(),
                                                    ForwardPropagationMode::Inference);
 
@@ -500,12 +422,6 @@ int main(int argc, char* argv[])
                     (void)forward_propagation.get_outputs();
                 }
 
-                // The clock stops when the work is done, not when it is
-                // queued. The PyTorch driver ends every pass with
-                // torch.cuda.synchronize(); without the same barrier here a
-                // pass that no longer copies per batch reports launch
-                // throughput -- 72.5M samples/s against a kernel time that
-                // cannot exceed 30M.
                 if (!on_cpu) device::synchronize(device::get_compute_stream());
             };
 
@@ -585,7 +501,7 @@ int main(int argc, char* argv[])
         }
         catch (const exception& error)
         {
-            cout << "fits=0\nreason=" << error.what() << "\nRESULT=OOM\n" << flush;
+            cout << "fits=0\nreason=" << error.what() << "\nRESULT=ERROR\n" << flush;
             return 1;
         }
 

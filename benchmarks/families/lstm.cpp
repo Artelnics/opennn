@@ -153,10 +153,6 @@ Index use_all_valid_windows(TimeSeriesDataset& dataset, SampleRole role,
     vector<Index> valid(static_cast<size_t>(windows));
     iota(valid.begin(), valid.end(), Index(0));
 
-    // TimeSeriesDataset normally installs a chronological 60/20/20 split.
-    // This benchmark, like the PyTorch driver, uses the complete CSV. Keep
-    // only starts whose full input window and target are in range; marking
-    // every raw row used to append `past` zero-padded pseudo-windows.
     dataset.set_sample_roles(SampleRole::None);
     dataset.set_sample_roles(valid, role);
     return windows;
@@ -456,7 +452,7 @@ int main(int argc, char* argv[])
         }
         catch (const exception& error)
         {
-            cout << "fits=0\nreason=" << error.what() << "\nRESULT=OOM\n" << flush;
+            cout << "fits=0\nreason=" << error.what() << "\nRESULT=ERROR\n" << flush;
             return 1;
         }
 

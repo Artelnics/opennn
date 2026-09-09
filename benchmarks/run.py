@@ -1,33 +1,6 @@
 #!/usr/bin/env python3
-"""The benchmark suite. One entry point, one execution, every observation.
-
-See PROTOCOL.md for the measurement and validity contract.
-
-    run.py --family dense --mode train  --batch 8192
-    run.py --family dense --mode infer  --batch 8192 --precision fp32
-    run.py --family dense --mode train  --batch 1024:OOM        # capacity sweep
-    run.py --family dense --mode train  --batch 1024,8192,65536 # explicit rungs
-
-Every run reports throughput, peak memory, energy and quality **from the same
-execution**. They were four benchmarks in four directories; they are four
-readings of one run. The suite this replaces launched the identical binary
-twice -- once timed, once with a power meter -- in two thermal states, and
-filed two results that could not be cross-referenced.
-
-`--batch` is the only sweep axis, and it is what the old protocol directories
-actually differed in:
-
-    8192            one rung: the speed cell
-    1024,8192       explicit rungs: the peak-batch curve
-    1024:OOM        double until a launch fails: the capacity frontier
-
-A sweep re-launches per rung because it must. A CUDA out-of-memory fault leaves
-the context unusable, so a second attempt in the same process would measure the
-wreck of the first. Exit code 0 fits, 1 does not.
-
-Engines are launched as the contract requires -- OpenNN with captured graphs
-and a device-resident split, PyTorch compiled. The model files own that; this
-only chooses which to run, and never learns which one it is talking to.
+"""Run benchmark families with shared provenance, memory and energy monitoring. Use --batch
+N, a comma-separated sweep, or N:OOM. See PROTOCOL.md.
 """
 
 from __future__ import annotations
@@ -71,11 +44,7 @@ KEY_VALUE = re.compile(r"([A-Za-z_][A-Za-z0-9_]*)=([^\s]+)")
 BENCH_DATA = Path(os.environ.get("OPENNN_BENCH_DATA",
                                  str(Path.home() / "opennn-benchmark-data")))
 
-# The only per-family knowledge here. Everything else -- which binary, which
-# script -- follows from the family name, so adding a family adds one entry.
-# The only per-family knowledge here: where its data is, and the model
-# options only it understands. Everything else -- which binary, which script --
-# follows from the family name.
+# Per-family data paths and model options; executable names follow the family.
 FAMILIES = {
     "dense": {
         "data": lambda root: {"train": root / "higgs/higgs_train_250k.csv",
@@ -86,9 +55,6 @@ FAMILIES = {
         "data": lambda root: {"train": root / "imagenet_subset/train"},
         "options": lambda a: [str(a.image_size)],
     },
-    # --hidden and --layers are the dense family's knobs. The transformer has
-    # its own, defaulting to the base model both drivers document, because
-    # sharing them silently benchmarked d_model 1024 with two layers.
     "transformer": {
         "data": lambda root: {"train": root / "wmt14/wmt14_pairs.txt"},
         "options": lambda a: [str(a.d_model), str(a.transformer_layers)],
@@ -136,16 +102,8 @@ def rungs(spec: str) -> tuple[list[int], bool]:
     return [int(part) for part in spec.split(",") if part], False
 
 def cpu_pinning(threads: int | None) -> tuple[list[str], dict[str, str], dict]:
-    """Prefix and environment that pin a CPU run to performance cores.
-
-    Two variables removed at once. `taskset` keeps every thread off the
-    E-cores, which run ~22% slower here and which the scheduler would
-    otherwise hand out arbitrarily. The thread count is then set identically
-    for both engines, because otherwise one may quietly take 28 threads while
-    the other takes 8 -- and the comparison becomes a thread-count comparison.
-
-    Defaults to one thread per *physical* P-core: SMT siblings share execution
-    units, so counting logical CPUs oversubscribes compute-bound work.
+    """Pin CPU runs to detected performance cores. Apply an explicit thread count to both
+    engines, or retain each engine's default.
     """
     environment: dict[str, str] = {}
     if threads:
@@ -171,33 +129,8 @@ def cpu_pinning(threads: int | None) -> tuple[list[str], dict[str, str], dict]:
     span = f"{cores[0]}-{cores[-1]}" if cores == list(range(cores[0], cores[-1] + 1)) \
         else ",".join(str(c) for c in cores)
 
-    # Cores are pinned; the thread count is not, unless asked for.
-    #
-    # Forcing one looked like fairness and was the opposite. Measured on dense
-    # CPU training, samples/s:
-    #
-    #                 unset     4        8       16
-    #     OpenNN     96,204  62,309   84,057  86,296
-    #     PyTorch    93,417  60,855   89,378  83,490
-    #
-    # Every fixed count is worse than letting each engine choose, and the
-    # penalty is uneven -- 13% for OpenNN against 4% for PyTorch at eight
-    # threads, which inverted the result. Contract item 3 asks for each engine
-    # at its best, and each engine's own default is what that means here.
-    #
-    # --threads still overrides, so the choice stays measurable.
     count = threads
 
-    # One OpenMP wait policy for both engines. GCC 14's libgomp (the system
-    # runtime OpenNN links) detects a hybrid CPU and stops spinning at
-    # barriers -- `GOMP_SPINCOUNT` becomes 1 and every fork/join sleeps in the
-    # kernel (libgomp/config/linux/x86/spincount.h). PyTorch ships its own,
-    # older libgomp that still spins 300,000 times. oneDNN's LSTM opens ~30
-    # regions per batch, so the difference is the runtime, not the engine:
-    # the same oneDNN primitive under each libgomp measured 3.45 ms against
-    # 3.14 ms. Setting the documented libgomp default for both makes the
-    # setting a no-op for PyTorch (69.0k -> 69.3k samples/s) and restores
-    # OpenNN's (62.6k -> 72.3k). Contract item 3, each engine at its best.
     environment.setdefault("GOMP_SPINCOUNT", "300000")
 
     return (["taskset", "-c", span], environment,
@@ -229,6 +162,54 @@ def stderr_excerpt(text: str) -> str:
             + f"\n... [{elided:,} bytes elided] ...\n"
             + text[-STDERR_TAIL_BYTES:])
 
+def failure_kind(returncode: int, stdout: str, stderr: str) -> str | None:
+    """Only allocation errors bound capacity; signals and Windows crashes do not."""
+    fields = dict(KEY_VALUE.findall(stdout))
+    if returncode < 0 or returncode >= 0x80000000:
+        return "crash"
+    if returncode == 0:
+        failed = fields.get("fits") == "0" or fields.get("RESULT") in ("ERROR", "OOM")
+        return "error" if failed else None
+    evidence = stdout + "\n" + stderr
+    allocation_error = re.search(
+        r"CUDA out of memory|CUDA error: out of memory|cudaErrorMemoryAllocation|"
+        r"CUDA_ERROR_OUT_OF_MEMORY|out of memory[^\n]*cudaMalloc|"
+        r"std::bad_alloc|bad allocation|DefaultCPUAllocator[^\n]*can't allocate memory|"
+        r"(?:^|\n)MemoryError(?::|\s*$)", evidence, re.IGNORECASE)
+    return "oom" if fields.get("RESULT") == "OOM" or allocation_error else "error"
+
+
+def capacity_summary(launches: list[dict]) -> dict:
+    successful = [item["batch"] for item in launches if item["fits"]]
+    failure = next((item for item in launches if not item["fits"]), None)
+    valid = bool(successful and failure and failure.get("failure_kind") == "oom")
+    return {
+        "max_batch": max(successful) if successful else None,
+        "frontier_valid": valid,
+        "frontier_note": ("largest tested batch before a confirmed allocation failure" if valid
+                          else "capacity unknown: no successful batch or no confirmed OOM"),
+    }
+
+
+def footprint_metrics(outcome: dict) -> dict:
+    fields = outcome["fields"]
+
+    def number(name: str) -> float | None:
+        try:
+            return float(fields[name])
+        except (KeyError, ValueError):
+            return None
+    return {
+        "baseline_ram_mib": number("baseline_ram_mb"),
+        "baseline_ram_metric": fields.get("baseline_ram_metric"),
+        "baseline_ram_note": fields.get("baseline_ram_note"),
+        "internal_first_prediction_seconds": number("first_prediction_s"),
+        "internal_first_prediction_scope": fields.get("first_prediction_scope"),
+        "process_lifetime_seconds": outcome["process_lifetime_seconds"],
+        "process_time_scope": outcome["process_time_scope"],
+    }
+
+
 def launch(command: list[str], quiet_wait: bool, device: str = "cuda",
            threads: int | None = None,
            watched_cores: list[int] | None = None) -> dict:
@@ -245,12 +226,6 @@ def launch(command: list[str], quiet_wait: bool, device: str = "cuda",
         if device == "cuda":
             wait_for_idle(seconds=30.0)
         else:
-            # CPU needs settling too, and skipping it was not free. Without
-            # this, dense training read 94,279 samples/s when OpenNN ran first
-            # and 85,150 when it ran straight after PyTorch -- a 10% swing
-            # decided by launch order, while PyTorch itself stayed flat. The
-            # rotation exposed it; a pause is what fixes it. There is no
-            # nvidia-smi equivalent to poll here, so it is a fixed wait.
             time.sleep(float(os.environ.get("OPENNN_BENCH_CPU_SETTLE", "8")))
 
     prefix: list[str] = []
@@ -262,7 +237,7 @@ def launch(command: list[str], quiet_wait: bool, device: str = "cuda",
         environment.update(extra)
 
     with Monitor(device=device) as monitor:
-        started = time.time()
+        started = time.perf_counter()
 
         # Popen rather than run(), so a CPU launch can be watched for its peak
         # resident set while it is alive -- there is nothing to read once it
@@ -271,14 +246,25 @@ def launch(command: list[str], quiet_wait: bool, device: str = "cuda",
                                    stderr=subprocess.PIPE, text=True,
                                    env=environment)
         with ForeignActivity(process.pid, watched_cores) as foreign:
-            if device != "cuda":
-                while process.poll() is None:
-                    monitor.watch_rss(process.pid)
-                    time.sleep(0.02)
-                monitor.watch_rss(process.pid)
-
-            stdout, stderr = process.communicate(timeout=14400)
-        wall = time.time() - started
+            try:
+                while True:
+                    if device != "cuda":
+                        monitor.watch_rss(process.pid)
+                    remaining = 14400 - (time.perf_counter() - started)
+                    if remaining <= 0:
+                        raise subprocess.TimeoutExpired(command, 14400)
+                    try:
+                        stdout, stderr = process.communicate(timeout=min(0.02, remaining)
+                                                             if device != "cuda" else remaining)
+                        break
+                    except subprocess.TimeoutExpired:
+                        if device == "cuda":
+                            raise
+                wall = time.perf_counter() - started
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.communicate()
+                raise
 
     completed = subprocess.CompletedProcess(command, process.returncode, stdout, stderr)
 
@@ -295,26 +281,6 @@ def launch(command: list[str], quiet_wait: bool, device: str = "cuda",
     instruments = monitor.summary(start, end)
     activity = foreign.worst(start, end)
 
-    # Workload memory: peak minus the engine's own framework baseline. On CPU a
-    # raw resident set compares which framework is bigger, not which run costs
-    # more -- torch's import alone is ~730 MiB against OpenNN's ~209, so the
-    # answer flips with dataset size. Subtracting the baseline is the same
-    # correction the GPU path already makes by subtracting idle.
-    #
-    # Metric and field name both come from common.py rather than being spelled
-    # again here, because spelling them here is how this broke: the gate asked
-    # for "process_peak_rss" while the CPU path has reported
-    # `process_peak_anonymous_rss` ever since the reading moved from total to
-    # anonymous pages, so no CPU launch ever reached the subtraction and
-    # `workload_mib` fell back to `peak_mib` without saying so.
-    #
-    # It stays unsubtracted for now, but says so. The drivers' existing
-    # `baseline_rss_mib` is /proc/self/statm's resident field -- total RSS,
-    # counting ~98 MiB of mapped libraries and, for OpenNN, its mmapped CSV --
-    # against an anonymous-only peak. That difference is larger than the
-    # workload on every published cpu-* cell, so simply letting the old field
-    # through the fixed gate would publish a clamped zero, not a correction.
-    # What is missing is a commensurable baseline, not a subtraction.
     if instruments.get("memory_metric") == HOST_MEMORY_METRIC:
         baseline = mark(HOST_BASELINE_FIELD)
         if baseline is not None:
@@ -329,14 +295,18 @@ def launch(command: list[str], quiet_wait: bool, device: str = "cuda",
 
     throughput = next((int(v) for k, v in fields.items()
                        if k.endswith("_samples_per_sec")), 0)
+    failure = failure_kind(completed.returncode, stdout, stderr)
 
     return {
         "command": prefix + command,
         "pinning": pinning,
         "returncode": completed.returncode,
         "wall_seconds": round(wall, 3),
+        "process_lifetime_seconds": wall,
+        "process_time_scope": "before_Popen_to_exit_and_output_collection_includes_teardown",
+        "failure_kind": failure,
         "samples_per_sec": throughput,
-        "fits": fields.get("fits") != "0" and completed.returncode == 0,
+        "fits": failure is None,
         "quality": {k: float(v) for k, v in fields.items()
                     if k.endswith(("_test_accuracy", "test_roc_auc", "test_log_loss"))
                     and _is_number(v)},
@@ -441,16 +411,6 @@ def main() -> int:
 
     print(f"=== {args.family} {args.mode} {args.precision} {args.device} ===")
 
-    # Is anything else using this machine? A competing process does not slow
-    # both engines equally -- one browser tab at a core cost 35% of achievable
-    # memory bandwidth here, which moves bandwidth-bound steps and leaves
-    # cache-resident ones alone. Measured, recorded, and allowed to decide
-    # where the artifact lands, because the rule is worthless as prose.
-    # A pinned CPU cell can only be disturbed by the cores it was pinned to.
-    # Watching the whole machine files it as scratch for work stranded on an
-    # E-core that could never have touched it -- which is how a parked browser
-    # cost two otherwise-clean cells their evidence status on 2026-09-01.
-    # A CUDA cell pins nothing, so it still watches everything.
     watched_cores = core_layout()["performance"] if args.device != "cuda" else None
     busy_before = cpu_busy_fraction(cores=watched_cores)
     machine_busy = busy_before > BUSY_THRESHOLD
@@ -469,16 +429,20 @@ def main() -> int:
                 outcome = launch(engine_command(args.family, engine) + [question],
                                  not args.no_wait, "cpu", watched_cores=watched_cores)
                 outcome.update(engine=engine, batch=0, round=1, question=question)
+                outcome["footprint"] = footprint_metrics(outcome)
+                if not sys.platform.startswith("linux"):
+                    # The common anonymous-RSS peak sampler uses Linux procfs.
+                    outcome["instruments"].update(peak_mib=None, workload_mib=None,
+                        peak_file_mib=None, memory_metric=None,
+                        workload_note="anonymous_peak_sampler_unavailable; use footprint baseline_ram_mib")
                 launches.append(outcome)
                 reported = {k: v for k, v in outcome["fields"].items()
                             if k not in ("engine", "mode", "RESULT")}
                 print(f"  {question:<8} {engine:<8} {reported}")
+                if question == "startup":
+                    print(f"    process lifetime (including teardown): {outcome['process_lifetime_seconds']:.6f} s")
                 note_activity(outcome)
 
-        # Again, now the work is done. The reading that mattered was never the
-        # one up front: a sync client woke mid-cell and cost OpenNN 4.6x while
-        # leaving PyTorch alone, and the sample before the first launch saw 4%
-        # and called the machine quiet.
         busy_after = cpu_busy_fraction(cores=watched_cores)
         busy_during, busy_during_at = busiest_second(launches)
 
@@ -490,11 +454,12 @@ def main() -> int:
 
         artifact = {
             "schema_version": 1,
-            "benchmark_id": f"{args.device}-{args.family}",
+            "benchmark_id": f"cpu-{args.family}",
             "run_id": run_id,
             "session_id": session_id(),
             "label": args.label,
-            "configuration": vars(args) | {"data_root": str(BENCH_DATA)},
+            "configuration": vars(args) | {"data_root": str(BENCH_DATA),
+                                            "device": "cpu", "precision": "fp32"},
             "git": git,
             "machine": gpu_state(),
         "cpu": cpu_state(),
@@ -535,10 +500,9 @@ def main() -> int:
                 # signal has not told us the batch was too large -- it has told
                 # us it is broken -- and reporting that batch as the frontier
                 # would publish a bug as a measurement.
-                crashed = outcome["returncode"] < 0
+                crashed = outcome["failure_kind"] == "crash"
                 print("fits" if outcome["fits"]
-                      else f"CRASHED (signal {-outcome['returncode']})" if crashed
-                      else "does not fit")
+                      else f"failed: {outcome['failure_kind']} (rc={outcome['returncode']})")
                 if crashed:
                     outcome["crashed"] = True
                 note_activity(outcome)
@@ -569,8 +533,10 @@ def main() -> int:
 
     summary: dict = {}
     for engine in engines:
-        ok = [l for l in launches if l["engine"] == engine and l["returncode"] == 0]
+        ok = [l for l in launches if l["engine"] == engine and l["fits"]]
         if not ok:
+            if to_oom:
+                summary[engine] = capacity_summary([l for l in launches if l["engine"] == engine])
             continue
 
         rates = sorted(l["samples_per_sec"] for l in ok)
@@ -585,18 +551,7 @@ def main() -> int:
             "launches": len(ok),
         }
         if to_oom:
-            entry["max_batch"] = max(l["batch"] for l in ok if l["fits"])
-            # Only a genuine out-of-memory bounds the frontier; a crash leaves
-            # it unknown, and the artifact must say so rather than imply the
-            # last surviving rung was a limit.
-            failure = next((l for l in launches
-                            if l["engine"] == engine and not l["fits"]), None)
-            entry["frontier_valid"] = bool(failure and failure["returncode"] > 0)
-            if failure and failure["returncode"] < 0:
-                entry["frontier_note"] = (
-                    f"engine crashed with signal {-failure['returncode']} at batch "
-                    f"{failure['batch']}; max_batch is where it stopped working, "
-                    f"not where it ran out of memory")
+            entry.update(capacity_summary([l for l in launches if l["engine"] == engine]))
         summary[engine] = entry
 
     # The quality gate: a speed win bought by computing something different is
@@ -641,15 +596,7 @@ def main() -> int:
 
     shape_agrees = len({tuple(sorted(v.items())) for v in shapes.values()}) <= 1
 
-    # Again, now the work is done. The reading that mattered was never the one
-    # up front: a sync client woke mid-cell and cost OpenNN 4.6x while leaving
-    # PyTorch alone, and the sample before the first launch saw 4% and called
-    # the machine quiet.
     busy_after = cpu_busy_fraction(cores=watched_cores)
-    # And every second in between, judged over each launch's timed window.
-    # The edge samples cannot see a disturbance that starts after the first
-    # launch and ends before the last; on 2026-09-02 that shape cost three
-    # dense cells 4-12% and was filed as evidence.
     busy_during, busy_during_at = busiest_second(launches)
 
     if busy_after > BUSY_THRESHOLD:
@@ -685,19 +632,25 @@ def main() -> int:
     }
 
     name = f"{artifact['benchmark_id']}{'-' + args.label if args.label else ''}-{run_id}.json"
-    path = result_destination(git.get("dirty"), args.device, machine_busy) / name
+    capacity_valid = not to_oom or all(stats["frontier_valid"] for stats in summary.values())
+    path = result_destination(git.get("dirty"), args.device, machine_busy or not capacity_valid) / name
     path.write_text(json.dumps(artifact, indent=2, default=str))
 
     print()
     for engine, stats in summary.items():
+        if "median_samples_per_sec" not in stats:
+            print(f"  {engine}: {stats['frontier_note']}")
+            continue
         line = (f"  {engine:<8} {stats['median_samples_per_sec']:>12,}/s  "
                 f"{stats.get('workload_mib', stats['peak_mib']):>7.0f} MiB  "
                 f"{format_wh(stats['energy_wh']):>9}")
         if "max_batch" in stats:
             line += f"  max batch {stats['max_batch']:,}"
+            if not stats["frontier_valid"]:
+                line += " (capacity unknown; diagnostic only)"
         print(line)
 
-    if len(summary) == 2:
+    if len(summary) == 2 and all("median_samples_per_sec" in stats for stats in summary.values()):
         names = list(summary)
         ratio = (summary[names[0]]["median_samples_per_sec"]
                  / max(summary[names[1]]["median_samples_per_sec"], 1))
@@ -728,7 +681,7 @@ def main() -> int:
               "\n  ~2% are not resolvable while the clock floats.")
 
     print(f"\nwrote {path}")
-    return 0
+    return 0 if capacity_valid else 3
 
 if __name__ == "__main__":
     raise SystemExit(main())

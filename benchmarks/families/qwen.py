@@ -14,6 +14,7 @@ import ctypes
 import hashlib
 import json
 import os
+import platform
 import re
 import socket
 import subprocess
@@ -42,14 +43,23 @@ DATA_ROOT = Path(os.environ.get("OPENNN_BENCH_DATA",
                                 str(Path.home() / "opennn-benchmark-data")))
 QWEN_ROOT = DATA_ROOT / "qwen3"
 MANIFEST_PATH = BENCHMARKS / "manifests" / "qwen_manifest.json"
-TARGET_SM_CLOCK = 2505.0
-TARGET_MEMORY_CLOCK = 11201.0
 CLOCK_STEP = 15.0
 MAX_TEMPERATURE = 45.0
 MAX_GPU_UTILIZATION = 2.0
 MAX_BASELINE_DRIFT_MIB = 64.0
 MAX_CV = 0.03
 CREATE_NO_WINDOW = 0x08000000 if os.name == "nt" else 0
+
+
+def clock_targets() -> dict[str, int | None]:
+    targets = {}
+    for key, variable in (("sm_clock_mhz", "OPENNN_BENCH_SM_CLOCK_MHZ"),
+                          ("memory_clock_mhz", "OPENNN_BENCH_MEMORY_CLOCK_MHZ")):
+        value = os.environ.get(variable)
+        if value is not None and (not value.isdecimal() or int(value) <= 0):
+            raise ValueError(f"{variable} must be a positive integer in MHz")
+        targets[key] = int(value) if value is not None else None
+    return targets
 
 
 def manifest() -> dict[str, Any]:
@@ -139,6 +149,8 @@ def environment_gate(initial_memory: float | None) -> dict[str, Any]:
         reasons.append("GPU baseline memory drift exceeded 64 MiB")
     if not clocks_locked():
         reasons.append("GPU clocks were not locked by the benchmark wrapper")
+    if any(value is None for value in clock_targets().values()):
+        reasons.append("GPU clock targets were not configured")
     throttles = {key: value for key, value in state.items()
                  if key.endswith(("slowdown", "power_cap"))
                  and str(value).lower() == "active"}
@@ -153,8 +165,7 @@ def environment_gate(initial_memory: float | None) -> dict[str, Any]:
             "gpu_utilization_percent": MAX_GPU_UTILIZATION,
             "temperature_c": MAX_TEMPERATURE,
             "baseline_drift_mib": MAX_BASELINE_DRIFT_MIB,
-            "sm_clock_mhz": TARGET_SM_CLOCK,
-            "memory_clock_mhz": TARGET_MEMORY_CLOCK,
+            **clock_targets(),
         },
         "baseline": baseline,
         "gpu_state": state,
@@ -168,7 +179,8 @@ def wait_for_environment(initial_memory: float | None,
     last = environment_gate(initial_memory)
     while time.monotonic() < deadline:
         transient = [reason for reason in last["reasons"]
-                     if "clocks were not locked" not in reason]
+                     if "clocks were not locked" not in reason
+                     and "clock targets were not configured" not in reason]
         if not transient:
             return last
         time.sleep(2.0)
@@ -802,12 +814,15 @@ def launch_valid(result: dict[str, Any], instruments: dict[str, Any],
         reasons.append("GPU power-cap throttling was active during the cell")
     if telemetry.get("thermal_throttled"):
         reasons.append("GPU thermal throttling was active during the cell")
-    for key, target in (("min_sm_clock_mhz", TARGET_SM_CLOCK),
-                        ("max_sm_clock_mhz", TARGET_SM_CLOCK),
-                        ("min_memory_clock_mhz", TARGET_MEMORY_CLOCK),
-                        ("max_memory_clock_mhz", TARGET_MEMORY_CLOCK)):
+    targets = clock_targets()
+    for key, target in (("min_sm_clock_mhz", targets["sm_clock_mhz"]),
+                        ("max_sm_clock_mhz", targets["sm_clock_mhz"]),
+                        ("min_memory_clock_mhz", targets["memory_clock_mhz"]),
+                        ("max_memory_clock_mhz", targets["memory_clock_mhz"])):
         observed = telemetry.get(key)
-        if observed is not None and abs(observed - target) > CLOCK_STEP:
+        if target is None or observed is None:
+            reasons.append(f"{key}: clock target or telemetry unavailable")
+        elif abs(observed - target) > CLOCK_STEP:
             reasons.append(f"{key}={observed} differs from locked target {target}")
     return not reasons, reasons
 
@@ -1008,9 +1023,11 @@ def markdown_report(artifact: dict[str, Any]) -> str:
     pp_ratio = ratio("prefill_tokens_per_second", headline_core_open, headline_core_llama)
     tg_ratio = ratio("decode_tokens_per_second", headline_core_open, headline_core_llama)
     lines = [
-        "# Qwen3-4B benchmark — RTX 4080 / Windows",
+        "# Qwen3-4B benchmark",
         "",
-        "> Internal engineering result. This is not an RTX 5070 Ti result and must not be presented as one.",
+        "> Local benchmark result; publication requires review. Results apply only to the recorded hardware and software.",
+        "",
+        f"GPU: **{artifact['machine'].get('name', 'unavailable')}**; platform: **{artifact.get('platform', 'unavailable')}**.",
         "",
         f"Overall gate: **{'PASS' if valid else 'INVALID / DIAGNOSTIC ONLY'}**",
         "",
@@ -1090,6 +1107,7 @@ def markdown_report(artifact: dict[str, Any]) -> str:
               f"- OpenNN commit: `{artifact['git']['commit']}`; dirty: `{artifact['git']['dirty']}`.",
               f"- Model validation: `{artifact['model_validation'].get('valid')}`.",
               f"- Clocks locked by harness: `{artifact['clocks_locked']}`.",
+              f"- Clock targets (MHz): `{artifact.get('clock_targets', {})}`.",
               f"- Headline cell: 2048 prompt + {artifact['configuration']['generate_tokens']} generated tokens."]
     unstable = sorted({metric for value in summary.values()
                        for metric in value.get("unstable_metrics", [])})
@@ -1154,6 +1172,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--label", default="")
     parser.add_argument("--no-wait", action="store_true")
     args = parser.parse_args(argv)
+    try:
+        clock_targets()
+    except ValueError as error:
+        parser.error(str(error))
 
     prompts = parse_ints(args.prompt_tokens)
     if args.generate_tokens <= 0 or args.rounds <= 0 or args.repeats <= 0:
@@ -1237,7 +1259,7 @@ def main(argv: list[str] | None = None) -> int:
     summary = aggregate(launches)
     run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     artifact: dict[str, Any] = {
-        "schema_version": 2,
+        "schema_version": 3,
         "benchmark_id": "cuda-qwen3-4b",
         "run_id": run_id,
         "session_id": session_id(),
@@ -1249,7 +1271,8 @@ def main(argv: list[str] | None = None) -> int:
         "model_validation": validation,
         "machine": gpu_state(),
         "cpu": cpu_state(),
-        "platform_note": "RTX 4080 / Windows only; never an RTX 5070 Ti result",
+        "platform": platform.platform(),
+        "clock_targets": clock_targets(),
         "clocks_locked": clocks_locked(),
         "launches": launches,
         "summary": summary,
