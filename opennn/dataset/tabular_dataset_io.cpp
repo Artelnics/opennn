@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "opennn/dataset/tabular_dataset.h"
+#include "opennn/core/log.h"
 #include "opennn/core/io_utilities.h"
 #include "opennn/core/random_utilities.h"
 #include "opennn/core/string_utilities.h"
@@ -250,7 +251,7 @@ DateFormat TabularDataset::configure_csv_columns(vector<string_view>& lines,
 
     if(display && !number_format.is_default())
     {
-        cout << "Reading numbers in " << data_path.string()
+        logging::info() << "Reading numbers in " << data_path.string()
              << " with decimal separator "
              << number_format_name(number_format.decimal_separator)
              << " and thousands separator "
@@ -383,7 +384,7 @@ void TabularDataset::load_csv_data(const vector<string_view>& lines,
     {
         if(!looks_like_id_variable(variables[i], samples_number)) continue;
 
-        cout << "Excluding identifier column: " << variables[i].name << endl;
+        logging::info() << "Excluding identifier column: " << variables[i].name << endl;
 
         variables.erase(variables.begin() + Index(i));
         variable_token_indices.erase(variable_token_indices.begin() + Index(i));
@@ -1006,7 +1007,7 @@ DateFormat TabularDataset::infer_column_types(
            && checked_tokens > 0
            && numeric_tokens * 10 >= checked_tokens * 9)
         {
-            cout << "Warning: variable '" << variable.name
+            logging::warning() << "Warning: variable '" << variable.name
                  << "' was classified as categorical, but "
                  << numeric_tokens << " of its " << checked_tokens
                  << " sampled values are numeric. First value that failed to parse: '"

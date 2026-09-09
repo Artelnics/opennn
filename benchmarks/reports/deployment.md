@@ -192,7 +192,7 @@ consolidation should be treated as unmeasured.
     python3 tools/deployment_facts.py                        # source facts
     python3 tools/deployment_facts.py \
         --binary ../build-bench/bin/footprint_opennn \
-        --pip /home/artelnics/benchenv/bin/pip               # and the host facts
+        --pip /path/to/venv/bin/pip                         # and the host facts
 
 The artifact lands in `results/` as `deployment-facts-<run_id>.json` and
 carries the `method` string for every count in it.

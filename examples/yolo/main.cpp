@@ -400,9 +400,7 @@ int main(int argc, char* argv[])
                                             : Yolo::BodyActivation::LeakyReLU;
 
         const filesystem::path voc_root =
-            resolve_data_path("VOC_ROOT", {"VOCdevkit/VOC2007",
-                                           "/home/alvaromartin/VOCdevkit/VOC2007",
-                                           "/home/artelnics/VOCdevkit/VOC2007"});
+            resolve_data_path("VOC_ROOT", {"VOCdevkit/VOC2007"});
         const string voc_image_set = "trainval";
 
         const vector<string> voc_class_filter = {};
@@ -447,10 +445,6 @@ int main(int argc, char* argv[])
             const filesystem::path voc12_root = []() -> filesystem::path {
                 if (const char* env = getenv("VOC12_ROOT")) return env;
                 for (const char* c : {
-                        "/home/alvaromartin/VOCdevkit/VOC2012",
-                        "/home/artelnics/VOCdevkit/VOC2012",
-                        "/home/artelnics/VOCdevkit/VOCdevkit/VOC2012",
-                        "/home/alvaromartin/VOCdevkit/VOCdevkit/VOC2012",
                         "VOCdevkit/VOC2012",
                         "VOCdevkit/VOCdevkit/VOC2012"})
                     if (filesystem::is_directory(c)) return c;
@@ -563,13 +557,11 @@ int main(int argc, char* argv[])
         {
 
             labels_dir = resolve_data_path("COCO_LABELS",
-                {"coco_mini_data/train2017_labels",
-                 "/home/alvaromartin/coco_mini_data/train2017_labels"});
+                {"coco_mini_data/train2017_labels"});
             images_dir = data_dir / "labeled_images";
             filesystem::create_directories(images_dir);
             const filesystem::path src_images = resolve_data_path("COCO_IMAGES",
-                {"coco_mini_data/train2017",
-                 "/home/alvaromartin/coco_mini_data/train2017"});
+                {"coco_mini_data/train2017"});
             for (const auto& entry : filesystem::directory_iterator(labels_dir))
             {
                 if (entry.path().extension() != ".txt") continue;
@@ -595,11 +587,9 @@ int main(int argc, char* argv[])
         {
 
             images_dir = resolve_data_path("RACCOON_IMAGES",
-                {"raccoon_dataset/images",
-                 "/home/artelnics/Documents/opennn/raccoon_dataset/images"});
+                {"raccoon_dataset/images"});
             labels_dir = resolve_data_path("RACCOON_LABELS",
-                {"raccoon_data/labels",
-                 "/home/artelnics/Documents/opennn/raccoon_data/labels"});
+                {"raccoon_data/labels"});
 
             grid_size      = 13;
             boxes_per_cell = 3;
@@ -611,9 +601,9 @@ int main(int argc, char* argv[])
         {
             // External synthetic dataset: 416×416 JPGs, 3 classes (circle/square/triangle).
             images_dir = resolve_data_path("SYNTHETIC_YOLO_IMAGES",
-                {"synthetic_yolo/images", "/home/alvaromartin/synthetic_yolo/images"});
+                {"synthetic_yolo/images"});
             labels_dir = resolve_data_path("SYNTHETIC_YOLO_LABELS",
-                {"synthetic_yolo/labels", "/home/alvaromartin/synthetic_yolo/labels"});
+                {"synthetic_yolo/labels"});
 
             // Grid 13×13 over 416×416 input (stride 32).
             grid_size      = 13;

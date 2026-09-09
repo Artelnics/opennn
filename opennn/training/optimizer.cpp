@@ -193,7 +193,7 @@ struct Optimizer::WorkerProfileCounters
 
         const double epoch_ms =
             chrono::duration<double, milli>(chrono::steady_clock::now() - epoch_t0).count();
-        profiler::stats().print(cout, banner, epoch_ms);
+        profiler::stats().log(banner, epoch_ms);
         logging::info() << "  Wall-clock epoch time: " << fixed << setprecision(2) << epoch_ms << " ms"
              << " | workers_number=" << workers_number << "\n\n";
         profiler::stats().clear();

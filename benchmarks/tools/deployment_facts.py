@@ -31,7 +31,7 @@ Usage:
 
     python3 tools/deployment_facts.py
     python3 tools/deployment_facts.py --binary ../build-bench/bin/footprint_opennn
-    python3 tools/deployment_facts.py --binary ... --pip /home/artelnics/benchenv/bin/pip
+    python3 tools/deployment_facts.py --binary ... --pip /path/to/venv/bin/pip
 """
 
 from __future__ import annotations

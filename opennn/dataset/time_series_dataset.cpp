@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "opennn/dataset/time_series_dataset.h"
+#include "opennn/core/log.h"
 #include "opennn/dataset/batch.h"
 #include "opennn/core/statistics.h"
 #include "opennn/dataset/correlations.h"
@@ -543,7 +544,7 @@ MatrixR TimeSeriesDataset::calculate_autocorrelations(const Index lags_number) c
         const Index variable_index = numeric_variable_indices[i];
 
         const MatrixR input_i = get_variable_data(variable_index);
-        if (display) cout << "Calculating " << variables[variable_index].name << " autocorrelations" << "\n";
+        if (display) logging::info() << "Calculating " << variables[variable_index].name << " autocorrelations" << "\n";
 
         const Map<const VectorR> current_input_i(input_i.data(), input_i.rows());
 
@@ -588,7 +589,7 @@ Tensor3 TimeSeriesDataset::calculate_cross_correlations(const Index lags_number)
 
         const MatrixR input_i = get_variable_data(variable_i);
 
-        if (display) cout << "Calculating " << variables[variable_i].name << " cross correlations:" << "\n";
+        if (display) logging::info() << "Calculating " << variables[variable_i].name << " cross correlations:" << "\n";
 
         for (Index j = 0; j < numeric_variables_number; ++j)
         {
@@ -596,7 +597,7 @@ Tensor3 TimeSeriesDataset::calculate_cross_correlations(const Index lags_number)
 
             const MatrixR input_j = get_variable_data(variable_j);
 
-            if (display) cout << "  vs. " << variables[variable_j].name << "\n";
+            if (display) logging::info() << "  vs. " << variables[variable_j].name << "\n";
 
             const Map<const VectorR> current_input_i(input_i.data(), input_i.rows());
             const Map<const VectorR> current_input_j(input_j.data(), input_j.rows());

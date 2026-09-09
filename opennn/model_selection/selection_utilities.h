@@ -9,6 +9,7 @@
 #pragma once
 
 #include "opennn/core/opennn_types.h"
+#include "opennn/core/log.h"
 #include "opennn/core/scaling.h"
 #include "opennn/core/tensor_types.h"
 
@@ -76,7 +77,7 @@ optional<Condition> first_stopping_condition(const bool display,
     const auto check = ranges::find(checks, true, &StoppingCheck<Condition>::fired);
     if (check != checks.end())
     {
-        if (display) cout << check->message;
+        if (display) logging::info() << check->message;
         return check->condition;
     }
 

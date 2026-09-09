@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "opennn/dataset/image_dataset.h"
+#include "opennn/core/log.h"
 
 #include <utility>
 
@@ -298,7 +299,7 @@ void ImageDataset::from_JSON(const JsonDocument& data_set_document)
      && image_dataset_element->has("Variables")
      && requested_input_shape.get_rank() == 3)
     {
-        cout << "Warning: image folder not found (" << data_path.string()
+        logging::warning() << "Warning: image folder not found (" << data_path.string()
              << ") - continuing without samples (deployment mode)." << "\n";
 
         read_json_blocks(image_dataset_element);
@@ -499,7 +500,7 @@ void ImageDataset::read_images()
         const long long seconds = (total_milliseconds % 60000) / 1000;
         const long long milliseconds = total_milliseconds % 1000;
 
-        cout << "\nImage dataset " << load_kind
+        logging::info() << "\nImage dataset " << load_kind
              << " in: " << minutes << " minutes, "
              << seconds << " seconds, "
              << milliseconds << " milliseconds.\n";

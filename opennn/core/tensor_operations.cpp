@@ -129,8 +129,8 @@ struct MklLinearReport
     ~MklLinearReport()
     {
         if (getenv("OPENNN_MKL_REPORT"))
-            fprintf(stderr, "mkl_linear_forward_calls=%lld refusals=%lld\n",
-                    mkl_linear_calls.load(), mkl_linear_refusals.load());
+            logging::info() << "mkl_linear_forward_calls=" << mkl_linear_calls.load()
+                            << " refusals=" << mkl_linear_refusals.load() << '\n';
     }
 };
 

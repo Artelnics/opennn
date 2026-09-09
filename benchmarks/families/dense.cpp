@@ -428,6 +428,7 @@ int main(int argc, char* argv[])
 
             if (!on_cpu)
             {
+#ifdef OPENNN_HAS_CUDA
                 iota(indices.begin(), indices.end(), Index(0));
                 device_batch.fill(indices, dataset.get_feature_selection(),
                                   FillMode::Inference);
@@ -460,6 +461,7 @@ int main(int argc, char* argv[])
                                  dataset.get_device_data_columns(), features.inputs.front(),
                                  stream);
                 device::synchronize(stream);
+#endif
             }
 
             const auto run_pass = [&]

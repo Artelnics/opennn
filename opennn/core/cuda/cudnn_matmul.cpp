@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "opennn/core/cuda/cudnn_matmul.h"
+#include "opennn/core/log.h"
 
 #ifdef OPENNN_HAS_CUDA
 
@@ -417,7 +418,7 @@ Plan* create(const Problem& problem, const int64_t plan_index) noexcept
         if (with_bias) plan->pack[uid_bias] = nullptr;
 
         if (verbose())
-            cerr << format("cudnn matmul {}x{}x{} epilogue {}: {} of {} engine "
+            logging::info() << format("cudnn matmul {}x{}x{} epilogue {}: {} of {} engine "
                            "configurations built\n",
                            problem.m, problem.n, problem.k, int(problem.epilogue),
                            plan->candidates.size(), offered);
@@ -427,7 +428,7 @@ Plan* create(const Problem& problem, const int64_t plan_index) noexcept
     catch (const exception& e)
     {
         device::reset_last_error();
-        if (verbose()) cerr << "cudnn matmul: declined (" << e.what() << ")\n";
+        if (verbose()) logging::warning() << "cudnn matmul: declined (" << e.what() << ")\n";
         return nullptr;
     }
     catch (...)

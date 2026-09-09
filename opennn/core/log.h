@@ -36,6 +36,9 @@ using Sink = std::function<void(Level, std::string_view)>;
 // a sink affects subsequent writes; an in-flight callback keeps its sink alive.
 // Recursive logging from a callback is discarded, and callback exceptions are
 // contained so diagnostics cannot terminate the application.
+// User captures are released at process shutdown; later exit diagnostics use
+// the default sink, retaining the configured level. The default sink flushes
+// each message, including interactive prompts and progress updates.
 void set_sink(Sink);          // an empty sink restores the default streams
 void write(Level, std::string_view);
 

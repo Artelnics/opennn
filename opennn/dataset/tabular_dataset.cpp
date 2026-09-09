@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "opennn/dataset/tabular_dataset.h"
+#include "opennn/core/log.h"
 #include "opennn/core/io_utilities.h"
 #include "opennn/core/string_utilities.h"
 #include "opennn/core/scaling.h"
@@ -836,7 +837,7 @@ Tensor<Correlation, 2> TabularDataset::calculate_input_target_variable_correlati
     Correlation (*correlation_function)(const MatrixR&, const MatrixR&),
     const string& method_name) const
 {
-    if (display) cout << "Calculating " << method_name << " correlations..." << "\n";
+    if (display) logging::info() << "Calculating " << method_name << " correlations..." << "\n";
 
     const Index input_variables_number = get_variables_number(VariableRole::Input);
     const Index target_variables_number = get_variables_number(VariableRole::Target);
@@ -870,7 +871,7 @@ Tensor<Correlation, 2> TabularDataset::calculate_input_variable_correlations(
     Correlation::Method method,
     const string& method_name) const
 {
-    if (display) cout << "Calculating " << method_name << " inputs correlations..." << "\n";
+    if (display) logging::info() << "Calculating " << method_name << " inputs correlations..." << "\n";
 
     const vector<Index> input_variable_indices = get_variable_indices(VariableRole::Input);
     const vector<Index> used_sample_indices = get_used_sample_indices();
@@ -881,7 +882,7 @@ Tensor<Correlation, 2> TabularDataset::calculate_input_variable_correlations(
 
     for (Index i = 0; i < input_variables_number; ++i)
     {
-        if (display) cout << "Correlation " << i + 1 << " of " << input_variables_number << "\n";
+        if (display) logging::info() << "Correlation " << i + 1 << " of " << input_variables_number << "\n";
 
         const MatrixR input_i = get_variable_data(input_variable_indices[i], used_sample_indices);
 

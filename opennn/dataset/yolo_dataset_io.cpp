@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "opennn/dataset/yolo_dataset.h"
+#include "opennn/core/log.h"
 #include "opennn/dataset/yolo_dataset_internal.h"
 
 #include <utility>
@@ -668,7 +669,7 @@ bool YoloDataset::try_rebuild_target_from_boxes(const vector<array<float, 2>>& r
         setup_metadata(Index(n_samples));
 
         if (display)
-            cout << "\nYOLO target cache rebuilt (" << n_samples
+            logging::info() << "\nYOLO target cache rebuilt (" << n_samples
                  << " samples, grid=" << grid_size
                  << ", bpc=" << boxes_per_cell << ").\n";
 
@@ -936,7 +937,7 @@ void YoloDataset::build_cache(const vector<array<float, 2>>& requested_anchors)
     setup_metadata(Index(image_paths.size()));
 
     if (display)
-        cout << "\nYOLO cache built (" << samples_number << " samples).\n";
+        logging::info() << "\nYOLO cache built (" << samples_number << " samples).\n";
 }
 
 void YoloDataset::setup_metadata(Index new_samples_number)
