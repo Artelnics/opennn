@@ -178,6 +178,8 @@ TEST_F(LoggingTest, ProfilerPreservesItsStreamFormatAndRespectsLevels)
 
 TEST_F(LoggingTest, ExitDiagnosticsRemainSafeAfterSinkCleanup)
 {
+    // Test normal process shutdown, not inherited state after a multithreaded fork.
+    GTEST_FLAG_SET(death_test_style, "threadsafe");
     EXPECT_EXIT({
         log_at_exit = true;
         logging::set_sink([](logging::Level, std::string_view) {});
@@ -187,6 +189,7 @@ TEST_F(LoggingTest, ExitDiagnosticsRemainSafeAfterSinkCleanup)
 
 TEST_F(LoggingTest, SilentAlsoSuppressesExitDiagnostics)
 {
+    GTEST_FLAG_SET(death_test_style, "threadsafe");
     EXPECT_EXIT({
         log_at_exit = true;
         logging::set_level(logging::Level::Silent);
