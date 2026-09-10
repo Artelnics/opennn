@@ -4,16 +4,20 @@
 
 #pragma once
 
-#include <cstdio>
 #include <cstdlib>
 #include <cuda_runtime.h>
+
+// Keep the third-party CUDA target independent of OpenNN's C++20 headers.
+namespace opennn { namespace logging {
+void cuda_launch_error(const char* file, int line, const char* message) noexcept;
+} }
 
 #define C10_CUDA_CHECK(expr)                                            \
     do {                                                                \
         const cudaError_t opennn_cuda_status = (expr);                  \
         if (opennn_cuda_status != cudaSuccess) {                        \
-            fprintf(stderr, "%s:%d: CUDA error: %s\n", __FILE__,        \
-                    __LINE__, cudaGetErrorString(opennn_cuda_status));  \
+            opennn::logging::cuda_launch_error(__FILE__, __LINE__,     \
+                cudaGetErrorString(opennn_cuda_status));              \
             abort();                                                    \
         }                                                               \
     } while (0)

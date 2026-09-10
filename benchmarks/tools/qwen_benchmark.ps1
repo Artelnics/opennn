@@ -80,6 +80,9 @@ function Import-VisualStudioEnvironment {
 }
 
 function Find-Cudnn {
+    if ($env:OPENNN_CUDNN_INCLUDE_DIR -and $env:OPENNN_CUDNN_LIBRARY) {
+        return @{ Include = $env:OPENNN_CUDNN_INCLUDE_DIR; Library = $env:OPENNN_CUDNN_LIBRARY }
+    }
     $Root = Join-Path $env:ProgramFiles 'NVIDIA\CUDNN'
     $Headers = Get-ChildItem -LiteralPath $Root -Filter cudnn_version.h -Recurse -File -ErrorAction SilentlyContinue |
         Sort-Object FullName -Descending
@@ -99,13 +102,14 @@ function Find-Cudnn {
 function Build-Benchmarks {
     Import-VisualStudioEnvironment
     $Cudnn = Find-Cudnn
+    $CudaArchitectures = if ($env:OPENNN_CUDA_ARCHITECTURES) { $env:OPENNN_CUDA_ARCHITECTURES } else { 'native' }
     $OpenNNBuild = Join-Path $QwenRoot 'build\opennn-windows-cuda'
     cmake -S $Repository -B $OpenNNBuild -G Ninja `
         -DCMAKE_BUILD_TYPE=Release `
         -DOpenNN_DISABLE_CUDA=OFF `
         -DOpenNN_BUILD_BENCHMARKS=ON `
         -DOpenNN_BUILD_EXAMPLES=OFF `
-        -DCMAKE_CUDA_ARCHITECTURES=89 `
+        "-DCMAKE_CUDA_ARCHITECTURES=$CudaArchitectures" `
         "-DCUDNN_INCLUDE_DIR=$($Cudnn.Include)" `
         "-DCUDNN_LIBRARY=$($Cudnn.Library)"
     if ($LASTEXITCODE -ne 0) { throw 'OpenNN CMake configure failed' }
@@ -126,7 +130,7 @@ function Build-Benchmarks {
         -DCMAKE_BUILD_TYPE=Release `
         -DGGML_CUDA=ON `
         -DGGML_NATIVE=OFF `
-        -DCMAKE_CUDA_ARCHITECTURES=89
+        "-DCMAKE_CUDA_ARCHITECTURES=$CudaArchitectures"
     if ($LASTEXITCODE -ne 0) { throw 'llama.cpp CMake configure failed' }
     cmake --build $LlamaBuild --target llama-bench llama-server
     if ($LASTEXITCODE -ne 0) { throw 'llama.cpp benchmark build failed' }
@@ -139,9 +143,20 @@ function Build-Benchmarks {
 }
 
 function Set-BenchmarkClocks {
-    & nvidia-smi -lgc 2505,2505
+    Remove-Item Env:OPENNN_BENCH_CLOCKS_LOCKED -ErrorAction SilentlyContinue
+    $SmClock = $env:OPENNN_BENCH_SM_CLOCK_MHZ
+    $MemoryClock = $env:OPENNN_BENCH_MEMORY_CLOCK_MHZ
+    if (-not $SmClock -or -not $MemoryClock) {
+        Write-Warning 'Set OPENNN_BENCH_SM_CLOCK_MHZ and OPENNN_BENCH_MEMORY_CLOCK_MHZ to sustainable values for this GPU; results will be diagnostic-only.'
+        return $false
+    }
+    if ($SmClock -notmatch '^[0-9]+$' -or $MemoryClock -notmatch '^[0-9]+$' -or
+        [double]$SmClock -le 0 -or [double]$MemoryClock -le 0) {
+        throw 'Clock targets must be positive integers in MHz.'
+    }
+    & nvidia-smi -i 0 -lgc "$SmClock,$SmClock"
     $Graphics = $LASTEXITCODE
-    & nvidia-smi -lmc 11201,11201
+    & nvidia-smi -i 0 -lmc "$MemoryClock,$MemoryClock"
     $Memory = $LASTEXITCODE
     if ($Graphics -eq 0 -and $Memory -eq 0) {
         $env:OPENNN_BENCH_CLOCKS_LOCKED = '1'
@@ -153,8 +168,8 @@ function Set-BenchmarkClocks {
 }
 
 function Reset-BenchmarkClocks {
-    & nvidia-smi -rgc | Out-Host
-    & nvidia-smi -rmc | Out-Host
+    & nvidia-smi -i 0 -rgc | Out-Host
+    & nvidia-smi -i 0 -rmc | Out-Host
     Remove-Item Env:OPENNN_BENCH_CLOCKS_LOCKED -ErrorAction SilentlyContinue
 }
 
@@ -191,8 +206,8 @@ switch ($Action) {
         Get-PortablePython
         Import-VisualStudioEnvironment
         Set-BinaryEnvironment
-        [void](Set-BenchmarkClocks)
         try {
+            [void](Set-BenchmarkClocks)
             $Arguments = @('--family', 'qwen')
             if ($Action -eq 'smoke') {
                 $Arguments += @('--prompt-tokens', '128', '--generate-tokens', '16',

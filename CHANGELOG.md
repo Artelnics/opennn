@@ -46,6 +46,14 @@ remaining limitations.
 
 ### Reliability and portability
 
+- Enforce strict bounded JSON syntax and run its parser under libFuzzer, ASan
+  and UBSan from a checked-in seed corpus.
+- Add explicit `NATIVE` and `PORTABLE` CPU targets, recording the selected
+  contract in package names and installed metadata while retaining native as
+  the performance-oriented default.
+- Move pinned-memory, CUDA-event and graph-capture ownership from the central
+  device backend into a focused implementation file without changing layouts,
+  allocations or runtime calls.
 - Fail configuration immediately when the selected C++ toolchain lacks the
   required OpenMP runtime, instead of producing an unusable library.
 - Build, install and consume the core package with vision and sequence models
@@ -71,6 +79,11 @@ remaining limitations.
 
 ### Packaging and verification
 
+- Add blocking shared-library, macOS package-consumer, focused static-analysis,
+  coverage-floor and JSON-fuzzing gates.
+- Enforce a machine-readable release scope: binary packages exclude unresolved
+  example assets, full-source publication remains blocked, and 8.x model
+  compatibility is explicitly unclaimed while no complete fixture exists.
 - Generate candidate ZIP/TGZ installation packages with compiler/backend
   metadata, release/migration documentation and dependency licence notices.
 - Allow hosted sanitizer builds and both test executables to finish within

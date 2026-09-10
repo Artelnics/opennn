@@ -1,32 +1,7 @@
 #!/usr/bin/env python3
-"""The dense family in PyTorch, defined once, driven four ways.
-
-The counterpart of dense.cpp
-and deliberately its mirror image. Same modes, same positional arguments, same
-`key=value` output, so a protocol drives either engine by swapping the command
-prefix and never learns which one it is talking to.
-
-  dense.py train    <train_csv> <test_csv> [epochs] [batch,...] [opts]
-  dense.py infer    <test_csv>             [reps]   [batch,...] [opts]
-  dense.py capacity <train_csv>            [batch]              [opts]
-  dense.py quality  <train_csv> <test_csv> [epochs] [batch]     [opts]
-
-  opts: [hidden] [layers] [relu|tanh] [cpu|cuda] [fp32|bf16|strict]
-
-The definition is `Linear -> activation -> ... -> Linear(1)`, which is what
-model_opennn.cpp builds: bare layers, no scaling stage, since prepare_higgs.py
-normalises the CSV beforehand.
-
-Contract item 3 -- each engine at its best -- means `torch.compile` here, the
-way it means captured CUDA graphs and a device-resident split for OpenNN.
-Training compiles with `reduce-overhead` (Inductor plus CUDA graphs, the
-closest analogue to what OpenNN does) and inference with
-`max-autotune-no-cudagraphs`; both were measured against the other modes and
-the numbers are in compiled(). PT_COMPILE_MODE overrides either.
-
-`fp32` allows TF32 tensor cores, as it does in every engine of this suite --
-OpenNN's fp32 GEMMs are CUBLAS_COMPUTE_32F_FAST_TF32. `strict` is the escape
-hatch that turns TF32 off, and is not the published fp32 cell.
+"""PyTorch dense benchmark matching dense.cpp. Modes: train, infer, capacity and quality.
+Inputs are normalized HIGGS CSV files from prepare.py. FP32 permits TF32; BF16 uses
+autocast; strict disables TF32.
 """
 
 from __future__ import annotations
@@ -45,10 +20,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
 from common import binary_metrics  # noqa: E402
 
 SEED = 42
-# Inference in bf16 can keep autocast on (weights re-cast on every call, which
-# torch.compile does not fold without freezing) or store the weights in bf16
-# once, the way OpenNN's inference deployment holds its parameters. PT_INFER_CAST
-# selects it; bf16 weights measured faster in every family (see compiled()).
 INFER_CAST = os.environ.get("PT_INFER_CAST", "weights")
 
 def report_blas() -> None:
@@ -78,19 +49,7 @@ def report_opened(path: str, role: str) -> None:
     print(f"dataset_{role}={Path(path).resolve()}", flush=True)
 
 def load_csv(path: str, role: str = "input") -> tuple[np.ndarray, np.ndarray]:
-    """Inputs and target, float32, parsed from the CSV both engines are given.
-
-    This used to prefer a `.npy` cache sitting beside the CSV, inherited from a
-    driver where it kept minutes of np.loadtxt out of the *timed* window.
-    Harmless for timing, which excludes loading either way. Fatal for memory:
-    OpenNN parsed 151 MB of text while this side was handed a 55 MB
-    pre-digested binary, and that single difference inverted the result --
-    OpenNN measured 1.8x worse with the cache and 2.6x better without it on
-    the same data.
-
-    pandas rather than np.loadtxt because the parse has to be fast enough to
-    do honestly rather than fast enough to skip.
-    """
+    """Parse float32 inputs and targets from the same CSV supplied to OpenNN."""
     import pandas as pd
 
     report_opened(path, role)
@@ -116,10 +75,8 @@ def build(features: int, opts: dict) -> torch.nn.Module:
     return torch.nn.Sequential(*layers).to(opts["device"])
 
 def resident_mib() -> float:
-    """Resident set, MiB. The framework baseline is subtracted from the peak,
-    because torch's import alone is ~816 MiB here against OpenNN's 209 -- so a
-    raw RSS comparison measures which framework is bigger, not which run costs
-    more, and the answer flips with dataset size."""
+    """Read process resident memory in MiB from Linux procfs; return zero when unavailable.
+    """
     try:
         with open("/proc/self/statm") as handle:
             return int(handle.read().split()[1]) * os.sysconf("SC_PAGE_SIZE") / (1024.0 * 1024.0)
@@ -128,7 +85,7 @@ def resident_mib() -> float:
 
 def parse_opts(argv: list[str], first: int) -> dict:
     """Trailing options, positional and shared by every mode -- the same five
-    in the same order as model_opennn.cpp."""
+    in the same order as dense.cpp."""
     def at(index: int, default: str) -> str:
         return argv[index] if len(argv) > index else default
 
@@ -166,36 +123,9 @@ def autocast_ctx(opts: dict):
     return torch.autocast(device_type=opts["device"], dtype=torch.bfloat16)
 
 def compiled(fn, opts: dict, default: str):
-    """torch.compile on CUDA, eager on CPU -- both measured, not assumed.
-
-    On CPU, eager is PyTorch's fast path for these models, not a shortcut:
-    inductor's CPU codegen loses on a small stack of GEMMs. Measured on this
-    machine, dense CPU training, batch 4,096: eager 93,156 samples/s against
-    compiled 83,722. The previous suite measured the same thing on different
-    hardware (41,523 against 29,449), so it is the codegen and not the box.
-
-    Compiling here anyway would hand OpenNN a win against a PyTorch nobody
-    would ship, which is the mirror image of the eager-on-GPU mistake that
-    made dense training read 1.29x when it was 1.06x.
-
-    **The mode is per cell, and each was measured (session
-    2026-09-02-variants, batch 8,192, bf16, samples/s).** Training:
-    reduce-overhead 9,903,911, max-autotune 9,032,884,
-    max-autotune-no-cudagraphs 7,967,271, default 7,031,465, eager
-    4,770,607 -- the step is launch-bound and CUDA graphs are what it needs.
-    Inference: max-autotune-no-cudagraphs 37,131,220 (with bf16 weights;
-    35,903,250 under autocast), max-autotune 33,740,951, default 29,761,490,
-    reduce-overhead 27,939,975. Here CUDA graphs *cost* 25%: cudagraph-tree
-    replay copies the input slice into its static placeholder and runs its
-    bookkeeping in Python before every 0.2 ms batch, and Inductor's autotuned
-    GEMM for the 28-wide first layer beats cuBLAS's.
-
-    PT_COMPILE_MODE overrides either way, so the choice stays measurable.
+    """Use torch.compile on CUDA and eager on CPU. PT_COMPILE_MODE overrides the supplied
+    mode; eager disables compilation.
     """
-    # dynamic=False: every batch size gets its own specialised graph rather
-    # than a symbolic batch dimension. It is not enough for an in-process
-    # sweep: batch 8192 still read 15-16M samples/s after 1024/2048/4096 in
-    # the same process, 37.1M alone, so run.py measures one batch per process.
     mode = os.environ.get("PT_COMPILE_MODE", default)
     if mode == "eager" or opts["device"] != "cuda":
         return fn, "eager"
@@ -246,7 +176,7 @@ def train_like(argv: list[str], mode: str) -> int:
 
         step_fn, how = compiled(step, opts, "reduce-overhead")
 
-        # Whole batches only, the same rule model_opennn.cpp applies by
+        # Whole batches only, the same rule dense.cpp applies by
         # dropping the tail: the remainder is not trained.
         starts = range(0, x.shape[0] - batch + 1, batch)
 
@@ -353,7 +283,7 @@ def infer(argv: list[str]) -> int:
     return 0
 
 def capacity(argv: list[str]) -> int:
-    """One attempt, then exit -- the same contract model_opennn.cpp honours,
+    """One attempt, then exit -- the same contract dense.cpp honours,
     because an out-of-memory fault leaves the CUDA context unusable and the
     next attempt in this process would measure the wreck of the last."""
     batch = int(argv[3]) if len(argv) > 3 else 1024

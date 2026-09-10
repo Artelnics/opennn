@@ -30,56 +30,60 @@ Level level_from_environment() noexcept
     return Level::Info;
 }
 
-std::atomic<Level>& current_level() noexcept
+struct State
 {
-    static std::atomic<Level> value{level_from_environment()};
-    return value;
-}
+    // Exit diagnostics can run after ordinary function-static destructors.
+    std::ios_base::Init streams;
+    std::atomic<Level> level{level_from_environment()};
+    std::mutex sink_mutex;
+    std::mutex stream_mutex;
+    std::shared_ptr<const Sink> sink;
+};
 
-std::mutex& sink_mutex()
+State& state()
 {
-    static std::mutex mutex;
-    return mutex;
-}
-
-std::shared_ptr<const Sink>& current_sink()
-{
-    static std::shared_ptr<const Sink> sink;
-    return sink;
+    // Keep the small synchronization state alive, but release user captures
+    // at shutdown. Later exit diagnostics use the default sink.
+    static State* const value = []
+    {
+        auto* result = new State;
+        std::atexit([] { set_sink({}); });
+        return result;
+    }();
+    return *value;
 }
 
 void default_sink(const Level level, const std::string_view text)
 {
-    static std::mutex stream_mutex;
-    std::lock_guard lock(stream_mutex);
+    std::lock_guard lock(state().stream_mutex);
     std::ostream& stream = level <= Level::Warning ? std::cerr : std::cout;
     stream << text;
-    if (level <= Level::Warning) stream.flush();
+    stream.flush();
 }
 
 }
 
 Level level() noexcept
 {
-    return current_level().load(std::memory_order_relaxed);
+    return state().level.load(std::memory_order_relaxed);
 }
 
 void set_level(const Level level) noexcept
 {
-    current_level().store(level, std::memory_order_relaxed);
+    state().level.store(level, std::memory_order_relaxed);
 }
 
 bool enabled(const Level level) noexcept
 {
-    return level != Level::Silent && level <= current_level().load(std::memory_order_relaxed);
+    return level != Level::Silent && level <= state().level.load(std::memory_order_relaxed);
 }
 
 void set_sink(Sink sink)
 {
     auto replacement = sink ? std::make_shared<const Sink>(std::move(sink)) : nullptr;
     {
-        std::lock_guard lock(sink_mutex());
-        current_sink().swap(replacement);
+        std::lock_guard lock(state().sink_mutex);
+        state().sink.swap(replacement);
     }
     // Destroy the old callback outside the mutex too: its captures can own
     // objects whose destructors log or replace the sink.
@@ -102,8 +106,8 @@ void write(const Level level, const std::string_view text)
     {
         std::shared_ptr<const Sink> sink;
         {
-            std::lock_guard lock(sink_mutex());
-            sink = current_sink();
+            std::lock_guard lock(state().sink_mutex);
+            sink = state().sink;
         }
         if (sink) (*sink)(level, text);
         else      default_sink(level, text);
@@ -113,6 +117,13 @@ void write(const Level level, const std::string_view text)
         // Logging is best-effort, including during stack unwinding. Do not
         // report a sink failure through the same sink or let it escape Line.
     }
+}
+
+// Called by the standalone FlashAttention launch-check shim before abort().
+void cuda_launch_error(const char* file, int line, const char* message) noexcept
+{
+    try { error() << file << ':' << line << ": CUDA error: " << message << '\n'; }
+    catch (...) { } // Preserve the caller's fatal-error path if formatting fails.
 }
 
 }

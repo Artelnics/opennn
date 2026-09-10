@@ -43,10 +43,6 @@ VOCAB_CAP = 20_000          # LanguageDataset's own cap, so both sides agree
 # so PT_DROPOUT=0 is the controlled variant that measures what the dropout
 # masks cost PyTorch's training step.
 DROPOUT = float(os.environ.get("PT_DROPOUT", "0.1"))
-# Inference in bf16 can keep autocast on (weights re-cast on every call, which
-# torch.compile does not fold without freezing) or store the weights in bf16
-# once, the way OpenNN's inference deployment holds its parameters. PT_INFER_CAST
-# selects it; bf16 weights measured faster in every family (see compiled()).
 INFER_CAST = os.environ.get("PT_INFER_CAST", "weights")
 
 class PositionalEncoding(nn.Module):
@@ -152,10 +148,8 @@ def load_corpus(path: str, sequence: int | None = None) -> tuple[torch.Tensor, t
     return encode(sources), encode(targets), VOCAB_CAP, length
 
 def resident_mib() -> float:
-    """Resident set, MiB. The framework baseline is subtracted from the peak,
-    because torch's import alone is ~816 MiB here against OpenNN's 209 -- so a
-    raw RSS comparison measures which framework is bigger, not which run costs
-    more, and the answer flips with dataset size."""
+    """Read process resident memory in MiB from Linux procfs; return zero when unavailable.
+    """
     try:
         with open("/proc/self/statm") as handle:
             return int(handle.read().split()[1]) * os.sysconf("SC_PAGE_SIZE") / (1024.0 * 1024.0)
@@ -197,28 +191,8 @@ def autocast_ctx(opts: dict):
     return torch.autocast(device_type=opts["device"], dtype=torch.bfloat16)
 
 def compiled(fn, opts: dict, default: str):
-    """torch.compile on CUDA, eager on CPU -- both measured, not assumed.
-
-    On CPU, eager is PyTorch's fast path for these models, not a shortcut:
-    inductor's CPU codegen loses on a small stack of GEMMs. Measured on this
-    machine, dense CPU training, batch 4,096: eager 93,156 samples/s against
-    compiled 83,722. The previous suite measured the same thing on different
-    hardware (41,523 against 29,449), so it is the codegen and not the box.
-
-    Compiling here anyway would hand OpenNN a win against a PyTorch nobody
-    would ship, which is the mirror image of the eager-on-GPU mistake that
-    made dense training read 1.29x when it was 1.06x.
-
-    **The mode is per cell, and each was measured (session
-    2026-09-02-variants, batch 32, bf16, samples/s).** Training:
-    max-autotune-no-cudagraphs 1,150, reduce-overhead 1,132, default 1,124.
-    Inference with bf16 weights: max-autotune-no-cudagraphs 4,657,
-    reduce-overhead 4,574, default 4,499, eager 4,275; under autocast every
-    mode is slower (default 3,537, reduce-overhead 3,567,
-    max-autotune-no-cudagraphs 3,641) because the weights are re-cast on
-    every call.
-
-    PT_COMPILE_MODE overrides either way, so the choice stays measurable.
+    """Use torch.compile on CUDA and eager on CPU. PT_COMPILE_MODE overrides the supplied
+    mode; eager disables compilation.
     """
     mode = os.environ.get("PT_COMPILE_MODE", default)
     if mode == "eager" or opts["device"] != "cuda":

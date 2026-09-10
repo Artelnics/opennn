@@ -1,10 +1,29 @@
 #include "tests/pch.h"
 #include "opennn/core/log.h"
+#include "opennn/core/profiler.h"
+#include "opennn/core/string_utilities.h"
+#include "opennn/model_selection/selection_utilities.h"
 
 #include <atomic>
 #include <thread>
 
+#ifdef OPENNN_HAS_CUDA
+#include "opennn/core/cuda/flash_attention_shim/c10/cuda/CUDAException.h"
+#endif
+
 using namespace opennn;
+
+namespace
+{
+bool log_at_exit = false;
+struct ExitLoggingProbe
+{
+    ~ExitLoggingProbe()
+    {
+        if (log_at_exit) logging::warning() << "late shutdown diagnostic\n";
+    }
+} exit_logging_probe;
+}
 
 class LoggingTest : public ::testing::Test
 {
@@ -117,3 +136,71 @@ TEST_F(LoggingTest, AllowsConcurrentWritesAndSinkReplacement)
     for (auto& writer : writers) writer.join();
     EXPECT_EQ(delivered.load(), 800);
 }
+
+TEST_F(LoggingTest, ProgressIsOneRedirectedMessageAndCanBeSilenced)
+{
+    std::vector<std::string> messages;
+    logging::set_sink([&](logging::Level, std::string_view text) { messages.emplace_back(text); });
+    display_progress_bar(1, 2);
+    ASSERT_EQ(messages.size(), 1);
+    EXPECT_EQ(messages[0], "\r[" + std::string(25, '=') + ">" + std::string(24, ' ') + "] 50 %   ");
+    logging::set_level(logging::Level::Silent);
+    display_progress_bar(2, 2);
+    EXPECT_EQ(messages.size(), 1);
+}
+
+TEST_F(LoggingTest, SelectionMessagesRespectDisplayAndLogLevel)
+{
+    std::string text;
+    logging::set_sink([&](logging::Level, std::string_view message) { text += message; });
+    EXPECT_EQ(first_stopping_condition<int>(false, {{true, 1, "stopped\n"}}), 1);
+    EXPECT_TRUE(text.empty());
+    EXPECT_EQ(first_stopping_condition<int>(true, {{true, 1, "stopped\n"}}), 1);
+    EXPECT_EQ(text, "stopped\n");
+    logging::set_level(logging::Level::Silent);
+    EXPECT_EQ(first_stopping_condition<int>(true, {{true, 1, "hidden"}}), 1);
+    EXPECT_EQ(text, "stopped\n");
+}
+
+TEST_F(LoggingTest, ProfilerPreservesItsStreamFormatAndRespectsLevels)
+{
+    profiler::Stats stats;
+    std::ostringstream expected;
+    stats.print(expected, "test report");
+    std::string actual;
+    logging::set_sink([&](logging::Level, std::string_view text) { actual += text; });
+    stats.log("test report");
+    EXPECT_EQ(actual, expected.str());
+    logging::set_level(logging::Level::Warning);
+    stats.log("hidden report");
+    EXPECT_EQ(actual, expected.str());
+}
+
+TEST_F(LoggingTest, ExitDiagnosticsRemainSafeAfterSinkCleanup)
+{
+    // Test normal process shutdown, not inherited state after a multithreaded fork.
+    GTEST_FLAG_SET(death_test_style, "threadsafe");
+    EXPECT_EXIT({
+        log_at_exit = true;
+        logging::set_sink([](logging::Level, std::string_view) {});
+        std::exit(EXIT_SUCCESS);
+    }, ::testing::ExitedWithCode(EXIT_SUCCESS), "late shutdown diagnostic");
+}
+
+TEST_F(LoggingTest, SilentAlsoSuppressesExitDiagnostics)
+{
+    GTEST_FLAG_SET(death_test_style, "threadsafe");
+    EXPECT_EXIT({
+        log_at_exit = true;
+        logging::set_level(logging::Level::Silent);
+        std::exit(EXIT_SUCCESS);
+    }, ::testing::ExitedWithCode(EXIT_SUCCESS), "^$");
+}
+
+#ifdef OPENNN_HAS_CUDA
+TEST_F(LoggingTest, FlashAttentionLaunchCheckStillAbortsOnError)
+{
+    EXPECT_NO_THROW(C10_CUDA_CHECK(cudaSuccess));
+    EXPECT_DEATH(C10_CUDA_CHECK(cudaErrorInvalidValue), "CUDA error:");
+}
+#endif

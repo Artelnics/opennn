@@ -101,48 +101,6 @@ unique_ptr<Transformer> build(LanguageDataset& dataset, const Options& options)
         options.feed_forward(),
         options.layers);
 
-    // WMT14 rows are 130 tokens after START/END are added, so the library-wide
-    // 192-token crossover puts them on the materialized path, which keeps a
-    // full attention matrix per encoder/decoder attention layer. PyTorch uses
-    // fused scaled-dot-product attention at this length, so leaving OpenNN
-    // materialized compares one engine's guarded path against the other's fast
-    // one. Both measured cells here run many iterations over the corpus, which
-    // is the regime the fused path is for.
-    //
-    // Measured on this suite, sweeping sequence length with everything else
-    // fixed, fused throughput beat materialized at every length tried, by
-    // roughly 6% at 32 tokens rising to about 30% by 192 and 256. Those sweep
-    // points are one launch each and the fused path varies by about 6% between
-    // launches while the materialized one holds to 0.5%, so read them as a
-    // trend rather than as figures. Five launches each way at 128 tokens give
-    // medians of 4674 against 3643 samples/s, a 28% gain whose distributions do
-    // not overlap at all -- 4231 slowest fused against 3653 fastest
-    // materialized. The library default
-    // stays at 192 regardless, and deliberately: the same sweep run as a single
-    // pass reverses the result, because cuDNN plan construction costs 0.3-2.0 s
-    // with nothing to amortize it against, leaving fused 1.6x slower at 256 and
-    // 5x slower at 32. Sequence length is only a proxy for the thing that
-    // actually decides this, which is how often the plan gets reused; a
-    // benchmark cell reusing it across every batch of 4,096 samples sits firmly
-    // on the fused side of that, and a caller doing one forward pass does not.
-    //
-    // The reference cuDNN 9.25 supports this graph; older runtimes stay on the
-    // materialized path because some reject the 130-token plan outright.
-    //
-    // Saying that was not enough to make it happen. This only ever lowered the
-    // threshold, so on a runtime below 9.25 the library default of 192 still
-    // put a 256-token corpus on the fused path -- the one this comment says to
-    // avoid there. Measured on cuDNN 9.10 with an RTX 3060, three interleaved
-    // pairs to cancel the thermal drift a laptop shows across a sequential
-    // sweep: 44,523 tokens/s fused against 47,064 materialized, fused losing
-    // every pair. In the attention scope alone fused was 6.2x slower forward
-    // and 5.5x slower backward, at 4.1 GB/s against 126.3, while Adam in the
-    // same run held 303.7 GB/s of a ~336 GB/s card. So the fused kernel is
-    // picking a poor engine for this shape on this architecture, not competing
-    // for bandwidth.
-    //
-    // Both branches are stated now, so the runtime decides the path rather than
-    // the library default deciding it by omission.
     transformer->set_attention_sdpa_min_sequence_length(
         use_bf16_sdpa(options) ? BF16_SDPA_MIN_SEQUENCE : SDPA_MATERIALIZED_ONLY);
 
@@ -373,13 +331,7 @@ int main(int argc, char* argv[])
                 for (Index i = 0; i + batch <= samples; i += batch)
                     network->calculate_outputs_resident(inputs, forward_propagation, false);
 
-                // The clock stops when the work is done, not when it is
-                // queued, matching torch.cuda.synchronize() in the PyTorch
-                // driver. At this pass length the queue saturates and the
-                // host blocks anyway, so this is worth about one graph
-                // launch -- but a pass short enough to fit the async queue
-                // would otherwise report launch throughput, which is how the
-                // dense inference cell read 72.5M samples/s.
+                // Measure completed GPU work, matching the PyTorch barrier.
                 if (options.device == Device::CUDA)
                     device::synchronize(device::get_compute_stream());
             };
@@ -458,7 +410,7 @@ int main(int argc, char* argv[])
         }
         catch (const exception& error)
         {
-            cout << "fits=0\nreason=" << error.what() << "\nRESULT=OOM\n" << flush;
+            cout << "fits=0\nreason=" << error.what() << "\nRESULT=ERROR\n" << flush;
             return 1;
         }
 

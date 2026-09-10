@@ -85,10 +85,6 @@ def load_series(path: str, past: int, *,
         rows = list(csv.reader(handle))
 
     values = np.asarray(rows[1:], dtype=np.float32)
-    # Forecasting uses the target's history as an input too. OpenNN marks the
-    # last column InputTarget, so excluding it here silently benchmarked 14
-    # channels against 15 (the parameter totals happened to collide because
-    # PyTorch owns a second bias vector).
     features, target = values, values[:, -1:]
 
     if standardize:
@@ -102,10 +98,8 @@ def load_series(path: str, past: int, *,
     return windows, np.ascontiguousarray(target[past:past + count])
 
 def resident_mib() -> float:
-    """Resident set, MiB. The framework baseline is subtracted from the peak,
-    because torch's import alone is ~816 MiB here against OpenNN's 209 -- so a
-    raw RSS comparison measures which framework is bigger, not which run costs
-    more, and the answer flips with dataset size."""
+    """Read process resident memory in MiB from Linux procfs; return zero when unavailable.
+    """
     try:
         with open("/proc/self/statm") as handle:
             return int(handle.read().split()[1]) * os.sysconf("SC_PAGE_SIZE") / (1024.0 * 1024.0)
@@ -151,42 +145,7 @@ def autocast_ctx(opts: dict):
     return torch.autocast(device_type=opts["device"], dtype=torch.bfloat16)
 
 def compiled(fn, opts: dict):
-    """torch.compile on CUDA, eager on CPU -- both measured, not assumed.
-
-    On CPU, eager is PyTorch's fast path for these models, not a shortcut:
-    inductor's CPU codegen loses on a small stack of GEMMs. Measured on this
-    machine, dense CPU training, batch 4,096: eager 93,156 samples/s against
-    compiled 83,722. The previous suite measured the same thing on different
-    hardware (41,523 against 29,449), so it is the codegen and not the box.
-
-    Compiling here anyway would hand OpenNN a win against a PyTorch nobody
-    would ship, which is the mirror image of the eager-on-GPU mistake that
-    made dense training read 1.29x when it was 1.06x.
-
-    **On CUDA this family is eager too, and that is the unusual case.** For
-    dense, cnn and transformer, compiling the training step wins on this box --
-    +13%, +19% and +33% respectively. For the LSTM it loses:
-
-        cuda train    compiled 87,628/s     eager 108,614/s    eager +24%
-        cuda infer    compiled 457,209/s    eager 528,734/s    eager +13%
-                      compiled 461,970/s    eager 514,318/s
-
-    Two reasons, and both are about what Dynamo can keep in one graph. The
-    step this suite compiles contains zero_grad, backward and optimizer.step,
-    and Dynamo breaks the graph at `Optimizer.zero_grad`
-    (TORCH_LOGS=graph_breaks names it). Every family pays that break; only this
-    one cannot earn it back, because `nn.LSTM` lowers to an opaque cuDNN RNN
-    call that Inductor cannot fuse into anything. So compilation buys a
-    recompile and some dispatch, and fuses nothing that matters.
-
-    Contract item 3 asks for each engine at its best, and this is the same rule
-    that already sends CPU to eager: measure both, take PyTorch's. Leaving it
-    compiled would have published cuda-lstm-train at 3.194x when PyTorch's own
-    best makes it 2.85x -- the mirror image of the eager-on-GPU mistake that
-    made dense training read 1.29x when it was 1.06x.
-
-    PT_COMPILE_MODE overrides either way, so the choice stays measurable.
-    """
+    """Use eager execution by default. An explicit PT_COMPILE_MODE enables compilation on CUDA."""
     mode = os.environ.get("PT_COMPILE_MODE", "default")
     if mode == "eager" or opts["device"] != "cuda" or mode == "default":
         return fn, "eager"

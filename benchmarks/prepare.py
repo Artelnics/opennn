@@ -1,23 +1,7 @@
 #!/usr/bin/env python3
-"""Every dataset the suite measures on, one subcommand per family.
-
-This replaces eight `prepare_*.py` scattered through the old
-metric directories. Each family gets its data from one place, so "how was this
-prepared" has one answer per family instead of one per benchmark that happened
-to need it.
-
-    prepare.py dense         HIGGS, normalised, label last
-    prepare.py cnn           ImageNet subset, 1000 classes x N, 224x224
-    prepare.py transformer   WMT14 English-German sentence pairs
-    prepare.py lstm          Beijing PM2.5 hourly
-    prepare.py qwen          Pinned Qwen3-4B weights and runtimes
-
-Nothing lands in the repository. Everything goes under $OPENNN_BENCH_DATA
-(default ~/opennn-benchmark-data); the only committed artefact is the ImageNet
-manifest, which is what makes that subset verifiable rather than trusted.
-
-Every step is skipped when its output already exists, so re-running is cheap
-and interrupted downloads resume rather than restart.
+"""Prepare datasets and pinned Qwen assets, one subcommand per family. Usage: python
+benchmarks/prepare.py dense|cnn|transformer|lstm|qwen. Generated assets live below
+OPENNN_BENCH_DATA; committed manifests pin ImageNet and Qwen assets.
 """
 
 from __future__ import annotations
@@ -321,13 +305,6 @@ def prepare_cnn(root: Path, args) -> None:
 
     print(f"  wrote {written:,} images and {MANIFEST.name}")
 
-# --------------------------------------------------------------------------
-# transformer -- WMT14 English-German
-# --------------------------------------------------------------------------
-
-# News Commentary v9 is one of the three official WMT14 En-De training
-# corpora. The Stanford NMT preprocessed mirror the old script used now
-# answers 403, and statmt.org is the primary source anyway.
 NC_URL = "https://www.statmt.org/wmt14/training-parallel-nc-v9.tgz"
 
 def opennn_tokens(text: str) -> list[str]:
@@ -413,8 +390,8 @@ def prepare_transformer(root: Path, args) -> None:
             # "does not contain exactly two fields". Natural prose has
             # unbalanced quotes routinely -- a sentence opening with one and
             # closing with a typographic one, for instance -- so those pairs
-            # are dropped rather than rewritten. It costs 0.5% of the corpus
-            # and keeps every surviving line exactly as the source wrote it.
+            # are dropped rather than rewritten, preserving the source text
+            # of every surviving pair.
             if en.count('"') % 2 or de.count('"') % 2:
                 continue
             # Pre-tokenised with OpenNN's own rule, so both engines agree on

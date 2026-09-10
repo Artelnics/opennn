@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "opennn/dataset/correlations.h"
+#include "opennn/core/log.h"
 
 #include "opennn/core/parallel_algorithms.h"
 #include "opennn/core/tensor_types.h"
@@ -495,7 +496,7 @@ Correlation logistic_correlation(const MatrixR& x, const MatrixR& y)
 
     if (x.cols() > 50 || y.cols() > 50)
     {
-        cerr << "Warning: One variable has too many categories.\n";
+        logging::warning() << "Warning: One variable has too many categories.\n";
 
         correlation.coefficient = QUIET_NAN;
         return correlation;

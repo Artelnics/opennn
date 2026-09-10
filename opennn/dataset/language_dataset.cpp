@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "opennn/dataset/language_dataset.h"
+#include "opennn/core/log.h"
 #include "opennn/core/string_utilities.h"
 #include "opennn/core/tensor_types.h"
 #include "opennn/core/io_utilities.h"
@@ -79,7 +80,7 @@ VectorI LanguageDataset::calculate_target_distribution() const
 
 void LanguageDataset::read_txt()
 {
-    cout << "Reading .txt file..." << "\n";
+    logging::info() << "Reading .txt file..." << "\n";
 
     cache_reader.close();
 
@@ -104,7 +105,7 @@ void LanguageDataset::read_txt()
         && load_cache_metadata(metadata_path))
     {
         split_samples_random();
-        cout << "Reading finished (cached)" << "\n";
+        logging::info() << "Reading finished (cached)" << "\n";
         return;
     }
 
@@ -129,7 +130,7 @@ void LanguageDataset::read_txt()
     if (input_sequence_length_limit > 0
      && maximum_input_sequence_length > input_sequence_length_limit)
     {
-        cout << "[LanguageDataset] Input sequence length capped from "
+        logging::info() << "[LanguageDataset] Input sequence length capped from "
              << maximum_input_sequence_length << " to "
              << input_sequence_length_limit
              << " tokens (longer documents are truncated)." << "\n";
@@ -208,7 +209,7 @@ void LanguageDataset::read_txt()
 
     split_samples_random();
 
-    cout << "Reading finished" << "\n";
+    logging::info() << "Reading finished" << "\n";
 }
 
 void LanguageDataset::configure(Index samples_number, bool has_decoder)
@@ -445,7 +446,7 @@ void LanguageDataset::from_JSON(const JsonDocument& data_set_document)
     if (!data_path.empty() && !filesystem::exists(data_path)
      && data_set_element->has("InputVocabulary"))
     {
-        cout << "Warning: data file not found (" << data_path.string()
+        logging::warning() << "Warning: data file not found (" << data_path.string()
              << ") - continuing without samples (deployment mode)." << "\n";
 
         input_tokenizer->set_vocabulary(read_json_strings(data_set_element, "InputVocabulary"));

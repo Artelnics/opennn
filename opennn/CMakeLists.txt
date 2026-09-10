@@ -10,6 +10,14 @@ endif()
 option(OpenNN_ENABLE_LTO "Enable interprocedural optimization/LTO for release builds"
     ${_opennn_lto_default})
 option(OpenNN_ENABLE_MKL "Use Intel MKL as Eigen BLAS/LAPACK backend" OFF)
+set(OpenNN_CPU_TARGET "NATIVE" CACHE STRING
+    "CPU instruction target: NATIVE preserves maximum local throughput; PORTABLE builds distributable binaries")
+set_property(CACHE OpenNN_CPU_TARGET PROPERTY STRINGS NATIVE PORTABLE)
+string(TOUPPER "${OpenNN_CPU_TARGET}" OpenNN_CPU_TARGET)
+set(OpenNN_CPU_TARGET "${OpenNN_CPU_TARGET}" CACHE STRING "CPU instruction target" FORCE)
+if(NOT OpenNN_CPU_TARGET STREQUAL "NATIVE" AND NOT OpenNN_CPU_TARGET STREQUAL "PORTABLE")
+    message(FATAL_ERROR "OpenNN_CPU_TARGET must be NATIVE or PORTABLE, not '${OpenNN_CPU_TARGET}'")
+endif()
 set(OpenNN_MKL_ROOT "" CACHE PATH "Intel MKL root prefix (e.g. /opt/intel/oneapi/mkl/latest or extracted /usr prefix)")
 # AUTO, ON or OFF. AUTO uses oneDNN when it can be found and says so either way;
 # ON fails the configure if it cannot; OFF never looks. Defaulting to AUTO
@@ -366,7 +374,8 @@ if(APPLE)
     target_link_options(opennn PUBLIC
         $<BUILD_INTERFACE:-fexperimental-library>)
     target_compile_options(opennn PRIVATE -Xpreprocessor -fopenmp)
-    target_include_directories(opennn SYSTEM PRIVATE "${LIBOMP_INCLUDE_DIR}")
+    target_include_directories(opennn SYSTEM PUBLIC
+        $<BUILD_INTERFACE:${LIBOMP_INCLUDE_DIR}>)
     target_link_libraries(opennn PUBLIC "${LIBOMP_LIBRARY}")
 else()
     # MSVC's plain -openmp is OpenMP 2.0 and rejects `#pragma omp simd` with
@@ -455,8 +464,7 @@ if(OPENNN_HAS_CUDA)
 endif()
 
 if(MSVC)
-    target_compile_options(opennn PUBLIC
-        $<BUILD_INTERFACE:$<$<AND:$<COMPILE_LANGUAGE:CXX>,$<NOT:$<CONFIG:DEBUG>>>:/arch:AVX2>>
+    target_compile_options(opennn PRIVATE
         # The cudnn-frontend graph API instantiates enough templates in one
         # translation unit to pass COFF's section limit: attention_operator.cpp
         # stopped fitting at frontend v1.27.0 with "fatal error C1128". The
@@ -464,22 +472,28 @@ if(MSVC)
         # with the code, and raising it costs nothing.
         $<BUILD_INTERFACE:$<$<COMPILE_LANGUAGE:CXX>:/bigobj>>
     )
+    if(OpenNN_CPU_TARGET STREQUAL "NATIVE")
+        target_compile_options(opennn PUBLIC
+            $<BUILD_INTERFACE:$<$<AND:$<COMPILE_LANGUAGE:CXX>,$<NOT:$<CONFIG:DEBUG>>>:/arch:AVX2>>)
+    endif()
 elseif(APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "arm64|aarch64")
     target_compile_options(opennn PRIVATE
         $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<CONFIG:DEBUG>>:-O0 -g>
         $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<NOT:$<CONFIG:DEBUG>>>:-O3>
     )
-    target_compile_options(opennn PUBLIC
-        $<BUILD_INTERFACE:$<$<COMPILE_LANGUAGE:CXX>:-mcpu=apple-m1>>
-    )
+    if(OpenNN_CPU_TARGET STREQUAL "NATIVE")
+        target_compile_options(opennn PUBLIC
+            $<BUILD_INTERFACE:$<$<COMPILE_LANGUAGE:CXX>:-mcpu=apple-m1>>)
+    endif()
 else()
     target_compile_options(opennn PRIVATE
         $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<CONFIG:DEBUG>>:-O0 -g>
         $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<NOT:$<CONFIG:DEBUG>>>:-O3>
     )
-    target_compile_options(opennn PUBLIC
-        $<BUILD_INTERFACE:$<$<COMPILE_LANGUAGE:CXX>:-march=native>>
-    )
+    if(OpenNN_CPU_TARGET STREQUAL "NATIVE")
+        target_compile_options(opennn PUBLIC
+            $<BUILD_INTERFACE:$<$<COMPILE_LANGUAGE:CXX>:-march=native>>)
+    endif()
 
     if(WIN32)
         target_compile_options(opennn PUBLIC
@@ -526,6 +540,8 @@ if(OpenNN_INSTALL)
         ${PROJECT_SOURCE_DIR}/CHANGELOG.md
         ${PROJECT_SOURCE_DIR}/MIGRATION.md
         ${PROJECT_SOURCE_DIR}/DATASETS.md
+        ${PROJECT_SOURCE_DIR}/QUALITY.md
+        ${PROJECT_SOURCE_DIR}/RELEASE_SCOPE.json
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/OpenNN)
     install(FILES ${PROJECT_SOURCE_DIR}/tools/REPRODUCTION.md
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/OpenNN/tools)
@@ -551,7 +567,7 @@ if(OpenNN_INSTALL)
             DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/OpenNN/cudnn-frontend)
     endif()
     file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/build-info-$<CONFIG>.json"
-        CONTENT "{\n  \"version\": \"${PROJECT_VERSION}\",\n  \"compiler\": \"${CMAKE_CXX_COMPILER_ID}\",\n  \"compiler_version\": \"${CMAKE_CXX_COMPILER_VERSION}\",\n  \"configuration\": \"$<CONFIG>\",\n  \"cuda\": \"${OPENNN_HAS_CUDA}\",\n  \"shared\": \"${OpenNN_BUILD_SHARED}\",\n  \"lto\": \"${OpenNN_ENABLE_LTO}\"\n}\n")
+        CONTENT "{\n  \"version\": \"${PROJECT_VERSION}\",\n  \"compiler\": \"${CMAKE_CXX_COMPILER_ID}\",\n  \"compiler_version\": \"${CMAKE_CXX_COMPILER_VERSION}\",\n  \"configuration\": \"$<CONFIG>\",\n  \"cpu_target\": \"${OpenNN_CPU_TARGET}\",\n  \"cuda\": \"${OPENNN_HAS_CUDA}\",\n  \"shared\": \"${OpenNN_BUILD_SHARED}\",\n  \"lto\": \"${OpenNN_ENABLE_LTO}\"\n}\n")
     install(FILES "${CMAKE_CURRENT_BINARY_DIR}/build-info-$<CONFIG>.json"
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/OpenNN RENAME build-info.json)
 

@@ -168,10 +168,12 @@ for the Linux GPU runner's requirements and availability.
 | `OpenNN_BUILD_TESTS` | `ON` | Build the GoogleTest test suite. |
 | `OpenNN_BUILD_EXAMPLES` | `ON` | Build example applications. |
 | `OpenNN_BUILD_BENCHMARKS` | `OFF` | Build benchmark drivers from `benchmarks/`. |
+| `OpenNN_BUILD_FUZZERS` | `OFF` | Build Clang libFuzzer targets with ASan/UBSan. |
 | `OpenNN_BUILD_VISION` | `ON` | Build vision, sequence, transformer, and detection components. |
 | `OpenNN_BUILD_SHARED` | `OFF` | Build OpenNN as a shared library instead of a static library. |
 | `OpenNN_ENABLE_MKL` | `OFF` | Use Intel MKL as Eigen's BLAS/LAPACK backend. |
 | `OpenNN_ENABLE_LTO` | platform-dependent | Enable interprocedural optimization for release builds. |
+| `OpenNN_CPU_TARGET` | `NATIVE` | `NATIVE` preserves local throughput; `PORTABLE` removes host-specific ISA flags for distributable binaries. |
 
 Clang static libraries built with LTO require a compatible Clang/LLVM toolchain
 in their consumers. Their CMake target carries the required linker flags.
@@ -256,6 +258,9 @@ This checkout prepares **9.0.0**; no final release is implied. See
 [MIGRATION.md](MIGRATION.md) for 8.x source/model migration,
 [DATASETS.md](DATASETS.md) for dataset attribution and unresolved permissions,
 and [RELEASE_READINESS.md](RELEASE_READINESS.md) for publication gates.
+[QUALITY.md](QUALITY.md) defines the automated analysis, coverage, fuzzing,
+portable-package and shared-library checks. [RELEASE_SCOPE.json](RELEASE_SCOPE.json)
+is the machine-readable artifact scope.
 
 [Reproduction recipes](tools/REPRODUCTION.md) rebuild verified datasets and
 train repeatable reference models. [Packaging instructions](tools/PACKAGING.md)

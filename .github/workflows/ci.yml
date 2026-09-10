@@ -42,6 +42,14 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Enforce publishable release scope
+        run: |
+          python tools/check_release_scope.py --package-kind binary
+          if python tools/check_release_scope.py --package-kind full-source; then
+            echo "Full source publication unexpectedly passed with unresolved assets."
+            exit 1
+          fi
+
       - name: Reject a toolchain without OpenMP
         run: |
           if cmake -S . -B build-no-openmp -G Ninja \
@@ -65,6 +73,7 @@ jobs:
           -DCMAKE_FIND_USE_PACKAGE_REGISTRY=OFF
           -DOpenNN_DISABLE_CUDA=ON
           -DOpenNN_ENABLE_MKL=OFF
+          -DOpenNN_CPU_TARGET=PORTABLE
           -DOpenNN_BUILD_VISION=OFF
           -DOpenNN_BUILD_TESTS=OFF
           -DOpenNN_BUILD_EXAMPLES=OFF
@@ -72,9 +81,13 @@ jobs:
 
       - name: Build and install the core package
         run: |
+          if grep -E -- '-march=native|/arch:AVX2|-mcpu=apple-m1' build-core/compile_commands.json; then
+            echo "Portable build unexpectedly contains a host-specific CPU flag."
+            exit 1
+          fi
           cmake --build build-core --target opennn --parallel
           cmake --install build-core --prefix "$PWD/core-prefix"
-          python tools/check_installed_package.py "$PWD/core-prefix"
+          python tools/check_installed_package.py "$PWD/core-prefix" --expect-cpu-target PORTABLE
 
       - name: Consume the installed core package
         run: |
@@ -129,6 +142,7 @@ jobs:
           -DCMAKE_BUILD_TYPE=Release
           -DOpenNN_DISABLE_CUDA=ON
           -DOpenNN_ENABLE_MKL=OFF
+          -DOpenNN_CPU_TARGET=PORTABLE
           -DOpenNN_BUILD_EXAMPLES=OFF
           -DOpenNN_BUILD_BENCHMARKS=OFF
 
@@ -145,7 +159,7 @@ jobs:
         run: |
           cmake --install build --prefix "$PWD/prefix"
           cmake -E rename "$PWD/prefix" "$PWD/relocated-prefix"
-          python tools/check_installed_package.py "$PWD/relocated-prefix"
+          python tools/check_installed_package.py "$PWD/relocated-prefix" --expect-cpu-target PORTABLE
           for configuration in Release Debug; do
             cmake -S tools/package_smoke -B "build/package-$configuration" -G Ninja -DCMAKE_BUILD_TYPE="$configuration" -DCMAKE_PREFIX_PATH="$PWD/relocated-prefix" -DCMAKE_FIND_USE_PACKAGE_REGISTRY=OFF
             cmake --build "build/package-$configuration"
@@ -170,6 +184,152 @@ jobs:
           path: |
             ${{ runner.temp }}/reproduced-data/reproduction.json
             ${{ runner.temp }}/reference-models/verification.json
+
+  shared-library:
+    name: Linux GCC (shared-library package)
+    runs-on: ubuntu-24.04
+    env:
+      CC: gcc-13
+      CXX: g++-13
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build gcc-13 g++-13
+      - name: Configure shared library
+        run: >
+          cmake -S . -B build-shared -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          -DOpenNN_DISABLE_CUDA=ON
+          -DOpenNN_ENABLE_MKL=OFF
+          -DOpenNN_ENABLE_LTO=OFF
+          -DOpenNN_CPU_TARGET=PORTABLE
+          -DOpenNN_BUILD_SHARED=ON
+          -DOpenNN_BUILD_VISION=OFF
+          -DOpenNN_BUILD_TESTS=OFF
+          -DOpenNN_BUILD_EXAMPLES=OFF
+          -DOpenNN_BUILD_BENCHMARKS=OFF
+      - name: Build, install and consume shared package
+        run: |
+          cmake --build build-shared --target opennn --parallel
+          cmake --install build-shared --prefix "$PWD/shared-prefix"
+          python tools/check_installed_package.py "$PWD/shared-prefix" --expect-cpu-target PORTABLE
+          cmake -S tools/package_smoke -B build-shared/package -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/shared-prefix" -DCMAKE_FIND_USE_PACKAGE_REGISTRY=OFF -DOpenNN_PACKAGE_EXPECT_NO_VISION=ON
+          cmake --build build-shared/package
+          LD_LIBRARY_PATH="$PWD/shared-prefix/lib:${LD_LIBRARY_PATH:-}" ./build-shared/package/opennn_package_smoke
+
+  macos:
+    name: macOS AppleClang (portable package)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install OpenMP
+        run: brew install libomp ninja
+      - name: Configure portable core
+        run: >
+          cmake -S . -B build-macos -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          -DOpenNN_DISABLE_CUDA=ON
+          -DOpenNN_ENABLE_MKL=OFF
+          -DOpenNN_ENABLE_LTO=OFF
+          -DOpenNN_CPU_TARGET=PORTABLE
+          -DOpenNN_BUILD_VISION=OFF
+          -DOpenNN_BUILD_TESTS=OFF
+          -DOpenNN_BUILD_EXAMPLES=OFF
+          -DOpenNN_BUILD_BENCHMARKS=OFF
+      - name: Build, install and consume package
+        run: |
+          cmake --build build-macos --target opennn --parallel
+          cmake --install build-macos --prefix "$PWD/macos-prefix"
+          python3 tools/check_installed_package.py "$PWD/macos-prefix" --expect-cpu-target PORTABLE
+          cmake -S tools/package_smoke -B build-macos/package -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/macos-prefix" -DCMAKE_FIND_USE_PACKAGE_REGISTRY=OFF -DOpenNN_PACKAGE_EXPECT_NO_VISION=ON
+          cmake --build build-macos/package
+          ./build-macos/package/opennn_package_smoke
+
+  static-analysis:
+    name: Clang static analysis
+    runs-on: ubuntu-24.04
+    env:
+      CC: clang-17
+      CXX: clang++-17
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install analyzer
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build clang-17 clang-tidy-17 libomp-17-dev
+      - name: Configure analysis database
+        run: >
+          cmake -S . -B build-analysis -G Ninja
+          -DCMAKE_BUILD_TYPE=Debug
+          -DOpenNN_DISABLE_CUDA=ON
+          -DOpenNN_ENABLE_MKL=OFF
+          -DOpenNN_ENABLE_LTO=OFF
+          -DCMAKE_DISABLE_PRECOMPILE_HEADERS=ON
+          -DOpenNN_BUILD_VISION=OFF
+          -DOpenNN_BUILD_TESTS=OFF
+          -DOpenNN_BUILD_EXAMPLES=OFF
+          -DOpenNN_BUILD_BENCHMARKS=OFF
+      - name: Reject critical analyzer findings
+        run: |
+          for source in \
+              opennn/core/json.cpp \
+              opennn/core/device_backend.cpp \
+              opennn/core/device_resources.cpp \
+              opennn/network/network_io.cpp \
+              opennn/dataset/tabular_dataset_io.cpp; do
+            clang-tidy-17 "$source" -p build-analysis \
+              --checks='-*,clang-analyzer-core.*,clang-analyzer-cplusplus.NewDelete,clang-analyzer-cplusplus.NewDeleteLeaks,bugprone-use-after-move' \
+              --warnings-as-errors='*'
+          done
+
+  coverage:
+    name: Linux GCC (coverage baseline)
+    runs-on: ubuntu-24.04
+    env:
+      CC: gcc-13
+      CXX: g++-13
+      OPENNN_THREADS: "4"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install coverage toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build gcc-13 g++-13 gcovr
+          python -m pip install numpy==2.4.4 pandas==2.3.3
+      - name: Configure coverage build
+        run: >
+          cmake -S . -B build-coverage -G Ninja
+          -DCMAKE_BUILD_TYPE=RelWithDebInfo
+          -DCMAKE_CXX_FLAGS_RELWITHDEBINFO="--coverage -O0 -g -DNDEBUG"
+          -DCMAKE_EXE_LINKER_FLAGS=--coverage
+          -DOpenNN_DISABLE_CUDA=ON
+          -DOpenNN_ENABLE_MKL=OFF
+          -DOpenNN_ENABLE_LTO=OFF
+          -DOpenNN_CPU_TARGET=PORTABLE
+          -DOpenNN_BUILD_EXAMPLES=OFF
+          -DOpenNN_BUILD_BENCHMARKS=OFF
+      - name: Build and run coverage suite
+        run: |
+          cmake --build build-coverage --target opennn_tests --parallel 2
+          ./build-coverage/bin/opennn_tests
+      - name: Enforce and publish baseline
+        run: |
+          gcovr --root "$PWD" --filter 'opennn/' --exclude 'opennn/core/cuda/' --exclude '.*\.cu$' \
+            --gcov-ignore-parse-errors=negative_hits.warn_once_per_file \
+            --json-summary coverage-summary.json --json-summary-pretty \
+            --html-details coverage.html \
+            --fail-under-line 25 --fail-under-branch 15
+      - name: Preserve coverage report
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-baseline
+          path: |
+            coverage-summary.json
+            coverage*.html
 
   sanitizers:
     name: Linux Clang (ASan, UBSan)
@@ -199,16 +359,18 @@ jobs:
           python-version: "3.12"
       - name: Install model export test dependencies
         run: python -m pip install numpy==2.4.4 pandas==2.3.3
-      - name: Configure sanitizers
-        run: cmake --preset verify-sanitizers -B build-sanitizers
+      - name: Configure sanitizers and JSON fuzzer
+        run: cmake --preset verify-sanitizers -B build-sanitizers -DOpenNN_BUILD_FUZZERS=ON
       - name: Build both test executables
         run: |
           nproc
           free -h
           /usr/bin/time -v -o build-sanitizers/build-resources.txt \
-            cmake --build build-sanitizers --target opennn_tests opennn_response_tests --parallel 2
+            cmake --build build-sanitizers --target opennn_tests opennn_response_tests opennn_json_fuzz --parallel 2
       - name: Check memory and undefined behavior
         run: ctest --test-dir build-sanitizers --output-on-failure
+      - name: Fuzz strict JSON parsing
+        run: ./build-sanitizers/bin/opennn_json_fuzz -runs=20000 -max_len=8192 tools/fuzz/corpus
       - name: Preserve test log
         if: always()
         continue-on-error: true
@@ -283,6 +445,7 @@ jobs:
           cmake -S . -B build -G "Visual Studio 17 2022" -A x64
           -DOpenNN_DISABLE_CUDA=ON
           -DOpenNN_ENABLE_MKL=OFF
+          -DOpenNN_CPU_TARGET=PORTABLE
           -DOpenNN_BUILD_EXAMPLES=OFF
           -DOpenNN_BUILD_BENCHMARKS=OFF
 
@@ -298,7 +461,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           cmake -E rename "$pwd/prefix" "$pwd/relocated-prefix"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          python tools/check_installed_package.py "$pwd/relocated-prefix"
+          python tools/check_installed_package.py "$pwd/relocated-prefix" --expect-cpu-target PORTABLE
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           cmake -S tools/package_smoke -B build/package -G "Visual Studio 17 2022" -A x64 -DCMAKE_PREFIX_PATH="$pwd/relocated-prefix" -DCMAKE_FIND_USE_PACKAGE_REGISTRY=OFF
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

@@ -18,9 +18,35 @@
 #include <cstring>
 #include <fstream>
 #include <limits>
+#if defined(__APPLE__) && defined(_LIBCPP_VERSION)
+#include <locale>
+#include <sstream>
+#endif
 
 namespace opennn
 {
+
+namespace
+{
+
+bool parse_double_exact(std::string_view text, double& value)
+{
+#if defined(__APPLE__) && defined(_LIBCPP_VERSION)
+    // Xcode 16's libc++ declares floating-point from_chars but does not
+    // implement it. The classic locale preserves JSON's decimal grammar.
+    std::istringstream stream{std::string(text)};
+    stream.imbue(std::locale::classic());
+    stream >> std::noskipws >> value;
+    return stream.eof() && !stream.fail();
+#else
+    const char* const first = text.data();
+    const char* const last = first + text.size();
+    const auto [end, error] = std::from_chars(first, last, value);
+    return error == std::errc{} && end == last;
+#endif
+}
+
+}
 
 Json Json::make_object()
 {
@@ -158,10 +184,7 @@ double Json::as_double() const
         const std::string& string = std::get<std::string>(value);
         if (string.empty()) return 0.0;
         double number = 0.0;
-        const char* const first = string.data();
-        const char* const last = first + string.size();
-        const auto [end, error] = std::from_chars(first, last, number);
-        throw_if(error != std::errc{} || end != last,
+        throw_if(!parse_double_exact(string, number),
                  "JSON: invalid numeric value '{}'", string);
         return number;
     }
@@ -290,8 +313,12 @@ std::string Json::dump(int indent) const
 
 namespace {
 
+constexpr std::size_t max_json_input_bytes = std::size_t(256) * 1024 * 1024;
+
 struct Parser
 {
+    static constexpr std::size_t max_nesting_depth = 256;
+
     std::string_view s;
     std::size_t position = 0;
 
@@ -336,6 +363,55 @@ struct Parser
         return true;
     }
 
+    void append_unescaped_utf8(std::string& out, char first)
+    {
+        const unsigned char lead = static_cast<unsigned char>(first);
+        if (lead < 0x80)
+        {
+            out.push_back(first);
+            return;
+        }
+
+        unsigned continuation_count = 0;
+        unsigned code_point = 0;
+        unsigned minimum = 0;
+        if (lead >= 0xC2 && lead <= 0xDF)
+        {
+            continuation_count = 1;
+            code_point = lead & 0x1F;
+            minimum = 0x80;
+        }
+        else if (lead >= 0xE0 && lead <= 0xEF)
+        {
+            continuation_count = 2;
+            code_point = lead & 0x0F;
+            minimum = 0x800;
+        }
+        else if (lead >= 0xF0 && lead <= 0xF4)
+        {
+            continuation_count = 3;
+            code_point = lead & 0x07;
+            minimum = 0x10000;
+        }
+        else
+        {
+            fail("invalid UTF-8 in string");
+        }
+
+        const std::size_t sequence_start = position - 1;
+        if (position + continuation_count > s.size()) fail("truncated UTF-8 in string");
+        for (unsigned i = 0; i < continuation_count; ++i)
+        {
+            const unsigned char byte = static_cast<unsigned char>(s[position++]);
+            if ((byte & 0xC0) != 0x80) fail("invalid UTF-8 continuation byte in string");
+            code_point = (code_point << 6) | (byte & 0x3F);
+        }
+        if (code_point < minimum || code_point > 0x10FFFF
+            || (code_point >= 0xD800 && code_point <= 0xDFFF))
+            fail("invalid UTF-8 code point in string");
+        out.append(s.substr(sequence_start, continuation_count + 1));
+    }
+
     std::string parse_string()
     {
         if (consume() != '"') fail("expected '\"'");
@@ -347,7 +423,9 @@ struct Parser
 
             if (c != '\\')
             {
-                out.push_back(c);
+                if (static_cast<unsigned char>(c) < 0x20)
+                    fail("unescaped control character in string");
+                append_unescaped_utf8(out, c);
                 continue;
             }
 
@@ -385,18 +463,18 @@ struct Parser
 
                 unsigned code = read_four_hex();
 
-                if (code >= 0xD800 && code <= 0xDBFF
-                    && position + 1 < s.size() && s[position] == '\\' && s[position + 1] == 'u')
+                if (code >= 0xD800 && code <= 0xDBFF)
                 {
-                    const size_t saved_position = position;
+                    if (position + 1 >= s.size() || s[position] != '\\' || s[position + 1] != 'u')
+                        fail("unpaired high surrogate in \\u escape");
                     position += 2;
                     const unsigned low = read_four_hex();
-
-                    if (low >= 0xDC00 && low <= 0xDFFF)
-                        code = 0x10000 + ((code - 0xD800) << 10) + (low - 0xDC00);
-                    else
-                        position = saved_position;
+                    if (low < 0xDC00 || low > 0xDFFF)
+                        fail("unpaired high surrogate in \\u escape");
+                    code = 0x10000 + ((code - 0xD800) << 10) + (low - 0xDC00);
                 }
+                else if (code >= 0xDC00 && code <= 0xDFFF)
+                    fail("unpaired low surrogate in \\u escape");
 
                 append_utf8(out, code);
                 break;
@@ -412,28 +490,44 @@ struct Parser
         skip_ws();
         const std::size_t start = position;
         if (position < s.size() && s[position] == '-') ++position;
-        while (position < s.size() && std::isdigit(static_cast<unsigned char>(s[position]))) ++position;
-        if (position < s.size() && s[position] == '.') { ++position; while (position < s.size() && std::isdigit(static_cast<unsigned char>(s[position]))) ++position; }
+        if (position >= s.size()) fail("bad number");
+        if (s[position] == '0')
+        {
+            ++position;
+            if (position < s.size() && std::isdigit(static_cast<unsigned char>(s[position])))
+                fail("leading zero in number");
+        }
+        else
+        {
+            if (s[position] < '1' || s[position] > '9') fail("bad number");
+            while (position < s.size() && std::isdigit(static_cast<unsigned char>(s[position]))) ++position;
+        }
+        if (position < s.size() && s[position] == '.')
+        {
+            ++position;
+            if (position >= s.size() || !std::isdigit(static_cast<unsigned char>(s[position])))
+                fail("fraction requires a digit");
+            while (position < s.size() && std::isdigit(static_cast<unsigned char>(s[position]))) ++position;
+        }
         if (position < s.size() && is_one_of(s[position], 'e', 'E'))
         {
             ++position;
             if (position < s.size() && is_one_of(s[position], '+', '-')) ++position;
+            if (position >= s.size() || !std::isdigit(static_cast<unsigned char>(s[position])))
+                fail("exponent requires a digit");
             while (position < s.size() && std::isdigit(static_cast<unsigned char>(s[position]))) ++position;
         }
         double value = 0.0;
-        const char* const first = s.data() + start;
-        const char* const last = s.data() + position;
-        const auto [ptr, ec] = std::from_chars(first, last, value);
-        if (ec != std::errc() || ptr != last) fail("bad number");
+        if (!parse_double_exact(s.substr(start, position - start), value)) fail("bad number");
         return Json(value);
     }
 
-    Json parse_value()
+    Json parse_value(std::size_t depth = 0)
     {
         const char c = peek();
         if (c == '"') return Json(parse_string());
-        if (c == '{') return parse_object();
-        if (c == '[') return parse_array();
+        if (c == '{') return parse_object(depth);
+        if (c == '[') return parse_array(depth);
         if (c == '-' || std::isdigit(static_cast<unsigned char>(c))) return parse_number();
         if (match("true"))  return Json(true);
         if (match("false")) return Json(false);
@@ -441,8 +535,9 @@ struct Parser
         fail(std::format("unexpected character '{}'", c));
     }
 
-    Json parse_object()
+    Json parse_object(std::size_t depth)
     {
+        if (depth >= max_nesting_depth) fail("maximum nesting depth exceeded");
         if (consume() != '{') fail("expected '{'");
         Json j = Json::make_object();
         skip_ws();
@@ -453,7 +548,7 @@ struct Parser
             skip_ws();
             if (position >= s.size() || s[position] != ':') fail("expected ':'");
             ++position;
-            j.as_object().emplace_back(std::move(key), parse_value());
+            j.as_object().emplace_back(std::move(key), parse_value(depth + 1));
             skip_ws();
             if (position < s.size() && s[position] == ',') { ++position; continue; }
             if (position < s.size() && s[position] == '}') { ++position; return j; }
@@ -461,15 +556,16 @@ struct Parser
         }
     }
 
-    Json parse_array()
+    Json parse_array(std::size_t depth)
     {
+        if (depth >= max_nesting_depth) fail("maximum nesting depth exceeded");
         if (consume() != '[') fail("expected '['");
         Json j = Json::make_array();
         skip_ws();
         if (position < s.size() && s[position] == ']') { ++position; return j; }
         while (true)
         {
-            j.push_back(parse_value());
+            j.push_back(parse_value(depth + 1));
             skip_ws();
             if (position < s.size() && s[position] == ',') { ++position; continue; }
             if (position < s.size() && s[position] == ']') { ++position; return j; }
@@ -482,6 +578,8 @@ struct Parser
 
 Json Json::parse(std::string_view text)
 {
+    throw_if(text.size() > max_json_input_bytes,
+             "JSON parse: input exceeds the 256 MiB safety limit");
     if (text.starts_with("\xEF\xBB\xBF")) text.remove_prefix(3);
 
     Parser p(text);
@@ -493,6 +591,10 @@ Json Json::parse(std::string_view text)
 }
 void JsonDocument::load(const std::filesystem::path& path)
 {
+    std::error_code error;
+    const std::uintmax_t byte_count = std::filesystem::file_size(path, error);
+    throw_if(!error && byte_count > max_json_input_bytes,
+             "JSON file exceeds the 256 MiB safety limit: {}", path.string());
     root = Json::parse(read_text_file(path));
 }
 

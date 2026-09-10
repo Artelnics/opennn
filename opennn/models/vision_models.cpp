@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "opennn/models/models.h"
+#include "opennn/core/log.h"
 
 #include <utility>
 
@@ -1172,7 +1173,7 @@ DarknetFile open_darknet_weights(const filesystem::path& weights_path, const cha
     throw_if(fread(&seen, sizeof(int64_t), 1, file.get()) != 1,
              "{}: failed to read header seen.", who);
 
-    cout << "Darknet weights header: major=" << header[0]
+    logging::info() << "Darknet weights header: major=" << header[0]
          << " minor=" << header[1]
          << " revision=" << header[2]
          << " seen=" << seen << "\n";
@@ -1198,7 +1199,7 @@ Index load_darknet_backbone(Network& network,
 
         conv->load_darknet_weights(f);
         ++loaded;
-        cout << format("Loaded backbone conv {}/{} from {}\n", loaded, n_backbone_convs, weights_path.string());
+        logging::info() << format("Loaded backbone conv {}/{} from {}\n", loaded, n_backbone_convs, weights_path.string());
     }
 
     return loaded;
@@ -1238,7 +1239,7 @@ Index load_darknet_backbone_v11(Network& network,
 
         it->second->load_darknet_weights(f);
         ++loaded;
-        cout << "Loaded pretrained downsampling conv \"" << label << "\" from yolov4.conv.137\n";
+        logging::info() << "Loaded pretrained downsampling conv \"" << label << "\" from yolov4.conv.137\n";
     }
 
     return loaded;

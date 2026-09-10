@@ -10,7 +10,9 @@ cpack --config /absolute/path/to/build/CPackConfig.cmake -C Release -G TGZ -B ..
 ```
 
 The archive name contains `9.0.0-candidate`, the system, target processor and
-CPU/CUDA backend. Each archive has a SHA-256 companion file. Its installed
+CPU target and CPU/CUDA backend. Release binaries must be configured with
+`OpenNN_CPU_TARGET=PORTABLE`; native remains the default for local maximum
+throughput. Each archive has a SHA-256 companion file. Its installed
 `share/doc/OpenNN/build-info.json` records the library version, compiler/version,
 configuration, CUDA, shared-library and LTO settings. The installation includes
 OpenNN's LGPL/GPL licence texts, release/migration documentation, libjpeg-turbo
@@ -36,6 +38,9 @@ with LTO also requires the matching compiler/linker support.
 
 These are binary installation archives. They exclude example datasets and model
 assets. They do not certify the separate GitHub source archive's dataset rights,
-historical model compatibility, or publication approval. Record the source commit,
+historical model compatibility, or full-source publication approval. Run
+`python tools/check_release_scope.py --package-kind binary` before packaging;
+the full-source scope intentionally remains blocked while tracked assets have
+unresolved redistribution records. Record the source commit,
 archive checksums, toolchain and actual consumer results in RELEASE_VERIFICATION.md
 before promotion. CPack does not create a Git tag or GitHub release.

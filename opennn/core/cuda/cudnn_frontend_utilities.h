@@ -11,6 +11,7 @@
 #ifdef OPENNN_HAS_CUDA
 
 #include <cudnn_frontend.h>
+#include "opennn/core/log.h"
 
 #include <algorithm>
 #include <filesystem>
@@ -113,7 +114,7 @@ inline profiler::Stats& graph_timing_stats()
         atexit(+[] {
             profiler::Stats& stats = graph_timing_stats();
             const double total_ms = stats.total_ms();
-            stats.print(cerr,
+            stats.log(
                         format("total_gpu_ms={:.1f}", total_ms),
                         total_ms,
                         "GRAPH_TIMING");
@@ -168,7 +169,7 @@ bool run_frontend(GraphCache& cache, const char* label, Body&& body)
     catch (const exception& e)
     {
         cache.disabled = true;
-        cerr << label << ": cudnn-frontend path unavailable (" << e.what() << ").\n";
+        logging::warning() << label << ": cudnn-frontend path unavailable (" << e.what() << ").\n";
         return false;
     }
 }
@@ -423,7 +424,7 @@ inline std::filesystem::path plan_cache_file(const graph::Graph& graph)
     {
         static std::once_flag reported;
         std::call_once(reported, []{
-            std::cerr << "cudnn plan cache: this cuDNN build cannot serialise "
+            logging::warning() << "cudnn plan cache: this cuDNN build cannot serialise "
                          "execution plans; continuing without the cache.\n"; });
         return {};
     }
@@ -720,7 +721,7 @@ inline bool finalize(graph::Graph& graph, int64_t& workspace_bytes, const string
 
 inline void report_autotune_skipped(const char* tag, const char* reason)
 {
-    cerr << (tag ? tag : "autotune")
+    logging::warning() << (tag ? tag : "autotune")
          << ": autotune skipped, keeping the heuristic plan (" << reason << ").\n";
 }
 
@@ -837,14 +838,15 @@ inline void select_plan_by_energy(graph::Graph& graph, TensorMap& tensors, void*
         string chosen_name, fastest_name;
         (void)graph.get_plan_name_at_index(chosen->index, chosen_name);
         (void)graph.get_plan_name_at_index(baseline->index, fastest_name);
-        cerr << (tag ? tag : "conv") << ": energy autotune over " << admissible.size() << " of "
+        auto message = logging::info();
+        message << (tag ? tag : "conv") << ": energy autotune over " << admissible.size() << " of "
              << timed.size() << " plans: "
              << (chosen == baseline ? "kept the fastest " : "chose ") << chosen_name
              << " (" << chosen->microseconds << " us, " << chosen->millijoules << " mJ)";
         if (chosen != baseline)
-            cerr << " over " << fastest_name << " (" << baseline->microseconds << " us, "
+            message << " over " << fastest_name << " (" << baseline->microseconds << " us, "
                  << baseline->millijoules << " mJ)";
-        cerr << "\n";
+        message << "\n";
     }
 
     if (chosen != baseline)
