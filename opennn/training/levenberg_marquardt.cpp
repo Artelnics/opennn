@@ -1,9 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/training/levenberg_marquardt.h"
 
@@ -414,7 +410,3 @@ BackPropagationLM::BackPropagationLM(const Index new_samples_number, Loss* new_l
     hessian                 = MatrixR::Zero(parameters_number, parameters_number);
 }
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

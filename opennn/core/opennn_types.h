@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   P U B L I C   T Y P E S   A N D   C O N F I G U R A T I O N
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #pragma once
 #ifndef OPENNN_TYPES_H_
@@ -322,7 +317,3 @@ template <int Rank>
 using TensorMapR = Eigen::TensorMap<Eigen::Tensor<float, Rank, Layout | Eigen::AlignedMax>, Eigen::AlignedMax>;
 
 #endif
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

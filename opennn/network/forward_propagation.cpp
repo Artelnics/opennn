@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   F O R W A R D   P R O P A G A T I O N   S O U R C E
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/network/forward_propagation.h"
 #include "opennn/registry.h"
@@ -184,6 +179,131 @@ static vector<Index> find_early_output_release_steps(
     return release_steps;
 }
 
+struct ForwardCapacities
+{
+    Index sequence = 0;
+    Index output = 0;
+    Index output_layer = -1;
+};
+
+static ForwardCapacities apply_inference_shape_policy(
+    vector<vector<TensorSpec>>& specs,
+    const Shape& input_shape,
+    const InferenceShapePolicy& policy)
+{
+    const Index model_sequence = input_shape.empty() ? 0 : input_shape[0];
+    ForwardCapacities result;
+    result.sequence = policy.sequence_capacity > 0 ? policy.sequence_capacity : model_sequence;
+
+    throw_if(policy.sequence_capacity > model_sequence,
+             "ForwardPropagation::set: sequence capacity {} exceeds the network capacity {}.",
+             policy.sequence_capacity, model_sequence);
+
+    if(policy.sequence_capacity > 0)
+        for(auto& layer_specs : specs)
+            for(TensorSpec& spec : layer_specs)
+                if(spec.shape.get_rank() >= 2 && spec.shape[1] == model_sequence)
+                    spec.shape.set_dimension(1, result.sequence);
+
+    for(const size_t i : views::iota(size_t(0), specs.size()) | views::reverse)
+        if(!specs[i].empty())
+        {
+            result.output_layer = Index(i);
+            break;
+        }
+
+    result.output = policy.final_output_capacity > 0
+                  ? policy.final_output_capacity
+                  : result.sequence;
+
+    throw_if(policy.final_output_capacity > 0 && policy.sequence_capacity <= 0,
+             "ForwardPropagation::set: final_output_capacity requires an explicit sequence_capacity.");
+    throw_if(result.output > result.sequence,
+             "ForwardPropagation::set: final output capacity {} exceeds sequence capacity {}.",
+             result.output, result.sequence);
+
+    if(policy.final_output_capacity > 0 && result.output_layer >= 0)
+    {
+        TensorSpec& output = specs[size_t(result.output_layer)].back();
+        throw_if(output.shape.get_rank() < 2 || output.shape[1] != result.sequence,
+                 "ForwardPropagation::set: final output does not expose a sequence dimension compatible with compact inference.");
+        output.shape.set_dimension(1, result.output);
+    }
+
+    return result;
+}
+
+static void elide_inference_slots(const vector<unique_ptr<Layer>>& layers,
+                                  vector<vector<TensorSpec>>& specs,
+                                  Device device,
+                                  Index batch_size)
+{
+    for(size_t i = 0; i < layers.size(); ++i)
+    {
+#ifndef OPENNN_NO_VISION
+        const auto* attention = dynamic_cast<const GroupedQueryAttention*>(layers[i].get());
+#endif
+        for(size_t j = 0; j < specs[i].size(); ++j)
+        {
+            bool elidable = layers[i]->get_forward_slot_kind(j + 1) == ForwardSlotKind::TrainingOnly
+                         || layers[i]->is_forward_slot_inference_elidable(j + 1, device);
+#ifndef OPENNN_NO_VISION
+            elidable = elidable
+                    || (attention && attention->is_forward_slot_inference_elidable(j + 1, device, batch_size));
+#endif
+            if(elidable) specs[i][j] = {};
+        }
+    }
+}
+
+static vector<Index> find_inference_output_release_steps(
+    const vector<vector<TensorSpec>>& specs,
+    const vector<vector<Index>>& sources,
+    span<const Index> retained_outputs,
+    Index last_trainable_layer)
+{
+    const size_t layers_number = specs.size();
+    const Index final_step = layers_number == 0 ? 0 : Index(layers_number - 1);
+    vector<Index> last_consumers(layers_number);
+    vector<bool> has_consumers(layers_number, false);
+    iota(last_consumers.begin(), last_consumers.end(), Index(0));
+
+    for(size_t consumer = 0; consumer < layers_number; ++consumer)
+        for(const Index source : sources[consumer])
+        {
+            const Index producer = resolve_producer(specs, sources, source);
+            if(producer < 0) continue;
+            has_consumers[size_t(producer)] = true;
+            last_consumers[size_t(producer)] = max(last_consumers[size_t(producer)], Index(consumer));
+        }
+
+    vector<bool> observable(layers_number, false);
+    for(size_t i = 0; i < layers_number; ++i)
+        observable[i] = !has_consumers[i];
+
+    const auto retain = [&](Index layer)
+    {
+        if(layer < 0 || size_t(layer) >= layers_number) return;
+        const Index producer = resolve_producer(specs, sources, layer);
+        if(producer >= 0) observable[size_t(producer)] = true;
+    };
+
+    retain(Index(layers_number) - 1);
+    retain(last_trainable_layer);
+    for(const Index retained : retained_outputs)
+    {
+        throw_if(retained < 0 || size_t(retained) >= layers_number,
+                 "ForwardPropagation::set: retained output layer {} is out of range (network has {} layers).",
+                 retained, layers_number);
+        retain(retained);
+    }
+
+    for(size_t i = 0; i < layers_number; ++i)
+        last_consumers[i] = observable[i] ? final_step : last_consumers[i];
+
+    return last_consumers;
+}
+
 ForwardPropagation::ForwardPropagation(const Index new_batch_size,
                                        Network* new_network,
                                        const ForwardPropagationMode new_mode,
@@ -316,77 +436,11 @@ void ForwardPropagation::set(
     for (Index i = 0; i < execution_start_layer; ++i)
         forward_specs[size_t(i)].clear();
 
-    const Shape model_input_shape = network->get_input_shape();
-
-    const Index model_sequence_capacity =
-        model_input_shape.empty() ? Index(0) : model_input_shape[0];
-
-    sequence_capacity =
-        new_shape_policy.sequence_capacity > 0
-        ? new_shape_policy.sequence_capacity
-        : model_sequence_capacity;
-
-    throw_if(new_shape_policy.sequence_capacity > model_sequence_capacity,
-             "ForwardPropagation::set: sequence capacity {} exceeds the "
-             "network capacity {}.",
-             new_shape_policy.sequence_capacity,
-             model_sequence_capacity);
-
-    if(new_shape_policy.sequence_capacity > 0)
-    {
-        for(auto& layer_specs : forward_specs)
-        {
-            for(TensorSpec& spec : layer_specs)
-            {
-                if(spec.shape.get_rank() >= 2
-                   && spec.shape[1] == model_sequence_capacity)
-                {
-                    spec.shape.set_dimension(1, sequence_capacity);
-                }
-            }
-        }
-    }
-
-    final_output_layer = -1;
-
-    for(const size_t i :
-        views::iota(size_t(0), layers_number) | views::reverse)
-    {
-        if(forward_specs[i].empty()) continue;
-
-        final_output_layer = Index(i);
-        break;
-    }
-
-    final_output_capacity =
-        new_shape_policy.final_output_capacity > 0
-        ? new_shape_policy.final_output_capacity
-        : sequence_capacity;
-
-    throw_if(new_shape_policy.final_output_capacity > 0
-             && new_shape_policy.sequence_capacity <= 0,
-             "ForwardPropagation::set: final_output_capacity requires an "
-             "explicit sequence_capacity.");
-
-    throw_if(final_output_capacity > sequence_capacity,
-             "ForwardPropagation::set: final output capacity {} exceeds "
-             "sequence capacity {}.",
-             final_output_capacity,
-             sequence_capacity);
-
-    if(new_shape_policy.final_output_capacity > 0
-       && final_output_layer >= 0)
-    {
-        TensorSpec& output_spec =
-            forward_specs[size_t(final_output_layer)].back();
-
-        throw_if(output_spec.shape.get_rank() < 2
-                 || output_spec.shape[1] != sequence_capacity,
-                 "ForwardPropagation::set: final output does not expose a "
-                 "sequence dimension compatible with compact inference.");
-
-        output_spec.shape.set_dimension(1, final_output_capacity);
-    }
+    const ForwardCapacities capacities = apply_inference_shape_policy(
+        forward_specs, network->get_input_shape(), new_shape_policy);
+    sequence_capacity = capacities.sequence;
+    final_output_capacity = capacities.output;
+    final_output_layer = capacities.output_layer;
 
     recomputable_slots.assign(layers_number, SIZE_MAX);
 
@@ -404,35 +458,7 @@ void ForwardPropagation::set(
     }
 
     if(!is_training(mode))
-    {
-        for(size_t i = 0; i < layers_number; ++i)
-        {
-#ifndef OPENNN_NO_VISION
-            const auto* attention = dynamic_cast<const GroupedQueryAttention*>(layers[i].get());
-#endif
-            for(size_t j = 0; j < forward_specs[i].size(); ++j)
-            {
-#ifndef OPENNN_NO_VISION
-                if(layers[i]->get_forward_slot_kind(j + 1)
-                       == ForwardSlotKind::TrainingOnly
-                   || layers[i]->is_forward_slot_inference_elidable(
-                          j + 1,
-                          network->get_device())
-                   || (attention && attention->is_forward_slot_inference_elidable(
-                          j + 1, network->get_device(), batch_size)))
-#else
-                if(layers[i]->get_forward_slot_kind(j + 1)
-                       == ForwardSlotKind::TrainingOnly
-                   || layers[i]->is_forward_slot_inference_elidable(
-                          j + 1,
-                          network->get_device()))
-#endif
-                {
-                    forward_specs[i][j] = {};
-                }
-            }
-        }
-    }
+        elide_inference_slots(layers, forward_specs, network->get_device(), batch_size);
 
     const auto is_transient_slot =
         [&](const size_t layer, const size_t slot)
@@ -777,102 +803,16 @@ void ForwardPropagation::set(
     }
     else
     {
-        const Index final_step =
-            layers_number == 0
-            ? 0
-            : Index(layers_number - 1);
-
-        vector<Index> last_consumers(layers_number);
-        vector<bool> has_consumers(layers_number, false);
-
-        iota(
-            last_consumers.begin(),
-            last_consumers.end(),
-            Index(0));
-
-        for(size_t consumer = 0;
-            consumer < layers_number;
-            ++consumer)
-        {
-            for(const Index source_layer :
-                source_layers[consumer])
-            {
-                const Index producer =
-                    resolve_producer(
-                        forward_specs,
-                        source_layers,
-                        source_layer);
-
-                if(producer < 0) continue;
-
-                has_consumers[size_t(producer)] = true;
-
-                last_consumers[size_t(producer)] =
-                    max(last_consumers[size_t(producer)],
-                        Index(consumer));
-            }
-        }
-
-        vector<bool> externally_observable(
-            layers_number,
-            false);
-
-        for(size_t i = 0; i < layers_number; ++i)
-        {
-            if(!has_consumers[i])
-            {
-                externally_observable[i] = true;
-            }
-        }
-
-        const auto mark_resolved_output =
-            [&](const Index layer_index)
-        {
-            if(layer_index < 0
-               || size_t(layer_index) >= layers_number)
-            {
-                return;
-            }
-
-            const Index producer =
-                resolve_producer(
-                    forward_specs,
-                    source_layers,
-                    layer_index);
-
-            if(producer >= 0)
-                externally_observable[size_t(producer)] = true;
-        };
-
-        mark_resolved_output(
-            Index(layers_number) - 1);
-
-        mark_resolved_output(
+        const vector<Index> inference_release_steps = find_inference_output_release_steps(
+            forward_specs,
+            source_layers,
+            new_shape_policy.retained_output_layers,
             network->get_last_trainable_layer_index());
-
-        for(const Index retained :
-            new_shape_policy.retained_output_layers)
-        {
-            throw_if(
-                retained < 0
-                || size_t(retained) >= layers_number,
-                "ForwardPropagation::set: retained output layer {} is out "
-                "of range (network has {} layers).",
-                retained,
-                layers_number);
-
-            mark_resolved_output(retained);
-        }
 
         collect_pooled_slots(
             [&](const size_t i, const bool is_output)
             {
-                if(!is_output)
-                    return Index(i);
-
-                return externally_observable[i]
-                    ? final_step
-                    : last_consumers[i];
+                return is_output ? inference_release_steps[i] : Index(i);
             });
 
         apply_pool_plan([&]
@@ -1414,7 +1354,3 @@ ForwardPropagation::get_cuda_graph_workspace_views() const noexcept
 }
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

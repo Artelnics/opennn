@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   P A R A L L E L   A L G O R I T H M S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #pragma once
 #ifndef OPENNN_PARALLEL_ALGORITHMS_H_
@@ -71,7 +66,3 @@ void nth_element_parallel_if_large(Iterator first, Iterator nth, Iterator last,
 }
 
 #endif
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

@@ -50,6 +50,13 @@ jobs:
             exit 1
           fi
 
+      - name: Enforce code size and architecture
+        run: |
+          python -m pip install -r tools/code-quality-requirements.txt
+          python tools/check_code_quality.py
+          python tools/check_architecture.py
+          python -m unittest discover -s tests -p benchmark_runner_test.py
+
       - name: Reject a toolchain without OpenMP
         run: |
           if cmake -S . -B build-no-openmp -G Ninja \
@@ -277,8 +284,13 @@ jobs:
               opennn/core/json.cpp \
               opennn/core/device_backend.cpp \
               opennn/core/device_resources.cpp \
+              opennn/network/forward_propagation.cpp \
               opennn/network/network_io.cpp \
-              opennn/dataset/tabular_dataset_io.cpp; do
+              opennn/network/layers/scaling_layer.cpp \
+              opennn/dataset/tabular_dataset_io.cpp \
+              opennn/response_optimization/expression_evaluator.cpp \
+              opennn/response_optimization/genetic_response.cpp \
+              opennn/training/optimizer.cpp; do
             clang-tidy-17 "$source" -p build-analysis \
               --checks='-*,clang-analyzer-core.*,clang-analyzer-cplusplus.NewDelete,clang-analyzer-cplusplus.NewDeleteLeaks,bugprone-use-after-move' \
               --warnings-as-errors='*'
@@ -320,7 +332,8 @@ jobs:
             --gcov-ignore-parse-errors=negative_hits.warn_once_per_file \
             --json-summary coverage-summary.json --json-summary-pretty \
             --html-details coverage.html \
-            --fail-under-line 25 --fail-under-branch 15
+            --fail-under-line 70 --fail-under-branch 35
+          python tools/check_coverage.py coverage-summary.json
       - name: Preserve coverage report
         if: always()
         continue-on-error: true

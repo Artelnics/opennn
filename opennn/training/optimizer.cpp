@@ -1,10 +1,5 @@
-﻿//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   O P T I M I Z E R   C L A S S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/training/optimizer.h"
 
@@ -1859,44 +1854,43 @@ Loss::EvaluationResult Optimizer::run_epoch_loop(EpochLoopContext& context)
 
 struct EpochBatches
 {
+    EpochBatches(const vector<vector<Index>>& batches, Index batch_size)
+        : all(batches), complete(&batches)
+    {
+        if (Index(batches.back().size()) == batch_size) return;
+
+        trimmed.assign(batches.begin(), batches.end() - 1);
+        complete = &trimmed;
+    }
+
+    bool has_tail() const { return complete != &all; }
     vector<vector<Index>> trimmed;
-    const vector<vector<Index>>* whole = nullptr;
-    bool has_tail = false;
+    const vector<vector<Index>>& all;
+    const vector<vector<Index>>* complete;
 
-    Index number() const { return Index(whole->size()); }
+    const vector<vector<Index>>& batches() const { return *complete; }
+    const vector<Index>& tail() const { return all.back(); }
+    Index number() const { return Index(complete->size()); }
+
+    void merge_tail(Loss::EvaluationResult& result,
+                    const Loss::EvaluationResult& tail_result,
+                    Index batch_size,
+                    bool tracks_accuracy) const
+    {
+        const float complete_samples = float(number() * batch_size);
+        const float tail_samples = float(tail().size());
+        const float total_samples = complete_samples + tail_samples;
+
+        result.error = (result.error * complete_samples
+                        + tail_result.error * tail_samples) / total_samples;
+
+        if (tracks_accuracy)
+            result.accuracy = (result.accuracy * complete_samples
+                               + tail_result.accuracy * tail_samples) / total_samples;
+
+        result.active_tokens_count += tail_result.active_tokens_count;
+    }
 };
-
-static EpochBatches split_off_tail(const vector<vector<Index>>& batches, Index batch_size)
-{
-    EpochBatches split;
-
-    split.has_tail = Index(batches.back().size()) != batch_size;
-
-    if (split.has_tail)
-        split.trimmed.assign(batches.begin(), batches.end() - 1);
-
-    split.whole = split.has_tail ? &split.trimmed : &batches;
-
-    return split;
-}
-
-static void merge_tail_result(Loss::EvaluationResult& result,
-                              const Loss::EvaluationResult& tail_result,
-                              const Index complete_samples,
-                              const Index tail_samples,
-                              const bool tracks_accuracy)
-{
-    const float total_samples = float(complete_samples + tail_samples);
-
-    result.error = (result.error * float(complete_samples)
-                    + tail_result.error * float(tail_samples)) / total_samples;
-
-    if (tracks_accuracy)
-        result.accuracy = (result.accuracy * float(complete_samples)
-                           + tail_result.accuracy * float(tail_samples)) / total_samples;
-
-    result.active_tokens_count += tail_result.active_tokens_count;
-}
 
 Loss::EvaluationResult Optimizer::train_epoch(
     TrainingContext& main_context,
@@ -1912,14 +1906,10 @@ Loss::EvaluationResult Optimizer::train_epoch(
     BackPropagation& back_propagation = main_context.backward;
 
     Network* network = loss->get_network();
-    const Index all_batches_number = Index(batches.size());
+    if(batches.empty()) return epoch_result;
 
-    if(all_batches_number == 0) return epoch_result;
-
-    const EpochBatches split = split_off_tail(batches, forward_propagation.batch_size);
-    const bool has_tail = split.has_tail;
-    const vector<vector<Index>>& epoch_batches = *split.whole;
-    const Index batches_number = split.number();
+    const EpochBatches epoch_batches(batches, forward_propagation.batch_size);
+    const Index batches_number = epoch_batches.number();
 
     const bool tracks_accuracy = loss->get_error() == Loss::Error::CrossEntropy3d;
     const bool on_gpu = network->is_gpu();
@@ -1951,9 +1941,9 @@ Loss::EvaluationResult Optimizer::train_epoch(
     const auto train_tail = [&]
     {
         Loss::EvaluationResult result;
-        if(!has_tail) return result;
+        if(!epoch_batches.has_tail()) return result;
 
-        const vector<Index>& sample_indices = batches.back();
+        const vector<Index>& sample_indices = epoch_batches.tail();
         const Index tail_size = Index(sample_indices.size());
 
         TrainingSession::TailContext& tail = training_session.tail;
@@ -2070,13 +2060,12 @@ Loss::EvaluationResult Optimizer::train_epoch(
 
     const auto merge_tail = [&](Loss::EvaluationResult& result)
     {
-        if(!has_tail) return;
+        if(!epoch_batches.has_tail()) return;
 
         const Loss::EvaluationResult tail_result = train_tail();
-        merge_tail_result(result, tail_result,
-                          batches_number * forward_propagation.batch_size,
-                          Index(batches.back().size()),
-                          tracks_accuracy);
+        epoch_batches.merge_tail(result, tail_result,
+                                 forward_propagation.batch_size,
+                                 tracks_accuracy);
 
         back_propagation.metrics.error = result.error;
         back_propagation.metrics.accuracy = result.accuracy;
@@ -2093,7 +2082,7 @@ Loss::EvaluationResult Optimizer::train_epoch(
         {
             {
                 PROFILE_SCOPE_HOST("step:fill");
-                batch->fill(epoch_batches[size_t(iteration)], features, FillMode::Training);
+                batch->fill(epoch_batches.batches()[size_t(iteration)], features, FillMode::Training);
             }
 
             {
@@ -2146,7 +2135,7 @@ Loss::EvaluationResult Optimizer::train_epoch(
                                        forward_propagation,
                                        back_propagation,
                                        empty_queue,
-                                       epoch_batches,
+                                       epoch_batches.batches(),
                                        features);
 
         merge_tail(epoch_result);
@@ -2163,7 +2152,7 @@ Loss::EvaluationResult Optimizer::train_epoch(
 
     EpochLoopContext context{
         &empty_queue,
-        &epoch_batches,
+        &epoch_batches.batches(),
         &features,
         FillMode::Training,
         true,
@@ -2265,14 +2254,10 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
     Loss::EvaluationResult epoch_result;
 
     Network* network = loss->get_network();
-    const Index all_batches_number = Index(batches.size());
+    if(batches.empty()) return epoch_result;
 
-    if(all_batches_number == 0) return epoch_result;
-
-    const EpochBatches split = split_off_tail(batches, forward_propagation.batch_size);
-    const bool has_tail = split.has_tail;
-    const vector<vector<Index>>& epoch_batches = *split.whole;
-    const Index batches_number = split.number();
+    const EpochBatches epoch_batches(batches, forward_propagation.batch_size);
+    const Index batches_number = epoch_batches.number();
 
     const bool tracks_accuracy = loss->get_error() == Loss::Error::CrossEntropy3d;
     const bool on_gpu = network->is_gpu();
@@ -2280,9 +2265,9 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
     const auto evaluate_tail = [&]
     {
         Loss::EvaluationResult result;
-        if(!has_tail) return result;
+        if(!epoch_batches.has_tail()) return result;
 
-        const vector<Index>& sample_indices = batches.back();
+        const vector<Index>& sample_indices = epoch_batches.tail();
         const Index tail_size = Index(sample_indices.size());
 
         Batch batch(tail_size, loss->get_dataset(), network->get_config());
@@ -2313,13 +2298,12 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
 
     const auto merge_tail = [&](Loss::EvaluationResult& result)
     {
-        if(!has_tail) return;
+        if(!epoch_batches.has_tail()) return;
 
         const Loss::EvaluationResult tail_result = evaluate_tail();
-        merge_tail_result(result, tail_result,
-                          batches_number * forward_propagation.batch_size,
-                          Index(batches.back().size()),
-                          tracks_accuracy);
+        epoch_batches.merge_tail(result, tail_result,
+                                 forward_propagation.batch_size,
+                                 tracks_accuracy);
     };
 
     if(!on_gpu)
@@ -2330,7 +2314,7 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
 
         for(Index iteration = 0; iteration < batches_number; ++iteration)
         {
-            batch->fill(epoch_batches[size_t(iteration)], features, FillMode::Validation);
+            batch->fill(epoch_batches.batches()[size_t(iteration)], features, FillMode::Validation);
 
             network->forward_propagate(batch->get_inputs(),
                                               forward_propagation,
@@ -2363,7 +2347,7 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
 
     EpochLoopContext context{
         &empty_queue,
-        &epoch_batches,
+        &epoch_batches.batches(),
         &features,
         FillMode::Validation,
         true,
@@ -2415,7 +2399,3 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
 }
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.
