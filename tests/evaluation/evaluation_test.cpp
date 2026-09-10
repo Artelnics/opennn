@@ -269,73 +269,77 @@ TEST(Evaluation, RejectsBinaryNetworkForMultipleClassificationTests)
 
 TEST(Evaluation, RocCurve)
 {
-    MatrixR targets;
-    MatrixR outputs;
-
-    MatrixR roc_curve;
-
-    targets.resize(4,1);
-
-    targets(0,0) = type(0);
-    targets(1,0) = type(0);
-    targets(2,0) = type(1);
-    targets(3,0) = type(1);
-
-    outputs.resize(4,1);
-
-    outputs(0,0) = type(0);
-    outputs(1,0) = type(0);
-    outputs(2,0) = type(1);
-    outputs(3,0) = type(1);
-
     Evaluation evaluation;
-    roc_curve = evaluation.calculate_roc_curve(targets, outputs);
+    MatrixR targets(4, 1), scores(4, 1);
+    targets << 0, 0, 1, 1;
+    scores << 0, 0, 1, 1;
+    const MatrixR curve = evaluation.calculate_roc_curve(targets, scores);
+    ASSERT_EQ(curve.rows(), 3);
+    ASSERT_EQ(curve.cols(), 3);
+    EXPECT_FLOAT_EQ(curve(0, 0), 1);
+    EXPECT_FLOAT_EQ(curve(0, 1), 1);
+    EXPECT_FLOAT_EQ(curve(1, 0), 0);
+    EXPECT_FLOAT_EQ(curve(1, 1), 1);
+    EXPECT_FLOAT_EQ(curve(1, 2), 1);
+    EXPECT_FLOAT_EQ(curve(2, 0), 0);
+    EXPECT_FLOAT_EQ(curve(2, 1), 0);
+    EXPECT_GT(curve(2, 2), scores.maxCoeff());
+}
 
-    EXPECT_EQ(roc_curve.cols(), 3);
-    EXPECT_EQ(roc_curve.rows(), 101);
+TEST(Evaluation, RocExactScoresAndTies)
+{
+    Evaluation evaluation;
+    MatrixR targets(4, 1), scores(4, 1);
+    targets << 0, 0, 1, 1;
+    for(const VectorR& values : vector<VectorR>{
+            (VectorR(4) << 0, .001f, .002f, 1).finished(),
+            (VectorR(4) << -10, -9, 20, 1000000).finished(),
+            (VectorR(4) << 0, 0, 0, 0).finished(),
+            (VectorR(4) << 1, 1, 0, 0).finished(),
+            (VectorR(4) << 0, .5f, .5f, 1).finished()})
+    {
+        scores.col(0) = values;
+        const MatrixR curve = evaluation.calculate_roc_curve(targets, scores);
+        double wins = 0;
+        for(Index p = 2; p < 4; ++p)
+            for(Index n = 0; n < 2; ++n)
+                wins += scores(p, 0) > scores(n, 0) ? 1.0
+                      : scores(p, 0) == scores(n, 0) ? 0.5 : 0.0;
+        EXPECT_NEAR(evaluation.calculate_area_under_curve(curve), wins / 4, 1e-7);
+        for(Index row = 0; row < curve.rows(); ++row)
+        {
+            Index tp = 0, fp = 0;
+            for(Index i = 0; i < 4; ++i)
+                if(scores(i, 0) >= curve(row, 2))
+                {
+                    if(targets(i, 0) >= .5f) ++tp;
+                    else ++fp;
+                }
+            EXPECT_FLOAT_EQ(curve(row, 0), float(fp) / 2);
+            EXPECT_FLOAT_EQ(curve(row, 1), float(tp) / 2);
+        }
+        MatrixR reversed_targets = targets.colwise().reverse();
+        MatrixR reversed_scores = scores.colwise().reverse();
+        EXPECT_FLOAT_EQ(evaluation.calculate_area_under_curve(curve),
+            evaluation.calculate_area_under_curve(
+                evaluation.calculate_roc_curve(reversed_targets, reversed_scores)));
+    }
+}
 
-    // Standard coordinates: column 0 = FPR, column 1 = TPR.
-    // Endpoints: threshold 0 -> (1,1); threshold 1 -> (0,0).
-    EXPECT_NEAR(roc_curve(0, 0), type(1), type(EPSILON));
-    EXPECT_NEAR(roc_curve(0, 1), type(1), type(EPSILON));
-    // Perfect classifier: every interior threshold sits at (0,1).
-    EXPECT_NEAR(roc_curve(1, 0), type(0), type(EPSILON));
-    EXPECT_NEAR(roc_curve(1, 1), type(1), type(EPSILON));
-    EXPECT_NEAR(roc_curve(50, 0), type(0), type(EPSILON));
-    EXPECT_NEAR(roc_curve(50, 1), type(1), type(EPSILON));
-    EXPECT_NEAR(roc_curve(100, 0), type(0), type(EPSILON));
-    EXPECT_NEAR(roc_curve(100, 1), type(0), type(EPSILON));
-
-    targets.resize(4,1);
-
-    targets(0,0) = type(0);
-    targets(1,0) = type(1);
-    targets(2,0) = type(1);
-    targets(3,0) = type(0);
-
-    outputs.resize(4,1);
-
-    outputs(0,0) = type(0.12);
-    outputs(1,0) = type(0.78);
-    outputs(2,0) = type(0.84);
-    outputs(3,0) = type(0.99);
-
-    roc_curve = evaluation.calculate_roc_curve(targets, outputs);
-
-    EXPECT_EQ(roc_curve.cols(), 3);
-    EXPECT_EQ(roc_curve.rows(), 101);
-
-    // Thresholds at or below 0.12 predict all four samples positive: (1,1).
-    EXPECT_NEAR(roc_curve(1, 0), type(1), type(EPSILON));
-    EXPECT_NEAR(roc_curve(1, 1), type(1), type(EPSILON));
-    // Threshold 0.5: positives 0.78 and 0.84 detected, negative 0.99 misfires: (0.5, 1).
-    EXPECT_NEAR(roc_curve(50, 0), type(0.5), type(EPSILON));
-    EXPECT_NEAR(roc_curve(50, 1), type(1), type(EPSILON));
-    // Threshold 0.9: only the 0.99 negative fires: (0.5, 0).
-    EXPECT_NEAR(roc_curve(90, 0), type(0.5), type(EPSILON));
-    EXPECT_NEAR(roc_curve(90, 1), type(0), type(EPSILON));
-    EXPECT_NEAR(roc_curve(100, 0), type(0), type(EPSILON));
-    EXPECT_NEAR(roc_curve(100, 1), type(0), type(EPSILON));
+TEST(Evaluation, RocRejectsInvalidData)
+{
+    Evaluation evaluation;
+    MatrixR targets(2, 1), scores(2, 1);
+    targets << 0, 1;
+    scores << 0, 1;
+    EXPECT_THROW(evaluation.calculate_roc_curve(MatrixR(0, 1), MatrixR(0, 1)), runtime_error);
+    EXPECT_THROW(evaluation.calculate_roc_curve(targets, MatrixR::Zero(3, 1)), runtime_error);
+    EXPECT_THROW(evaluation.calculate_roc_curve(targets, MatrixR::Zero(2, 2)), runtime_error);
+    EXPECT_THROW(evaluation.calculate_roc_curve(MatrixR::Zero(2, 1), scores), runtime_error);
+    scores(0, 0) = numeric_limits<float>::quiet_NaN();
+    EXPECT_THROW(evaluation.calculate_roc_curve(targets, scores), runtime_error);
+    scores(0, 0) = numeric_limits<float>::infinity();
+    EXPECT_THROW(evaluation.calculate_roc_curve(targets, scores), runtime_error);
 }
 
 TEST(Evaluation, AreaUnderCurve)
@@ -366,7 +370,7 @@ TEST(Evaluation, AreaUnderCurve)
 
     area_under_curve = evaluation.calculate_area_under_curve(roc_curve);
 
-    EXPECT_LT(area_under_curve - type(1), type(EPSILON));
+    EXPECT_NEAR(area_under_curve, type(1), type(EPSILON));
 
     targets.resize(4,1);
 
@@ -386,7 +390,7 @@ TEST(Evaluation, AreaUnderCurve)
 
     area_under_curve = evaluation.calculate_area_under_curve(roc_curve);
 
-    EXPECT_LT(area_under_curve - type(0.5), type(EPSILON));
+    EXPECT_NEAR(area_under_curve, type(0.5), type(EPSILON));
 
     targets.resize(4,1);
 
@@ -406,7 +410,7 @@ TEST(Evaluation, AreaUnderCurve)
 
     area_under_curve = evaluation.calculate_area_under_curve(roc_curve);
 
-    EXPECT_LT(area_under_curve - type(0.5), type(EPSILON));
+    EXPECT_NEAR(area_under_curve, type(0.5), type(EPSILON));
 
     targets.resize(4,1);
 

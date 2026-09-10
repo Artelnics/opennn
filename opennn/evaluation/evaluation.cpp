@@ -9,6 +9,8 @@
 #include "opennn/evaluation/evaluation.h"
 
 #include <sstream>
+#include <numeric>
+#include <limits>
 
 #include "opennn/dataset/dataset.h"
 #include "opennn/dataset/correlations.h"
@@ -530,78 +532,59 @@ Evaluation::RocAnalysis Evaluation::perform_roc_analysis() const
 
 MatrixR Evaluation::calculate_roc_curve(const MatrixR& targets, const MatrixR& outputs) const
 {
-    const VectorI positives_negatives_rate = calculate_positives_negatives_rate(targets, outputs);
+    throw_if(targets.cols() != 1 || outputs.cols() != 1
+             || targets.rows() == 0 || targets.rows() != outputs.rows(),
+             "ROC requires equally sized, nonempty single-column targets and scores.");
+    throw_if(!targets.array().isFinite().all() || !outputs.array().isFinite().all(),
+             "ROC targets and scores must be finite.");
 
-    const Index total_positives = positives_negatives_rate(0);
-    const Index total_negatives = positives_negatives_rate(1);
+    const Index total_positives = (targets.array() >= 0.5f).count();
+    const Index total_negatives = targets.rows() - total_positives;
+    throw_if(total_positives == 0 || total_negatives == 0,
+             "ROC requires both positive and negative samples.");
 
-    throw_if(total_positives == 0,
-             "Number of positive samples ({}) must be greater than zero.\n", total_positives);
+    vector<Index> order(size_t(outputs.rows()));
+    iota(order.begin(), order.end(), Index(0));
+    sort(order.begin(), order.end(), [&](Index a, Index b)
+         { return outputs(a, 0) < outputs(b, 0); });
 
-    throw_if(total_negatives == 0,
-             "Number of negative samples ({}) must be greater than zero.\n", total_negatives);
-
-    const Index points_number = 100;
-
-    throw_if(targets.cols() != 1,
-             "Number of of target variables ({}) must be one.\n", targets.cols());
-
-    throw_if(outputs.cols() != 1,
-             "Number of of output variables ({}) must be one.\n", outputs.cols());
-
-    MatrixR roc_curve = MatrixR::Zero(points_number + 1, 3);
-
-#pragma omp parallel for schedule(dynamic)
-
-    for (Index i = 1; i < Index(points_number); ++i)
+    MatrixR roc_curve(outputs.rows() + 1, 3);
+    Index true_positive = total_positives;
+    Index false_positive = total_negatives;
+    Index row = 0;
+    for(size_t first = 0; first < order.size();)
     {
-        const float threshold = float(i) * (1.0f/float(points_number));
-
-        Index true_positive = 0;
-        Index false_negative = 0;
-        Index false_positive = 0;
-        Index true_negative = 0;
-
-        for (Index j = 0; j < targets.size(); ++j)
+        const float threshold = outputs(order[first], 0);
+        roc_curve(row, 0) = float(false_positive) / float(total_negatives);
+        roc_curve(row, 1) = float(true_positive) / float(total_positives);
+        roc_curve(row++, 2) = threshold;
+        size_t end = first;
+        while(end < order.size() && outputs(order[end], 0) == threshold)
         {
-            const bool target_positive = targets(j, 0) >= threshold;
-            const bool output_positive = outputs(j, 0) >= threshold;
-
-            if      (target_positive && output_positive) ++true_positive;
-            else if (target_positive)                    ++false_negative;
-            else if (output_positive)                    ++false_positive;
-            else                                         ++true_negative;
+            if(targets(order[end], 0) >= 0.5f) --true_positive;
+            else --false_positive;
+            ++end;
         }
-
-        roc_curve(i,0) = float(false_positive)/float(false_positive + true_negative);
-        roc_curve(i,1) = float(true_positive)/float(true_positive + false_negative);
-        roc_curve(i,2) = threshold;
-
-        if (isnan(roc_curve(i,0)))
-            roc_curve(i,0) = 1.0f;
-
-        if (isnan(roc_curve(i,1)))
-            roc_curve(i,1) = 0.0f;
+        first = end;
     }
-
-    roc_curve(0,0) = 1.0f;
-    roc_curve(0,1) = 1.0f;
-    roc_curve(0,2) = 0.0f;
-    roc_curve(points_number,0) = 0.0f;
-    roc_curve(points_number,1) = 0.0f;
-    roc_curve(points_number,2) = 1.0f;
+    roc_curve(row, 0) = 0.0f;
+    roc_curve(row, 1) = 0.0f;
+    roc_curve(row++, 2) = nextafter(outputs(order.back(), 0),
+                                   numeric_limits<float>::infinity());
+    roc_curve.conservativeResize(row, 3);
 
     return roc_curve;
 }
 
 float Evaluation::calculate_area_under_curve(const MatrixR& roc_curve) const
 {
-    float area_under_curve = 0.0f;
+    double area_under_curve = 0.0;
 
     for (Index i = 1; i < roc_curve.rows(); ++i)
-        area_under_curve += (roc_curve(i,0) - roc_curve(i-1,0))*(roc_curve(i,1) + roc_curve(i-1,1));
+        area_under_curve += (double(roc_curve(i,0)) - double(roc_curve(i-1,0)))
+                          * (double(roc_curve(i,1)) + double(roc_curve(i-1,1)));
 
-    return fabs(area_under_curve) / 2.0f;
+    return float(fabs(area_under_curve) / 2.0);
 }
 
 float Evaluation::calculate_area_under_curve_confidence_limit(const MatrixR& targets, const MatrixR& outputs) const
