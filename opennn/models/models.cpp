@@ -161,50 +161,6 @@ ForecastingLstmNetwork::ForecastingLstmNetwork(const Shape& input_shape,
 }
 
 Autoencoder::Autoencoder(const Shape& input_shape,
-                                               const Shape& complexity_dimensions,
-                                               const Shape& output_shape)
-    : Network(NetworkTask::AnomalyDetection)
-{
-    throw_if(input_shape.empty(),
-             "Autoencoder: input shape cannot be empty.");
-    throw_if(complexity_dimensions.empty(),
-             "Autoencoder: complexity dimensions cannot be empty.");
-
-    add_layer(make_unique<Scaling>(input_shape));
-
-    const Shape encoder_shape{ 10 };
-    const Shape bottleneck_shape{ complexity_dimensions[0] };
-
-    add_layer(make_unique<Dense>(input_shape,
-                                 encoder_shape,
-                                 "Tanh",
-                                 BatchNormalization::No,
-                                 "encoder_layer_1"));
-
-    add_layer(make_unique<Dense>(encoder_shape,
-                                 bottleneck_shape,
-                                 "Identity",
-                                 BatchNormalization::No,
-                                 "bottleneck_layer"));
-
-    add_layer(make_unique<Dense>(bottleneck_shape,
-                                 encoder_shape,
-                                 "Tanh",
-                                 BatchNormalization::No,
-                                 "decoder_layer_1"));
-
-    add_layer(make_unique<Dense>(encoder_shape,
-                                 Shape{ output_shape },
-                                 "Identity",
-                                 BatchNormalization::No,
-                                 "output_layer"));
-
-    add_layer(make_unique<Unscaling>(output_shape));
-
-    finalize_build(*this);
-}
-
-Autoencoder::Autoencoder(const Shape& input_shape,
                                                const Shape& encoder_dimensions,
                                                const string& hidden_activation,
                                                const string& output_activation)

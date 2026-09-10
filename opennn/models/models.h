@@ -66,10 +66,6 @@ public:
 
     Autoencoder(const Shape&,
                            const Shape&,
-                           const Shape&);
-
-    Autoencoder(const Shape&,
-                           const Shape&,
                            const string&,
                            const string&);
 };

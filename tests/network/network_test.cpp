@@ -1039,20 +1039,6 @@ TEST(NetworkTest, ForecastingConstructor)
     EXPECT_EQ(network.get_task(), NetworkTask::Forecasting);
 }
 
-TEST(NetworkTest, AnomalyDetectionConstructor)
-{
-    Autoencoder network({ 1 }, { 4 }, { 2 });
-
-    EXPECT_EQ(network.get_layers_number(), 6);
-    EXPECT_EQ(network.get_layer(0)->get_name(), "Scaling");
-    EXPECT_EQ(network.get_layer(1)->get_name(), "Dense");
-    EXPECT_EQ(network.get_layer(2)->get_name(), "Dense");
-    EXPECT_EQ(network.get_layer(3)->get_name(), "Dense");
-    EXPECT_EQ(network.get_layer(4)->get_name(), "Dense");
-    EXPECT_EQ(network.get_layer(5)->get_name(), "Unscaling");
-    EXPECT_EQ(network.get_task(), NetworkTask::AnomalyDetection);
-}
-
 TEST(NetworkTest, AnomalyDetectionSymmetricEncoderConstructor)
 {
     Autoencoder network({140}, {32, 16, 8}, "ReLU", "Sigmoid");
