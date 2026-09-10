@@ -52,7 +52,7 @@ jobs:
 
       - name: Enforce code size and architecture
         run: |
-          python -m pip install -r tools/code-quality-requirements.txt
+          python -m pip install -r tools/code-quality-requirements.txt numpy==2.4.4
           python tools/check_code_quality.py
           python tools/check_architecture.py
           python -m unittest discover -s tests -p benchmark_runner_test.py
