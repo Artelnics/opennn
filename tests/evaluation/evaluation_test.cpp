@@ -148,6 +148,53 @@ TEST(Evaluation, AnomalyPredictionIncludesThresholdEquality)
     EXPECT_EQ(predictions(2), 1);
 }
 
+TEST(Evaluation, PerfectReconstructionsAreNormal)
+{
+    Evaluation evaluation;
+    const VectorR errors = VectorR::Zero(4);
+    const auto statistics = evaluation.calculate_reconstruction_error_statistics(errors);
+    const float threshold = evaluation.calculate_anomaly_threshold(statistics);
+    EXPECT_GT(threshold, 0.0f);
+    EXPECT_EQ(evaluation.calculate_anomaly_predictions(errors, threshold).sum(), 0);
+
+    VectorR positive_error(1);
+    positive_error << nextafter(0.0f, 1.0f);
+    EXPECT_EQ(evaluation.calculate_anomaly_predictions(positive_error, threshold)(0), 1);
+}
+
+TEST(Evaluation, AnomalyThresholdRejectsInvalidNumbers)
+{
+    Evaluation evaluation;
+    Evaluation::ReconstructionErrorStatistics statistics;
+    statistics.mean = 1.0f;
+    statistics.population_standard_deviation = 2.0f;
+    const float infinity = numeric_limits<float>::infinity();
+    const float nan = numeric_limits<float>::quiet_NaN();
+    for(const float invalid : {nan, infinity, -infinity, -1.0f})
+        EXPECT_THROW(evaluation.calculate_anomaly_threshold(statistics, invalid), runtime_error);
+    EXPECT_FLOAT_EQ(evaluation.calculate_anomaly_threshold(statistics, 0.0f), 1.0f);
+    EXPECT_FLOAT_EQ(evaluation.calculate_anomaly_threshold(statistics, 2.0f), 5.0f);
+
+    for(const float invalid : {nan, infinity, -infinity, -1.0f})
+    {
+        statistics.population_standard_deviation = invalid;
+        EXPECT_THROW(evaluation.calculate_anomaly_threshold(statistics), runtime_error);
+    }
+    statistics.population_standard_deviation = 0.0f;
+    EXPECT_THROW(evaluation.calculate_anomaly_threshold(statistics, infinity), runtime_error);
+    for(const float invalid : {nan, infinity, -infinity})
+    {
+        statistics.mean = invalid;
+        EXPECT_THROW(evaluation.calculate_anomaly_threshold(statistics), runtime_error);
+    }
+
+    statistics.mean = numeric_limits<float>::max();
+    statistics.population_standard_deviation = numeric_limits<float>::max();
+    EXPECT_THROW(evaluation.calculate_anomaly_threshold(statistics, 1.0f), runtime_error);
+    statistics.mean = 0.0f;
+    EXPECT_THROW(evaluation.calculate_anomaly_threshold(statistics, 2.0f), runtime_error);
+}
+
 TEST(Evaluation, BinaryClassificationTestsFromData)
 {
     MatrixR targets(4, 1);

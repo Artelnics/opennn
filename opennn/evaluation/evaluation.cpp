@@ -389,13 +389,19 @@ float Evaluation::calculate_anomaly_threshold(
     const ReconstructionErrorStatistics& statistics,
     const float standard_deviations) const
 {
-    throw_if(standard_deviations < 0.0f,
-             "Evaluation::calculate_anomaly_threshold: standard deviations cannot be negative.");
+    throw_if(!isfinite(standard_deviations) || standard_deviations < 0.0f,
+             "Evaluation::calculate_anomaly_threshold: standard deviation multiplier must be finite and nonnegative.");
     throw_if(!isfinite(statistics.mean)
              || !isfinite(statistics.population_standard_deviation),
              "Evaluation::calculate_anomaly_threshold: statistics must be finite.");
+    throw_if(statistics.population_standard_deviation < 0.0f,
+             "Evaluation::calculate_anomaly_threshold: standard deviation cannot be negative.");
 
-    return statistics.mean + standard_deviations * statistics.population_standard_deviation;
+    const float threshold = statistics.mean
+                          + standard_deviations * statistics.population_standard_deviation;
+    throw_if(!isfinite(threshold),
+             "Evaluation::calculate_anomaly_threshold: calculated threshold must be finite.");
+    return threshold == 0.0f ? nextafter(0.0f, 1.0f) : threshold;
 }
 
 VectorI Evaluation::calculate_anomaly_predictions(const VectorR& errors,
