@@ -1775,8 +1775,8 @@ static void linear_forward_lt_gpu(const TensorView& input, const TensorView& wei
     // cuBLASLt's answer before it can be selected. Nothing about this function
     // changes -- the operands, the epilogue and the layouts are the same
     // either way, and cuDNN is declined for every shape it was not measured
-    // on. See cublaslt_backend.cpp's autotune_lt_plan for the selection rule and
-    // core/cuda/cudnn_matmul.cpp for the graph.
+    // on. See matmul_backend.cpp's autotune_matmul_plan for the selection rule and
+    // core/cuda/matmul_cudnn.cpp for the graph.
     const Index chunk = pre_activation ? Index(0) : gemm_row_chunk();
     const bool chunked = chunk > 0 && Index(total_rows) > chunk;
 

@@ -106,6 +106,280 @@ static void parse_binary_token(float* row, Index feature_index,
         parse_float_or_nan(token, number_format);
 }
 
+using CategoryMaps = vector<unordered_map<string_view, Index>>;
+
+struct NumericColumnValues
+{
+    bool has_value = false;
+    float first_value = 0.0f;
+    bool constant = true;
+    bool zero_one = true;
+};
+
+static CategoryMaps make_category_maps(const vector<Variable>& variables)
+{
+    CategoryMaps maps(variables.size());
+    for(size_t i = 0; i < variables.size(); ++i)
+    {
+        const Variable& variable = variables[i];
+        if(!variable.is_categorical()) continue;
+        for(Index category = 0; category < ssize(variable.categories); ++category)
+            maps[i].emplace(variable.categories[size_t(category)], category);
+    }
+    return maps;
+}
+
+static void check_expanded_data_size(const vector<Variable>& variables,
+                                     Index samples_number,
+                                     Index feature_columns_number)
+{
+    const size_t bytes = size_t(samples_number) * size_t(feature_columns_number) * sizeof(float);
+    if(feature_columns_number <= 0 || bytes <= maximum_expanded_data_bytes) return;
+
+    const auto largest = ranges::max_element(variables, {}, [](const Variable& variable) {
+        return variable.is_categorical() ? variable.categories.size() : size_t(0);
+    });
+    const Index categories = largest == variables.end() ? 0 : ssize(largest->categories);
+    const string name = largest == variables.end() ? string() : largest->name;
+    throw runtime_error(format(
+        "Expanding the categorical variables of this file would produce {} feature "
+        "columns for {} samples ({:.1f} GB). The largest contributor is '{}' with {} "
+        "categories. If that column is meant to be numeric, check its number format; "
+        "if it is an identifier, remove it from the file.",
+        feature_columns_number, samples_number,
+        double(bytes) / (1024.0 * 1024.0 * 1024.0), name, categories));
+}
+
+class CsvDataParser
+{
+public:
+    CsvDataParser(const vector<string_view>& lines,
+                  const vector<Variable>& variables,
+                  const vector<Index>& token_indices,
+                  const vector<vector<Index>>& feature_indices,
+                  const CategoryMaps& category_maps,
+                  vector<string>& sample_ids,
+                  vector<SampleRole>& sample_roles,
+                  VectorI& variables_missing,
+                  Index& rows_missing,
+                  Index& missing,
+                  string_view missing_label,
+                  const NumberFormat& number_format,
+                  DateFormat date_format,
+                  char separator,
+                  bool has_quotes,
+                  bool has_sample_ids,
+                  bool binary_storage,
+                  Index required_tokens,
+                  Index feature_columns)
+        : lines(lines), variables(variables), token_indices(token_indices),
+          feature_indices(feature_indices), category_maps(category_maps),
+          sample_ids(sample_ids), sample_roles(sample_roles),
+          variables_missing(variables_missing), rows_missing(rows_missing), missing(missing),
+          missing_label(missing_label), number_format(number_format), date_format(date_format),
+          separator(separator), has_quotes(has_quotes), has_sample_ids(has_sample_ids),
+          binary_storage(binary_storage), required_tokens(required_tokens),
+          feature_columns(feature_columns), numeric_values(variables.size()),
+          bad_row_index(ssize(lines)), parse_error_index(ssize(lines))
+    {
+    }
+
+    void parse_rows(Index base, Index end, float* destination)
+    {
+        Index range_rows_missing = 0;
+        Index range_missing = 0;
+        vector<Index> range_variables_missing(variables.size(), 0);
+
+#pragma omp parallel
+        {
+            string scratch;
+            vector<string_view> tokens;
+            vector<Index> thread_variables_missing(variables.size(), 0);
+            Index thread_rows_missing = 0;
+            Index thread_missing = 0;
+
+#pragma omp for schedule(static) nowait
+            for(Index row_index = base; row_index < end; ++row_index)
+            {
+                get_token_views_maybe_quoted(lines[size_t(row_index)], separator,
+                                             has_quotes, scratch, tokens);
+                float* row = destination
+                           + size_t(row_index - base) * size_t(feature_columns);
+                const bool row_has_missing = count_missing(
+                    tokens, thread_rows_missing, thread_missing, thread_variables_missing);
+
+                if(ssize(tokens) < required_tokens)
+                {
+#pragma omp critical
+                    record_bad_row(row_index, ssize(tokens));
+                    continue;
+                }
+
+                if(has_sample_ids) sample_ids[size_t(row_index)] = string(tokens[0]);
+                if(binary_storage && row_has_missing)
+                    sample_roles[size_t(row_index)] = SampleRole::None;
+
+                try { parse_row(row, tokens); }
+                catch(const exception& error)
+                {
+#pragma omp critical
+                    record_parse_error(row_index, error.what());
+                }
+            }
+
+#pragma omp critical
+            {
+                range_rows_missing += thread_rows_missing;
+                range_missing += thread_missing;
+                for(size_t i = 0; i < variables.size(); ++i)
+                    range_variables_missing[i] += thread_variables_missing[i];
+            }
+        }
+
+        rows_missing += range_rows_missing;
+        missing += range_missing;
+        for(Index i = 0; i < ssize(variables); ++i)
+            variables_missing(i) += range_variables_missing[size_t(i)];
+        for(Index i = base; i < end; ++i)
+            refine_numeric(destination + size_t(i - base) * size_t(feature_columns));
+    }
+
+    void throw_parse_error() const
+    {
+        if(bad_row_index < ssize(lines) && bad_row_index <= parse_error_index)
+            throw runtime_error(format("Row {} has fewer columns than expected ({}).",
+                                       bad_row_index, bad_row_columns));
+        if(parse_error_index < ssize(lines))
+            throw runtime_error(format("Row {}: {}", parse_error_index, parse_error_message));
+    }
+
+    void refine_variable_types(vector<Variable>& mutable_variables) const
+    {
+        for(size_t i = 0; i < mutable_variables.size(); ++i)
+        {
+            Variable& variable = mutable_variables[i];
+            if(variable.type == VariableType::Numeric)
+            {
+                if(numeric_values[i].constant)
+                    variable.set(variable.name, "None", VariableType::Constant);
+                else if(numeric_values[i].zero_one)
+                {
+                    variable.type = VariableType::Binary;
+                    variable.categories = {"0", "1"};
+                }
+            }
+            else if(is_one_of(variable.type, VariableType::Binary, VariableType::Categorical)
+                    && variable.get_categories_number() == 1)
+                variable.set(variable.name, "None", VariableType::Constant);
+        }
+    }
+
+private:
+    void parse_row(float* row, const vector<string_view>& tokens) const
+    {
+        for(size_t i = 0; i < variables.size(); ++i)
+        {
+            const Variable& variable = variables[i];
+            const string_view token = tokens[size_t(token_indices[i])];
+            const vector<Index>& features = feature_indices[i];
+            switch(variable.type)
+            {
+                case VariableType::None:
+                case VariableType::Constant: break;
+                case VariableType::Numeric:
+                case VariableType::Integer:
+                    parse_numeric_token(row, features[0], token, missing_label, number_format);
+                    break;
+                case VariableType::DateTime:
+                    parse_datetime_token(row, features[0], token, missing_label, date_format);
+                    break;
+                case VariableType::Categorical:
+                    parse_categorical_token(row, features, token, missing_label, category_maps[i]);
+                    break;
+                case VariableType::Binary:
+                    parse_binary_token(row, features[0], token, missing_label,
+                                       variable.categories, number_format);
+                    break;
+            }
+        }
+    }
+
+    bool count_missing(const vector<string_view>& tokens,
+                       Index& rows, Index& count, vector<Index>& columns) const
+    {
+        bool row_has_missing = false;
+        for(size_t i = 0; i < variables.size(); ++i)
+        {
+            const size_t token = size_t(token_indices[i]);
+            if(token >= tokens.size()) break;
+            if(!is_missing_token(tokens[token], missing_label)) continue;
+            row_has_missing = true;
+            ++count;
+            ++columns[i];
+        }
+        if(row_has_missing) ++rows;
+        return row_has_missing;
+    }
+
+    void refine_numeric(const float* row)
+    {
+        for(size_t i = 0; i < variables.size(); ++i)
+        {
+            if(variables[i].type != VariableType::Numeric) continue;
+            NumericColumnValues& column = numeric_values[i];
+            const float value = row[size_t(feature_indices[i][0])];
+            if(isnan(value)) continue;
+            if(!column.has_value)
+            {
+                column.has_value = true;
+                column.first_value = value;
+            }
+            else if(abs(value - column.first_value) > numeric_limits<float>::min())
+                column.constant = false;
+            if(value != 0.0f && value != 1.0f) column.zero_one = false;
+        }
+    }
+
+    void record_bad_row(Index row, Index columns)
+    {
+        if(row >= bad_row_index) return;
+        bad_row_index = row;
+        bad_row_columns = columns;
+    }
+
+    void record_parse_error(Index row, const char* message)
+    {
+        if(row >= parse_error_index) return;
+        parse_error_index = row;
+        parse_error_message = message;
+    }
+
+    const vector<string_view>& lines;
+    const vector<Variable>& variables;
+    const vector<Index>& token_indices;
+    const vector<vector<Index>>& feature_indices;
+    const CategoryMaps& category_maps;
+    vector<string>& sample_ids;
+    vector<SampleRole>& sample_roles;
+    VectorI& variables_missing;
+    Index& rows_missing;
+    Index& missing;
+    string_view missing_label;
+    const NumberFormat& number_format;
+    DateFormat date_format;
+    char separator;
+    bool has_quotes;
+    bool has_sample_ids;
+    bool binary_storage;
+    Index required_tokens;
+    Index feature_columns;
+    vector<NumericColumnValues> numeric_values;
+    Index bad_row_index;
+    Index bad_row_columns = 0;
+    Index parse_error_index;
+    string parse_error_message;
+};
+
 static DateFormat infer_dataset_date_format(const vector<Variable>& variables,
                                      const vector<string_view>& sample_lines,
                                      char file_separator,
@@ -371,546 +645,82 @@ void TabularDataset::load_csv_data(const vector<string_view>& lines,
 {
     const Index samples_number = ssize(lines);
     const Index id_offset = has_sample_ids ? 1 : 0;
-
     vector<Index> variable_token_indices(variables.size());
     iota(variable_token_indices.begin(), variable_token_indices.end(), id_offset);
 
     for(const size_t i : views::iota(size_t(0), variables.size()) | views::reverse)
     {
         if(!looks_like_id_variable(variables[i], samples_number)) continue;
-
         logging::info() << "Excluding identifier column: " << variables[i].name << endl;
-
         variables.erase(variables.begin() + Index(i));
         variable_token_indices.erase(variable_token_indices.begin() + Index(i));
     }
 
     throw_if(variables.empty(),
              "Data file contains no variables (all columns are identifiers).");
-
     const Index variables_number = ssize(variables);
     const Index required_tokens = variable_token_indices.back() + 1;
 
     sample_roles.assign(size_t(samples_number), SampleRole::Training);
+    if(has_sample_ids) sample_ids.assign(size_t(samples_number), {});
+    else sample_ids.clear();
 
-    // Only when the file actually carries ids. std::string is 32 bytes here
-    // even when empty, so one per sample costs 32 bytes a row before holding
-    // a single character -- 15.3 MiB on a 500,000-row file whose ids are never
-    // written and never read. Every use of sample_ids is already guarded by
-    // has_sample_ids, so an empty vector is the correct representation of
-    // "this file has none".
-    if (has_sample_ids)
-        sample_ids.assign(size_t(samples_number), {});
-    else
-        sample_ids.clear();
+    const vector<vector<Index>> feature_indices = get_feature_indices();
+    const Index feature_columns = feature_indices.empty()
+                                ? 0 : feature_indices.back().back() + 1;
+    check_expanded_data_size(variables, samples_number, feature_columns);
 
-    const vector<vector<Index>> all_feature_indices =
-        get_feature_indices();
-
-    const Index feature_columns_number =
-        all_feature_indices.empty()
-        ? 0
-        : all_feature_indices.back().back() + 1;
-
-    if(feature_columns_number > 0)
-    {
-        const size_t projected_bytes =
-            size_t(samples_number)
-            * size_t(feature_columns_number)
-            * sizeof(float);
-
-        if(projected_bytes > maximum_expanded_data_bytes)
-        {
-            Index worst_index = 0;
-            Index worst_categories = 0;
-
-            for(Index i = 0; i < variables_number; ++i)
-            {
-                if(variables[size_t(i)].is_categorical()
-                   && ssize(variables[size_t(i)].categories) > worst_categories)
-                {
-                    worst_categories =
-                        ssize(variables[size_t(i)].categories);
-
-                    worst_index = i;
-                }
-            }
-
-            throw runtime_error(
-                format(
-                    "Expanding the categorical variables of this file would produce {} feature "
-                    "columns for {} samples ({:.1f} GB). The largest contributor is '{}' with {} "
-                    "categories. If that column is meant to be numeric, check its number format; "
-                    "if it is an identifier, remove it from the file.",
-                    feature_columns_number,
-                    samples_number,
-                    double(projected_bytes)
-                        / (1024.0 * 1024.0 * 1024.0),
-                    variables[size_t(worst_index)].name,
-                    worst_categories));
-        }
-    }
-
-    const bool binary_storage =
-        storage_mode == StorageMode::BinaryFile;
-
+    const bool binary_storage = storage_mode == StorageMode::BinaryFile;
     FileWriter cache_writer;
-    vector<float> row_values;
-
     if(binary_storage)
     {
         cache_reader.close();
         clear_cache_derived_state();
         cache_path = cache_file_path();
-
-        filesystem::create_directories(
-            cache_path.parent_path());
-
-        cache_writer.open(
-            cache_path.string() + ".tmp");
-
-        cache_columns_number = feature_columns_number;
-
-        row_values.resize(size_t(feature_columns_number));
+        filesystem::create_directories(cache_path.parent_path());
+        cache_writer.open(cache_path.string() + ".tmp");
+        cache_columns_number = feature_columns;
     }
     else
-    {
-        data = MatrixR::Zero(
-            samples_number,
-            feature_columns_number);
-    }
+        data = MatrixR::Zero(samples_number, feature_columns);
 
     rows_missing_values_number = 0;
     missing_values_number = 0;
-
-    variables_missing_values_number =
-        VectorI::Zero(variables_number);
-
-    vector<unordered_map<string_view, Index>>
-        category_maps(static_cast<size_t>(variables_number));
-
-    for(Index variable_index = 0;
-        variable_index < variables_number;
-        ++variable_index)
-    {
-        const Variable& variable =
-            variables[size_t(variable_index)];
-
-        if(!variable.is_categorical())
-            continue;
-
-        unordered_map<string_view, Index>& category_map =
-            category_maps[size_t(variable_index)];
-
-        for(Index category = 0;
-            category < ssize(variable.categories);
-            ++category)
-        {
-            category_map.emplace(
-                string_view(variable.categories[size_t(category)]),
-                category);
-        }
-    }
-
-    struct NumericColumnValues
-    {
-        bool has_value = false;
-        float first_value = 0.0f;
-        bool constant = true;
-        bool zero_one = true;
-    };
-
-    vector<NumericColumnValues>
-        numeric_column_values(static_cast<size_t>(variables_number));
-
-    const auto parse_row =
-        [&](float* row,
-            const vector<string_view>& row_tokens)
-    {
-        for(Index variable_index = 0;
-            variable_index < variables_number;
-            ++variable_index)
-        {
-            const size_t index = size_t(variable_index);
-
-            const Variable& variable = variables[index];
-
-            const string_view token =
-                row_tokens[size_t(variable_token_indices[index])];
-
-            const vector<Index>& feature_indices =
-                all_feature_indices[index];
-
-            using enum VariableType;
-
-            switch(variable.type)
-            {
-                case None:
-                case Constant:
-                    break;
-
-                case Numeric:
-                case Integer:
-                    parse_numeric_token(
-                        row,
-                        feature_indices[0],
-                        token,
-                        missing_values_label,
-                        number_format);
-                    break;
-
-                case DateTime:
-                    parse_datetime_token(
-                        row,
-                        feature_indices[0],
-                        token,
-                        missing_values_label,
-                        date_format);
-                    break;
-
-                case Categorical:
-                    parse_categorical_token(
-                        row,
-                        feature_indices,
-                        token,
-                        missing_values_label,
-                        category_maps[index]);
-                    break;
-
-                case Binary:
-                    parse_binary_token(
-                        row,
-                        feature_indices[0],
-                        token,
-                        missing_values_label,
-                        variable.categories,
-                        number_format);
-                    break;
-            }
-        }
-    };
-
-    const auto refine_numeric =
-        [&](const float* row)
-    {
-        for(Index variable_index = 0;
-            variable_index < variables_number;
-            ++variable_index)
-        {
-            const size_t index = size_t(variable_index);
-
-            if(variables[index].type != VariableType::Numeric)
-                continue;
-
-            NumericColumnValues& column =
-                numeric_column_values[index];
-
-            const float value =
-                row[size_t(all_feature_indices[index][0])];
-
-            if(isnan(value))
-                continue;
-
-            if(!column.has_value)
-            {
-                column.has_value = true;
-                column.first_value = value;
-            }
-            else if(abs(value - column.first_value)
-                    > numeric_limits<float>::min())
-            {
-                column.constant = false;
-            }
-
-            if(value != 0.0f && value != 1.0f)
-                column.zero_one = false;
-        }
-    };
-
-    const auto count_missing =
-        [&](const vector<string_view>& row_tokens,
-            Index& thread_rows_missing,
-            Index& thread_missing,
-            vector<Index>& thread_variables_missing)
-    {
-        bool row_has_missing = false;
-
-        for(Index variable_index = 0;
-            variable_index < variables_number;
-            ++variable_index)
-        {
-            const size_t index = size_t(variable_index);
-
-            const size_t token_index =
-                size_t(variable_token_indices[index]);
-
-            if(token_index >= row_tokens.size())
-                break;
-
-            if(!is_missing_token(row_tokens[token_index], missing_values_label))
-                continue;
-
-            row_has_missing = true;
-            ++thread_missing;
-            ++thread_variables_missing[index];
-        }
-
-        if(row_has_missing)
-            ++thread_rows_missing;
-
-        return row_has_missing;
-    };
-
-    bool bad_row = false;
-    Index bad_row_index = samples_number;
-    Index bad_row_columns = 0;
-
-    bool parse_error = false;
-    Index parse_error_index = samples_number;
-    string parse_error_message;
-
-    const auto parse_rows =
-        [&](const Index base,
-            const Index end,
-            float* destination)
-    {
-        Index range_rows_missing = 0;
-        Index range_missing = 0;
-
-        vector<Index> range_variables_missing(
-            size_t(variables_number),
-            0);
-
-#pragma omp parallel
-        {
-            string thread_scratch;
-            vector<string_view> thread_tokens;
-
-            vector<Index> thread_variables_missing(
-                size_t(variables_number),
-                0);
-
-            Index thread_rows_missing = 0;
-            Index thread_missing = 0;
-
-#pragma omp for schedule(static) nowait
-            for(Index i = base; i < end; ++i)
-            {
-                get_token_views_maybe_quoted(
-                    lines[size_t(i)],
-                    file_separator,
-                    has_quotes,
-                    thread_scratch,
-                    thread_tokens);
-
-                float* row =
-                    destination
-                    + size_t(i - base)
-                        * size_t(feature_columns_number);
-
-                const bool row_has_missing =
-                    count_missing(
-                        thread_tokens,
-                        thread_rows_missing,
-                        thread_missing,
-                        thread_variables_missing);
-
-                if(ssize(thread_tokens) < required_tokens)
-                {
-#pragma omp critical
-                    {
-                        if(i < bad_row_index)
-                        {
-                            bad_row = true;
-                            bad_row_index = i;
-                            bad_row_columns =
-                                ssize(thread_tokens);
-                        }
-                    }
-
-                    continue;
-                }
-
-                if(has_sample_ids)
-                {
-                    sample_ids[size_t(i)] =
-                        string(thread_tokens[0]);
-                }
-
-                if(binary_storage && row_has_missing)
-                {
-                    sample_roles[size_t(i)] =
-                        SampleRole::None;
-                }
-
-                try
-                {
-                    parse_row(row, thread_tokens);
-                }
-                catch(const exception& e)
-                {
-#pragma omp critical
-                    {
-                        if(i < parse_error_index)
-                        {
-                            parse_error = true;
-                            parse_error_index = i;
-                            parse_error_message = e.what();
-                        }
-                    }
-                }
-            }
-
-#pragma omp critical
-            {
-                range_rows_missing += thread_rows_missing;
-                range_missing += thread_missing;
-
-                for(Index variable_index = 0;
-                    variable_index < variables_number;
-                    ++variable_index)
-                {
-                    range_variables_missing[
-                        size_t(variable_index)]
-                        += thread_variables_missing[
-                            size_t(variable_index)];
-                }
-            }
-        }
-
-        rows_missing_values_number +=
-            range_rows_missing;
-
-        missing_values_number +=
-            range_missing;
-
-        for(Index variable_index = 0;
-            variable_index < variables_number;
-            ++variable_index)
-        {
-            variables_missing_values_number(variable_index)
-                += range_variables_missing[
-                    size_t(variable_index)];
-        }
-
-        for(Index i = base; i < end; ++i)
-        {
-            refine_numeric(
-                destination
-                + size_t(i - base)
-                    * size_t(feature_columns_number));
-        }
-    };
+    variables_missing_values_number = VectorI::Zero(variables_number);
+    const CategoryMaps category_maps = make_category_maps(variables);
+    CsvDataParser parser(lines, variables, variable_token_indices, feature_indices,
+                         category_maps, sample_ids, sample_roles,
+                         variables_missing_values_number, rows_missing_values_number,
+                         missing_values_number, missing_values_label, number_format,
+                         date_format, file_separator, has_quotes, has_sample_ids,
+                         binary_storage, required_tokens, feature_columns);
 
     if(binary_storage)
     {
         constexpr Index chunk_size = 16384;
-
-        vector<float> chunk_buffer;
-
-        for(Index base = 0;
-            base < samples_number;
-            base += chunk_size)
+        vector<float> chunk;
+        for(Index base = 0; base < samples_number; base += chunk_size)
         {
-            const Index end =
-                min(base + chunk_size, samples_number);
-
-            const Index rows_number =
-                end - base;
-
-            chunk_buffer.assign(
-                size_t(rows_number)
-                    * size_t(feature_columns_number),
-                0.0f);
-
-            parse_rows(
-                base,
-                end,
-                chunk_buffer.data());
-
-            cache_writer.write(
-                span(chunk_buffer));
+            const Index end = min(base + chunk_size, samples_number);
+            chunk.assign(size_t(end - base) * size_t(feature_columns), 0.0f);
+            parser.parse_rows(base, end, chunk.data());
+            cache_writer.write(span(chunk));
         }
     }
     else
-    {
-        parse_rows(
-            0,
-            samples_number,
-            data.data());
-    }
+        parser.parse_rows(0, samples_number, data.data());
 
-    if(bad_row
-       && (!parse_error
-           || bad_row_index <= parse_error_index))
-    {
-        throw runtime_error(
-            format(
-                "Row {} has fewer columns than expected ({}).",
-                bad_row_index,
-                bad_row_columns));
-    }
-
-    if(parse_error)
-    {
-        throw runtime_error(
-            format(
-                "Row {}: {}",
-                parse_error_index,
-                parse_error_message));
-    }
-
+    parser.throw_parse_error();
     if(binary_storage)
     {
         cache_writer.finish_with_rename(cache_path);
         cache_reader.open(cache_path);
     }
 
-    for(Index variable_index = 0;
-        variable_index < variables_number;
-        ++variable_index)
-    {
-        Variable& variable =
-            variables[size_t(variable_index)];
-
-        if(variable.type == VariableType::Numeric)
-        {
-            const NumericColumnValues& column =
-                numeric_column_values[
-                    size_t(variable_index)];
-
-            if(column.constant)
-            {
-                variable.set(
-                    variable.name,
-                    "None",
-                    VariableType::Constant);
-            }
-            else if(column.zero_one)
-            {
-                variable.type = VariableType::Binary;
-                variable.categories = {"0", "1"};
-            }
-        }
-        else if(is_one_of(
-                    variable.type,
-                    VariableType::Binary,
-                    VariableType::Categorical)
-                && variable.get_categories_number() == 1)
-        {
-            variable.set(
-                variable.name,
-                "None",
-                VariableType::Constant);
-        }
-    }
-
+    parser.refine_variable_types(variables);
     split_samples_random();
-
-    if (binary_storage)
-        refresh_cache_statistics();
+    if(binary_storage) refresh_cache_statistics();
 }
-
 DateFormat TabularDataset::infer_column_types(
     const vector<string_view>& sample_lines,
     const char file_separator,

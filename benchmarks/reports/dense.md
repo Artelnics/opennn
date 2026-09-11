@@ -415,7 +415,7 @@ the family — it prices the cuDNN engine below at 265 W where it measures 227.7
 
 **Why the answer is not a lookup table.** The shortlist, the counts and the two
 experiments below are the same standalone probe's, carried over with the
-tile-power table. The probe (`cudnn_matmul_probe.cu`, which `cudnn_matmul.h`
+tile-power table. The probe (`cudnn_matmul_probe.cu`, which `matmul_cudnn.h`
 names) is not in the tree and its output is not in the artifact store, so what
 can still be checked against the library source is the 13,460 count, the 0.86 s
 enumeration, the bound that nothing under 198 µs draws less than 265 W, and the
@@ -493,7 +493,7 @@ codebase that enumerating beat trusting one: the cuBLASLt heuristic's
 shortlist above, which never offers the 256×160, and the custom-option scan
 that took the first valid option per tile, are the other two. The pattern is
 written into the code rather than left to a reader — the candidate accessors
-in `cudnn_matmul.h` say the candidates are deliberately **not** ranked,
+in `matmul_cudnn.h` say the candidates are deliberately **not** ranked,
 because the caller must time them.
 
 Two implementation notes:
@@ -563,7 +563,7 @@ default's values. Its peak memory does not: 372.1 / 381.5 / 387.4 MiB across
 its three launches, against 377.9 on all three of the default's, which is a
 spread rather than a difference.
 
-Stage 1 still governs every shape cuDNN declines, and `cudnn_matmul.cpp` lists
+Stage 1 still governs every shape cuDNN declines, and `matmul_cudnn.cpp` lists
 them: not bf16 in and out, a non-zero beta, an AUX or GELU epilogue, an m or k
 that is not a multiple of eight, or a product below a minimum GFLOP.
 `cuda-dense-train`'s hidden layer is none of those — it is the same

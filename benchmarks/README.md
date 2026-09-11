@@ -87,7 +87,7 @@ setup wrapper does not provision other operating systems.
 
 Greedy output is bit-reproducible across processes only if every process runs
 the same cuBLASLt kernel for every shape, and the tuner in
-`opennn/core/cublaslt_backend.cpp` picks kernels by timing them. OpenNN persists
+`opennn/core/matmul_backend.cpp` picks kernels by timing them. OpenNN persists
 each winner below `%TEMP%\opennn-lt-plans\<card>-sm<cc>-cublaslt<version>`
 (`OPENNN_LT_PLAN_CACHE_DIR` moves it, `OPENNN_LT_PLAN_CACHE=0` disables it), so
 the first process on a card tunes and every later one loads. Warm that cache
