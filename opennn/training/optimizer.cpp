@@ -1,10 +1,5 @@
-﻿//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   O P T I M I Z E R   C L A S S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/training/optimizer.h"
 
@@ -76,10 +71,40 @@ static void clip_gradient_norm_device(Buffer& gradient,
                             squared_norm, max_norm, GRADIENT_NORM_EPS);
 }
 
+static void clip_gradient_slices_device(
+    const span<const BackPropagation::GradientSlice> slices,
+    Buffer& workspace,
+    const float max_norm)
+{
+    float* const partials = workspace.ensure<float>(Index(slices.size() + 1));
+    float* const squared_norm = partials + slices.size();
+
+    BlasHandle handle = device::get_cublas_handle();
+    {
+        device::CublasPointerModeGuard pointer_mode(handle, CUBLAS_POINTER_MODE_DEVICE);
+        for(size_t i = 0; i < slices.size(); ++i)
+        {
+            const TensorView& values = slices[i].values;
+            CHECK_CUBLAS(cublasSdot(handle, to_int(values.size()),
+                                    values.as<float>(), 1,
+                                    values.as<float>(), 1, partials + i));
+        }
+    }
+
+    sum_squared_norms_cuda(Index(slices.size()), partials, squared_norm);
+    for(const auto& slice : slices)
+        clip_gradient_norm_cuda(slice.values.size(), slice.values.as<float>(),
+                                squared_norm, max_norm, GRADIENT_NORM_EPS);
+}
+
 #else
 
 static void clip_gradient_norm_device(Buffer&, Buffer&, Index, float)
     OPENNN_CUDA_STUB_BODY(clip_gradient_norm_device)
+
+static void clip_gradient_slices_device(
+    span<const BackPropagation::GradientSlice>, Buffer&, float)
+    OPENNN_CUDA_STUB_BODY(clip_gradient_slices_device)
 
 #endif
 
@@ -137,7 +162,7 @@ struct DeviceEpochMetricSums
         if (!device::is_cuda_build()) return sums;
 
         float host[2] = {0.0f, 0.0f};
-        const cudaStream_t stream = device::get_compute_stream();
+        const DeviceStream stream = device::get_compute_stream();
         device::copy_async(host, values.data(), Index(sizeof(host)),
                            device::CopyKind::DeviceToHost,
                            stream);
@@ -227,7 +252,6 @@ bool Optimizer::uses_joint_gradient_arena() const noexcept
         loss ? loss->get_network() : nullptr;
 
     return joint_gradient_arena
-        && gradient_clip_norm <= 0.0f
         && network
         && network->is_gpu();
 }
@@ -658,7 +682,7 @@ void Optimizer::warmup_device_training(
        || training_batches.empty())
         return;
 
-    const cudaStream_t stream = device::get_compute_stream();
+    const DeviceStream stream = device::get_compute_stream();
 
     const Index parameters_bytes =
         network->get_parameters_buffer_size() * Index(sizeof(float));
@@ -1287,7 +1311,7 @@ void Optimizer::update_best_parameters(Network* network,
         const size_t bytes = size_t(size) * sizeof(float);
         if (network->is_gpu() && device::is_cuda_build())
         {
-            const cudaStream_t stream = device::get_compute_stream();
+            const DeviceStream stream = device::get_compute_stream();
             device::copy_async(destination.data(), source, Index(bytes),
                                device::CopyKind::DeviceToHost, stream);
             device::synchronize(stream);
@@ -1400,25 +1424,32 @@ void Optimizer::clip_gradient_norm(BackPropagation& back_propagation,
 {
     if(max_norm <= 0.0f) return;
 
-    throw_if(back_propagation.has_joint_gradient_arena(),
-             "Joint-gradient arenas require gradient clipping to be disabled; "
-             "use the contiguous-gradient fallback when clipping is enabled.");
-
     Buffer& gradient = back_propagation.gradient;
-    const Index gradient_size = gradient.size_in_floats();
-    if (gradient_size <= 0) return;
+    const auto& slices = back_propagation.get_gradient_slices();
+    if(slices.empty()) return;
 
-    if (gradient.get_device() == Device::CUDA)
-        clip_gradient_norm_device(gradient,
-                                  back_propagation.execution_workspace,
-                                  gradient_size,
-                                  max_norm);
+    if(slices.front().values.get_device() == Device::CUDA)
+    {
+        if(!back_propagation.has_joint_gradient_arena())
+            clip_gradient_norm_device(gradient,
+                                      back_propagation.execution_workspace,
+                                      gradient.size_in_floats(), max_norm);
+        else
+            clip_gradient_slices_device(slices,
+                                        back_propagation.execution_workspace,
+                                        max_norm);
+    }
     else
     {
-        VectorMap gradient_view = gradient.as_vector();
-        const float gradient_norm = gradient_view.norm();
+        float squared_norm = 0.0f;
+        for(const auto& slice : slices)
+            squared_norm += slice.values.as_vector().squaredNorm();
+        const float gradient_norm = sqrt(squared_norm);
         if (gradient_norm > max_norm)
-            gradient_view *= max_norm / (gradient_norm + GRADIENT_NORM_EPS);
+        {
+            const float scale = max_norm / (gradient_norm + GRADIENT_NORM_EPS);
+            for(const auto& slice : slices) slice.values.as_vector() *= scale;
+        }
     }
 }
 
@@ -1438,8 +1469,8 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
     DeviceEpochMetricSums device_metrics(training_session.device_metrics);
     device_metrics.reset();
 
-    const cudaStream_t compute = device::get_compute_stream();
-    const cudaStream_t transfer = device::get_transfer_stream();
+    const DeviceStream compute = device::get_compute_stream();
+    const DeviceStream transfer = device::get_transfer_stream();
 
     auto& pipelines = training_session.pipelines;
     const bool profile_this = env_flag_enabled("OPENNN_PROFILE");
@@ -1474,7 +1505,7 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
         copy_section(source.target,  slot.target);
     };
 
-    const auto issue_slot_h2d = [](Batch& slot, cudaStream_t stream)
+    const auto issue_slot_h2d = [](Batch& slot, DeviceStream stream)
     {
         const auto copy_section = [&](BatchSlot& section)
         {
@@ -1859,44 +1890,43 @@ Loss::EvaluationResult Optimizer::run_epoch_loop(EpochLoopContext& context)
 
 struct EpochBatches
 {
+    EpochBatches(const vector<vector<Index>>& batches, Index batch_size)
+        : all(batches), complete(&batches)
+    {
+        if (Index(batches.back().size()) == batch_size) return;
+
+        trimmed.assign(batches.begin(), batches.end() - 1);
+        complete = &trimmed;
+    }
+
+    bool has_tail() const { return complete != &all; }
     vector<vector<Index>> trimmed;
-    const vector<vector<Index>>* whole = nullptr;
-    bool has_tail = false;
+    const vector<vector<Index>>& all;
+    const vector<vector<Index>>* complete;
 
-    Index number() const { return Index(whole->size()); }
+    const vector<vector<Index>>& batches() const { return *complete; }
+    const vector<Index>& tail() const { return all.back(); }
+    Index number() const { return Index(complete->size()); }
+
+    void merge_tail(Loss::EvaluationResult& result,
+                    const Loss::EvaluationResult& tail_result,
+                    Index batch_size,
+                    bool tracks_accuracy) const
+    {
+        const float complete_samples = float(number() * batch_size);
+        const float tail_samples = float(tail().size());
+        const float total_samples = complete_samples + tail_samples;
+
+        result.error = (result.error * complete_samples
+                        + tail_result.error * tail_samples) / total_samples;
+
+        if (tracks_accuracy)
+            result.accuracy = (result.accuracy * complete_samples
+                               + tail_result.accuracy * tail_samples) / total_samples;
+
+        result.active_tokens_count += tail_result.active_tokens_count;
+    }
 };
-
-static EpochBatches split_off_tail(const vector<vector<Index>>& batches, Index batch_size)
-{
-    EpochBatches split;
-
-    split.has_tail = Index(batches.back().size()) != batch_size;
-
-    if (split.has_tail)
-        split.trimmed.assign(batches.begin(), batches.end() - 1);
-
-    split.whole = split.has_tail ? &split.trimmed : &batches;
-
-    return split;
-}
-
-static void merge_tail_result(Loss::EvaluationResult& result,
-                              const Loss::EvaluationResult& tail_result,
-                              const Index complete_samples,
-                              const Index tail_samples,
-                              const bool tracks_accuracy)
-{
-    const float total_samples = float(complete_samples + tail_samples);
-
-    result.error = (result.error * float(complete_samples)
-                    + tail_result.error * float(tail_samples)) / total_samples;
-
-    if (tracks_accuracy)
-        result.accuracy = (result.accuracy * float(complete_samples)
-                           + tail_result.accuracy * float(tail_samples)) / total_samples;
-
-    result.active_tokens_count += tail_result.active_tokens_count;
-}
 
 Loss::EvaluationResult Optimizer::train_epoch(
     TrainingContext& main_context,
@@ -1912,14 +1942,10 @@ Loss::EvaluationResult Optimizer::train_epoch(
     BackPropagation& back_propagation = main_context.backward;
 
     Network* network = loss->get_network();
-    const Index all_batches_number = Index(batches.size());
+    if(batches.empty()) return epoch_result;
 
-    if(all_batches_number == 0) return epoch_result;
-
-    const EpochBatches split = split_off_tail(batches, forward_propagation.batch_size);
-    const bool has_tail = split.has_tail;
-    const vector<vector<Index>>& epoch_batches = *split.whole;
-    const Index batches_number = split.number();
+    const EpochBatches epoch_batches(batches, forward_propagation.batch_size);
+    const Index batches_number = epoch_batches.number();
 
     const bool tracks_accuracy = loss->get_error() == Loss::Error::CrossEntropy3d;
     const bool on_gpu = network->is_gpu();
@@ -1951,9 +1977,9 @@ Loss::EvaluationResult Optimizer::train_epoch(
     const auto train_tail = [&]
     {
         Loss::EvaluationResult result;
-        if(!has_tail) return result;
+        if(!epoch_batches.has_tail()) return result;
 
-        const vector<Index>& sample_indices = batches.back();
+        const vector<Index>& sample_indices = epoch_batches.tail();
         const Index tail_size = Index(sample_indices.size());
 
         TrainingSession::TailContext& tail = training_session.tail;
@@ -2008,7 +2034,7 @@ Loss::EvaluationResult Optimizer::train_epoch(
                 update_parameters(tail_back_propagation, optimizer_data, update_mode);
             };
 
-            const cudaStream_t compute = device::get_compute_stream();
+            const DeviceStream compute = device::get_compute_stream();
             if (tail.exec)
                 device::launch_graph(tail.exec, compute);
             else if (graph_tail && training_session.cuda_graph_capture_allowed)
@@ -2070,13 +2096,12 @@ Loss::EvaluationResult Optimizer::train_epoch(
 
     const auto merge_tail = [&](Loss::EvaluationResult& result)
     {
-        if(!has_tail) return;
+        if(!epoch_batches.has_tail()) return;
 
         const Loss::EvaluationResult tail_result = train_tail();
-        merge_tail_result(result, tail_result,
-                          batches_number * forward_propagation.batch_size,
-                          Index(batches.back().size()),
-                          tracks_accuracy);
+        epoch_batches.merge_tail(result, tail_result,
+                                 forward_propagation.batch_size,
+                                 tracks_accuracy);
 
         back_propagation.metrics.error = result.error;
         back_propagation.metrics.accuracy = result.accuracy;
@@ -2093,7 +2118,7 @@ Loss::EvaluationResult Optimizer::train_epoch(
         {
             {
                 PROFILE_SCOPE_HOST("step:fill");
-                batch->fill(epoch_batches[size_t(iteration)], features, FillMode::Training);
+                batch->fill(epoch_batches.batches()[size_t(iteration)], features, FillMode::Training);
             }
 
             {
@@ -2146,7 +2171,7 @@ Loss::EvaluationResult Optimizer::train_epoch(
                                        forward_propagation,
                                        back_propagation,
                                        empty_queue,
-                                       epoch_batches,
+                                       epoch_batches.batches(),
                                        features);
 
         merge_tail(epoch_result);
@@ -2163,7 +2188,7 @@ Loss::EvaluationResult Optimizer::train_epoch(
 
     EpochLoopContext context{
         &empty_queue,
-        &epoch_batches,
+        &epoch_batches.batches(),
         &features,
         FillMode::Training,
         true,
@@ -2265,14 +2290,10 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
     Loss::EvaluationResult epoch_result;
 
     Network* network = loss->get_network();
-    const Index all_batches_number = Index(batches.size());
+    if(batches.empty()) return epoch_result;
 
-    if(all_batches_number == 0) return epoch_result;
-
-    const EpochBatches split = split_off_tail(batches, forward_propagation.batch_size);
-    const bool has_tail = split.has_tail;
-    const vector<vector<Index>>& epoch_batches = *split.whole;
-    const Index batches_number = split.number();
+    const EpochBatches epoch_batches(batches, forward_propagation.batch_size);
+    const Index batches_number = epoch_batches.number();
 
     const bool tracks_accuracy = loss->get_error() == Loss::Error::CrossEntropy3d;
     const bool on_gpu = network->is_gpu();
@@ -2280,9 +2301,9 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
     const auto evaluate_tail = [&]
     {
         Loss::EvaluationResult result;
-        if(!has_tail) return result;
+        if(!epoch_batches.has_tail()) return result;
 
-        const vector<Index>& sample_indices = batches.back();
+        const vector<Index>& sample_indices = epoch_batches.tail();
         const Index tail_size = Index(sample_indices.size());
 
         Batch batch(tail_size, loss->get_dataset(), network->get_config());
@@ -2313,13 +2334,12 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
 
     const auto merge_tail = [&](Loss::EvaluationResult& result)
     {
-        if(!has_tail) return;
+        if(!epoch_batches.has_tail()) return;
 
         const Loss::EvaluationResult tail_result = evaluate_tail();
-        merge_tail_result(result, tail_result,
-                          batches_number * forward_propagation.batch_size,
-                          Index(batches.back().size()),
-                          tracks_accuracy);
+        epoch_batches.merge_tail(result, tail_result,
+                                 forward_propagation.batch_size,
+                                 tracks_accuracy);
     };
 
     if(!on_gpu)
@@ -2330,7 +2350,7 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
 
         for(Index iteration = 0; iteration < batches_number; ++iteration)
         {
-            batch->fill(epoch_batches[size_t(iteration)], features, FillMode::Validation);
+            batch->fill(epoch_batches.batches()[size_t(iteration)], features, FillMode::Validation);
 
             network->forward_propagate(batch->get_inputs(),
                                               forward_propagation,
@@ -2363,7 +2383,7 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
 
     EpochLoopContext context{
         &empty_queue,
-        &epoch_batches,
+        &epoch_batches.batches(),
         &features,
         FillMode::Validation,
         true,
@@ -2415,7 +2435,3 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
 }
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

@@ -11,10 +11,38 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "benchmarks"))
 import run as runner
+import compare as benchmark_compare
 from families import footprint
 
 
 class BenchmarkRunnerTest(unittest.TestCase):
+    @staticmethod
+    def artifact(rate=100.0, memory=50.0, batch=128):
+        return {
+            "benchmark_id": "cpu-dense-infer",
+            "shape_gate": {"agrees": True},
+            "quality_gate": {"agrees": True},
+            "machine_quiet": {"quiet": True},
+            "summary": {"opennn": {
+                "median_samples_per_sec": rate,
+                "workload_mib": memory,
+                "max_batch": batch,
+            }},
+        }
+
+    def test_benchmark_regression_limits(self):
+        baseline = self.artifact()
+        self.assertEqual(benchmark_compare.compare(baseline, self.artifact(96, 52)), [])
+        failures = benchmark_compare.compare(baseline, self.artifact(94, 56, 64))
+        self.assertEqual(len(failures), 3)
+
+    def test_benchmark_regression_rejects_invalid_runs(self):
+        baseline = self.artifact()
+        candidate = self.artifact()
+        candidate["machine_quiet"]["quiet"] = False
+        candidate["shape_gate"]["agrees"] = False
+        self.assertEqual(len(benchmark_compare.compare(baseline, candidate)), 2)
+
     def test_failure_classification(self):
         for code, stdout, stderr, expected in (
             (0, "RESULT=OK", "CUDA out of memory recovered", None),

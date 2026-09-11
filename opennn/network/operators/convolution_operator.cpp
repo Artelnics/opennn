@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   C O N V O L U T I O N   O P E R A T O R   S O U R C E
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/network/operators/convolution_operator.h"
 
@@ -234,11 +229,12 @@ bool build_preferred(const ConvolutionOperator& op, const char* kind, int64_t ba
     }
     catch (const exception& e)
     {
-        logging::warning() << "ConvolutionOperator " << kind << " "
-             << op.input_height << "x" << op.input_width << "x" << op.kernel_channels
-             << " k" << op.kernel_height << "x" << op.kernel_width << "x" << op.kernels_number
-             << " batch " << batch << ": no engine (" << e.what() << "); "
-             << consequence << ".\n";
+        if (frontend_verbose())
+            logging::warning() << "ConvolutionOperator " << kind << " "
+                 << op.input_height << "x" << op.input_width << "x" << op.kernel_channels
+                 << " k" << op.kernel_height << "x" << op.kernel_width << "x" << op.kernels_number
+                 << " batch " << batch << ": no engine (" << e.what() << "); "
+                 << consequence << ".\n";
         return false;
     }
 }
@@ -663,7 +659,7 @@ void ConvolutionOperator::apply_gpu_folded(const TensorView& input,
 
     if (!ran)
         linear_forward(input, folded_weights, folded_bias, output,
-                       relu ? CUBLASLT_EPILOGUE_RELU_BIAS : CUBLASLT_EPILOGUE_BIAS);
+                       relu ? LinearEpilogue::ReluBias : LinearEpilogue::Bias);
 }
 
 void ConvolutionOperator::apply_delta_gpu(const TensorView& input,
@@ -783,7 +779,3 @@ void ConvolutionOperator::apply_delta_gpu(const TensorView&, const TensorView&, 
 #endif
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

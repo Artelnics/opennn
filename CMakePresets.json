@@ -13,6 +13,7 @@
       "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_FIND_USE_PACKAGE_REGISTRY": false,
         "OpenNN_BUILD_TESTS": true,
         "OpenNN_BUILD_EXAMPLES": false,
         "OpenNN_BUILD_BENCHMARKS": false

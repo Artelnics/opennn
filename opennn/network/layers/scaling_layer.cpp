@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   S C A L I N G   L A Y E R   C L A S S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/network/layers/scaling_layer.h"
 
@@ -169,6 +164,21 @@ static void scale_cpu(const TensorView& input,
     }
 }
 
+static void apply_scaling(const TensorView& input,
+                          const TensorView& minimums, const TensorView& maximums,
+                          const TensorView& means, const TensorView& standard_deviations,
+                          const TensorView& scalers,
+                          float min_range, float max_range,
+                          TensorView& output, bool inverse)
+{
+    if (input.is_cuda())
+        return scale_gpu(input, minimums, maximums, means, standard_deviations, scalers,
+                         min_range, max_range, output, inverse);
+
+    scale_cpu(input, minimums, maximums, means, standard_deviations, scalers,
+              min_range, max_range, output, inverse);
+}
+
 void scale(const TensorView& input,
            const TensorView& minimums, const TensorView& maximums,
            const TensorView& means, const TensorView& standard_deviations,
@@ -176,11 +186,8 @@ void scale(const TensorView& input,
            float min_range, float max_range,
            TensorView& output)
 {
-    if (input.is_cuda())
-        return scale_gpu(input, minimums, maximums, means, standard_deviations, scalers,
-                         min_range, max_range, output, false);
-    scale_cpu(input, minimums, maximums, means, standard_deviations, scalers,
-              min_range, max_range, output, false);
+    apply_scaling(input, minimums, maximums, means, standard_deviations, scalers,
+                  min_range, max_range, output, false);
 }
 
 void unscale(const TensorView& input,
@@ -190,12 +197,8 @@ void unscale(const TensorView& input,
              float min_range, float max_range,
              TensorView& output)
 {
-    if (input.is_cuda())
-        return scale_gpu(input, minimums, maximums, means, standard_deviations, scalers,
-                         min_range, max_range, output, true);
-
-    scale_cpu(input, minimums, maximums, means, standard_deviations, scalers,
-              min_range, max_range, output, true);
+    apply_scaling(input, minimums, maximums, means, standard_deviations, scalers,
+                  min_range, max_range, output, true);
 }
 
 void ScaleOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, ForwardPropagationMode)
@@ -206,12 +209,8 @@ void ScaleOperator::forward_propagate(ForwardPropagation& forward_propagation, s
     if (!minimums.get_data())
         return copy(input, output);
 
-    if (invert)
-        unscale(input, minimums, maximums, means, standard_deviations, scalers,
-                min_range, max_range, output);
-    else
-        scale(input, minimums, maximums, means, standard_deviations, scalers,
-              min_range, max_range, output);
+    apply_scaling(input, minimums, maximums, means, standard_deviations, scalers,
+                  min_range, max_range, output, invert);
 }
 
 Scaling::Scaling(const Shape& new_input_shape)

@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   J S O N   M I N I M A L   S U P P O R T
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/core/json.h"
 #include "opennn/core/io_utilities.h"
@@ -412,6 +407,61 @@ struct Parser
         out.append(s.substr(sequence_start, continuation_count + 1));
     }
 
+    unsigned read_hex_quad()
+    {
+        if (position + 4 > s.size()) fail("bad \\u");
+
+        unsigned value = 0;
+        for (int i = 0; i < 4; ++i)
+        {
+            const char digit = s[position++];
+            value <<= 4;
+            if (digit >= '0' && digit <= '9') value |= unsigned(digit - '0');
+            else if (digit >= 'a' && digit <= 'f') value |= unsigned(digit - 'a' + 10);
+            else if (digit >= 'A' && digit <= 'F') value |= unsigned(digit - 'A' + 10);
+            else fail("bad hex in \\u");
+        }
+        return value;
+    }
+
+    void append_unicode_escape(std::string& out)
+    {
+        unsigned code = read_hex_quad();
+        if (code >= 0xD800 && code <= 0xDBFF)
+        {
+            if (position + 1 >= s.size() || s[position] != '\\' || s[position + 1] != 'u')
+                fail("unpaired high surrogate in \\u escape");
+            position += 2;
+            const unsigned low = read_hex_quad();
+            if (low < 0xDC00 || low > 0xDFFF)
+                fail("unpaired high surrogate in \\u escape");
+            code = 0x10000 + ((code - 0xD800) << 10) + (low - 0xDC00);
+        }
+        else if (code >= 0xDC00 && code <= 0xDFFF)
+            fail("unpaired low surrogate in \\u escape");
+
+        append_utf8(out, code);
+    }
+
+    void append_escape(std::string& out)
+    {
+        if (position >= s.size()) fail("bad escape");
+
+        switch (s[position++])
+        {
+        case '"':  out.push_back('"');  break;
+        case '\\': out.push_back('\\'); break;
+        case '/':  out.push_back('/');  break;
+        case 'n':  out.push_back('\n'); break;
+        case 'r':  out.push_back('\r'); break;
+        case 't':  out.push_back('\t'); break;
+        case 'b':  out.push_back('\b'); break;
+        case 'f':  out.push_back('\f'); break;
+        case 'u':  append_unicode_escape(out); break;
+        default: fail("bad escape");
+        }
+    }
+
     std::string parse_string()
     {
         if (consume() != '"') fail("expected '\"'");
@@ -429,60 +479,32 @@ struct Parser
                 continue;
             }
 
-            if (position >= s.size()) fail("bad escape");
-
-            const char e = s[position++];
-            switch (e)
-            {
-            case '"':  out.push_back('"');  break;
-            case '\\': out.push_back('\\'); break;
-            case '/':  out.push_back('/');  break;
-            case 'n':  out.push_back('\n'); break;
-            case 'r':  out.push_back('\r'); break;
-            case 't':  out.push_back('\t'); break;
-            case 'b':  out.push_back('\b'); break;
-            case 'f':  out.push_back('\f'); break;
-            case 'u':
-            {
-                const auto read_four_hex = [&]() -> unsigned
-                {
-                    if (position + 4 > s.size()) fail("bad \\u");
-
-                    unsigned value = 0;
-                    for (int i = 0; i < 4; ++i)
-                    {
-                        const char h = s[position++];
-                        value <<= 4;
-                        if (h >= '0' && h <= '9')      value |= unsigned(h - '0');
-                        else if (h >= 'a' && h <= 'f') value |= unsigned(h - 'a' + 10);
-                        else if (h >= 'A' && h <= 'F') value |= unsigned(h - 'A' + 10);
-                        else fail("bad hex in \\u");
-                    }
-                    return value;
-                };
-
-                unsigned code = read_four_hex();
-
-                if (code >= 0xD800 && code <= 0xDBFF)
-                {
-                    if (position + 1 >= s.size() || s[position] != '\\' || s[position + 1] != 'u')
-                        fail("unpaired high surrogate in \\u escape");
-                    position += 2;
-                    const unsigned low = read_four_hex();
-                    if (low < 0xDC00 || low > 0xDFFF)
-                        fail("unpaired high surrogate in \\u escape");
-                    code = 0x10000 + ((code - 0xD800) << 10) + (low - 0xDC00);
-                }
-                else if (code >= 0xDC00 && code <= 0xDFFF)
-                    fail("unpaired low surrogate in \\u escape");
-
-                append_utf8(out, code);
-                break;
-            }
-            default: fail("bad escape");
-            }
+            append_escape(out);
         }
         fail("unterminated string");
+    }
+
+    void consume_digits(const char* error)
+    {
+        if (position >= s.size() || !std::isdigit(static_cast<unsigned char>(s[position])))
+            fail(error);
+        while (position < s.size() && std::isdigit(static_cast<unsigned char>(s[position])))
+            ++position;
+    }
+
+    void consume_integer_part()
+    {
+        if (position >= s.size()) fail("bad number");
+        if (s[position] != '0')
+        {
+            if (s[position] < '1' || s[position] > '9') fail("bad number");
+            consume_digits("bad number");
+            return;
+        }
+
+        ++position;
+        if (position < s.size() && std::isdigit(static_cast<unsigned char>(s[position])))
+            fail("leading zero in number");
     }
 
     Json parse_number()
@@ -490,32 +512,17 @@ struct Parser
         skip_ws();
         const std::size_t start = position;
         if (position < s.size() && s[position] == '-') ++position;
-        if (position >= s.size()) fail("bad number");
-        if (s[position] == '0')
-        {
-            ++position;
-            if (position < s.size() && std::isdigit(static_cast<unsigned char>(s[position])))
-                fail("leading zero in number");
-        }
-        else
-        {
-            if (s[position] < '1' || s[position] > '9') fail("bad number");
-            while (position < s.size() && std::isdigit(static_cast<unsigned char>(s[position]))) ++position;
-        }
+        consume_integer_part();
         if (position < s.size() && s[position] == '.')
         {
             ++position;
-            if (position >= s.size() || !std::isdigit(static_cast<unsigned char>(s[position])))
-                fail("fraction requires a digit");
-            while (position < s.size() && std::isdigit(static_cast<unsigned char>(s[position]))) ++position;
+            consume_digits("fraction requires a digit");
         }
         if (position < s.size() && is_one_of(s[position], 'e', 'E'))
         {
             ++position;
             if (position < s.size() && is_one_of(s[position], '+', '-')) ++position;
-            if (position >= s.size() || !std::isdigit(static_cast<unsigned char>(s[position])))
-                fail("exponent requires a digit");
-            while (position < s.size() && std::isdigit(static_cast<unsigned char>(s[position]))) ++position;
+            consume_digits("exponent requires a digit");
         }
         double value = 0.0;
         if (!parse_double_exact(s.substr(start, position - start), value)) fail("bad number");

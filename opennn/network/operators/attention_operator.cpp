@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   A T T E N T I O N   O P E R A T O R   S O U R C E
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/network/operators/attention_operator.h"
 #include "opennn/core/profiler.h"
@@ -910,7 +905,7 @@ void AttentionOperator::apply_sdpa_forward(const TensorView& query,
 
     if (fp32_via_bf16)
     {
-        cudaStream_t cstream = device::get_compute_stream();
+        DeviceStream cstream = device::get_compute_stream();
         const Index q_elems  = query.size();
         const Index kv_elems = key.size();
 
@@ -1179,7 +1174,7 @@ void AttentionOperator::apply_sdpa_backward(const TensorView& query,
                  "SDPA backward: BF16 scratch views were not planned "
                  "(BackPropagation::set ran without the SDPA backward specs).");
 
-        cudaStream_t cstream = device::get_compute_stream();
+        DeviceStream cstream = device::get_compute_stream();
         cast_fp32_to_bf16(query.size(), query.as<float>(), query_bf16.as<bfloat16>(), cstream);
         cast_fp32_to_bf16(key.size(),   key.as<float>(),   key_bf16.as<bfloat16>(), cstream);
         cast_fp32_to_bf16(value.size(), value.as<float>(), value_bf16.as<bfloat16>(), cstream);
@@ -1252,7 +1247,3 @@ void AttentionOperator::apply_sdpa_backward(const TensorView& query,
 #endif
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   A D A M
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/training/adam.h"
 
@@ -174,7 +169,7 @@ void Adam::update_parameters(BackPropagation& back_propagation,
         float* const graph_epsilon = graph_scalars + 2;
         const float* const graph_base_learning_rate = graph_scalars + 3;
 
-        cudaStream_t stream = device::get_compute_stream();
+        DeviceStream stream = device::get_compute_stream();
         adam_prepare_capturable_cuda(
             beta_1, beta_2, graph_base_learning_rate, EPSILON,
             graph_step, graph_learning_rate, graph_epsilon, stream);
@@ -325,7 +320,3 @@ void Adam::from_JSON(const JsonDocument& document)
 }
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

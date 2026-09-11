@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   P U B L I C   T Y P E S   A N D   C O N F I G U R A T I O N
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #pragma once
 #ifndef OPENNN_TYPES_H_
@@ -136,6 +131,41 @@ using Eigen::Index;
 using type = float;
 
 namespace opennn {
+
+using DeviceStream = cudaStream_t;
+using DeviceEvent = cudaEvent_t;
+using DeviceGraph = cudaGraph_t;
+using DeviceGraphExec = cudaGraphExec_t;
+using BlasHandle = cublasHandle_t;
+using BlasLtHandle = cublasLtHandle_t;
+using DnnHandle = cudnnHandle_t;
+using DnnOpTensorDescriptor = cudnnOpTensorDescriptor_t;
+using DnnDataType = cudnnDataType_t;
+#ifdef OPENNN_HAS_CUDA
+using DnnStatus = cudnnStatus_t;
+#else
+using DnnStatus = int;
+#endif
+using DnnTensorDescriptor = cudnnTensorDescriptor_t;
+using DnnRNNDataDescriptor = cudnnRNNDataDescriptor_t;
+using DnnRNNDescriptor = cudnnRNNDescriptor_t;
+using DnnDropoutDescriptor = cudnnDropoutDescriptor_t;
+using DnnPoolingDescriptor = cudnnPoolingDescriptor_t;
+#ifdef OPENNN_HAS_CUDA
+using DnnRNNMode = cudnnRNNMode_t;
+#else
+using DnnRNNMode = int;
+#endif
+using BlasComputeType = cublasComputeType_t;
+#ifdef OPENNN_HAS_CUDA
+using BlasPointerMode = cublasPointerMode_t;
+using BlasMathMode = cublasMath_t;
+#else
+using BlasPointerMode = int;
+using BlasMathMode = int;
+#endif
+using BlasOperation = cublasOperation_t;
+using DeviceDataType = cudaDataType_t;
 
 using namespace Eigen;
 using bfloat16 = __nv_bfloat16;
@@ -322,7 +352,3 @@ template <int Rank>
 using TensorMapR = Eigen::TensorMap<Eigen::Tensor<float, Rank, Layout | Eigen::AlignedMax>, Eigen::AlignedMax>;
 
 #endif
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

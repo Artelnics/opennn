@@ -1,10 +1,5 @@
-﻿//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   D E V I C E   B A C K E N D
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #pragma once
 
@@ -21,7 +16,7 @@ struct CudnnDescriptor
 {
     Handle handle = nullptr;
 #ifdef OPENNN_HAS_CUDA
-    cudnnStatus_t (*deleter)(Handle) = nullptr;
+    DnnStatus (*deleter)(Handle) = nullptr;
 #else
     void (*deleter)(Handle) = nullptr;
 #endif
@@ -96,6 +91,7 @@ string gpu_info_string() noexcept;
 string lt_plan_cache_directory() noexcept;
 bool cuda_allocation_growth_forbidden() noexcept;
 void set_cuda_allocation_growth_forbidden(bool forbidden) noexcept;
+void begin_cuda_shutdown() noexcept;
 
 enum class GraphWorkspaceKind
 {
@@ -124,6 +120,11 @@ struct GraphWorkspaceView
 
 using GraphWorkspaceRequirements = std::array<Index, static_cast<size_t>(GraphWorkspaceKind::Count)>;
 using GraphWorkspaceViews = std::array<GraphWorkspaceView, static_cast<size_t>(GraphWorkspaceKind::Count)>;
+
+#ifdef OPENNN_HAS_CUDA
+bool cuda_matmul_plan_creation_forbidden() noexcept;
+optional<void*> graph_workspace_override(GraphWorkspaceKind, Index minimum_bytes);
+#endif
 
 class CudaGraphWorkspaceScope
 {
@@ -159,6 +160,7 @@ void set_conv_autotune(bool enabled) noexcept;
 // keys.
 bool allow_tf32() noexcept;
 void set_allow_tf32(bool enabled) noexcept;
+void refresh_blas_math_mode();
 
 enum class BatchNormBackwardRung { Auto, StagedFp32, PlainNative, OwnKernel };
 enum class BatchNormForwardRung { Auto, CudnnGraph, OwnKernel };
@@ -203,11 +205,11 @@ private:
 };
 
 void set_zero(void*, Index, Device);
-void set_zero_async(void*, Index, cudaStream_t = nullptr);
+void set_zero_async(void*, Index, DeviceStream = nullptr);
 
-void copy_async(void*, const void*, Index, CopyKind, cudaStream_t = nullptr);
-void copy_async(void*, const void*, Index, Device, Device, cudaStream_t = nullptr);
-void synchronize(cudaStream_t = nullptr);
+void copy_async(void*, const void*, Index, CopyKind, DeviceStream = nullptr);
+void copy_async(void*, const void*, Index, Device, Device, DeviceStream = nullptr);
+void synchronize(DeviceStream = nullptr);
 void check_last_error();
 void reset_last_error() noexcept;
 
@@ -216,7 +218,7 @@ class CublasPointerModeGuard
 {
 public:
 
-    CublasPointerModeGuard(cublasHandle_t, cublasPointerMode_t);
+    CublasPointerModeGuard(BlasHandle, BlasPointerMode);
 
     CublasPointerModeGuard(const CublasPointerModeGuard&) = delete;
     CublasPointerModeGuard& operator=(const CublasPointerModeGuard&) = delete;
@@ -225,15 +227,15 @@ public:
 
 private:
 
-    cublasHandle_t handle = nullptr;
-    cublasPointerMode_t previous_mode = CUBLAS_POINTER_MODE_HOST;
+    BlasHandle handle = nullptr;
+    BlasPointerMode previous_mode = CUBLAS_POINTER_MODE_HOST;
 };
 
 class CublasMathModeGuard
 {
 public:
 
-    CublasMathModeGuard(cublasHandle_t, cublasMath_t);
+    CublasMathModeGuard(BlasHandle, BlasMathMode);
 
     CublasMathModeGuard(const CublasMathModeGuard&) = delete;
     CublasMathModeGuard& operator=(const CublasMathModeGuard&) = delete;
@@ -242,8 +244,8 @@ public:
 
 private:
 
-    cublasHandle_t handle = nullptr;
-    cublasMath_t previous_mode = CUBLAS_DEFAULT_MATH;
+    BlasHandle handle = nullptr;
+    BlasMathMode previous_mode = CUBLAS_DEFAULT_MATH;
 };
 #endif
 
@@ -287,9 +289,9 @@ private:
     Index allocated_bytes = 0;
 };
 
-void record_event(cudaEvent_t, cudaStream_t);
-void synchronize_event(cudaEvent_t);
-void stream_wait_event(cudaStream_t, cudaEvent_t);
+void record_event(DeviceEvent, DeviceStream);
+void synchronize_event(DeviceEvent);
+void stream_wait_event(DeviceStream, DeviceEvent);
 
 class CudaEvent
 {
@@ -308,28 +310,24 @@ public:
 
     void create();
 
-    cudaEvent_t get() const noexcept { return handle; }
+    DeviceEvent get() const noexcept { return handle; }
     explicit operator bool() const noexcept { return handle != nullptr; }
 
 private:
 
     void reset() noexcept;
 
-    cudaEvent_t handle = nullptr;
+    DeviceEvent handle = nullptr;
 };
 
-#ifdef OPENNN_HAS_CUDA
-struct GraphExecDeleter { void operator()(cudaGraphExec_t exec) const noexcept { cudaGraphExecDestroy(exec); } };
-#else
-struct GraphExecDeleter { void operator()(void*) const noexcept {} };
-#endif
+struct GraphExecDeleter { void operator()(DeviceGraphExec) const noexcept; };
 
-using GraphExecHandle = unique_ptr<remove_pointer_t<cudaGraphExec_t>, GraphExecDeleter>;
+using GraphExecHandle = unique_ptr<remove_pointer_t<DeviceGraphExec>, GraphExecDeleter>;
 
 class StreamCapture
 {
 public:
-    explicit StreamCapture(cudaStream_t);
+    explicit StreamCapture(DeviceStream);
 
     StreamCapture(const StreamCapture&) = delete;
     StreamCapture& operator=(const StreamCapture&) = delete;
@@ -340,26 +338,26 @@ public:
 
 private:
 #ifdef OPENNN_HAS_CUDA
-    cudaStream_t stream = nullptr;
+    DeviceStream stream = nullptr;
     bool finished = false;
 #endif
 };
 
-void launch_graph(const GraphExecHandle&, cudaStream_t);
+void launch_graph(const GraphExecHandle&, DeviceStream);
 
 constexpr int MAX_LANES = 4;
 int lanes_available() noexcept;
 int active_lane() noexcept;
 void set_active_lane(int lane);
-cudaStream_t lane_stream(int lane);
+DeviceStream lane_stream(int lane);
 
-cudaStream_t get_compute_stream();
-cudaStream_t get_transfer_stream();
+DeviceStream get_compute_stream();
+DeviceStream get_transfer_stream();
 
-cublasHandle_t get_cublas_handle();
-cublasLtHandle_t get_cublas_lt_handle();
-cudnnHandle_t get_cudnn_handle();
-cudnnOpTensorDescriptor_t get_op_tensor_add_descriptor();
+BlasHandle get_cublas_handle();
+BlasLtHandle get_cublas_lt_handle();
+DnnHandle get_cudnn_handle();
+DnnOpTensorDescriptor get_op_tensor_add_descriptor();
 
 }
 
@@ -398,30 +396,26 @@ const void* bias_for_gemm_bf16(const TensorView&);
 // same thing.
 void run_lt_matmul_cached(
     int, int, int,
-    cublasOperation_t transA,
-    cublasOperation_t transB,
-    cublasLtEpilogue_t epilogue,
+    BlasOperation transA,
+    BlasOperation transB,
+    LinearEpilogue epilogue,
     const void*, const void*, void*,
     const void*,
-    cudaDataType_t dtype_a   = CUDA_R_32F,
-    cudaDataType_t dtype_b   = CUDA_R_32F,
-    cudaDataType_t out_dtype = CUDA_R_32F,
+    DeviceDataType dtype_a   = CUDA_R_32F,
+    DeviceDataType dtype_b   = CUDA_R_32F,
+    DeviceDataType out_dtype = CUDA_R_32F,
     const void* aux_pointer  = nullptr,
     const void* addend       = nullptr,
     float alpha              = 1.0f,
     float beta               = 0.0f,
     int lda = 0, int ldb = 0, int ldd = 0);
 
-void gemm_strided_batched_cuda(cublasOperation_t transa, cublasOperation_t transb,
+void gemm_strided_batched_cuda(BlasOperation transa, BlasOperation transb,
                                int, int, int,
-                               const void*, cudaDataType_t Atype, int, long long stride_a,
-                               const void*, cudaDataType_t Btype, int, long long stride_b,
-                               void*, cudaDataType_t Ctype, int, long long stride_c,
+                               const void*, DeviceDataType Atype, int, long long stride_a,
+                               const void*, DeviceDataType Btype, int, long long stride_b,
+                               void*, DeviceDataType Ctype, int, long long stride_c,
                                int,
                                float alpha = 1.0f, float beta = 0.0f);
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

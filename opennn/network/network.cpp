@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   N E T W O R K   C L A S S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/network/network.h"
 #include "opennn/network/network_internal.h"
@@ -158,6 +153,7 @@ void Network::compile(EffectiveConfig new_config, const bool allocate_parameter_
     mark_parameters_changed();
 
     config = new_config;
+    precision = make_precision_plan(config.training_type);
 
     stale_configuration_warned = false;
 
@@ -172,11 +168,11 @@ void Network::compile(EffectiveConfig new_config, const bool allocate_parameter_
     // skips the master: for a 4B model it is 16 GiB of host memory that would
     // only be zeroed and freed. With no master there is nothing to link; the
     // loader links the operators once its storage exists.
-    parameters.resize_bytes(allocate_parameter_master
+    parameter_store.master.resize_bytes(allocate_parameter_master
                             ? get_aligned_bytes(get_parameter_specs(), Type::FP32)
                             : Index(0),
                             Device::CPU);
-    parameters.setZero();
+    parameter_store.master.setZero();
 
     clear_low_precision_parameter_storage();
 
@@ -197,10 +193,7 @@ void Network::compile(EffectiveConfig new_config, const bool allocate_parameter_
 
 void Network::clear_low_precision_parameter_storage()
 {
-    parameters_bf16_mirror.resize_bytes(0, Device::CUDA);
-    parameters_bf16_mirror_compact = false;
-    parameters_fp32_inference_storage.resize_bytes(0, Device::CUDA);
-    parameters_int8_storage.resize_bytes(0, Device::CUDA);
+    parameter_store.clear_derived();
 }
 
 void Network::warn_if_stale_configuration() const
@@ -494,7 +487,7 @@ static bool upload_host_vector(Buffer& buffer, const VectorR& values)
         buffer.resize_bytes(byte_count, Device::CUDA);
         if (byte_count > 0)
         {
-            cudaStream_t stream = device::get_compute_stream();
+            DeviceStream stream = device::get_compute_stream();
             device::copy_async(buffer.data(), values.data(), byte_count,
                                device::CopyKind::HostToDevice,
                                stream);
@@ -524,9 +517,9 @@ void Network::set_parameters(const VectorR& new_parameters)
     throw_if(expected_size > 0 && new_parameters.size() != expected_size,
              "Network::set_parameters: size mismatch (got {}, expected {}). Make sure the network is compiled with the same architecture as the one that produced this snapshot.", new_parameters.size(), expected_size);
 
-    parameters_fp32_inference_storage.resize_bytes(0, Device::CUDA);
+    parameter_store.fp32_inference.resize_bytes(0, Device::CUDA);
 
-    if (upload_host_vector(parameters, new_parameters))
+    if (upload_host_vector(parameter_store.master, new_parameters))
         cast_parameters_to_bf16();
 
     link_parameters();
@@ -781,7 +774,7 @@ void Network::forward_propagate(const vector<TensorView>& input_view,
                                       ForwardPropagation& forward_propagation,
                                       ForwardPropagationMode pass) const
 {
-    throw_if(parameters.size_in_floats() != get_aligned_size(get_parameter_specs()),
+    throw_if(parameter_store.master.size_in_floats() != get_aligned_size(get_parameter_specs()),
              "Network shapes changed since compile(); call compile() again.");
 
     const Index first_layer_index = forward_propagation.get_execution_start_layer();
@@ -793,8 +786,8 @@ void Network::forward_propagate(const vector<TensorView>& input_view,
         Network* self = const_cast<Network*>(this);
 
         const bool needs_parameter_device_copy =
-            parameters.get_device() != Device::CUDA
-            || (!parameters.empty() && !low_precision_storage_ready());
+            parameter_store.master.get_device() != Device::CUDA
+            || (!parameter_store.master.empty() && !low_precision_storage_ready());
 
         if (needs_parameter_device_copy)
             self->copy_parameters_device();
@@ -807,7 +800,7 @@ void Network::forward_propagate(const vector<TensorView>& input_view,
         forward_propagation.staged_input_storage.resize(input_view.size());
 
         const bool uses_bf16_activations =
-            activation_dtype(config.training_type) == Type::BF16;
+            precision.activations == Type::BF16;
         if (uses_bf16_activations)
             forward_propagation.host_bf16_input_scratch.resize(input_view.size());
 
@@ -828,7 +821,7 @@ void Network::forward_propagate(const vector<TensorView>& input_view,
             return true;
         };
 
-        cudaStream_t stream = device::get_compute_stream();
+        DeviceStream stream = device::get_compute_stream();
         bool inputs_staged = false;
 
         if (forward_propagation.needs_position_staging())
@@ -957,26 +950,26 @@ void Network::forward_propagate(const vector<TensorView>& input_view,
                                       ForwardPropagation& forward_propagation)
 {
 
-    const Device original_parameters_device = parameters.get_device();
+    const Device original_parameters_device = parameter_store.master.get_device();
     const Index parameters_size = get_parameters_buffer_size();
     VectorR saved_parameters(parameters_size);
-    if (parameters.get_device() == Device::CUDA)
+    if (parameter_store.master.get_device() == Device::CUDA)
     {
-        cudaStream_t stream = device::get_compute_stream();
-        device::copy_async(saved_parameters.data(), parameters.data(),
+        DeviceStream stream = device::get_compute_stream();
+        device::copy_async(saved_parameters.data(), parameter_store.master.data(),
                            parameters_size * Index(sizeof(float)),
                            device::CopyKind::DeviceToHost, stream);
         device::synchronize(stream);
     }
     else
-        memcpy(saved_parameters.data(), parameters.data(),
+        memcpy(saved_parameters.data(), parameter_store.master.data(),
                size_t(parameters_size) * sizeof(float));
 
     set_parameters(new_parameters);
     forward_propagate(input_view, forward_propagation, ForwardPropagationMode::Training);
     set_parameters(saved_parameters);
 
-    if (parameters.get_device() != original_parameters_device)
+    if (parameter_store.master.get_device() != original_parameters_device)
     {
         if (original_parameters_device == Device::CPU)
             copy_parameters_host();
@@ -1064,21 +1057,21 @@ Network::ParameterSlotTotals Network::for_each_parameter_slot(
 
 void Network::allocate_compact_parameter_storage(const ParameterSlotTotals& totals)
 {
-    parameters_bf16_mirror.resize_bytes(
+    parameter_store.bf16.resize_bytes(
         totals.bf16_elements * Index(sizeof(bfloat16)), Device::CUDA);
-    parameters_fp32_inference_storage.resize_bytes(
+    parameter_store.fp32_inference.resize_bytes(
         totals.fp32_elements * Index(sizeof(float)), Device::CUDA);
-    parameters_int8_storage.resize_bytes(totals.int8_elements, Device::CUDA);
-    parameters_bf16_mirror_compact = true;
+    parameter_store.int8.resize_bytes(totals.int8_elements, Device::CUDA);
+    parameter_store.bf16_compact = true;
 }
 
 #ifdef OPENNN_HAS_CUDA
 
 void Network::use_compact_parameter_storage()
 {
-    void* compact_storage = parameters_bf16_mirror.data();
-    if (!compact_storage) compact_storage = parameters_int8_storage.data();
-    if (!compact_storage) compact_storage = parameters_fp32_inference_storage.data();
+    void* compact_storage = parameter_store.bf16.data();
+    if (!compact_storage) compact_storage = parameter_store.int8.data();
+    if (!compact_storage) compact_storage = parameter_store.fp32_inference.data();
 
     throw_if(!compact_storage,
              "Network: compact inference parameter storage is empty.");
@@ -1087,8 +1080,9 @@ void Network::use_compact_parameter_storage()
     // against the layer specs; it is computed from the specs here because a
     // network compiled for the loader never had the master.
     const Index master_bytes = get_aligned_bytes(get_parameter_specs(), Type::FP32);
-    parameters.resize_bytes(0, Device::CPU);
-    parameters.set_view(compact_storage, master_bytes, Device::CUDA);
+    parameter_store.master.resize_bytes(0, Device::CPU);
+    parameter_store.master.set_view(compact_storage, master_bytes, Device::CUDA);
+    parameter_store.validate(config.training_type);
     link_parameters();
     activate_transposed_inference_weights();
 }
@@ -1112,22 +1106,22 @@ void Network::link_parameters()
     const bool low_precision_live = storage == ParameterStorage::DeviceMasterWithMirror
                                  || storage == ParameterStorage::DeviceCompact;
 
-    float* fp32_base = parameters.as<float>();
+    float* fp32_base = parameter_store.master.as<float>();
 
     // The compact fp32 storage only exists once the master has gone; before
     // that the master is the fp32 source and this buffer is empty.
     float* fp32_inference_base =
         storage == ParameterStorage::DeviceCompact
-        && !parameters_fp32_inference_storage.empty()
-        ? parameters_fp32_inference_storage.as<float>()
+        && !parameter_store.fp32_inference.empty()
+        ? parameter_store.fp32_inference.as<float>()
         : nullptr;
 
-    bfloat16* bf16_mirror_base = low_precision_live && !parameters_bf16_mirror.empty()
-        ? parameters_bf16_mirror.as<bfloat16>()
+    bfloat16* bf16_mirror_base = low_precision_live && !parameter_store.bf16.empty()
+        ? parameter_store.bf16.as<bfloat16>()
         : nullptr;
 
-    int8_t* int8_base = low_precision_live && !parameters_int8_storage.empty()
-        ? parameters_int8_storage.as<int8_t>()
+    int8_t* int8_base = low_precision_live && !parameter_store.int8.empty()
+        ? parameter_store.int8.as<int8_t>()
         : nullptr;
 
     Layer* current_layer = nullptr;
@@ -1176,7 +1170,7 @@ void Network::link_parameters()
 
         void* slot_ptr = fp32_slot;
         Type view_type = Type::FP32;
-        Device view_device = parameters.get_device();
+        Device view_device = parameter_store.master.get_device();
         TensorView scale_view;
 
         if (slot.dtype == Type::INT8 && int8_base != nullptr)
@@ -1193,7 +1187,7 @@ void Network::link_parameters()
         else if (slot.dtype == Type::BF16 && bf16_mirror_base != nullptr)
         {
             slot_ptr = bf16_mirror_base
-                + (parameters_bf16_mirror_compact ? slot.bf16_offset : slot.master_offset);
+                + (parameter_store.bf16_compact ? slot.bf16_offset : slot.master_offset);
             view_type = Type::BF16;
             view_device = Device::CUDA;
         }
@@ -1264,7 +1258,7 @@ void Network::link_gradients(
             ? nullptr
             : storage.as<float>();
         float* const end = layers[i]->link_gradients(
-            begin, storage.empty() ? parameters.get_device()
+            begin, storage.empty() ? parameter_store.master.get_device()
                                    : storage.get_device());
 
         const float* const expected_end = expected_elements > 0
@@ -1283,7 +1277,7 @@ void Network::link_gradients(
 void Network::link_states()
 {
     const Device state_device = states.empty()
-        ? parameters.get_device()
+        ? parameter_store.master.get_device()
         : states.get_device();
 
     link_states(state_device);
@@ -1304,13 +1298,13 @@ void Network::copy_parameters_device()
     throw_if(config.device != Device::CUDA,
              "Network::copy_parameters_device: the network is compiled for the CPU.");
 
-    if (parameters.empty())
+    if (parameter_store.master.empty())
         return clear_low_precision_parameter_storage();
 
     if (fp32_master_released())
     {
-        const bool bf16_released = config.training_type == Type::BF16 && !parameters_bf16_mirror.empty();
-        const bool int8_released = config.training_type == Type::INT8 && !parameters_int8_storage.empty();
+        const bool bf16_released = config.training_type == Type::BF16 && !parameter_store.bf16.empty();
+        const bool int8_released = config.training_type == Type::INT8 && !parameter_store.int8.empty();
         throw_if(!bf16_released && !int8_released,
                  "Network::copy_parameters_device: parameters are a non-owning view.");
         return link_parameters();
@@ -1318,46 +1312,47 @@ void Network::copy_parameters_device()
 
     if (config.training_type == Type::INT8)
     {
-        throw_if(parameters.get_device() != Device::CPU || !parameters.owns_memory(),
+        throw_if(parameter_store.master.get_device() != Device::CPU || !parameter_store.master.owns_memory(),
                  "Network::copy_parameters_device: INT8 inference requires "
                  "a host FP32 master to quantize.");
         return upload_parameters_int8_inference();
     }
 
-    cudaStream_t stream = device::get_compute_stream();
-    parameters.migrate_to(Device::CUDA, stream);
+    DeviceStream stream = device::get_compute_stream();
+    parameter_store.master.migrate_to(Device::CUDA, stream);
 
     if (config.training_type == Type::BF16)
     {
-        parameters_bf16_mirror.resize_bytes(parameters.size_in_floats() * Index(sizeof(bfloat16)), Device::CUDA);
-        parameters_bf16_mirror_compact = false;
-        parameters_fp32_inference_storage.resize_bytes(0, Device::CUDA);
-        parameters_int8_storage.resize_bytes(0, Device::CUDA);
+        parameter_store.bf16.resize_bytes(parameter_store.master.size_in_floats() * Index(sizeof(bfloat16)), Device::CUDA);
+        parameter_store.bf16_compact = false;
+        parameter_store.fp32_inference.resize_bytes(0, Device::CUDA);
+        parameter_store.int8.resize_bytes(0, Device::CUDA);
         cast_parameters_to_bf16();
     }
     else
         clear_low_precision_parameter_storage();
 
     link_parameters();
+    parameter_store.validate(config.training_type);
 }
 
 void Network::cast_parameters_to_bf16()
 {
-    if (parameters_bf16_mirror.empty() || parameters.empty() || !parameters.owns_memory()) return;
+    if (parameter_store.bf16.empty() || parameter_store.master.empty() || !parameter_store.master.owns_memory()) return;
 
-    cast_fp32_to_bf16(parameters.size_in_floats(),
-                           parameters.as<float>(),
-                           parameters_bf16_mirror.as<bfloat16>());
+    cast_fp32_to_bf16(parameter_store.master.size_in_floats(),
+                           parameter_store.master.as<float>(),
+                           parameter_store.bf16.as<bfloat16>());
 }
 
 void Network::release_bf16_fp32_parameter_master_for_inference()
 {
     const bool can_release_parameter_master =
         config.training_type == Type::BF16
-        && parameters.get_device() == Device::CUDA
-        && !parameters.empty()
-        && !parameters_bf16_mirror.empty()
-        && parameters.owns_memory();
+        && parameter_store.master.get_device() == Device::CUDA
+        && !parameter_store.master.empty()
+        && !parameter_store.bf16.empty()
+        && parameter_store.master.owns_memory();
 
     if (!can_release_parameter_master) return;
 
@@ -1371,11 +1366,11 @@ void Network::release_bf16_fp32_parameter_master_for_inference()
 
     if (fp32_keep_floats > 0)
     {
-        parameters_fp32_inference_storage.resize_bytes(fp32_keep_floats * Index(sizeof(float)), Device::CUDA);
+        parameter_store.fp32_inference.resize_bytes(fp32_keep_floats * Index(sizeof(float)), Device::CUDA);
 
-        cudaStream_t stream = device::get_compute_stream();
-        float* const source_base = parameters.as<float>();
-        float* const destination_base = parameters_fp32_inference_storage.as<float>();
+        DeviceStream stream = device::get_compute_stream();
+        float* const source_base = parameter_store.master.as<float>();
+        float* const destination_base = parameter_store.fp32_inference.as<float>();
 
         Index source_offset = 0;
         Index destination_offset = 0;
@@ -1401,19 +1396,20 @@ void Network::release_bf16_fp32_parameter_master_for_inference()
         device::synchronize(stream);
         memory_debug::record("parameters",
                              "fp32_compact_inference",
-                             parameters_fp32_inference_storage.byte_size(),
+                             parameter_store.fp32_inference.byte_size(),
                              "bf16_release");
     }
     else
     {
-        parameters_fp32_inference_storage.resize_bytes(0, Device::CUDA);
+        parameter_store.fp32_inference.resize_bytes(0, Device::CUDA);
     }
 
-    const Index fp32_master_bytes = parameters.byte_size();
-    parameters.resize_bytes(0, Device::CUDA);
-    parameters.set_view(parameters_bf16_mirror.data(),
+    const Index fp32_master_bytes = parameter_store.master.byte_size();
+    parameter_store.master.resize_bytes(0, Device::CUDA);
+    parameter_store.master.set_view(parameter_store.bf16.data(),
                         fp32_master_bytes,
                         Device::CUDA);
+    parameter_store.validate(config.training_type);
     link_parameters();
 }
 
@@ -1422,21 +1418,21 @@ void Network::upload_parameters_bf16_inference()
     const bool can_upload_low_precision_parameters =
         config.device == Device::CUDA
         && is_one_of(config.training_type, Type::BF16, Type::INT8)
-        && !parameters.empty()
-        && parameters.get_device() == Device::CPU
-        && parameters.owns_memory();
+        && !parameter_store.master.empty()
+        && parameter_store.master.get_device() == Device::CPU
+        && parameter_store.master.owns_memory();
 
     if (!can_upload_low_precision_parameters)
         return copy_parameters_device();
 
-    cudaStream_t stream = device::get_compute_stream();
-    const float* const host_fp32 = parameters.as<float>();
+    DeviceStream stream = device::get_compute_stream();
+    const float* const host_fp32 = parameter_store.master.as<float>();
 
     const ParameterSlotTotals totals = for_each_parameter_slot({});
     allocate_compact_parameter_storage(totals);
-    uint16_t* const mirror = parameters_bf16_mirror.as<uint16_t>();
-    float* const fp32_compact = parameters_fp32_inference_storage.as<float>();
-    int8_t* const int8_storage = parameters_int8_storage.as<int8_t>();
+    uint16_t* const mirror = parameter_store.bf16.as<uint16_t>();
+    float* const fp32_compact = parameter_store.fp32_inference.as<float>();
+    int8_t* const int8_storage = parameter_store.int8.as<int8_t>();
 
     vector<uint16_t> host_bf16;
     vector<int8_t> host_int8;
@@ -1536,7 +1532,7 @@ void Network::activate_transposed_inference_weights()
 
     if (pending.empty()) return;
 
-    cudaStream_t stream = device::get_compute_stream();
+    DeviceStream stream = device::get_compute_stream();
 
     Buffer scratch{Device::CUDA};
     scratch.resize_bytes(scratch_bytes, Device::CUDA);
@@ -1579,14 +1575,14 @@ void Network::copy_parameters_host()
 {
     mark_parameters_changed();
 
-    if (parameters.empty())
+    if (parameter_store.master.empty())
         return clear_low_precision_parameter_storage();
 
     throw_if(fp32_master_released(),
              "Network::copy_parameters_host: the fp32 CUDA parameter master "
              "was released for quantized inference and cannot be copied back.");
 
-    parameters.migrate_to(Device::CPU, device::get_compute_stream());
+    parameter_store.master.migrate_to(Device::CPU, device::get_compute_stream());
     clear_low_precision_parameter_storage();
 
     for (const auto& layer : layers)
@@ -1598,10 +1594,10 @@ void Network::copy_parameters_host()
 
 Network::DeviceResidency Network::get_device_residency() const noexcept
 {
-    return {parameters.data(),
-            parameters_bf16_mirror.data(),
-            parameters_fp32_inference_storage.data(),
-            parameters_int8_storage.data(),
+    return {parameter_store.master.data(),
+            parameter_store.bf16.data(),
+            parameter_store.fp32_inference.data(),
+            parameter_store.int8.data(),
             states.data()};
 }
 
@@ -1635,7 +1631,7 @@ void Network::calculate_outputs_device(const vector<TensorView>& input_views_cpu
     if (Index(outputs.rows()) != batch_size || Index(outputs.cols()) != out_cols)
         outputs.resize(batch_size, out_cols);
 
-    cudaStream_t stream = device::get_compute_stream();
+    DeviceStream stream = device::get_compute_stream();
     copy_device_to_host_float(out_view.get_data(), out_view.get_type(), out_view.size(),
                               outputs.data(), stream,
                               forward_propagation.host_bf16_output_scratch);
@@ -1689,7 +1685,7 @@ TensorView Network::calculate_outputs_resident(const vector<TensorView>& gpu_inp
         return forward_propagation.get_outputs();
     }
 
-    const cudaStream_t compute = device::get_compute_stream();
+    const DeviceStream compute = device::get_compute_stream();
 
     if (forward_propagation.inference_graph_exec)
     {
@@ -1831,7 +1827,3 @@ TensorView Network::calculate_outputs_resident(const vector<TensorView>&,
 #endif
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

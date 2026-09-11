@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   E X P R E S S I O N   E V A L U A T O R   C L A S S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/pch.h"
 #include "opennn/response_optimization/expression_evaluator.h"
@@ -148,23 +143,26 @@ struct Parser
     {
     }
 
-    ExpressionNodePtr parse_expression()
+    ExpressionNodePtr parse_binary(ExpressionNodePtr (Parser::*parse_operand)(),
+                                   string_view operators,
+                                   ExpressionNode::Kind first_kind,
+                                   ExpressionNode::Kind second_kind)
     {
-        ExpressionNodePtr left_node = parse_term();
+        ExpressionNodePtr left_node = (this->*parse_operand)();
 
         while (true)
         {
             const Token& next_token = lexer.peek();
 
             if (next_token.kind != Token::Kind::Operator) break;
-            if (next_token.text != "+" && next_token.text != "-") break;
+            const size_t operation = operators.find(next_token.text);
+            if (operation == string_view::npos) break;
 
-            const string operator_text = lexer.consume().text;
-
-            ExpressionNodePtr right_node = parse_term();
+            lexer.consume();
+            ExpressionNodePtr right_node = (this->*parse_operand)();
 
             auto combined_node = make_unique<ExpressionNode>();
-            combined_node->kind = (operator_text == "+") ? ExpressionNode::Kind::Add : ExpressionNode::Kind::Sub;
+            combined_node->kind = operation == 0 ? first_kind : second_kind;
             combined_node->children.reserve(2);
             combined_node->children.push_back(move(left_node));
             combined_node->children.push_back(move(right_node));
@@ -174,30 +172,16 @@ struct Parser
         return left_node;
     }
 
+    ExpressionNodePtr parse_expression()
+    {
+        return parse_binary(&Parser::parse_term, "+-",
+                            ExpressionNode::Kind::Add, ExpressionNode::Kind::Sub);
+    }
+
     ExpressionNodePtr parse_term()
     {
-        ExpressionNodePtr left_node = parse_factor();
-
-        while (true)
-        {
-            const Token& next_token = lexer.peek();
-
-            if (next_token.kind != Token::Kind::Operator) break;
-            if (next_token.text != "*" && next_token.text != "/") break;
-
-            const string operator_text = lexer.consume().text;
-
-            ExpressionNodePtr right_node = parse_factor();
-
-            auto combined_node = make_unique<ExpressionNode>();
-            combined_node->kind = (operator_text == "*") ? ExpressionNode::Kind::Mul : ExpressionNode::Kind::Div;
-            combined_node->children.reserve(2);
-            combined_node->children.push_back(move(left_node));
-            combined_node->children.push_back(move(right_node));
-            left_node = move(combined_node);
-        }
-
-        return left_node;
+        return parse_binary(&Parser::parse_factor, "*/",
+                            ExpressionNode::Kind::Mul, ExpressionNode::Kind::Div);
     }
 
     ExpressionNodePtr parse_factor()
@@ -365,6 +349,14 @@ static void scale_terms_in_place(unordered_map<Index, float>& terms, const float
         coefficient *= scaling;
 }
 
+static LinearForm scaled_linear_form(LinearForm form, float scaling)
+{
+    form.constant *= scaling;
+    scale_terms_in_place(form.input_terms, scaling);
+    scale_terms_in_place(form.output_terms, scaling);
+    return form;
+}
+
 
 static LinearForm analyze_linear(const ExpressionNode& node)
 {
@@ -389,13 +381,7 @@ static LinearForm analyze_linear(const ExpressionNode& node)
     {
         LinearForm child_form = analyze_linear(*node.children[0]);
         if (!child_form.is_linear) { result.is_linear = false; return result; }
-
-        result.constant = -child_form.constant;
-        scale_terms_in_place(child_form.input_terms, -1.0f);
-        scale_terms_in_place(child_form.output_terms, -1.0f);
-        result.input_terms = move(child_form.input_terms);
-        result.output_terms = move(child_form.output_terms);
-        return result;
+        return scaled_linear_form(move(child_form), -1.0f);
     }
 
     case Add:
@@ -421,24 +407,10 @@ static LinearForm analyze_linear(const ExpressionNode& node)
         if (!left_form.is_linear || !right_form.is_linear) { result.is_linear = false; return result; }
 
         if (left_form.is_constant())
-        {
-            result.constant = left_form.constant * right_form.constant;
-            scale_terms_in_place(right_form.input_terms, left_form.constant);
-            scale_terms_in_place(right_form.output_terms, left_form.constant);
-            result.input_terms = move(right_form.input_terms);
-            result.output_terms = move(right_form.output_terms);
-            return result;
-        }
+            return scaled_linear_form(move(right_form), left_form.constant);
 
         if (right_form.is_constant())
-        {
-            result.constant = left_form.constant * right_form.constant;
-            scale_terms_in_place(left_form.input_terms, right_form.constant);
-            scale_terms_in_place(left_form.output_terms, right_form.constant);
-            result.input_terms = move(left_form.input_terms);
-            result.output_terms = move(left_form.output_terms);
-            return result;
-        }
+            return scaled_linear_form(move(left_form), right_form.constant);
 
         result.is_linear = false;
         return result;
@@ -456,13 +428,7 @@ static LinearForm analyze_linear(const ExpressionNode& node)
             return result;
         }
 
-        const float inverse = 1.0f / right_form.constant;
-        result.constant = left_form.constant * inverse;
-        scale_terms_in_place(left_form.input_terms, inverse);
-        scale_terms_in_place(left_form.output_terms, inverse);
-        result.input_terms = move(left_form.input_terms);
-        result.output_terms = move(left_form.output_terms);
-        return result;
+        return scaled_linear_form(move(left_form), 1.0f / right_form.constant);
     }
 
     case Pow:
@@ -1124,7 +1090,3 @@ VectorR evaluate_input_gradient(const CompiledExpression& expression, const Vect
 
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

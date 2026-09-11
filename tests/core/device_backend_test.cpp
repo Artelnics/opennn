@@ -533,7 +533,7 @@ TEST(DeviceBackendTest, LtPlanCacheNamesCardAndLibraryAndStoresTunedShape)
     device::set_zero(a, Index(m) * k * bf16, Device::CUDA);
     device::set_zero(b, Index(k) * n * bf16, Device::CUDA);
 
-    run_lt_matmul_cached(m, n, k, CUBLAS_OP_N, CUBLAS_OP_N, CUBLASLT_EPILOGUE_DEFAULT,
+    run_lt_matmul_cached(m, n, k, CUBLAS_OP_N, CUBLAS_OP_N, LinearEpilogue::Default,
                          a, b, d, nullptr, CUDA_R_16BF, CUDA_R_16BF, CUDA_R_16BF);
     device::synchronize(device::get_compute_stream());
 

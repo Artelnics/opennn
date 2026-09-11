@@ -181,8 +181,8 @@ should be attributed to the framework without checking this first.
 **On the GEMM itself, PyTorch is not behind.** Timed alone at the cell's shape
 (m=1024, n=8192, k=1024, bf16, bias and ReLU fused), PyTorch's Triton kernel
 takes 189.6 us and the cuDNN engine OpenNN now runs takes 189.8 us at 227.7 W.
-(`cudnn_matmul.h` records the same engine at 189.6 us and 235 W; that is the
-other operand layout the probe measured, and `cudnn_matmul.cpp` records why
+(`matmul_cudnn.h` records the same engine at 189.6 us and 235 W; that is the
+other operand layout the probe measured, and `matmul_cudnn.cpp` records why
 the layout OpenNN already has gets the 189.8 us / 227.7 W one instead.) The
 two matmuls are at parity within measurement. What is left is a subtraction,
 not a profile: 8,192 samples take 207.9 us per batch on OpenNN against 211.8
@@ -447,14 +447,14 @@ not trust the heuristic. Twice on this one shape the heuristic was the thing in
 the way. cuBLASLt's offers eight candidates for the dense inference GEMM and
 never the 256x160 tile that costs 34% less energy for 4% more time;
 cuDNN's mode A ranks a 226 us engine first where its best runs at 189.6
-(`device_backend.cpp`, `cudnn_matmul.cpp`). Reaching that engine took
+(`device_backend.cpp`, `matmul_cudnn.cpp`). Reaching that engine took
 enumerating all 13,460 valid cuBLASLt configurations (exactly one is below
 198 us, and it draws 265 W), instantiating five CUTLASS 3.8 tile shapes, and
 hand-writing six `mma.sync` kernels — eleven kernels written and verified
 correct against a cuBLASLt reference, none fast enough. The cuDNN side was
 sampled rather than swept: sixty engine configurations were built, executed and
 verified against a cuBLASLt reference, and thirteen beat both the time and the
-energy bound (`cudnn_matmul.h`).
+energy bound (`matmul_cudnn.h`).
 
 Where the margin owes something to an asymmetry that is not the framework —
 a different cuDNN or oneDNN build, a pre-decoded image cache against a JPEG

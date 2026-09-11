@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   D A T A   S E T   C L A S S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/dataset/dataset.h"
 #include "opennn/core/memory_debug.h"
@@ -238,7 +233,7 @@ void Dataset::upload_device_matrix(const MatrixR& matrix)
     const Index bytes = Index(matrix.size()) * Index(sizeof(float));
     data_device.resize_bytes(bytes, Device::CUDA);
 
-    const cudaStream_t stream = device::get_compute_stream();
+    const DeviceStream stream = device::get_compute_stream();
     device::copy_async(data_device.data(), matrix.data(), bytes,
                        device::CopyKind::HostToDevice, stream);
     device::synchronize(stream);
@@ -1143,7 +1138,3 @@ void Dataset::samples_from_JSON(const Json *samples_element)
 }
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

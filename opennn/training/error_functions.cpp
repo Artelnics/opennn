@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   E R R O R   F U N C T I O N S   S O U R C E
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/training/error_functions.h"
 #include "opennn/core/device_backend.h"
@@ -363,7 +358,7 @@ void cross_entropy_3d(const TensorView& input, const TensorView& target, float& 
             }
 
             float host_results[3];
-            cudaStream_t stream = device::get_compute_stream();
+            DeviceStream stream = device::get_compute_stream();
             device::copy_async(host_results, reduction_device,
                                3 * Index(sizeof(float)),
                                device::CopyKind::DeviceToHost,
@@ -541,7 +536,3 @@ void l2_regularization_gradient(const TensorView& parameters, float lambda, cons
 }
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   N E T W O R K   P E R S I S T E N C E
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/network/network.h"
 #include "opennn/network/network_internal.h"
@@ -592,6 +587,124 @@ void Network::to_JSON(JsonWriter& printer) const
     printer.close_element();
 }
 
+namespace
+{
+
+void read_network_variables(const Json* parent, const char* tag,
+                            vector<Variable>& variables, const char* default_role)
+{
+    const Json* items = parent->find(tag);
+    const size_t count = items && items->is_array() ? items->as_array().size() : 0;
+    variables.assign(count, Variable());
+
+    for_json_items(parent, tag, count, [&](size_t i, const Json* element) {
+        Variable& variable = variables[i];
+        variable.name = read_json_string(element, "Text");
+        variable.set_role(element->has("Role")
+                          ? read_json_string(element, "Role") : default_role);
+        variable.features = element->has("Features")
+                          ? read_json_index(element, "Features") : 1;
+
+        if(element->has("Type")) variable.set_type(read_json_string(element, "Type"));
+        else if(element->has("Categories")) variable.type = VariableType::Categorical;
+        if(element->has("Scaler")) variable.set_scaler(read_json_string(element, "Scaler"));
+        if(element->has("Categories"))
+            variable.categories = get_tokens(read_json_string(element, "Categories"), ";");
+    });
+}
+
+const Json* read_network_layers(const Json* container, Index expected,
+                                vector<unique_ptr<Layer>>& layers)
+{
+    layers.clear();
+    layers.reserve(expected);
+    const Json* items = container->find("Items");
+    if(!items || !items->is_array()) return items;
+
+    for(const Json& item : items->as_array())
+    {
+        if(!item.is_object() || item.as_object().empty()) continue;
+        unique_ptr<Layer> layer = create_layer(item.as_object().front().first);
+        JsonDocument layer_document;
+        layer_document.set_root(item);
+        layer->from_JSON(layer_document);
+        layers.push_back(std::move(layer));
+    }
+    return items;
+}
+
+void read_network_sources(const Json* container,
+                          const vector<unique_ptr<Layer>>& layers,
+                          vector<vector<Index>>& sources)
+{
+    sources.assign(layers.size(), {});
+    const Json* source_container = container->find("SourceLayers");
+    const Json* entries = source_container ? source_container->find("SourceLayer") : nullptr;
+
+    if(entries && entries->is_array())
+        for(const Json& entry : entries->as_array())
+        {
+            const Index layer_index = read_json_index(&entry, "LayerIndex");
+            const string text = read_json_string(&entry, "Text");
+            if(text.empty()) continue;
+            throw_if(layer_index < 0 || layer_index >= ssize(layers),
+                     "Network::from_JSON: SourceLayer index {} out of range (have {} layers).",
+                     layer_index, layers.size());
+
+            vector<Index> layer_sources = parse_number_list<Index>(text, "SourceLayers");
+            validate_source_indices(layer_sources, layer_index, ssize(layers));
+            validate_source_arity(*layers[size_t(layer_index)], layer_sources, layer_index);
+            sources[size_t(layer_index)] = std::move(layer_sources);
+        }
+
+    for(Index layer_index = 0; layer_index < ssize(layers); ++layer_index)
+    {
+        if(!sources[size_t(layer_index)].empty()) continue;
+        throw_if(layer_index == 0,
+                 "Network::from_JSON: layer 0 has no source; the first layer must name its input.");
+        sources[size_t(layer_index)] = {layer_index - 1};
+        validate_source_arity(*layers[size_t(layer_index)],
+                              sources[size_t(layer_index)], layer_index);
+    }
+}
+
+void read_tied_weights(const Json* container, vector<unique_ptr<Layer>>& layers)
+{
+    const Json* entries = container->find("TiedWeights");
+    if(!entries || !entries->is_array()) return;
+
+    for(const Json& entry : entries->as_array())
+    {
+        const Index layer = read_json_index(&entry, "LayerIndex");
+        const Index source = read_json_index(&entry, "SourceLayerIndex");
+        const Index spec = entry.has("SpecIndex") ? read_json_index(&entry, "SpecIndex") : 0;
+        const Index source_spec = entry.has("SourceSpecIndex")
+                                ? read_json_index(&entry, "SourceSpecIndex") : 0;
+        throw_if(layer < 0 || layer >= ssize(layers) || source < 0 || source >= layer
+                 || spec < 0 || source_spec < 0,
+                 "Network::from_JSON: invalid tied weight indices for layer {} and source {}.",
+                 layer, source);
+        layers[size_t(layer)]->set_tied_weight(
+            {layers[size_t(source)].get(), size_t(spec), size_t(source_spec)});
+    }
+}
+
+void load_layer_states(const Json* items, vector<unique_ptr<Layer>>& layers)
+{
+    if(!items || !items->is_array()) return;
+    Index layer = 0;
+    for(const Json& item : items->as_array())
+    {
+        if(!item.is_object() || item.as_object().empty()) continue;
+        if(layer >= ssize(layers)) break;
+        JsonDocument layer_document;
+        layer_document.set_root(item);
+        layers[size_t(layer++)]->load_state_from_JSON(layer_document);
+    }
+}
+
+}
+
 void Network::from_JSON(const JsonDocument& document)
 {
     const Json* network_element = get_json_root(document, "Network");
@@ -603,151 +716,26 @@ void Network::from_JSON(const JsonDocument& document)
         network_element->has("TrainingActivationRecomputation")
         && read_json_bool(network_element, "TrainingActivationRecomputation");
 
-    const auto read_variables_array = [](const Json* parent, const char* tag,
-                                         vector<Variable>& variables, const char* role)
-    {
-        const Json* items = parent->find(tag);
-        const size_t entries_number = items && items->is_array()
-                                    ? items->as_array().size()
-                                    : 0;
-
-        variables.assign(entries_number, Variable());
-
-        for_json_items(parent, tag, entries_number, [&](size_t i, const Json* element) {
-            Variable& variable = variables[i];
-
-            variable.name = read_json_string(element, "Text");
-            variable.set_role(element->has("Role")
-                              ? read_json_string(element, "Role")
-                              : role);
-            variable.features = element->find("Features") ? read_json_index(element, "Features") : 1;
-
-            if (element->has("Type"))
-                variable.set_type(read_json_string(element, "Type"));
-            else if (element->has("Categories"))
-                variable.type = VariableType::Categorical;
-
-            if (element->has("Scaler"))
-                variable.set_scaler(read_json_string(element, "Scaler"));
-
-            if (element->find("Categories"))
-            {
-                variable.categories = get_tokens(read_json_string(element, "Categories"), ";");
-            }
-        });
-    };
-
     if (const Json* inputs_element = network_element->find("Inputs"); inputs_element)
-        read_variables_array(inputs_element, "Input", input_variables, "Input");
+        read_network_variables(inputs_element, "Input", input_variables, "Input");
 
     const Json* layers_container = network_element->find("Layers");
     throw_if(!layers_container, "layers container is nullptr.");
 
     const Index layers_number = read_json_index(layers_container, "LayersNumber");
 
-    layers.clear();
     source_layers.clear();
-    layers.reserve(layers_number);
-    linked_gradient_base   = nullptr;
-
-    const Json* items_array = layers_container->find("Items");
-    if (items_array && items_array->is_array())
-    {
-        for (const Json& item : items_array->as_array())
-        {
-            if (!item.is_object() || item.as_object().empty()) continue;
-
-            const string& tag_name = item.as_object().front().first;
-
-            unique_ptr<Layer> layer = create_layer(tag_name);
-
-            JsonDocument layer_doc;
-            layer_doc.set_root(item);
-            layer->from_JSON(layer_doc);
-
-            layers.push_back(std::move(layer));
-        }
-    }
-
-    source_layers.resize(layers.size());
-
-    if (const Json* source_layers_element = layers_container->find("SourceLayers"); source_layers_element)
-    {
-        const Json* indices_array = source_layers_element->find("SourceLayer");
-        if (indices_array && indices_array->is_array())
-        {
-            for (const Json& entry : indices_array->as_array())
-            {
-                const long layer_index = read_json_index(&entry, "LayerIndex");
-                const string text   = read_json_string(&entry, "Text");
-                if (text.empty()) continue;
-
-                throw_if(layer_index < 0 || layer_index >= ssize(layers),
-                         "Network::from_JSON: SourceLayer index {} out of range (have {} layers).", layer_index, layers.size());
-
-                const vector<Index> sources = parse_number_list<Index>(text, "SourceLayers");
-                validate_source_indices(sources, layer_index, ssize(layers));
-                validate_source_arity(*layers[layer_index], sources, layer_index);
-                source_layers[layer_index] = sources;
-            }
-        }
-    }
-
-    for (Index i = 0; i < ssize(layers); ++i)
-    {
-        if (!source_layers[size_t(i)].empty()) continue;
-
-        throw_if(i == 0,
-                 "Network::from_JSON: layer 0 has no source; the first layer must name "
-                 "its input.");
-
-        source_layers[size_t(i)] = vector<Index>{i - 1};
-        validate_source_arity(*layers[size_t(i)], source_layers[size_t(i)], i);
-    }
-
-    if (const Json* tied_weights = layers_container->find("TiedWeights");
-        tied_weights && tied_weights->is_array())
-    {
-        for (const Json& entry : tied_weights->as_array())
-        {
-            const Index layer_index = read_json_index(&entry, "LayerIndex");
-            const Index source_layer_index = read_json_index(&entry, "SourceLayerIndex");
-            const Index spec_index = entry.has("SpecIndex")
-                                   ? read_json_index(&entry, "SpecIndex") : 0;
-            const Index source_spec_index = entry.has("SourceSpecIndex")
-                                          ? read_json_index(&entry, "SourceSpecIndex") : 0;
-
-            throw_if(layer_index < 0 || layer_index >= ssize(layers)
-                     || source_layer_index < 0 || source_layer_index >= layer_index
-                     || spec_index < 0 || source_spec_index < 0,
-                     "Network::from_JSON: invalid tied weight indices for layer {} and source {}.",
-                     layer_index, source_layer_index);
-
-            layers[size_t(layer_index)]->set_tied_weight({
-                layers[size_t(source_layer_index)].get(),
-                size_t(spec_index), size_t(source_spec_index)});
-        }
-    }
+    linked_gradient_base = nullptr;
+    const Json* items_array = read_network_layers(layers_container, layers_number, layers);
+    read_network_sources(layers_container, layers, source_layers);
+    read_tied_weights(layers_container, layers);
 
     if (const Json* outputs_element = network_element->find("Outputs"); outputs_element)
-        read_variables_array(outputs_element, "Output", output_variables, "Target");
+        read_network_variables(outputs_element, "Output", output_variables, "Target");
 
     compile();
 
-    if (items_array && items_array->is_array())
-    {
-        Index layer_index = 0;
-        for (const Json& item : items_array->as_array())
-        {
-            if (!item.is_object() || item.as_object().empty()) continue;
-            if (layer_index >= ssize(layers)) break;
-
-            JsonDocument layer_doc;
-            layer_doc.set_root(item);
-            layers[layer_index]->load_state_from_JSON(layer_doc);
-            ++layer_index;
-        }
-    }
+    load_layer_states(items_array, layers);
 
     const Json* parameters_element = network_element->find("Parameters");
     const string parameters_text   = parameters_element ? read_json_string(parameters_element, "Values") : string();
@@ -756,11 +744,11 @@ void Network::from_JSON(const JsonDocument& document)
     VectorR json_parameters;
     string_to_vector(parameters_text, json_parameters);
 
-    throw_if(json_parameters.size() != parameters.size_in_floats(),
+    throw_if(json_parameters.size() != parameter_store.master.size_in_floats(),
              "Network::from_JSON: embedded parameter size mismatch "
              "(got {}, expected {}). Supply the complete compiled parameter buffer, "
              "including alignment padding.",
-             json_parameters.size(), parameters.size_in_floats());
+             json_parameters.size(), parameter_store.master.size_in_floats());
 
     for (Index i = 0; i < json_parameters.size(); ++i)
         throw_if(!std::isfinite(json_parameters(i)),
@@ -768,7 +756,7 @@ void Network::from_JSON(const JsonDocument& document)
                  "All embedded parameter values must be finite.", i);
 
     const HostParametersGuard guard(*this);
-    std::copy_n(json_parameters.data(), json_parameters.size(), parameters.as<float>());
+    std::copy_n(json_parameters.data(), json_parameters.size(), parameter_store.master.as<float>());
 }
 
 void Network::save(const filesystem::path& file_name) const
@@ -872,7 +860,7 @@ static void save_binary_snapshot(const filesystem::path& file_name,
 
     if (cuda)
     {
-        cudaStream_t stream = device::get_compute_stream();
+        DeviceStream stream = device::get_compute_stream();
         device::copy_async(staging.data(), storage.data(), payload_bytes,
                            device::CopyKind::DeviceToHost, stream);
         device::synchronize(stream);
@@ -943,7 +931,7 @@ static void load_binary_snapshot(const filesystem::path& file_name,
 
     if (cuda)
     {
-        cudaStream_t stream = device::get_compute_stream();
+        DeviceStream stream = device::get_compute_stream();
         device::copy_async(storage.data(), destination, storage.byte_size(),
                            device::CopyKind::HostToDevice, stream);
         device::synchronize(stream);
@@ -956,11 +944,11 @@ static void load_binary_snapshot(const filesystem::path& file_name,
 
 void Network::save_parameters_binary(const filesystem::path& file_name) const
 {
-    throw_if(!parameters.owns_memory(),
+    throw_if(!parameter_store.master.owns_memory(),
              "Network::save_parameters_binary: the fp32 parameter master "
              "was released for quantized inference; reload the model before saving.");
 
-    save_binary_snapshot(file_name, parameters, PARAMETER_FILE_MAGIC,
+    save_binary_snapshot(file_name, parameter_store.master, PARAMETER_FILE_MAGIC,
                          parameter_layout_fingerprint());
 }
 
@@ -1009,11 +997,11 @@ void Network::load_parameters_binary(const filesystem::path& file_name)
              "Network::load_parameters_binary: the fp32 parameter master was released "
              "for quantized inference; reload the model before loading parameters.");
 
-    load_binary_snapshot(file_name, parameters, PARAMETER_FILE_MAGIC,
+    load_binary_snapshot(file_name, parameter_store.master, PARAMETER_FILE_MAGIC,
                          parameter_layout_fingerprint(),
                          "load_parameters_binary", "parameter");
 
-    if (parameters.get_device() == Device::CUDA && parameters.data())
+    if (parameter_store.master.get_device() == Device::CUDA && parameter_store.master.data())
         cast_parameters_to_bf16();
 
     link_parameters();
@@ -1022,11 +1010,11 @@ void Network::load_parameters_binary(const filesystem::path& file_name)
 void Network::load_parameters_bf16_inference_binary(
     const filesystem::path& file_name)
 {
-    throw_if(parameters.empty() || !parameters.owns_memory(),
+    throw_if(parameter_store.master.empty() || !parameter_store.master.owns_memory(),
              "Network::load_parameters_bf16_inference_binary: "
              "the network must own its compiled parameter storage.");
 
-    read_parameters_bf16_inference_binary(file_name, parameters.size_in_floats());
+    read_parameters_bf16_inference_binary(file_name, parameter_store.master.size_in_floats());
 }
 
 void Network::compile_and_load_parameters_bf16_inference_binary(
@@ -1087,10 +1075,10 @@ void Network::read_parameters_bf16_inference_binary(
         const ParameterSlotTotals totals = for_each_parameter_slot({});
         allocate_compact_parameter_storage(totals);
 
-        uint16_t* const mirror = parameters_bf16_mirror.as<uint16_t>();
-        float* const fp32_compact = parameters_fp32_inference_storage.as<float>();
-        int8_t* const int8_storage = parameters_int8_storage.as<int8_t>();
-        cudaStream_t stream = device::get_compute_stream();
+        uint16_t* const mirror = parameter_store.bf16.as<uint16_t>();
+        float* const fp32_compact = parameter_store.fp32_inference.as<float>();
+        int8_t* const int8_storage = parameter_store.int8.as<int8_t>();
+        DeviceStream stream = device::get_compute_stream();
 
         const auto skip = [&](const Index count)
         {
@@ -1257,10 +1245,10 @@ void Network::read_parameters_bf16_inference_binary(
 
     // A network compiled without its master gets one here: every aligned float
     // of it, padding included, is overwritten by the chunks below.
-    if (parameters.empty())
-        parameters.resize_bytes(parameters_number * Index(sizeof(float)), Device::CPU);
+    if (parameter_store.master.empty())
+        parameter_store.master.resize_bytes(parameters_number * Index(sizeof(float)), Device::CPU);
 
-    float* const host_parameters = parameters.as<float>();
+    float* const host_parameters = parameter_store.master.as<float>();
 
     for_each_bf16_chunk(parameters_number, [&](const Index chunk, const Index converted)
     {
@@ -1281,7 +1269,3 @@ void Network::load_states_binary(const filesystem::path& file_name)
 }
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

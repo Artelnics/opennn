@@ -24,3 +24,18 @@ TEST(ConfigurationTest, ResolveForCpuReturnsIndependentValue)
     EXPECT_EQ(config.training_type, Type::FP32);
     EXPECT_EQ(config.generation, configuration.get_generation());
 }
+
+TEST(ConfigurationTest, PrecisionPlanSeparatesStorageAndComputeTypes)
+{
+    const PrecisionPlan bf16 = make_precision_plan(Type::BF16);
+    EXPECT_EQ(bf16.activations, Type::BF16);
+    EXPECT_EQ(bf16.weights, Type::BF16);
+    EXPECT_EQ(bf16.master_weights, Type::FP32);
+    EXPECT_EQ(bf16.gradients, Type::FP32);
+
+    const PrecisionPlan int8 = make_precision_plan(Type::INT8);
+    EXPECT_EQ(int8.activations, Type::BF16);
+    EXPECT_EQ(int8.weights, Type::INT8);
+    EXPECT_EQ(int8.gradients, Type::FP32);
+    EXPECT_TRUE(int8.quantized_weights());
+}

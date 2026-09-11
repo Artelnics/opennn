@@ -15,6 +15,7 @@
 
 #include <filesystem>
 
+#include "opennn/core/configuration.h"
 #include "opennn/network/network.h"
 #include "opennn/response_optimization/response_optimization.h"
 
@@ -45,7 +46,13 @@ inline float bound_slack(const float bound) { return max(1e-2f, abs(bound)*1e-3f
 
 inline Network& concrete_network()
 {
-    static Network network(std::filesystem::path(CONCRETE_NETWORK_DIR) / "nn" / "concrete_uci.json");
+    static Network network = []
+    {
+        // These scenarios exercise the optimizers with a small 8-52-1 model.
+        // Pin it to CPU so their runtime does not depend on GPU launch overhead.
+        Configuration::instance().set(Device::CPU, Type::FP32);
+        return Network(std::filesystem::path(CONCRETE_NETWORK_DIR) / "nn" / "concrete_uci.json");
+    }();
 
     return network;
 }

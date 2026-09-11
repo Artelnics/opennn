@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   B A T C H   N O R M   O P E R A T O R   S O U R C E
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/network/operators/batch_norm_operator.h"
 
@@ -705,7 +700,7 @@ void BatchNormalizationOperator::apply_delta_gpu(
                 && chosen.fuse_relu == fuse_relu
                 && (chosen.fork || !has_residual);
 
-            if (!fully_fused)
+            if (!fully_fused && cudnn_frontend::frontend_verbose())
                 logging::warning() << "BatchNormalizationOperator backward c" << features
                      << " r" << input.size() / features
                      << " batch " << batch << ": "
@@ -847,7 +842,3 @@ BatchNormalizationOperator::BatchNormalizationOperator()
 BatchNormalizationOperator::~BatchNormalizationOperator() = default;
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   M U L T I H E A D   P R O J E C T I O N   O P E R A T O R   S O U R C E
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/network/operators/multihead_projection_operator.h"
 #include "opennn/core/profiler.h"
@@ -153,7 +148,7 @@ void MultiHeadProjectionOperator::forward_propagate(ForwardPropagation& forward_
 
         TensorView head_output_2d = head_output.reshape({rows, heads_number * head_dimension});
         return linear_forward(input_2d, weights, bias, head_output_2d,
-                              CUBLASLT_EPILOGUE_BIAS, nullptr, weight_scale);
+                              LinearEpilogue::Bias, nullptr, weight_scale);
     }
 
     record_bytes(2.0);
@@ -164,7 +159,7 @@ void MultiHeadProjectionOperator::forward_propagate(ForwardPropagation& forward_
         {batch_size, seq_len, heads_number, head_dimension});
 
     linear_forward(input_2d, weights, bias, scratch_2d,
-                   CUBLASLT_EPILOGUE_BIAS, nullptr, weight_scale);
+                   LinearEpilogue::Bias, nullptr, weight_scale);
     split_heads(scratch_4d, head_output);
 }
 
@@ -219,7 +214,3 @@ void MultiHeadProjectionOperator::back_propagate(ForwardPropagation& forward_pro
 }
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

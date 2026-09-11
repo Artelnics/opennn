@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   G R O U P E D   Q U E R Y   A T T E N T I O N   L A Y E R   C L A S S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/network/layers/grouped_query_attention_layer.h"
 
@@ -1083,7 +1078,7 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
     const Index qd  = q_dim();
     const Index kd  = kv_dim();
     const float scale = 1.0f / sqrt(float(head_dim));
-    cudaStream_t stream = device::get_compute_stream();
+    DeviceStream stream = device::get_compute_stream();
 
     const Type  act  = input.get_type();
     const Index elem = Index(type_bytes(act));
@@ -1366,7 +1361,3 @@ void GroupedQueryAttention::write_JSON_body(JsonWriter& printer) const
 }
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

@@ -22,6 +22,18 @@ That prints throughput, peak memory and energy for each engine, and writes an
 artifact. `--family` is `dense`, `cnn`, `transformer` or `lstm`; `--mode` is
 `train` or `infer`.
 
+Compare two clean runs from the same controlled machine before accepting an
+execution-path change:
+
+```bash
+python benchmarks/compare.py baseline.json candidate.json
+```
+
+The default gate allows 5% measurement tolerance for throughput and memory and
+does not allow confirmed batch capacity to fall. Invalid shape, quality, or
+machine-idle gates always fail. Adjust a tolerance explicitly when a machine's
+recorded variance justifies it.
+
 Capacity sweeps require an identified allocation failure after a successful
 batch. Other failures leave capacity unknown and send the run to `scratch/`.
 In that case `max_batch` is only the largest successful batch observed, or
@@ -75,7 +87,7 @@ setup wrapper does not provision other operating systems.
 
 Greedy output is bit-reproducible across processes only if every process runs
 the same cuBLASLt kernel for every shape, and the tuner in
-`opennn/core/device_backend.cpp` picks kernels by timing them. OpenNN persists
+`opennn/core/matmul_backend.cpp` picks kernels by timing them. OpenNN persists
 each winner below `%TEMP%\opennn-lt-plans\<card>-sm<cc>-cublaslt<version>`
 (`OPENNN_LT_PLAN_CACHE_DIR` moves it, `OPENNN_LT_PLAN_CACHE=0` disables it), so
 the first process on a card tunes and every later one loads. Warm that cache
