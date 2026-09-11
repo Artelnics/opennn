@@ -377,6 +377,14 @@ A publishable artifact requires all applicable conditions:
 - stable repeated measurements;
 - no unexpected fallback, throttle, OOM or early termination.
 
+An old passing flag is not a substitute for its underlying evidence. Missing
+or nonfinite quality values mean that quality was not measured. Recalculate
+variation from every retained launch, verify the input hashes and check the
+actual workload before reviewing an older result for a new release. Review
+status and publication readiness are separate: an audited report may conclude
+that its observations require another run. See
+[`publication/README.md`](publication/README.md) for the release procedure.
+
 The raw artifact is the measurement record; the reviewed document in
 `reports/` is the project-level source of truth. A table or chart must be
 derivable from raw samples and must name the hardware, operating system,
@@ -389,6 +397,22 @@ the cause and rerun the complete affected cell. Do not edit generated JSON by
 hand, move it into the valid directory, or average it with valid samples.
 
 ## 12. Final checklist
+
+### Application and quality experiment extensions
+
+`startup` and `deployment` use the workload and boundary definitions in
+[APPLICATIONS.md](APPLICATIONS.md); `quality` uses the held-out-data procedure
+in [QUALITY.md](QUALITY.md). Their C++/Python drivers, preparation and public
+entry points live beside the standard families. The baseline is PyTorch's
+Python API. LibTorch observations are separate comparisons.
+
+All outputs from these extensions currently remain in `results/scratch/`.
+Source identity, successful execution and matching work are necessary, but do
+not by themselves certify clock stability, idle-host conditions or quality
+equivalence. Startup, process lifetime and steady-state throughput are distinct
+metrics. Standard-installation disk size and observed dependency size are
+distinct scopes. Full quality runs and synthetic smoke checks are distinct
+experiments. Historical reports keep their original provenance and values.
 
 Before accepting a benchmark session, verify:
 

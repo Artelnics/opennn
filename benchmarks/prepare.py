@@ -593,8 +593,16 @@ FAMILIES = {
 }
 
 def main() -> int:
+    if len(sys.argv) > 1 and sys.argv[1] in ("quality", "applications"):
+        sys.path.insert(0, str(Path(__file__).resolve().parent / "tools"))
+        if sys.argv[1] == "quality":
+            from quality_data import main as prepare_specialized
+        else:
+            from prepare_applications import main as prepare_specialized
+        return prepare_specialized(sys.argv[2:])
     parser = argparse.ArgumentParser(description=__doc__,
-                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+                                     formatter_class=argparse.RawDescriptionHelpFormatter,
+                                     epilog="Additional entry points: prepare.py quality --help; prepare.py applications --help")
     parser.add_argument("family", nargs="+", choices=sorted(FAMILIES) + ["all"])
     parser.add_argument("--data-root", type=Path, default=BENCH_DATA)
     parser.add_argument("--force", action="store_true", help="rebuild even if present")

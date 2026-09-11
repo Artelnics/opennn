@@ -5,13 +5,26 @@ memory and energy **from the same execution**.
 
 There are no numbers in this file. Results are generated locally under
 `results/`, with each artifact naming the commit, machine and session it came
-from. That directory is ignored completely by Git. Reviewed official results
-are versioned under [`reports/`](reports/). This README is the quick entry
+from. That directory is ignored completely by Git. Reviewed reports and their
+publication status are versioned under [`reports/`](reports/). This README is the quick entry
 point; [`PROTOCOL.md`](PROTOCOL.md) contains the complete, machine-neutral
 measurement contract. Changing a measurement rule means rerunning the affected
 cells.
 
+The [publication review](reports/publication-review.md) consolidates the current
+evidence and identifies the measurements that still need work. The
+[publication guide](publication/README.md) explains the release process and
+plain-language reporting rules. Historical reports and raw observations remain
+in dated archives; a historical passing label does not approve a new release.
+
 ## Running one
+
+Application startup, deployment size and prediction quality also use this
+directory's entry points. The baseline is **OpenNN C++ versus the PyTorch Python
+API**. See [APPLICATIONS.md](APPLICATIONS.md) for startup/deployment and
+[QUALITY.md](QUALITY.md) for the four-model training-quality comparison.
+Their provisional artifacts and generated tables go to `results/scratch/`.
+Presentation directories contain no benchmark code or raw measurements.
 
 ```bash
 python benchmarks/prepare.py dense                       # once per family
@@ -115,6 +128,9 @@ Incompatible plan-cache records require re-tuning before measurement.
 | `lstm` | LSTM(15→128) → Linear | Beijing PM2.5, hourly | both engines reach the same cuDNN kernel here |
 | `footprint` | — | — | what a framework costs *before* it runs anything |
 | `qwen` | Qwen3-4B BF16 | pinned Hugging Face weights | engine and end-user runtime comparison |
+| `startup` | small dense, LSTM, CNN and Transformer applications | constructed inputs | process creation to the first completed prediction |
+| `deployment` | the same small applications | constructed inputs | native runtime files versus a standard PyTorch Python installation |
+| `quality` | dense, LSTM, ResNet and encoder-decoder Transformer | shared held-out tensors | trained prediction quality, separate from short speed tests |
 
 Each family keeps its C++ and Python implementation in
 [`families/`](families/). The standard families expose training and inference

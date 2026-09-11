@@ -360,6 +360,10 @@ def _is_number(text: str) -> bool:
         return False
 
 def main() -> int:
+    from experiment import dispatch
+    specialized = dispatch(sys.argv[1:])
+    if specialized is not None:
+        return specialized
     # Qwen is a token-length/runtime matrix rather than the batch/epoch matrix
     # used by the supervised families.  Keep one public entry point while
     # letting the family own its materially different command-line contract.
@@ -370,7 +374,8 @@ def main() -> int:
 
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--family", default="dense", choices=sorted(FAMILIES))
+    parser.add_argument("--family", default="dense", choices=sorted(FAMILIES) + ["startup", "deployment", "quality"],
+                        help="Specialized families expose their own options with --family NAME --help")
     parser.add_argument("--mode", default="train", choices=("train", "infer"))
     parser.add_argument("--engines", default="opennn,pytorch")
     parser.add_argument("--batch", default="8192",

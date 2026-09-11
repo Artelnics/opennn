@@ -157,6 +157,8 @@ build-wrapper-dump.json
 /benchmarks/*.md
 !/benchmarks/README.md
 !/benchmarks/PROTOCOL.md
+!/benchmarks/APPLICATIONS.md
+!/benchmarks/QUALITY.md
 
 # OneDrive leaves these when it syncs the repo between machines.
 *-DESKTOP-*.cpp

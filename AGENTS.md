@@ -4,6 +4,15 @@ See [README.md](README.md) for the project overview, requirements, build
 instructions and public CMake options. Keep this file focused on repository-wide
 engineering rules that are not tied to one workstation.
 
+## Working branches
+
+- Use the existing OpenNN checkout on `dev` for normal development. Do not create
+  additional clones or worktrees unless the user explicitly requests them.
+- Keep development and release preparation on `dev`. Merge into `master` only
+  when the user explicitly decides the work is ready for release.
+- Preserve uncommitted work and saved stashes when switching or consolidating
+  branches. A folder cleanup does not authorize publishing a release.
+
 ## Compatibility and scope
 
 - Preserve the public API and serialized model compatibility unless the task

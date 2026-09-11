@@ -1,0 +1,140 @@
+{
+  "schema": "publication-selection-v1",
+  "review_date": "2026-09-11",
+  "status": "review_only",
+  "website": "https://www.opennn.net/benchmarks/",
+  "selection_reason": "The twelve observations already cited by the September 6 reports, plus the complete September 10 Python application comparison. Selection preserves continuity; it does not choose the fastest run or imply approval.",
+  "model_notes": {
+    "dense": [
+      "Both engines use a 28?1024?1024?1 classifier on HIGGS. The historical training paths use different sample-order policies; align and record those policies for the new comparison.",
+      "GPU dense training exceeds the throughput variation limit on the PyTorch side. Its energy and throughput windows also differ in duration, so both boundaries need checking. Record library versions and the selected kernel configuration before the new session."
+    ],
+    "lstm": [
+      "Both engines use 128 LSTM units and 24-step windows of 15 weather features. The old GPU records are labelled BF16, but the archived analysis identifies FP16 recurrent kernels on the PyTorch side. Verify the actual precision and compare the same prediction task.",
+      "The old PyTorch inference driver kept a full dataset on the GPU while replaying only one batch. Training also differs in scaling layers and data residency. Remove unused data from the inference comparison and decide whether each timing includes input transfers.",
+      "CPU LSTM inference exceeds the throughput variation limit on the PyTorch side. Repeat it after stabilizing the machine."
+    ],
+    "cnn": [
+      "The historical model is ResNet-50 v1.5 with 25,557,032 parameters, using 224 ? 224 images from a 50,000-image ImageNet subset. It is a different workload from the older CIFAR-sized website article.",
+      "The old training runs use different image transforms, decoding paths, transfer sizes and warm-up counts. Feed both engines the same prepared pixels and match the timing boundary and warm-up. Separate resident-model inference from application input handling."
+    ],
+    "transformer": [
+      "The historical model has six encoder and six decoder layers, width 512, eight attention heads and a 20,000-token vocabulary on WMT14 text.",
+      "The old drivers differ in causal and padding masks, dropout, and the loss denominator. Align these before repeating training or inference. Translation quality must use generated text on held-out data; equal tensor shapes are not sufficient."
+    ]
+  },
+  "performance": [
+    {
+      "path": "results/archive/2026-09-11/reference/cpu-dense-infer-publish-20260906T134425Z.json",
+      "sha256": "64a0c7ed5be4bc4bbeda8a8ed3ed69910b2dcf677892a36449208535162f8565",
+      "issues": [
+        "Both engines use a 28?1024?1024?1 classifier on HIGGS. The historical training paths use different sample-order policies; align and record those policies for the new comparison.",
+        "GPU dense training exceeds the throughput variation limit on the PyTorch side. Its energy and throughput windows also differ in duration, so both boundaries need checking. Record library versions and the selected kernel configuration before the new session."
+      ]
+    },
+    {
+      "path": "results/archive/2026-09-11/reference/cpu-dense-train-publish-20260906T134749Z.json",
+      "sha256": "db02af8a3778bb5259647fb6f14151084c0d95282d75da46ee8a1774fc72ff9a",
+      "issues": [
+        "Both engines use a 28?1024?1024?1 classifier on HIGGS. The historical training paths use different sample-order policies; align and record those policies for the new comparison.",
+        "GPU dense training exceeds the throughput variation limit on the PyTorch side. Its energy and throughput windows also differ in duration, so both boundaries need checking. Record library versions and the selected kernel configuration before the new session."
+      ]
+    },
+    {
+      "path": "results/archive/2026-09-11/reference/cpu-lstm-infer-publish-20260906T133954Z.json",
+      "sha256": "5064f886b512a3b30f6fa33e2132813eebf9469a1e44f78bcab5c8f8bc7a7b48",
+      "issues": [
+        "Both engines use 128 LSTM units and 24-step windows of 15 weather features. The old GPU records are labelled BF16, but the archived analysis identifies FP16 recurrent kernels on the PyTorch side. Verify the actual precision and compare the same prediction task.",
+        "The old PyTorch inference driver kept a full dataset on the GPU while replaying only one batch. Training also differs in scaling layers and data residency. Remove unused data from the inference comparison and decide whether each timing includes input transfers.",
+        "CPU LSTM inference exceeds the throughput variation limit on the PyTorch side. Repeat it after stabilizing the machine."
+      ]
+    },
+    {
+      "path": "results/archive/2026-09-11/reference/cpu-lstm-train-publish-20260906T134139Z.json",
+      "sha256": "bc7f9744e2065a7d9d64e553d87b7329b03057517d03ffca1edf5c0e76a675f5",
+      "issues": [
+        "Both engines use 128 LSTM units and 24-step windows of 15 weather features. The old GPU records are labelled BF16, but the archived analysis identifies FP16 recurrent kernels on the PyTorch side. Verify the actual precision and compare the same prediction task.",
+        "The old PyTorch inference driver kept a full dataset on the GPU while replaying only one batch. Training also differs in scaling layers and data residency. Remove unused data from the inference comparison and decide whether each timing includes input transfers.",
+        "CPU LSTM inference exceeds the throughput variation limit on the PyTorch side. Repeat it after stabilizing the machine."
+      ]
+    },
+    {
+      "path": "results/archive/2026-09-11/reference/cuda-cnn-infer-publish-20260906T171646Z.json",
+      "sha256": "f5afae0e10c3fc731dd54d0e89361ad9d9da1a4052b9baee74e704c623ae3ddf",
+      "issues": [
+        "The historical model is ResNet-50 v1.5 with 25,557,032 parameters, using 224 ? 224 images from a 50,000-image ImageNet subset. It is a different workload from the older CIFAR-sized website article.",
+        "The old training runs use different image transforms, decoding paths, transfer sizes and warm-up counts. Feed both engines the same prepared pixels and match the timing boundary and warm-up. Separate resident-model inference from application input handling."
+      ]
+    },
+    {
+      "path": "results/archive/2026-09-11/reference/cuda-cnn-train-publish-20260906T172254Z.json",
+      "sha256": "19a8a48b1d8a0376d92e7a8570337ae05f30d7872316006cd494ac44b4e35911",
+      "issues": [
+        "The historical model is ResNet-50 v1.5 with 25,557,032 parameters, using 224 ? 224 images from a 50,000-image ImageNet subset. It is a different workload from the older CIFAR-sized website article.",
+        "The old training runs use different image transforms, decoding paths, transfer sizes and warm-up counts. Feed both engines the same prepared pixels and match the timing boundary and warm-up. Separate resident-model inference from application input handling."
+      ]
+    },
+    {
+      "path": "results/archive/2026-09-11/reference/cuda-dense-infer-publish-20260906T132837Z.json",
+      "sha256": "c6228cbe1e3b1cfbbb4cd83dd2a44c72b7faa776a5d519a8d687460912a48060",
+      "issues": [
+        "Both engines use a 28?1024?1024?1 classifier on HIGGS. The historical training paths use different sample-order policies; align and record those policies for the new comparison.",
+        "GPU dense training exceeds the throughput variation limit on the PyTorch side. Its energy and throughput windows also differ in duration, so both boundaries need checking. Record library versions and the selected kernel configuration before the new session."
+      ]
+    },
+    {
+      "path": "results/archive/2026-09-11/reference/cuda-dense-train-publish-20260906T133020Z.json",
+      "sha256": "26537bcb9aec2652390eab64933eea9662d7cfeff2ed2870a17bed9d257b1173",
+      "issues": [
+        "Both engines use a 28?1024?1024?1 classifier on HIGGS. The historical training paths use different sample-order policies; align and record those policies for the new comparison.",
+        "GPU dense training exceeds the throughput variation limit on the PyTorch side. Its energy and throughput windows also differ in duration, so both boundaries need checking. Record library versions and the selected kernel configuration before the new session."
+      ]
+    },
+    {
+      "path": "results/archive/2026-09-11/reference/cuda-lstm-infer-publish-20260906T133237Z.json",
+      "sha256": "ac407ccc3b64bb8afad4b4b107324a8f63a0bea30247bc2d25e271ecc5da4070",
+      "issues": [
+        "Both engines use 128 LSTM units and 24-step windows of 15 weather features. The old GPU records are labelled BF16, but the archived analysis identifies FP16 recurrent kernels on the PyTorch side. Verify the actual precision and compare the same prediction task.",
+        "The old PyTorch inference driver kept a full dataset on the GPU while replaying only one batch. Training also differs in scaling layers and data residency. Remove unused data from the inference comparison and decide whether each timing includes input transfers.",
+        "CPU LSTM inference exceeds the throughput variation limit on the PyTorch side. Repeat it after stabilizing the machine."
+      ]
+    },
+    {
+      "path": "results/archive/2026-09-11/reference/cuda-lstm-train-publish-20260906T133548Z.json",
+      "sha256": "51166e45822293b2823454828d6a082f3526db37774131432139d4fb3ee77ea4",
+      "issues": [
+        "Both engines use 128 LSTM units and 24-step windows of 15 weather features. The old GPU records are labelled BF16, but the archived analysis identifies FP16 recurrent kernels on the PyTorch side. Verify the actual precision and compare the same prediction task.",
+        "The old PyTorch inference driver kept a full dataset on the GPU while replaying only one batch. Training also differs in scaling layers and data residency. Remove unused data from the inference comparison and decide whether each timing includes input transfers.",
+        "CPU LSTM inference exceeds the throughput variation limit on the PyTorch side. Repeat it after stabilizing the machine."
+      ]
+    },
+    {
+      "path": "results/archive/2026-09-11/reference/cuda-transformer-infer-publish-20260906T173620Z.json",
+      "sha256": "02a3209c8013632f58bb052d600a7602383b7e179e3282ea826c20d8d2fc74af",
+      "issues": [
+        "The historical model has six encoder and six decoder layers, width 512, eight attention heads and a 20,000-token vocabulary on WMT14 text.",
+        "The old drivers differ in causal and padding masks, dropout, and the loss denominator. Align these before repeating training or inference. Translation quality must use generated text on held-out data; equal tensor shapes are not sufficient."
+      ]
+    },
+    {
+      "path": "results/archive/2026-09-11/reference/cuda-transformer-train-publish-20260906T180409Z.json",
+      "sha256": "fc8ce8e2432bfbae246c7c8a26d1189d28bcb24d66c13c7d28fa5bdad9903b94",
+      "issues": [
+        "The historical model has six encoder and six decoder layers, width 512, eight attention heads and a 20,000-token vocabulary on WMT14 text.",
+        "The old drivers differ in causal and padding masks, dropout, and the loss denominator. Align these before repeating training or inference. Translation quality must use generated text on held-out data; equal tensor shapes are not sufficient."
+      ]
+    }
+  ],
+  "startup": {
+    "path": "results/scratch/archive/2026-09-11/presentation-benchmarks-20260910/raw-python-comparison/local-results/startup/results.json",
+    "sha256": "e5b6ce19267f68647e81a96f50b12b0d0a7174db13856863965a91ec4812e5ac"
+  },
+  "deployment": {
+    "path": "results/scratch/archive/2026-09-11/presentation-benchmarks-20260910/raw-python-comparison/local-results/deployment/results.json",
+    "sha256": "00c9faa9a2b63bc5e8406264a20d235b40c1a261de7d0e366d66032861af8db9"
+  },
+  "source_counts": {
+    "path": "results/archive/2026-09-11/reference/deployment-facts-20260908T121258Z.json",
+    "sha256": "c612195999b46acc82db4eaca89bb1e9a06879807d50ab78f4ccbdb367a047a4"
+  }
+}
