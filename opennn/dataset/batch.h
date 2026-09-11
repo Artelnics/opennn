@@ -104,9 +104,9 @@ struct Batch
     BatchSlot decoder;
     BatchSlot target;
 
-    void upload_to_device_batch_async(Batch&, cudaStream_t);
+    void upload_to_device_batch_async(Batch&, DeviceStream);
 
-    void record_h2d_done(cudaStream_t);
+    void record_h2d_done(DeviceStream);
 
     device::PinnedBuffer input_host_bf16;
     Buffer fp32_staging{Device::CUDA};

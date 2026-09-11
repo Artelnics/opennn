@@ -10,6 +10,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "opennn"
 INCLUDE = re.compile(r'^\s*#include\s+["<]opennn/([^">]+)[">]')
+CUDA_TYPE = re.compile(
+    r"\b(?:cuda(?:Stream|Event|Graph|DataType)_t|"
+    r"cublas[A-Za-z0-9_]*_t|cudnn[A-Za-z0-9_]*_t)\b"
+)
 
 ALLOWED = {
     "core": {"core"},
@@ -53,6 +57,13 @@ def main() -> int:
         relative = path.relative_to(SOURCE).as_posix()
         source_module = module(path)
         for number, line in enumerate(path.read_text(encoding="utf-8-sig").splitlines(), 1):
+            if (path.suffix == ".h"
+                    and not relative.startswith("core/cuda/")
+                    and relative != "core/opennn_types.h"
+                    and CUDA_TYPE.search(line)):
+                violations.append(
+                    f"{relative}:{number}: expose an OpenNN backend type instead of a CUDA vendor type"
+                )
             match = INCLUDE.match(line)
             if not match:
                 continue

@@ -44,7 +44,7 @@ void SGD::update_parameters(BackPropagation& back_propagation,
         float* const parameters = network->get_parameters_data();
         bfloat16* const mirror =
             network->get_parameters_bf16_mirror_data();
-        cudaStream_t stream = device::get_compute_stream();
+        DeviceStream stream = device::get_compute_stream();
 
         for(const BackPropagation::GradientSlice& slice : gradient_slices)
         {

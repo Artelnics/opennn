@@ -51,7 +51,7 @@ struct Problem
     bool beta_is_zero = true;
 };
 
-// Opaque: device_backend.cpp holds a pointer and never a definition, so
+// Opaque: cublaslt_backend.cpp holds a pointer and never a definition, so
 // cudnn_frontend.h stays inside this translation unit.
 class Plan;
 

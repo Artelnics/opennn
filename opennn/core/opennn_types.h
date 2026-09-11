@@ -132,6 +132,41 @@ using type = float;
 
 namespace opennn {
 
+using DeviceStream = cudaStream_t;
+using DeviceEvent = cudaEvent_t;
+using DeviceGraph = cudaGraph_t;
+using DeviceGraphExec = cudaGraphExec_t;
+using BlasHandle = cublasHandle_t;
+using BlasLtHandle = cublasLtHandle_t;
+using DnnHandle = cudnnHandle_t;
+using DnnOpTensorDescriptor = cudnnOpTensorDescriptor_t;
+using DnnDataType = cudnnDataType_t;
+#ifdef OPENNN_HAS_CUDA
+using DnnStatus = cudnnStatus_t;
+#else
+using DnnStatus = int;
+#endif
+using DnnTensorDescriptor = cudnnTensorDescriptor_t;
+using DnnRNNDataDescriptor = cudnnRNNDataDescriptor_t;
+using DnnRNNDescriptor = cudnnRNNDescriptor_t;
+using DnnDropoutDescriptor = cudnnDropoutDescriptor_t;
+using DnnPoolingDescriptor = cudnnPoolingDescriptor_t;
+#ifdef OPENNN_HAS_CUDA
+using DnnRNNMode = cudnnRNNMode_t;
+#else
+using DnnRNNMode = int;
+#endif
+using BlasComputeType = cublasComputeType_t;
+#ifdef OPENNN_HAS_CUDA
+using BlasPointerMode = cublasPointerMode_t;
+using BlasMathMode = cublasMath_t;
+#else
+using BlasPointerMode = int;
+using BlasMathMode = int;
+#endif
+using BlasOperation = cublasOperation_t;
+using DeviceDataType = cudaDataType_t;
+
 using namespace Eigen;
 using bfloat16 = __nv_bfloat16;
 

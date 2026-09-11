@@ -96,7 +96,7 @@ void CombinationOperator::forward_propagate(ForwardPropagation& forward_propagat
     {
         TensorView& activated = forward_propagation.slots[layer][output_slots[1]];
         return linear_forward(get_input(forward_propagation, layer), weights, bias,
-                              activated, CUBLASLT_EPILOGUE_GELU_AUX_BIAS, &output, weight_scale);
+                              activated, LinearEpilogue::GeluAuxBias, &output, weight_scale);
     }
 
     const bool relu = (fused_activation == ActivationFunction::ReLU);
@@ -117,7 +117,7 @@ void CombinationOperator::forward_propagate(ForwardPropagation& forward_propagat
             throw_if(relu_mask.empty(),
                      "CombinationOperator: fused ReLU mask slot was not planned.");
             linear_forward(get_input(forward_propagation, layer), weights, bias, output,
-                           CUBLASLT_EPILOGUE_RELU_AUX_BIAS, &relu_mask, weight_scale);
+                           LinearEpilogue::ReluAuxBias, &relu_mask, weight_scale);
             *relu_mask_fused = 1;
             return;
         }
@@ -133,12 +133,12 @@ void CombinationOperator::forward_propagate(ForwardPropagation& forward_propagat
 
     if (output_features == 1 && fused_activation != ActivationFunction::Identity)
         return linear_forward(get_input(forward_propagation, layer), weights, bias, output,
-                              use_bias ? CUBLASLT_EPILOGUE_BIAS : CUBLASLT_EPILOGUE_DEFAULT,
+                              use_bias ? LinearEpilogue::Bias : LinearEpilogue::Default,
                               nullptr, weight_scale, fused_activation);
 
-    const cublasLtEpilogue_t epilogue = use_bias
-        ? (relu ? CUBLASLT_EPILOGUE_RELU_BIAS : CUBLASLT_EPILOGUE_BIAS)
-        : (relu ? CUBLASLT_EPILOGUE_RELU      : CUBLASLT_EPILOGUE_DEFAULT);
+    const LinearEpilogue epilogue = use_bias
+        ? (relu ? LinearEpilogue::ReluBias : LinearEpilogue::Bias)
+        : (relu ? LinearEpilogue::Relu      : LinearEpilogue::Default);
     linear_forward(get_input(forward_propagation, layer), weights, bias, output, epilogue, nullptr, weight_scale);
 }
 

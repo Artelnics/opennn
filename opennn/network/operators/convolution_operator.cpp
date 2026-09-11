@@ -229,11 +229,12 @@ bool build_preferred(const ConvolutionOperator& op, const char* kind, int64_t ba
     }
     catch (const exception& e)
     {
-        logging::warning() << "ConvolutionOperator " << kind << " "
-             << op.input_height << "x" << op.input_width << "x" << op.kernel_channels
-             << " k" << op.kernel_height << "x" << op.kernel_width << "x" << op.kernels_number
-             << " batch " << batch << ": no engine (" << e.what() << "); "
-             << consequence << ".\n";
+        if (frontend_verbose())
+            logging::warning() << "ConvolutionOperator " << kind << " "
+                 << op.input_height << "x" << op.input_width << "x" << op.kernel_channels
+                 << " k" << op.kernel_height << "x" << op.kernel_width << "x" << op.kernels_number
+                 << " batch " << batch << ": no engine (" << e.what() << "); "
+                 << consequence << ".\n";
         return false;
     }
 }
@@ -658,7 +659,7 @@ void ConvolutionOperator::apply_gpu_folded(const TensorView& input,
 
     if (!ran)
         linear_forward(input, folded_weights, folded_bias, output,
-                       relu ? CUBLASLT_EPILOGUE_RELU_BIAS : CUBLASLT_EPILOGUE_BIAS);
+                       relu ? LinearEpilogue::ReluBias : LinearEpilogue::Bias);
 }
 
 void ConvolutionOperator::apply_delta_gpu(const TensorView& input,

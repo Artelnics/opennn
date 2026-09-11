@@ -13,6 +13,7 @@ namespace opennn
 
 class Loss;
 class Network;
+class TrainingArenaPlan;
 
 struct BackPropagation
 {
@@ -118,6 +119,10 @@ private:
     BackPropagation() = default;
 
     friend struct TrainingContext;
+    friend class TrainingArenaPlan;
+
+    void set(Index, Loss&, Buffer* external_arena,
+             Buffer* external_gradient, const TrainingArenaPlan&);
 
     DeltaLayout build_delta_layout(const vector<vector<TensorSpec>>&) const;
     DeltaPlan build_delta_plan();

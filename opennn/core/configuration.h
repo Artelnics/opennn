@@ -12,6 +12,26 @@ namespace opennn
 enum class Device { Auto, CPU, CUDA };
 enum class Type { Auto, FP32, BF16, INT8 };
 
+struct PrecisionPlan
+{
+    Type activations = Type::FP32;
+    Type weights = Type::FP32;
+    Type master_weights = Type::FP32;
+    Type gradients = Type::FP32;
+    Type optimizer_state = Type::FP32;
+
+    bool quantized_weights() const noexcept { return weights == Type::INT8; }
+};
+
+constexpr PrecisionPlan make_precision_plan(const Type type) noexcept
+{
+    if(type == Type::BF16)
+        return {Type::BF16, Type::BF16, Type::FP32, Type::FP32, Type::FP32};
+    if(type == Type::INT8)
+        return {Type::BF16, Type::INT8, Type::FP32, Type::FP32, Type::FP32};
+    return {};
+}
+
 // Which BLAS the CPU kernels dispatch to. Eigen is the default because it is
 // what a plain build has: MKL is compiled in only when the build asks for it,
 // and even then an application opts in rather than inheriting it. Read on
@@ -20,9 +40,21 @@ enum class Blas { Eigen, Mkl };
 
 enum class ActivationFunction { Identity, Sigmoid, Tanh, ReLU, Softmax, LeakyReLU, GELU, GELUTanh, SiLU };
 
+enum class LinearEpilogue
+{
+    Default,
+    Relu,
+    Bias,
+    ReluBias,
+    ReluAuxBias,
+    DRelu,
+    GeluAuxBias,
+    BiasGradient
+};
+
 inline constexpr float LEAKY_RELU_SLOPE = 0.1f;
 
-inline Type activation_dtype(Type type) { return type == Type::INT8 ? Type::BF16 : type; }
+inline Type activation_dtype(Type type) { return make_precision_plan(type).activations; }
 
 struct EffectiveConfig
 {

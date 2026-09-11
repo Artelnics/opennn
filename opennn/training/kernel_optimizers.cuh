@@ -38,6 +38,7 @@ void adam_update_prepared_cuda(
     cudaStream_t stream = nullptr);
 
 void clip_gradient_norm_cuda(const Index n, float* gradient, const float* squared_norm, const float max_norm, const float eps);
+void sum_squared_norms_cuda(const Index n, const float* values, float* total);
 
 #endif
 

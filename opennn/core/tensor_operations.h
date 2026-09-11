@@ -129,7 +129,7 @@ void activation_forward(TensorView&, ActivationFunction);
 void activation_backward(const TensorView&, TensorView&, ActivationFunction);
 
 void linear_forward(const TensorView&, const TensorView&, const TensorView&,
-                    TensorView&, cublasLtEpilogue_t epilogue = CUBLASLT_EPILOGUE_BIAS,
+                    TensorView&, LinearEpilogue epilogue = LinearEpilogue::Bias,
                     TensorView* pre_activation = nullptr,
                     const TensorView& weight_scale = {},
                     ActivationFunction fused_activation = ActivationFunction::Identity);

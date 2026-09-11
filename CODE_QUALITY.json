@@ -1,13 +1,13 @@
 {
   "limits": {
-    "files": 209,
-    "nloc": 57226,
-    "functions": 3337,
+    "files": 213,
+    "nloc": 57523,
+    "functions": 3357,
     "functions_nloc_100": 49,
     "functions_ccn_25": 42,
     "maximum_function_nloc": 443,
     "maximum_function_ccn": 59,
-    "duplicate_percent": 0.97,
-    "physical_lines": 74717
+    "duplicate_percent": 0.96,
+    "physical_lines": 75081
   }
 }

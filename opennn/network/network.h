@@ -14,6 +14,60 @@
 namespace opennn
 {
 
+class Network;
+
+namespace detail
+{
+class ParameterStore
+{
+public:
+    enum class State { Host, DeviceMaster, DeviceMasterWithMirror, DeviceCompact };
+
+    State state() const noexcept
+    {
+        if(master.get_device() != Device::CUDA) return State::Host;
+        if(!master.owns_memory()) return State::DeviceCompact;
+        return bf16.empty() && int8.empty()
+            ? State::DeviceMaster : State::DeviceMasterWithMirror;
+    }
+
+    bool low_precision_ready(Type type) const noexcept
+    {
+        if(type == Type::BF16) return !bf16.empty();
+        if(type == Type::INT8) return !int8.empty();
+        return true;
+    }
+
+    void clear_derived()
+    {
+        bf16.resize_bytes(0, Device::CUDA);
+        fp32_inference.resize_bytes(0, Device::CUDA);
+        int8.resize_bytes(0, Device::CUDA);
+        bf16_compact = false;
+    }
+
+    void validate(Type type) const
+    {
+        throw_if(type == Type::BF16 && bf16_compact && bf16.empty(),
+                 "ParameterStore: compact BF16 layout has no BF16 storage.");
+        throw_if(state() == State::DeviceCompact
+                 && bf16.empty() && fp32_inference.empty() && int8.empty(),
+                 "ParameterStore: compact master view has no owning storage.");
+        throw_if(type == Type::BF16 && !int8.empty(),
+                 "ParameterStore: BF16 precision cannot own INT8 storage.");
+    }
+
+private:
+    Buffer master;
+    Buffer bf16{Device::CUDA};
+    Buffer fp32_inference{Device::CUDA};
+    Buffer int8{Device::CUDA};
+    bool bf16_compact = false;
+
+    friend class ::opennn::Network;
+};
+}
+
 enum class NetworkTask
 {
     Generic,
@@ -35,7 +89,7 @@ public:
     struct HostParametersGuard
     {
         explicit HostParametersGuard(Network& n)
-            : network(n), was_on_device(n.parameters.get_device() == Device::CUDA)
+            : network(n), was_on_device(n.get_parameters_device() == Device::CUDA)
         {
             if (was_on_device) network.copy_parameters_host();
         }
@@ -69,6 +123,8 @@ public:
     Device get_device() const noexcept { return config.device; }
     bool is_gpu() const noexcept { return config.device == Device::CUDA; }
     Type get_training_type()  const noexcept { return config.training_type; }
+    const PrecisionPlan& get_precision() const noexcept { return precision; }
+    Type get_activation_type() const noexcept { return precision.activations; }
 
     void set_training_activation_recomputation(bool enabled) noexcept
     {
@@ -133,19 +189,19 @@ public:
 
     void mark_parameters_changed() noexcept { ++parameters_version; }
 
-    float* get_parameters_data() { mark_parameters_changed(); return parameters.as<float>(); }
-    const float* get_parameters_data() const { return parameters.as<float>(); }
+    float* get_parameters_data() { mark_parameters_changed(); return parameter_store.master.as<float>(); }
+    const float* get_parameters_data() const { return parameter_store.master.as<float>(); }
     VectorMap get_parameters_map() &
     {
         mark_parameters_changed();
-        return parameters.as_vector();
+        return parameter_store.master.as_vector();
     }
     ConstVectorMap get_parameters_map() const &
     {
-        return parameters.as_vector();
+        return parameter_store.master.as_vector();
     }
-    Index get_parameters_buffer_size() const noexcept { return parameters.size_in_floats(); }
-    Device get_parameters_device() const noexcept { return parameters.get_device(); }
+    Index get_parameters_buffer_size() const noexcept { return parameter_store.master.size_in_floats(); }
+    Device get_parameters_device() const noexcept { return parameter_store.master.get_device(); }
     float* get_states_data() { return states.as<float>(); }
     const float* get_states_data() const { return states.as<float>(); }
     Index get_states_buffer_size() const noexcept { return states.size_in_floats(); }
@@ -215,15 +271,9 @@ public:
 
     ParameterStorage get_parameter_storage() const noexcept
     {
-        if (parameters.get_device() != Device::CUDA)
-            return ParameterStorage::Host;
-
-        if (!parameters.owns_memory())
-            return ParameterStorage::DeviceCompact;
-
-        return parameters_bf16_mirror.empty() && parameters_int8_storage.empty()
-            ? ParameterStorage::DeviceMaster
-            : ParameterStorage::DeviceMasterWithMirror;
+        static_assert(int(ParameterStorage::DeviceCompact)
+                      == int(detail::ParameterStore::State::DeviceCompact));
+        return static_cast<ParameterStorage>(parameter_store.state());
     }
 
     bool fp32_master_released() const noexcept
@@ -236,9 +286,7 @@ public:
     // so it is always ready.
     bool low_precision_storage_ready() const noexcept
     {
-        if (config.training_type == Type::BF16) return !parameters_bf16_mirror.empty();
-        if (config.training_type == Type::INT8) return !parameters_int8_storage.empty();
-        return true;
+        return parameter_store.low_precision_ready(config.training_type);
     }
 
     void link_gradients(const Buffer&) const;
@@ -308,8 +356,8 @@ public:
 
     bfloat16* get_parameters_bf16_mirror_data()
     {
-        return config.training_type == Type::BF16 && parameters.owns_memory()
-            ? parameters_bf16_mirror.as<bfloat16>()
+        return config.training_type == Type::BF16 && parameter_store.master.owns_memory()
+            ? parameter_store.bf16.as<bfloat16>()
             : nullptr;
     }
 
@@ -344,7 +392,7 @@ protected:
 
     struct DeviceResidency
     {
-        const void* parameters = nullptr;
+        const void* parameter_master = nullptr;
         const void* bf16_mirror = nullptr;
         const void* fp32_inference = nullptr;
         const void* int8_storage = nullptr;
@@ -359,16 +407,12 @@ protected:
     // derived cache can tell that what it was built from has moved on.
     uint64_t parameters_version = 1;
 
-    Buffer parameters;
-    Buffer parameters_bf16_mirror{Device::CUDA};
-    Buffer parameters_fp32_inference_storage{Device::CUDA};
-    Buffer parameters_int8_storage{Device::CUDA};
-
-    bool parameters_bf16_mirror_compact = false;
+    detail::ParameterStore parameter_store;
 
     Buffer states;
 
     EffectiveConfig config;
+    PrecisionPlan precision;
 
     bool training_activation_recomputation = false;
 

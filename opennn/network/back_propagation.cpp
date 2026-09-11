@@ -5,6 +5,7 @@
 #include "opennn/registry.h"
 #include "opennn/core/memory_pool.h"
 #include "opennn/training/loss.h"
+#include "opennn/network/training_arena_plan.h"
 #include "opennn/network/network.h"
 #include "opennn/core/tensor_operations.h"
 #include "opennn/core/memory_debug.h"
@@ -27,6 +28,72 @@ vector<bool> find_passthrough_layers(const vector<unique_ptr<Layer>>& layers,
 }
 
 }
+
+
+struct TrainingArenaPlan::Impl
+{
+    BackPropagation::DeltaPlan backward;
+    vector<MemoryPoolEntry> lifetimes;
+    vector<Index> delta_offsets;
+    vector<Index> gradient_offsets;
+    size_t delta_entries = 0;
+    size_t gradient_entries = 0;
+    bool offsets_bound = false;
+};
+
+TrainingArenaPlan::TrainingArenaPlan(const Index batch_size, Loss& loss,
+                                     const bool include_gradient)
+    : impl(make_unique<Impl>())
+{
+    BackPropagation planner;
+    planner.loss = &loss;
+    planner.batch_size = batch_size;
+    impl->backward = planner.build_delta_plan();
+
+    const Network& network = planner.require_network();
+    const Index step_offset = backward_step(network.get_layers_number(), 0)
+                            - network.get_last_trainable_layer_index();
+    impl->lifetimes = BackPropagation::to_pool_entries(
+        impl->backward.layout.entries, step_offset);
+    impl->delta_entries = impl->lifetimes.size();
+
+    if(include_gradient)
+    {
+        vector<MemoryPoolEntry> gradients =
+            BackPropagation::make_gradient_co_planned_lifetimes(loss);
+        impl->gradient_entries = gradients.size();
+        impl->lifetimes.insert(impl->lifetimes.end(),
+                               gradients.begin(), gradients.end());
+    }
+}
+
+TrainingArenaPlan::~TrainingArenaPlan() = default;
+
+span<const MemoryPoolEntry> TrainingArenaPlan::co_planned_lifetimes() const noexcept
+{
+    return impl->lifetimes;
+}
+
+bool TrainingArenaPlan::uses_joint_gradient() const noexcept
+{
+    return impl->gradient_entries > 0;
+}
+
+void TrainingArenaPlan::bind_offsets(const span<const Index> offsets)
+{
+    throw_if(offsets.size() != impl->lifetimes.size(),
+             "TrainingArenaPlan: got {} offsets for {} planned entries.",
+             offsets.size(), impl->lifetimes.size());
+    throw_if(impl->offsets_bound,
+             "TrainingArenaPlan: offsets were already bound.");
+
+    impl->delta_offsets.assign(offsets.begin(),
+                               offsets.begin() + impl->delta_entries);
+    impl->gradient_offsets.assign(offsets.begin() + impl->delta_entries,
+                                  offsets.end());
+    impl->offsets_bound = true;
+}
+
 
 BackPropagation::BackPropagation(const Index new_batch_size,
                                  Loss& new_loss,
@@ -94,6 +161,41 @@ void BackPropagation::set(const Index new_batch_size,
     else
         setup_arena(plan.backward_specs, plan.layout);
 
+    plan_delta_addends();
+}
+
+void BackPropagation::set(const Index new_batch_size,
+                          Loss& new_loss,
+                          Buffer* external_arena,
+                          Buffer* external_gradient,
+                          const TrainingArenaPlan& arena_plan)
+{
+    batch_size = new_batch_size;
+    loss = &new_loss;
+
+    const Network& network = require_network();
+    throw_if(!external_arena,
+             "BackPropagation::set: a training arena plan requires storage.");
+    throw_if(!arena_plan.impl->offsets_bound,
+             "BackPropagation::set: training arena offsets are not bound.");
+    layer_scratch_storage.clear();
+    layer_scratch_storage.reserve(size_t(network.get_layers_number()));
+    for(Index i = 0; i < network.get_layers_number(); ++i)
+        layer_scratch_storage.emplace_back(network.get_device());
+
+    throw_if(network.get_training_type() == Type::INT8,
+             "INT8 is inference-only; training requires FP32 or BF16.");
+    output_delta_layer_index = network.get_last_trainable_layer_index();
+    metrics.reset();
+    consumer_edges = network.get_consumer_edges();
+
+    setup_gradient(external_gradient, external_arena,
+                   arena_plan.impl->gradient_offsets);
+    bind_deltas(arena_plan.impl->backward.layout,
+                arena_plan.impl->delta_offsets,
+                external_arena->as<uint8_t>(), external_arena->get_device(),
+                arena_plan.impl->backward.backward_specs);
+    arena.resize_bytes(0, network.get_device());
     plan_delta_addends();
 }
 
@@ -297,7 +399,7 @@ BackPropagation::DeltaLayout BackPropagation::build_delta_layout(
 
     const Index first_layer = network.get_first_trainable_layer_index();
     const Index last_layer = network.get_last_trainable_layer_index();
-    const Type compute_dtype = activation_dtype(network.get_training_type());
+    const Type compute_dtype = network.get_activation_type();
 
     const auto is_trainable = [&](Index layer)
     {

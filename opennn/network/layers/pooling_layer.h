@@ -63,14 +63,14 @@ struct PoolOperator : Operator
     void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
 
 #ifdef OPENNN_HAS_CUDA
-    cudnnPoolingDescriptor_t get_pooling_descriptor() const;
+    DnnPoolingDescriptor get_pooling_descriptor() const;
 
     bool own_max_pooling(const TensorView& input, const TensorView& mask) const noexcept;
     ::MaxPoolGeometry max_pool_geometry(const TensorView& input) const noexcept;
 
 private:
 
-    CudnnDescriptor<cudnnPoolingDescriptor_t> pooling_descriptor;
+    CudnnDescriptor<DnnPoolingDescriptor> pooling_descriptor;
 #endif
 };
 

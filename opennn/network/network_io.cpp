@@ -751,11 +751,11 @@ void Network::from_JSON(const JsonDocument& document)
     VectorR json_parameters;
     string_to_vector(parameters_text, json_parameters);
 
-    throw_if(json_parameters.size() != parameters.size_in_floats(),
+    throw_if(json_parameters.size() != parameter_store.master.size_in_floats(),
              "Network::from_JSON: embedded parameter size mismatch "
              "(got {}, expected {}). Supply the complete compiled parameter buffer, "
              "including alignment padding.",
-             json_parameters.size(), parameters.size_in_floats());
+             json_parameters.size(), parameter_store.master.size_in_floats());
 
     for (Index i = 0; i < json_parameters.size(); ++i)
         throw_if(!std::isfinite(json_parameters(i)),
@@ -763,7 +763,7 @@ void Network::from_JSON(const JsonDocument& document)
                  "All embedded parameter values must be finite.", i);
 
     const HostParametersGuard guard(*this);
-    std::copy_n(json_parameters.data(), json_parameters.size(), parameters.as<float>());
+    std::copy_n(json_parameters.data(), json_parameters.size(), parameter_store.master.as<float>());
 }
 
 void Network::save(const filesystem::path& file_name) const
@@ -867,7 +867,7 @@ static void save_binary_snapshot(const filesystem::path& file_name,
 
     if (cuda)
     {
-        cudaStream_t stream = device::get_compute_stream();
+        DeviceStream stream = device::get_compute_stream();
         device::copy_async(staging.data(), storage.data(), payload_bytes,
                            device::CopyKind::DeviceToHost, stream);
         device::synchronize(stream);
@@ -938,7 +938,7 @@ static void load_binary_snapshot(const filesystem::path& file_name,
 
     if (cuda)
     {
-        cudaStream_t stream = device::get_compute_stream();
+        DeviceStream stream = device::get_compute_stream();
         device::copy_async(storage.data(), destination, storage.byte_size(),
                            device::CopyKind::HostToDevice, stream);
         device::synchronize(stream);
@@ -951,11 +951,11 @@ static void load_binary_snapshot(const filesystem::path& file_name,
 
 void Network::save_parameters_binary(const filesystem::path& file_name) const
 {
-    throw_if(!parameters.owns_memory(),
+    throw_if(!parameter_store.master.owns_memory(),
              "Network::save_parameters_binary: the fp32 parameter master "
              "was released for quantized inference; reload the model before saving.");
 
-    save_binary_snapshot(file_name, parameters, PARAMETER_FILE_MAGIC,
+    save_binary_snapshot(file_name, parameter_store.master, PARAMETER_FILE_MAGIC,
                          parameter_layout_fingerprint());
 }
 
@@ -1004,11 +1004,11 @@ void Network::load_parameters_binary(const filesystem::path& file_name)
              "Network::load_parameters_binary: the fp32 parameter master was released "
              "for quantized inference; reload the model before loading parameters.");
 
-    load_binary_snapshot(file_name, parameters, PARAMETER_FILE_MAGIC,
+    load_binary_snapshot(file_name, parameter_store.master, PARAMETER_FILE_MAGIC,
                          parameter_layout_fingerprint(),
                          "load_parameters_binary", "parameter");
 
-    if (parameters.get_device() == Device::CUDA && parameters.data())
+    if (parameter_store.master.get_device() == Device::CUDA && parameter_store.master.data())
         cast_parameters_to_bf16();
 
     link_parameters();
@@ -1017,11 +1017,11 @@ void Network::load_parameters_binary(const filesystem::path& file_name)
 void Network::load_parameters_bf16_inference_binary(
     const filesystem::path& file_name)
 {
-    throw_if(parameters.empty() || !parameters.owns_memory(),
+    throw_if(parameter_store.master.empty() || !parameter_store.master.owns_memory(),
              "Network::load_parameters_bf16_inference_binary: "
              "the network must own its compiled parameter storage.");
 
-    read_parameters_bf16_inference_binary(file_name, parameters.size_in_floats());
+    read_parameters_bf16_inference_binary(file_name, parameter_store.master.size_in_floats());
 }
 
 void Network::compile_and_load_parameters_bf16_inference_binary(
@@ -1082,10 +1082,10 @@ void Network::read_parameters_bf16_inference_binary(
         const ParameterSlotTotals totals = for_each_parameter_slot({});
         allocate_compact_parameter_storage(totals);
 
-        uint16_t* const mirror = parameters_bf16_mirror.as<uint16_t>();
-        float* const fp32_compact = parameters_fp32_inference_storage.as<float>();
-        int8_t* const int8_storage = parameters_int8_storage.as<int8_t>();
-        cudaStream_t stream = device::get_compute_stream();
+        uint16_t* const mirror = parameter_store.bf16.as<uint16_t>();
+        float* const fp32_compact = parameter_store.fp32_inference.as<float>();
+        int8_t* const int8_storage = parameter_store.int8.as<int8_t>();
+        DeviceStream stream = device::get_compute_stream();
 
         const auto skip = [&](const Index count)
         {
@@ -1252,10 +1252,10 @@ void Network::read_parameters_bf16_inference_binary(
 
     // A network compiled without its master gets one here: every aligned float
     // of it, padding included, is overwritten by the chunks below.
-    if (parameters.empty())
-        parameters.resize_bytes(parameters_number * Index(sizeof(float)), Device::CPU);
+    if (parameter_store.master.empty())
+        parameter_store.master.resize_bytes(parameters_number * Index(sizeof(float)), Device::CPU);
 
-    float* const host_parameters = parameters.as<float>();
+    float* const host_parameters = parameter_store.master.as<float>();
 
     for_each_bf16_chunk(parameters_number, [&](const Index chunk, const Index converted)
     {

@@ -905,7 +905,7 @@ void AttentionOperator::apply_sdpa_forward(const TensorView& query,
 
     if (fp32_via_bf16)
     {
-        cudaStream_t cstream = device::get_compute_stream();
+        DeviceStream cstream = device::get_compute_stream();
         const Index q_elems  = query.size();
         const Index kv_elems = key.size();
 
@@ -1174,7 +1174,7 @@ void AttentionOperator::apply_sdpa_backward(const TensorView& query,
                  "SDPA backward: BF16 scratch views were not planned "
                  "(BackPropagation::set ran without the SDPA backward specs).");
 
-        cudaStream_t cstream = device::get_compute_stream();
+        DeviceStream cstream = device::get_compute_stream();
         cast_fp32_to_bf16(query.size(), query.as<float>(), query_bf16.as<bfloat16>(), cstream);
         cast_fp32_to_bf16(key.size(),   key.as<float>(),   key_bf16.as<bfloat16>(), cstream);
         cast_fp32_to_bf16(value.size(), value.as<float>(), value_bf16.as<bfloat16>(), cstream);

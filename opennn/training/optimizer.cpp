@@ -71,10 +71,40 @@ static void clip_gradient_norm_device(Buffer& gradient,
                             squared_norm, max_norm, GRADIENT_NORM_EPS);
 }
 
+static void clip_gradient_slices_device(
+    const span<const BackPropagation::GradientSlice> slices,
+    Buffer& workspace,
+    const float max_norm)
+{
+    float* const partials = workspace.ensure<float>(Index(slices.size() + 1));
+    float* const squared_norm = partials + slices.size();
+
+    BlasHandle handle = device::get_cublas_handle();
+    {
+        device::CublasPointerModeGuard pointer_mode(handle, CUBLAS_POINTER_MODE_DEVICE);
+        for(size_t i = 0; i < slices.size(); ++i)
+        {
+            const TensorView& values = slices[i].values;
+            CHECK_CUBLAS(cublasSdot(handle, to_int(values.size()),
+                                    values.as<float>(), 1,
+                                    values.as<float>(), 1, partials + i));
+        }
+    }
+
+    sum_squared_norms_cuda(Index(slices.size()), partials, squared_norm);
+    for(const auto& slice : slices)
+        clip_gradient_norm_cuda(slice.values.size(), slice.values.as<float>(),
+                                squared_norm, max_norm, GRADIENT_NORM_EPS);
+}
+
 #else
 
 static void clip_gradient_norm_device(Buffer&, Buffer&, Index, float)
     OPENNN_CUDA_STUB_BODY(clip_gradient_norm_device)
+
+static void clip_gradient_slices_device(
+    span<const BackPropagation::GradientSlice>, Buffer&, float)
+    OPENNN_CUDA_STUB_BODY(clip_gradient_slices_device)
 
 #endif
 
@@ -132,7 +162,7 @@ struct DeviceEpochMetricSums
         if (!device::is_cuda_build()) return sums;
 
         float host[2] = {0.0f, 0.0f};
-        const cudaStream_t stream = device::get_compute_stream();
+        const DeviceStream stream = device::get_compute_stream();
         device::copy_async(host, values.data(), Index(sizeof(host)),
                            device::CopyKind::DeviceToHost,
                            stream);
@@ -222,7 +252,6 @@ bool Optimizer::uses_joint_gradient_arena() const noexcept
         loss ? loss->get_network() : nullptr;
 
     return joint_gradient_arena
-        && gradient_clip_norm <= 0.0f
         && network
         && network->is_gpu();
 }
@@ -653,7 +682,7 @@ void Optimizer::warmup_device_training(
        || training_batches.empty())
         return;
 
-    const cudaStream_t stream = device::get_compute_stream();
+    const DeviceStream stream = device::get_compute_stream();
 
     const Index parameters_bytes =
         network->get_parameters_buffer_size() * Index(sizeof(float));
@@ -1282,7 +1311,7 @@ void Optimizer::update_best_parameters(Network* network,
         const size_t bytes = size_t(size) * sizeof(float);
         if (network->is_gpu() && device::is_cuda_build())
         {
-            const cudaStream_t stream = device::get_compute_stream();
+            const DeviceStream stream = device::get_compute_stream();
             device::copy_async(destination.data(), source, Index(bytes),
                                device::CopyKind::DeviceToHost, stream);
             device::synchronize(stream);
@@ -1395,25 +1424,32 @@ void Optimizer::clip_gradient_norm(BackPropagation& back_propagation,
 {
     if(max_norm <= 0.0f) return;
 
-    throw_if(back_propagation.has_joint_gradient_arena(),
-             "Joint-gradient arenas require gradient clipping to be disabled; "
-             "use the contiguous-gradient fallback when clipping is enabled.");
-
     Buffer& gradient = back_propagation.gradient;
-    const Index gradient_size = gradient.size_in_floats();
-    if (gradient_size <= 0) return;
+    const auto& slices = back_propagation.get_gradient_slices();
+    if(slices.empty()) return;
 
-    if (gradient.get_device() == Device::CUDA)
-        clip_gradient_norm_device(gradient,
-                                  back_propagation.execution_workspace,
-                                  gradient_size,
-                                  max_norm);
+    if(slices.front().values.get_device() == Device::CUDA)
+    {
+        if(!back_propagation.has_joint_gradient_arena())
+            clip_gradient_norm_device(gradient,
+                                      back_propagation.execution_workspace,
+                                      gradient.size_in_floats(), max_norm);
+        else
+            clip_gradient_slices_device(slices,
+                                        back_propagation.execution_workspace,
+                                        max_norm);
+    }
     else
     {
-        VectorMap gradient_view = gradient.as_vector();
-        const float gradient_norm = gradient_view.norm();
+        float squared_norm = 0.0f;
+        for(const auto& slice : slices)
+            squared_norm += slice.values.as_vector().squaredNorm();
+        const float gradient_norm = sqrt(squared_norm);
         if (gradient_norm > max_norm)
-            gradient_view *= max_norm / (gradient_norm + GRADIENT_NORM_EPS);
+        {
+            const float scale = max_norm / (gradient_norm + GRADIENT_NORM_EPS);
+            for(const auto& slice : slices) slice.values.as_vector() *= scale;
+        }
     }
 }
 
@@ -1433,8 +1469,8 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
     DeviceEpochMetricSums device_metrics(training_session.device_metrics);
     device_metrics.reset();
 
-    const cudaStream_t compute = device::get_compute_stream();
-    const cudaStream_t transfer = device::get_transfer_stream();
+    const DeviceStream compute = device::get_compute_stream();
+    const DeviceStream transfer = device::get_transfer_stream();
 
     auto& pipelines = training_session.pipelines;
     const bool profile_this = env_flag_enabled("OPENNN_PROFILE");
@@ -1469,7 +1505,7 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
         copy_section(source.target,  slot.target);
     };
 
-    const auto issue_slot_h2d = [](Batch& slot, cudaStream_t stream)
+    const auto issue_slot_h2d = [](Batch& slot, DeviceStream stream)
     {
         const auto copy_section = [&](BatchSlot& section)
         {
@@ -1998,7 +2034,7 @@ Loss::EvaluationResult Optimizer::train_epoch(
                 update_parameters(tail_back_propagation, optimizer_data, update_mode);
             };
 
-            const cudaStream_t compute = device::get_compute_stream();
+            const DeviceStream compute = device::get_compute_stream();
             if (tail.exec)
                 device::launch_graph(tail.exec, compute);
             else if (graph_tail && training_session.cuda_graph_capture_allowed)

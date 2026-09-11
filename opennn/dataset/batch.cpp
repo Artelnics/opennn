@@ -62,7 +62,7 @@ void Batch::set(const Index new_batch_size,
 
     const Type input_type =
         on_gpu
-        && activation_dtype(new_config.training_type) == Type::BF16
+        && make_precision_plan(new_config.training_type).activations == Type::BF16
         && dataset->supports_bf16_inputs()
             ? Type::BF16
             : Type::FP32;
@@ -263,7 +263,7 @@ Batch::~Batch()
 
 #ifdef OPENNN_HAS_CUDA
 
-void Batch::upload_to_device_batch_async(Batch& destination, cudaStream_t stream)
+void Batch::upload_to_device_batch_async(Batch& destination, DeviceStream stream)
 {
     const Index current_batch_size = batch_size;
 
@@ -386,11 +386,11 @@ void Batch::upload_to_device_batch_async(Batch& destination, cudaStream_t stream
 
 #else
 
-void Batch::upload_to_device_batch_async(Batch&, cudaStream_t) OPENNN_CUDA_STUB_BODY(Batch::upload_to_device_batch_async)
+void Batch::upload_to_device_batch_async(Batch&, DeviceStream) OPENNN_CUDA_STUB_BODY(Batch::upload_to_device_batch_async)
 
 #endif
 
-void Batch::record_h2d_done(cudaStream_t stream)
+void Batch::record_h2d_done(DeviceStream stream)
 {
     if (!h2d_done_event)
         h2d_done_event.create();

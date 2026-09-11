@@ -178,6 +178,7 @@ TEST_F(SGDTest, GpuClipSupportsTailAndCudaGraph)
     optimizer.set_initial_learning_rate(0.01f);
     optimizer.set_batch_size(4);
     optimizer.set_gradient_clip_norm(0.5f);
+    optimizer.set_joint_gradient_arena(true);
     optimizer.set_cuda_graph(true);
     optimizer.set_maximum_epochs(2);
     optimizer.set_display(false);

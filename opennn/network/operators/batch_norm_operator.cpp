@@ -700,7 +700,7 @@ void BatchNormalizationOperator::apply_delta_gpu(
                 && chosen.fuse_relu == fuse_relu
                 && (chosen.fork || !has_residual);
 
-            if (!fully_fused)
+            if (!fully_fused && cudnn_frontend::frontend_verbose())
                 logging::warning() << "BatchNormalizationOperator backward c" << features
                      << " r" << input.size() / features
                      << " batch " << batch << ": "

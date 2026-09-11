@@ -49,7 +49,7 @@ void NonMaxSuppressionOperator::forward_propagate(ForwardPropagation& forward_pr
 #ifdef OPENNN_HAS_CUDA
     if (input.is_cuda())
     {
-        cudaStream_t stream = device::get_compute_stream();
+        DeviceStream stream = device::get_compute_stream();
         device::PinnedBuffer& staging =
             forward_propagation.layer_pinned_storage[layer];
         const Index input_bytes = input.size() * Index(sizeof(float));

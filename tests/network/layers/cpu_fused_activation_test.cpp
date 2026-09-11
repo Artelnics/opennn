@@ -46,7 +46,7 @@ vector<float> forward_once(Network& network,
 }
 
 
-// A bias-free Dense asks the combination for CUBLASLT_EPILOGUE_RELU, not
+// A bias-free Dense asks the combination for LinearEpilogue::Relu, not
 // RELU_BIAS. The CPU epilogue honoured only the latter, so the layer behaved as
 // Identity.
 

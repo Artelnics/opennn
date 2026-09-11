@@ -1078,7 +1078,7 @@ void GroupedQueryAttentionOperator::forward_gpu(TensorView& input, TensorView& o
     const Index qd  = q_dim();
     const Index kd  = kv_dim();
     const float scale = 1.0f / sqrt(float(head_dim));
-    cudaStream_t stream = device::get_compute_stream();
+    DeviceStream stream = device::get_compute_stream();
 
     const Type  act  = input.get_type();
     const Index elem = Index(type_bytes(act));

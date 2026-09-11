@@ -2,6 +2,7 @@
 // Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/network/forward_propagation.h"
+#include "opennn/network/training_arena_plan.h"
 #include "opennn/registry.h"
 #include "opennn/network/network.h"
 #include "opennn/core/memory_debug.h"
@@ -39,7 +40,7 @@ bool ForwardPropagation::reserve_kv_cache(const Index required, const Index pres
     struct Replacement { size_t layer; Buffer storage{Device::CUDA}; };
     vector<Replacement> replacements;
     const auto& layers = network->get_layers();
-    const cudaStream_t stream = device::get_compute_stream();
+    const DeviceStream stream = device::get_compute_stream();
     try
     {
         for (size_t i = 0; i < layers.size(); ++i)
@@ -601,7 +602,20 @@ ForwardPropagation::~ForwardPropagation()
     PROFILE_SCOPE_HOST("fp:dtor");
 }
 
-void ForwardPropagation::stage_position(cudaStream_t stream)
+void ForwardPropagation::set(const Index new_batch_size,
+                             Network* new_network,
+                             Buffer* external_storage,
+                             const bool new_inputs_pre_scaled,
+                             TrainingArenaPlan& plan)
+{
+    set(new_batch_size, new_network, external_storage,
+        ForwardPropagationMode::Training, InferenceShapePolicy{},
+        new_inputs_pre_scaled, plan.co_planned_lifetimes(),
+        plan.uses_joint_gradient());
+    plan.bind_offsets(co_planned_offsets);
+}
+
+void ForwardPropagation::stage_position(DeviceStream stream)
 {
 #ifdef OPENNN_HAS_CUDA
     if (!position_pinned)

@@ -12,6 +12,15 @@
 namespace opennn::device
 {
 
+void GraphExecDeleter::operator()(DeviceGraphExec exec) const noexcept
+{
+#ifdef OPENNN_HAS_CUDA
+    if(exec) cudaGraphExecDestroy(exec);
+#else
+    (void)exec;
+#endif
+}
+
 namespace
 {
 
@@ -175,7 +184,7 @@ void CudaEvent::reset() noexcept
     handle = nullptr;
 }
 
-void record_event(cudaEvent_t event, cudaStream_t stream)
+void record_event(cudaEvent_t event, DeviceStream stream)
 {
 #ifdef OPENNN_HAS_CUDA
     throw_if(!event, "cannot record a null CUDA event.");
@@ -195,7 +204,7 @@ void synchronize_event(cudaEvent_t event)
 #endif
 }
 
-void stream_wait_event(cudaStream_t stream, cudaEvent_t event)
+void stream_wait_event(DeviceStream stream, cudaEvent_t event)
 {
     if (!event) return;
 
@@ -234,7 +243,7 @@ void instantiate_or_update(GraphExecHandle& exec, cudaGraph_t graph)
 
 }
 
-StreamCapture::StreamCapture(cudaStream_t new_stream)
+StreamCapture::StreamCapture(DeviceStream new_stream)
     : stream(new_stream)
 {
     CHECK_CUDA(cudaStreamBeginCapture(stream, cudaStreamCaptureModeThreadLocal));
@@ -269,17 +278,17 @@ StreamCapture::~StreamCapture() noexcept
     cudaGetLastError();
 }
 
-void launch_graph(const GraphExecHandle& exec, cudaStream_t stream)
+void launch_graph(const GraphExecHandle& exec, DeviceStream stream)
 {
     CHECK_CUDA(cudaGraphLaunch(exec.get(), stream));
 }
 
 #else
 
-StreamCapture::StreamCapture(cudaStream_t) { throw_cuda_unavailable(); }
+StreamCapture::StreamCapture(DeviceStream) { throw_cuda_unavailable(); }
 StreamCapture::~StreamCapture() noexcept {}
 void StreamCapture::end(GraphExecHandle&) { throw_cuda_unavailable(); }
-void launch_graph(const GraphExecHandle&, cudaStream_t) { throw_cuda_unavailable(); }
+void launch_graph(const GraphExecHandle&, DeviceStream) { throw_cuda_unavailable(); }
 
 #endif
 

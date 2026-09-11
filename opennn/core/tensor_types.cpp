@@ -150,7 +150,7 @@ void fill_tensor_data(const MatrixR& matrix,
 
 void copy_device_to_host_float(const void* device_src, Type src_dtype,
                                Index element_count, float* host_dst,
-                               cudaStream_t stream,
+                               DeviceStream stream,
                                vector<uint16_t>& bf16_staging)
 {
     if (element_count == 0) return;
@@ -179,7 +179,7 @@ void copy_device_to_host_float(const void* device_src, Type src_dtype,
 
 void copy_device_to_host_float(const void* device_src, Type src_dtype,
                                Index element_count, float* host_dst,
-                               cudaStream_t stream)
+                               DeviceStream stream)
 {
     vector<uint16_t> bf16_staging;
     copy_device_to_host_float(device_src, src_dtype, element_count,

@@ -148,7 +148,7 @@ void MultiHeadProjectionOperator::forward_propagate(ForwardPropagation& forward_
 
         TensorView head_output_2d = head_output.reshape({rows, heads_number * head_dimension});
         return linear_forward(input_2d, weights, bias, head_output_2d,
-                              CUBLASLT_EPILOGUE_BIAS, nullptr, weight_scale);
+                              LinearEpilogue::Bias, nullptr, weight_scale);
     }
 
     record_bytes(2.0);
@@ -159,7 +159,7 @@ void MultiHeadProjectionOperator::forward_propagate(ForwardPropagation& forward_
         {batch_size, seq_len, heads_number, head_dimension});
 
     linear_forward(input_2d, weights, bias, scratch_2d,
-                   CUBLASLT_EPILOGUE_BIAS, nullptr, weight_scale);
+                   LinearEpilogue::Bias, nullptr, weight_scale);
     split_heads(scratch_4d, head_output);
 }
 

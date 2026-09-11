@@ -27,6 +27,7 @@ array<Buffer, sizeof...(Kind)> cuda_workspace_buffers(index_sequence<Kind...>)
 }
 
 class Network;
+class TrainingArenaPlan;
 
 enum class ForwardPropagationMode
 {
@@ -71,7 +72,7 @@ struct ForwardPropagation
 
     vector<Index> co_planned_offsets;
 
-    void stage_position(cudaStream_t stream);
+    void stage_position(DeviceStream stream);
 
     void set_active_sequence_length(Index length);
 
@@ -159,6 +160,11 @@ struct ForwardPropagation
     uint64_t get_parameters_version() const;
 
 private:
+
+    friend struct TrainingContext;
+
+    void set(Index, Network*, Buffer* external_storage,
+             bool inputs_pre_scaled, TrainingArenaPlan&);
 
     friend class ChatSession;
     void release_inference_storage();

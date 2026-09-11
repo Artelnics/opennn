@@ -20,10 +20,13 @@ struct TrainingContext
     TrainingContext(const TrainingContext&) = delete;
     TrainingContext& operator=(const TrainingContext&) = delete;
 
-    bool shares_memory() const noexcept { return !forward.arena.owns_memory(); }
+    bool shares_memory() const noexcept { return shared_memory; }
 
     ForwardPropagation forward;
     BackPropagation backward;
+
+private:
+    bool shared_memory = false;
 };
 
 }

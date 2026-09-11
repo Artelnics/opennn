@@ -358,7 +358,7 @@ void cross_entropy_3d(const TensorView& input, const TensorView& target, float& 
             }
 
             float host_results[3];
-            cudaStream_t stream = device::get_compute_stream();
+            DeviceStream stream = device::get_compute_stream();
             device::copy_async(host_results, reduction_device,
                                3 * Index(sizeof(float)),
                                device::CopyKind::DeviceToHost,

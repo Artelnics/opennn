@@ -48,6 +48,12 @@ inline bool frontend_enabled()
     return device_sm_version() >= 700;
 }
 
+inline bool frontend_verbose()
+{
+    static const bool verbose = env_flag_enabled("OPENNN_CUDNN_FRONTEND_VERBOSE");
+    return verbose;
+}
+
 inline bool bn_frontend_enabled()
 {
     return frontend_enabled() && device_sm_version() >= 800;
@@ -164,7 +170,9 @@ bool run_frontend(GraphCache& cache, const char* label, Body&& body)
     catch (const exception& e)
     {
         cache.disabled = true;
-        logging::warning() << label << ": cudnn-frontend path unavailable (" << e.what() << ").\n";
+        if(frontend_verbose())
+            logging::warning() << label << ": cudnn-frontend path unavailable ("
+                               << e.what() << ").\n";
         return false;
     }
 }
@@ -716,8 +724,9 @@ inline bool finalize(graph::Graph& graph, int64_t& workspace_bytes, const string
 
 inline void report_autotune_skipped(const char* tag, const char* reason)
 {
-    logging::warning() << (tag ? tag : "autotune")
-         << ": autotune skipped, keeping the heuristic plan (" << reason << ").\n";
+    if(frontend_verbose() || conv_energy_verbose())
+        logging::warning() << (tag ? tag : "autotune")
+             << ": autotune skipped, keeping the heuristic plan (" << reason << ").\n";
 }
 
 // run_slot() labels its calls "ConvolutionOperator fwd", "... wgrad",
