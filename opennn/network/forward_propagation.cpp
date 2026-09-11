@@ -304,6 +304,285 @@ static vector<Index> find_inference_output_release_steps(
     return last_consumers;
 }
 
+struct ForwardPoolLayout
+{
+    vector<vector<Index>> slot_offsets;
+    vector<vector<Index>> transient_slot_offsets;
+    Index activation_bytes = 0;
+    Index transient_bytes = 0;
+    Index logical_bytes = 0;
+    Index logical_persistent_bytes = 0;
+    Index lower_bound_bytes = 0;
+    Index fragmentation_bytes = 0;
+    Index overlaid_scratch_bytes = 0;
+    size_t overlaid_recompute_slots = 0;
+};
+
+struct PooledForwardSlots
+{
+    vector<pair<size_t, size_t>> persistent;
+    vector<pair<size_t, size_t>> transient;
+    vector<MemoryPoolEntry> lifetimes;
+    Index transient_bytes = 0;
+};
+
+static bool is_transient_forward_slot(
+    const ForwardPropagationMode mode,
+    const vector<unique_ptr<Layer>>& layers,
+    const vector<size_t>& recomputable_slots,
+    const size_t layer,
+    const size_t slot)
+{
+    return is_training(mode)
+        && (layers[layer]->get_forward_slot_kind(slot + 1)
+                == ForwardSlotKind::Transient
+            || recomputable_slots[layer] == slot);
+}
+
+static ForwardPoolLayout initialize_forward_pool_layout(
+    const vector<unique_ptr<Layer>>& layers,
+    const vector<vector<TensorSpec>>& specs,
+    const vector<size_t>& recomputable_slots,
+    const ForwardPropagationMode mode)
+{
+    ForwardPoolLayout layout;
+    layout.slot_offsets.resize(specs.size());
+    layout.transient_slot_offsets.resize(specs.size());
+
+    for(size_t i = 0; i < specs.size(); ++i)
+    {
+        layout.slot_offsets[i].assign(specs[i].size(), Index(-1));
+        layout.transient_slot_offsets[i].assign(specs[i].size(), Index(-1));
+        throw_if(recomputable_slots[i] != SIZE_MAX
+                 && recomputable_slots[i] >= specs[i].size(),
+                 "ForwardPropagation::set: invalid recomputable slot for layer {}.", i);
+
+        for(size_t j = 0; j < specs[i].size(); ++j)
+        {
+            if(specs[i][j].shape.empty()) continue;
+            const Index bytes = get_aligned_bytes(specs[i][j]);
+            layout.logical_bytes += bytes;
+            if(is_transient_forward_slot(mode, layers, recomputable_slots, i, j))
+                throw_if(j + 1 == specs[i].size(),
+                         "ForwardPropagation::set: a layer output cannot be a transient slot.");
+            else
+                layout.logical_persistent_bytes += bytes;
+        }
+    }
+    return layout;
+}
+
+static PooledForwardSlots collect_forward_slots(
+    const vector<unique_ptr<Layer>>& layers,
+    const vector<vector<TensorSpec>>& specs,
+    const vector<size_t>& recomputable_slots,
+    const ForwardPropagationMode mode,
+    const vector<Index>& output_release_steps)
+{
+    PooledForwardSlots pooled;
+    const bool training = is_training(mode);
+    const Index backward_base = backward_step(Index(specs.size()), 0);
+
+    for(size_t i = 0; i < specs.size(); ++i)
+        for(size_t j = 0; j < specs[i].size(); ++j)
+        {
+            const TensorSpec& spec = specs[i][j];
+            if(spec.shape.empty()
+               || is_transient_forward_slot(mode, layers, recomputable_slots, i, j))
+                continue;
+
+            const bool output = j + 1 == specs[i].size();
+            const Index last_step = training
+                ? (output && output_release_steps[i] >= 0
+                    ? output_release_steps[i] : backward_base - Index(i))
+                : (output ? output_release_steps[i] : Index(i));
+            pooled.persistent.emplace_back(i, j);
+            pooled.lifetimes.push_back({get_aligned_bytes(spec), Index(i), last_step});
+        }
+
+    if(!training) return pooled;
+    for(size_t i = 0; i < specs.size(); ++i)
+        for(size_t j = 0; j < specs[i].size(); ++j)
+        {
+            const TensorSpec& spec = specs[i][j];
+            if(spec.shape.empty()
+               || !is_transient_forward_slot(mode, layers, recomputable_slots, i, j)
+               || recomputable_slots[i] == j)
+                continue;
+
+            const Index bytes = get_aligned_bytes(spec);
+            pooled.transient.emplace_back(i, j);
+            pooled.lifetimes.push_back({bytes, Index(i), Index(i)});
+            pooled.transient_bytes += bytes;
+        }
+    return pooled;
+}
+
+static void apply_forward_pool_plan(
+    ForwardPoolLayout& layout,
+    const PooledForwardSlots& pooled,
+    const MemoryPoolPlan& plan)
+{
+    for(size_t i = 0; i < pooled.persistent.size(); ++i)
+        layout.slot_offsets[pooled.persistent[i].first][pooled.persistent[i].second]
+            = plan.byte_offsets[i];
+
+    const size_t transient_base = pooled.persistent.size();
+    for(size_t i = 0; i < pooled.transient.size(); ++i)
+        layout.transient_slot_offsets[pooled.transient[i].first][pooled.transient[i].second]
+            = plan.byte_offsets[transient_base + i];
+
+    layout.activation_bytes = plan.peak_bytes;
+    layout.lower_bound_bytes = plan.lower_bound_live_bytes;
+    layout.fragmentation_bytes = plan.fragmentation_bytes();
+}
+
+static Index place_unplanned_transient_slots(
+    ForwardPoolLayout& layout,
+    const vector<unique_ptr<Layer>>& layers,
+    const vector<vector<TensorSpec>>& specs,
+    const vector<size_t>& recomputable_slots,
+    const ForwardPropagationMode mode)
+{
+    Index block_bytes = 0;
+    for(size_t i = 0; i < specs.size(); ++i)
+    {
+        Index layer_bytes = 0;
+        for(size_t j = 0; j < specs[i].size(); ++j)
+        {
+            if(!is_transient_forward_slot(mode, layers, recomputable_slots, i, j)
+               || specs[i][j].shape.empty()
+               || layout.transient_slot_offsets[i][j] >= 0)
+                continue;
+            layout.transient_slot_offsets[i][j] = layout.activation_bytes + layer_bytes;
+            layer_bytes += get_aligned_bytes(specs[i][j]);
+        }
+        block_bytes = max(block_bytes, layer_bytes);
+    }
+    return block_bytes;
+}
+
+static void plan_training_forward_pool(
+    ForwardPoolLayout& layout,
+    PooledForwardSlots pooled,
+    const vector<vector<TensorSpec>>& specs,
+    const vector<size_t>& recomputable_slots,
+    const span<const MemoryPoolEntry> co_planned_lifetimes,
+    const bool exhaustive_training_plan,
+    const size_t early_release_outputs,
+    const Index early_release_logical_bytes,
+    const Index batch_size,
+    vector<Index>& co_planned_offsets)
+{
+    memory_debug::record_pool_lifetimes(
+        "forward", pooled.lifetimes,
+        format("layers={},batch={}", specs.size(), batch_size));
+    const size_t forward_entry_count = pooled.lifetimes.size();
+    pooled.lifetimes.insert(pooled.lifetimes.end(),
+                            co_planned_lifetimes.begin(), co_planned_lifetimes.end());
+
+    const MemoryPoolPlan plan = [&]
+    {
+        PROFILE_SCOPE_HOST("fp:set:plan");
+        return exhaustive_training_plan
+            ? plan_memory_pool_best(pooled.lifetimes)
+            : plan_memory_pool(pooled.lifetimes,
+                early_release_outputs > 0
+                    ? MemoryPoolStrategy::Compact
+                    : MemoryPoolStrategy::Chronological);
+    }();
+    apply_forward_pool_plan(layout, pooled, plan);
+
+    if(!co_planned_lifetimes.empty())
+    {
+        co_planned_offsets.assign(plan.byte_offsets.begin() + forward_entry_count,
+                                  plan.byte_offsets.end());
+        const Index bytes = accumulate(co_planned_lifetimes.begin(), co_planned_lifetimes.end(),
+                                       Index(0), [](const Index total, const MemoryPoolEntry& entry)
+                                       { return total + entry.bytes; });
+        memory_debug::record("forward.joint_plan", "co_planned_entries_in_arena", bytes,
+                             format("batch={},entries={}", batch_size,
+                                    co_planned_lifetimes.size()));
+    }
+
+    if(pooled.transient_bytes > 0)
+        memory_debug::record("forward.transient_pool", "lifetime_planned_scratch",
+                             pooled.transient_bytes,
+                             format("batch={},entries={}", batch_size, pooled.transient.size()));
+
+    const Index backward_base = backward_step(Index(specs.size()), 0);
+    for(size_t i = 0; i < specs.size(); ++i)
+    {
+        const size_t slot = recomputable_slots[i];
+        if(slot == SIZE_MAX || specs[i][slot].shape.empty()) continue;
+        const Index bytes = get_aligned_bytes(specs[i][slot]);
+        const Index second_step = backward_base - Index(i);
+        const Index offset = find_memory_pool_overlay(
+            pooled.lifetimes, plan, bytes, Index(i), second_step);
+        if(offset >= 0)
+        {
+            layout.transient_slot_offsets[i][slot] = offset;
+            ++layout.overlaid_recompute_slots;
+            layout.overlaid_scratch_bytes += bytes;
+        }
+        memory_debug::record("forward.recompute_entry", format("{}:{}", i, slot), bytes,
+                             format("first={},second={},overlaid={}", i, second_step,
+                                    offset >= 0 ? 1 : 0));
+    }
+
+    if(early_release_outputs > 0)
+    {
+        memory_debug::record("forward.training_lifetime_reuse",
+                             "early_release_output_bytes", early_release_logical_bytes,
+                             format("batch={},layers={}", batch_size, early_release_outputs));
+        memory_debug::record("forward.training_lifetime_reuse",
+                             "allocated_persistent_bytes", layout.activation_bytes,
+                             format("batch={},lower_bound_mib={:.2f}", batch_size,
+                                    double(layout.lower_bound_bytes) / (1024.0 * 1024.0)));
+    }
+}
+
+static void record_forward_pool_metrics(
+    const ForwardPoolLayout& layout,
+    const ForwardPropagationMode mode,
+    const Index batch_size,
+    const size_t recomputed_layers)
+{
+    if(layout.transient_bytes > 0)
+        memory_debug::record("forward.transient_pool", "shared_block", layout.transient_bytes,
+                             format("batch={}", batch_size));
+    if(layout.overlaid_recompute_slots > 0)
+        memory_debug::record("forward.training_recomputation", "overlaid_scratch_bytes",
+                             layout.overlaid_scratch_bytes,
+                             format("batch={},layers={}", batch_size,
+                                    layout.overlaid_recompute_slots));
+
+    if(!is_training(mode))
+    {
+        memory_debug::record("forward.inference_pool_analysis", "logical_persistent_bytes",
+                             layout.logical_persistent_bytes, format("batch={}", batch_size));
+        memory_debug::record("forward.inference_pool_analysis", "live_bytes_lower_bound",
+                             layout.lower_bound_bytes, format("batch={}", batch_size));
+        memory_debug::record("forward.inference_pool_analysis", "allocator_fragmentation_overhead",
+                             layout.fragmentation_bytes, format("batch={}", batch_size));
+        memory_debug::record("forward.inference_pool_analysis", "saved_bytes",
+                             layout.logical_bytes - layout.activation_bytes,
+                             format("batch={}", batch_size));
+    }
+    else if(recomputed_layers > 0)
+    {
+        const Index allocated_bytes = layout.activation_bytes + layout.transient_bytes;
+        memory_debug::record("forward.training_recomputation", "logical_forward_bytes",
+                             layout.logical_bytes, format("batch={}", batch_size));
+        memory_debug::record("forward.training_recomputation", "allocated_forward_bytes",
+                             allocated_bytes,
+                             format("batch={},layers={}", batch_size, recomputed_layers));
+        memory_debug::record("forward.training_recomputation", "saved_bytes",
+                             layout.logical_bytes - allocated_bytes,
+                             format("batch={}", batch_size));
+    }
+}
+
 ForwardPropagation::ForwardPropagation(const Index new_batch_size,
                                        Network* new_network,
                                        const ForwardPropagationMode new_mode,
@@ -460,389 +739,54 @@ void ForwardPropagation::set(
     if(!is_training(mode))
         elide_inference_slots(layers, forward_specs, network->get_device(), batch_size);
 
-    const auto is_transient_slot =
-        [&](const size_t layer, const size_t slot)
-    {
-        return is_training(mode)
-            && (layers[layer]->get_forward_slot_kind(slot + 1)
-                    == ForwardSlotKind::Transient
-                || recomputable_slots[layer] == slot);
-    };
-
     Index early_release_logical_bytes = 0;
-
-    const vector<Index> output_release_steps =
-        is_training(mode)
-        ? find_early_output_release_steps(
-              layers,
-              network->get_consumer_edges(),
-              forward_specs,
-              early_release_logical_bytes)
+    const vector<Index> output_release_steps = is_training(mode)
+        ? find_early_output_release_steps(layers, network->get_consumer_edges(),
+                                          forward_specs, early_release_logical_bytes)
         : vector<Index>(layers_number, Index(-1));
+    const size_t early_release_outputs = ranges::count_if(
+        output_release_steps, [](const Index step) { return step >= 0; });
 
-    const size_t early_release_outputs =
-        ranges::count_if(
-            output_release_steps,
-            [](const Index step)
-            {
-                return step >= 0;
-            });
-
-    vector<vector<Index>> slot_offsets(layers_number);
-    vector<vector<Index>> transient_slot_offsets(layers_number);
-
-    Index logical_total_bytes = 0;
-    Index logical_persistent_bytes = 0;
-
-    for(size_t i = 0; i < layers_number; ++i)
-    {
-        slot_offsets[i].assign(
-            forward_specs[i].size(),
-            Index(-1));
-
-        transient_slot_offsets[i].assign(
-            forward_specs[i].size(),
-            Index(-1));
-
-        throw_if(recomputable_slots[i] != SIZE_MAX
-                 && recomputable_slots[i] >= forward_specs[i].size(),
-                 "ForwardPropagation::set: invalid recomputable slot for layer {}.",
-                 i);
-
-        for(size_t j = 0; j < forward_specs[i].size(); ++j)
-        {
-            const TensorSpec& spec = forward_specs[i][j];
-
-            if(spec.shape.empty()) continue;
-
-            const Index bytes = get_aligned_bytes(spec);
-
-            logical_total_bytes += bytes;
-
-            if(is_transient_slot(i, j))
-            {
-                throw_if(
-                    j + 1 == forward_specs[i].size(),
-                    "ForwardPropagation::set: a layer output cannot be a transient slot.");
-            }
-            else
-            {
-                logical_persistent_bytes += bytes;
-            }
-        }
-    }
-
-    Index activation_pool_bytes = 0;
-    Index lower_bound_live_bytes = 0;
-    Index fragmentation_bytes = 0;
-    Index transient_block_bytes = 0;
-
-    size_t overlaid_recompute_slots = 0;
-    Index overlaid_scratch_bytes = 0;
-
-    const auto place_transient_slots = [&]() -> Index
-    {
-        Index block_bytes = 0;
-
-        for(size_t i = 0; i < layers_number; ++i)
-        {
-            Index layer_bytes = 0;
-
-            for(size_t j = 0; j < forward_specs[i].size(); ++j)
-            {
-                if(!is_transient_slot(i, j)
-                   || forward_specs[i][j].shape.empty()
-                   || transient_slot_offsets[i][j] >= 0)
-                {
-                    continue;
-                }
-
-                transient_slot_offsets[i][j] =
-                    activation_pool_bytes + layer_bytes;
-
-                layer_bytes +=
-                    get_aligned_bytes(forward_specs[i][j]);
-            }
-
-            block_bytes = max(block_bytes, layer_bytes);
-        }
-
-        return block_bytes;
-    };
-
-    vector<pair<size_t, size_t>> pooled_slots;
-    vector<pair<size_t, size_t>> pooled_transient_slots;
-    vector<MemoryPoolEntry> pooled_lifetimes;
-    Index pooled_transient_bytes = 0;
-
-    const auto collect_pooled_slots = [&](auto&& last_step_for)
-    {
-        for(size_t i = 0; i < layers_number; ++i)
-        {
-            for(size_t j = 0; j < forward_specs[i].size(); ++j)
-            {
-                const TensorSpec& spec = forward_specs[i][j];
-
-                if(spec.shape.empty() || is_transient_slot(i, j))
-                    continue;
-
-                const bool is_output =
-                    j + 1 == forward_specs[i].size();
-
-                pooled_slots.emplace_back(i, j);
-
-                pooled_lifetimes.push_back(
-                    {get_aligned_bytes(spec),
-                     Index(i),
-                     last_step_for(i, is_output)});
-            }
-        }
-    };
-
-    const auto collect_pooled_transient_slots = [&]
-    {
-        for(size_t i = 0; i < layers_number; ++i)
-        {
-            for(size_t j = 0; j < forward_specs[i].size(); ++j)
-            {
-                const TensorSpec& spec = forward_specs[i][j];
-
-                // A recomputed activation has a disjoint two-point lifetime:
-                // once in the forward layer and once in its backward layer.
-                // MemoryPoolEntry represents an interval, so those continue
-                // through find_memory_pool_overlay below. Ordinary transient
-                // scratch is live only while this layer executes and belongs
-                // directly in the joint plan instead of in an appended block.
-                if(spec.shape.empty()
-                   || !is_transient_slot(i, j)
-                   || recomputable_slots[i] == j)
-                {
-                    continue;
-                }
-
-                const Index bytes = get_aligned_bytes(spec);
-
-                pooled_transient_slots.emplace_back(i, j);
-                pooled_lifetimes.push_back(
-                    {bytes, Index(i), Index(i)});
-                pooled_transient_bytes += bytes;
-            }
-        }
-    };
-
-    const auto apply_pool_plan =
-        [&](const MemoryPoolPlan& plan)
-    {
-        for(size_t i = 0; i < pooled_slots.size(); ++i)
-        {
-            slot_offsets[pooled_slots[i].first]
-                        [pooled_slots[i].second] =
-                plan.byte_offsets[i];
-        }
-
-        const size_t transient_base = pooled_slots.size();
-        for(size_t i = 0; i < pooled_transient_slots.size(); ++i)
-        {
-            transient_slot_offsets[pooled_transient_slots[i].first]
-                                  [pooled_transient_slots[i].second] =
-                plan.byte_offsets[transient_base + i];
-        }
-
-        activation_pool_bytes = plan.peak_bytes;
-        lower_bound_live_bytes = plan.lower_bound_live_bytes;
-        fragmentation_bytes = plan.fragmentation_bytes();
-    };
-
+    ForwardPoolLayout pool = initialize_forward_pool_layout(
+        layers, forward_specs, recomputable_slots, mode);
     if(is_training(mode))
     {
-        const Index backward_base =
-            backward_step(Index(layers_number), 0);
-
-        collect_pooled_slots(
-            [&](const size_t i, const bool is_output)
-            {
-                return is_output && output_release_steps[i] >= 0
-                    ? output_release_steps[i]
-                    : backward_base - Index(i);
-            });
-
-        collect_pooled_transient_slots();
-
-        memory_debug::record_pool_lifetimes(
-            "forward",
-            pooled_lifetimes,
-            format("layers={},batch={}",
-                   layers_number,
-                   batch_size));
-
-        const size_t forward_entry_count =
-            pooled_lifetimes.size();
-
-        pooled_lifetimes.insert(
-            pooled_lifetimes.end(),
-            co_planned_lifetimes.begin(),
-            co_planned_lifetimes.end());
-
-        const MemoryPoolPlan persistent_plan = [&]
-        {
-            PROFILE_SCOPE_HOST("fp:set:plan");
-
-            // Keep the established layout for ordinary training.  Some
-            // multi-branch graphs accumulate into propagation-owned storage
-            // whose complete lifetime is intentionally more conservative than
-            // the generic interval model.  The joint-gradient layout is a
-            // separately audited, explicit opt-in used by language training.
-            return exhaustive_training_plan
-                ? plan_memory_pool_best(pooled_lifetimes)
-                : plan_memory_pool(
-                    pooled_lifetimes,
-                    early_release_outputs > 0
-                        ? MemoryPoolStrategy::Compact
-                        : MemoryPoolStrategy::Chronological);
-        }();
-
-        apply_pool_plan(persistent_plan);
-
-        if(!co_planned_lifetimes.empty())
-        {
-            co_planned_offsets.assign(
-                persistent_plan.byte_offsets.begin()
-                    + forward_entry_count,
-                persistent_plan.byte_offsets.end());
-
-            Index co_planned_bytes = 0;
-            for(const MemoryPoolEntry& entry : co_planned_lifetimes)
-                co_planned_bytes += entry.bytes;
-
-            memory_debug::record(
-                "forward.joint_plan",
-                "co_planned_entries_in_arena",
-                co_planned_bytes,
-                format("batch={},entries={}",
-                       batch_size,
-                       co_planned_lifetimes.size()));
-        }
-
-        if(pooled_transient_bytes > 0)
-        {
-            memory_debug::record(
-                "forward.transient_pool",
-                "lifetime_planned_scratch",
-                pooled_transient_bytes,
-                format("batch={},entries={}",
-                       batch_size,
-                       pooled_transient_slots.size()));
-        }
-
-        for(size_t i = 0; i < layers_number; ++i)
-        {
-            const size_t slot =
-                recomputable_slots[i];
-
-            if(slot == SIZE_MAX
-               || forward_specs[i][slot].shape.empty())
-            {
-                continue;
-            }
-
-            const Index bytes =
-                get_aligned_bytes(forward_specs[i][slot]);
-
-            const Index backward_step =
-                backward_base - Index(i);
-
-            const Index overlay_offset = find_memory_pool_overlay(
-                pooled_lifetimes,
-                persistent_plan,
-                bytes,
-                Index(i),
-                backward_step);
-
-            if(overlay_offset >= 0)
-            {
-                transient_slot_offsets[i][slot] =
-                    overlay_offset;
-
-                ++overlaid_recompute_slots;
-                overlaid_scratch_bytes += bytes;
-            }
-
-            memory_debug::record(
-                "forward.recompute_entry",
-                format("{}:{}", i, slot),
-                bytes,
-                format("first={},second={},overlaid={}",
-                       i,
-                       backward_step,
-                       overlay_offset >= 0 ? 1 : 0));
-        }
-
-        transient_block_bytes =
-            place_transient_slots();
-
-        if(early_release_outputs > 0)
-        {
-            memory_debug::record(
-                "forward.training_lifetime_reuse",
-                "early_release_output_bytes",
-                early_release_logical_bytes,
-                format("batch={},layers={}",
-                       batch_size,
-                       early_release_outputs));
-
-            memory_debug::record(
-                "forward.training_lifetime_reuse",
-                "allocated_persistent_bytes",
-                activation_pool_bytes,
-                format(
-                    "batch={},lower_bound_mib={:.2f}",
-                    batch_size,
-                    double(lower_bound_live_bytes)
-                        / (1024.0 * 1024.0)));
-        }
+        PooledForwardSlots pooled = collect_forward_slots(
+            layers, forward_specs, recomputable_slots, mode, output_release_steps);
+        plan_training_forward_pool(
+            pool, move(pooled), forward_specs, recomputable_slots,
+            co_planned_lifetimes, exhaustive_training_plan,
+            early_release_outputs, early_release_logical_bytes,
+            batch_size, co_planned_offsets);
+        pool.transient_bytes = place_unplanned_transient_slots(
+            pool, layers, forward_specs, recomputable_slots, mode);
     }
     else
     {
-        const vector<Index> inference_release_steps = find_inference_output_release_steps(
-            forward_specs,
-            source_layers,
-            new_shape_policy.retained_output_layers,
+        const vector<Index> release_steps = find_inference_output_release_steps(
+            forward_specs, source_layers, new_shape_policy.retained_output_layers,
             network->get_last_trainable_layer_index());
-
-        collect_pooled_slots(
-            [&](const size_t i, const bool is_output)
-            {
-                return is_output ? inference_release_steps[i] : Index(i);
-            });
-
-        apply_pool_plan([&]
+        const PooledForwardSlots pooled = collect_forward_slots(
+            layers, forward_specs, recomputable_slots, mode, release_steps);
+        const MemoryPoolPlan plan = [&]
         {
             PROFILE_SCOPE_HOST("fp:set:plan");
-            return plan_memory_pool(pooled_lifetimes, MemoryPoolStrategy::Compact);
-        }());
+            return plan_memory_pool(pooled.lifetimes, MemoryPoolStrategy::Compact);
+        }();
+        apply_forward_pool_plan(pool, pooled, plan);
     }
 
-    const Index total_bytes =
-        activation_pool_bytes + transient_block_bytes;
-
+    const Index total_bytes = pool.activation_bytes + pool.transient_bytes;
     if(external_storage
-       && external_storage->get_device()
-              == network->get_device()
+       && external_storage->get_device() == network->get_device()
        && external_storage->byte_size() >= total_bytes)
-    {
-        arena.set_view(
-            external_storage->data(),
-            total_bytes,
-            external_storage->get_device());
-    }
+        arena.set_view(external_storage->data(), total_bytes,
+                       external_storage->get_device());
     else
     {
         PROFILE_SCOPE_HOST("fp:set:alloc");
-        arena.resize_bytes(
-            total_bytes,
-            network->get_device());
+        arena.resize_bytes(total_bytes, network->get_device());
     }
-
     {
         PROFILE_SCOPE_HOST("fp:set:zero");
         arena.setZero();
@@ -850,94 +794,15 @@ void ForwardPropagation::set(
 
     memory_debug::record(
         arena.owns_memory() ? "forward" : "forward.aliased",
-        "ForwardPropagation::arena",
-        arena.owns_memory() ? total_bytes : 0,
-        format("batch={},mode={}",
-               batch_size,
+        "ForwardPropagation::arena", arena.owns_memory() ? total_bytes : 0,
+        format("batch={},mode={}", batch_size,
                is_training(mode) ? "training" : "inference"));
+    const size_t recomputed_layers = ranges::count_if(
+        recomputable_slots, [](const size_t slot) { return slot != SIZE_MAX; });
+    record_forward_pool_metrics(pool, mode, batch_size, recomputed_layers);
 
-    if(transient_block_bytes > 0)
-    {
-        memory_debug::record(
-            "forward.transient_pool",
-            "shared_block",
-            transient_block_bytes,
-            format("batch={}", batch_size));
-    }
-
-    if(overlaid_recompute_slots > 0)
-    {
-        memory_debug::record(
-            "forward.training_recomputation",
-            "overlaid_scratch_bytes",
-            overlaid_scratch_bytes,
-            format("batch={},layers={}",
-                   batch_size,
-                   overlaid_recompute_slots));
-    }
-
-    const size_t recomputed_layers =
-        ranges::count_if(
-            recomputable_slots,
-            [](const size_t slot)
-            {
-                return slot != SIZE_MAX;
-            });
-
-    if(!is_training(mode))
-    {
-        memory_debug::record(
-            "forward.inference_pool_analysis",
-            "logical_persistent_bytes",
-            logical_persistent_bytes,
-            format("batch={}", batch_size));
-
-        memory_debug::record(
-            "forward.inference_pool_analysis",
-            "live_bytes_lower_bound",
-            lower_bound_live_bytes,
-            format("batch={}", batch_size));
-
-        memory_debug::record(
-            "forward.inference_pool_analysis",
-            "allocator_fragmentation_overhead",
-            fragmentation_bytes,
-            format("batch={}", batch_size));
-
-        memory_debug::record(
-            "forward.inference_pool_analysis",
-            "saved_bytes",
-            logical_total_bytes - activation_pool_bytes,
-            format("batch={}", batch_size));
-    }
-    else if(recomputed_layers > 0)
-    {
-        memory_debug::record(
-            "forward.training_recomputation",
-            "logical_forward_bytes",
-            logical_total_bytes,
-            format("batch={}", batch_size));
-
-        memory_debug::record(
-            "forward.training_recomputation",
-            "allocated_forward_bytes",
-            total_bytes,
-            format("batch={},layers={}",
-                   batch_size,
-                   recomputed_layers));
-
-        memory_debug::record(
-            "forward.training_recomputation",
-            "saved_bytes",
-            logical_total_bytes - total_bytes,
-            format("batch={}", batch_size));
-    }
-
-    device::set_conv_workspace_auto_limit_bytes(
-        bind_slots(
-            forward_specs,
-            slot_offsets,
-            transient_slot_offsets));
+    device::set_conv_workspace_auto_limit_bytes(bind_slots(
+        forward_specs, pool.slot_offsets, pool.transient_slot_offsets));
 
     capacity_inputs = inputs;
     capacity_slots = slots;

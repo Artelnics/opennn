@@ -24,10 +24,10 @@ modules. This focused blocking set avoids accepting a large unreviewed warning
 baseline.
 
 The coverage job executes the CPU unit suite with GCC instrumentation and
-requires at least 25% line and 15% branch coverage across non-CUDA library
-sources. Its JSON and HTML reports are retained as CI artifacts. These are
-initial repository-wide floors, not a claim that every subsystem is adequately
-covered; thresholds should rise as tests are added.
+requires at least 70% line and 35% branch coverage across non-CUDA library
+sources. It also enforces the reviewed per-module floors in
+`tools/check_coverage.py`. Its JSON and HTML reports are retained as CI
+artifacts; thresholds should rise as tests are added.
 
 The sanitizer build also links `opennn_json_fuzz` with libFuzzer, ASan and
 UBSan. CI runs 20,000 mutations from the checked-in corpus. Longer local runs
