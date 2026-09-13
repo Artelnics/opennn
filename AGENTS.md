@@ -78,3 +78,17 @@ Do not remove them until each affected example has a reproducible replacement.
 Stage reviewed asset changes before running `python tools/check_dataset_manifest.py`.
 The `--release` check additionally requires every bundle's redistribution
 clearance; do not mark an unknown source as cleared merely to pass that gate.
+
+## Documentation
+
+- Update the existing topic guides listed in `README.md`; consolidate overlapping
+  explanations instead of adding a Markdown file for each task or audit.
+- Keep release and verification procedures in `DEVELOPMENT.md`, migration in
+  `CHANGELOG.md`, and current benchmark findings in `benchmarks/reports/README.md`.
+- Link to an immutable Git revision for superseded reports. Keep raw evidence
+  outside Git, and preserve dataset attribution notices and skill entry points.
+
+- Keep the README focused on building, running the first example and locating
+  the main guides. Put source maps and tool inventories in `DEVELOPMENT.md`.
+- When changing example targets or dependencies, update the catalog in
+  `examples/README.md`. Run data-dependent examples from the executable directory.

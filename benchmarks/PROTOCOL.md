@@ -10,6 +10,12 @@ instrumentation or validity gates creates a new protocol revision. Results
 affected by such a change must be rerun; a note beside old numbers is not a
 substitute for measuring them again.
 
+Procedures: [standard families](#9-standard-family-procedure),
+[Qwen3](#10-qwen3-procedure),
+[startup and deployment](#13-application-startup-and-deployment),
+[prediction quality](#14-prediction-quality),
+[publication](#15-publication-procedure).
+
 ## 1. What is being compared
 
 A benchmark cell is defined by all of the following:
@@ -383,7 +389,7 @@ variation from every retained launch, verify the input hashes and check the
 actual workload before reviewing an older result for a new release. Review
 status and publication readiness are separate: an audited report may conclude
 that its observations require another run. See
-[`publication/README.md`](publication/README.md) for the release procedure.
+[the publication procedure](#15-publication-procedure) for the release procedure.
 
 The raw artifact is the measurement record; the reviewed document in
 `reports/` is the project-level source of truth. A table or chart must be
@@ -397,22 +403,6 @@ the cause and rerun the complete affected cell. Do not edit generated JSON by
 hand, move it into the valid directory, or average it with valid samples.
 
 ## 12. Final checklist
-
-### Application and quality experiment extensions
-
-`startup` and `deployment` use the workload and boundary definitions in
-[APPLICATIONS.md](APPLICATIONS.md); `quality` uses the held-out-data procedure
-in [QUALITY.md](QUALITY.md). Their C++/Python drivers, preparation and public
-entry points live beside the standard families. The baseline is PyTorch's
-Python API. LibTorch observations are separate comparisons.
-
-All outputs from these extensions currently remain in `results/scratch/`.
-Source identity, successful execution and matching work are necessary, but do
-not by themselves certify clock stability, idle-host conditions or quality
-equivalence. Startup, process lifetime and steady-state throughput are distinct
-metrics. Standard-installation disk size and observed dependency size are
-distinct scopes. Full quality runs and synthetic smoke checks are distinct
-experiments. Historical reports keep their original provenance and values.
 
 Before accepting a benchmark session, verify:
 
@@ -429,3 +419,351 @@ Before accepting a benchmark session, verify:
 - [ ] valid and diagnostic results landed in the correct local directories;
 - [ ] any official report traces back to the raw artifact and identifies the
       actual machine.
+
+## 13. Application startup and deployment
+
+These experiments compare OpenNN C++ with the **PyTorch Python API**. They use
+small applications, not the larger training-throughput models. Native source is
+`families/application.cpp`; the Python counterpart is `families/application.py`.
+Each native model is a separate `<model>_application_opennn` CMake target, so the
+deployment measurement does not charge every application for all four models.
+
+### Build and prepare
+
+Linux/WSL, Python 3.12 with venv support, CMake, Ninja and a C++ compiler are
+required. Build directories and Python installations must be outside the checkout.
+For the CPU Eigen application:
+
+```bash
+python3.12 benchmarks/prepare.py applications --backends cpu-eigen \
+  --work "$HOME/opennn-benchmark-data/applications"
+```
+
+For the complete matrix, choose `--backends cpu-eigen,cpu-mkl,cuda` and supply
+`--mkl-root`, `--onednn-root`, `--cuda-root`, `--cudnn-include` and
+`--cudnn-library`. All paths describe the computer being tested; none is built
+into the code. `--gpu-arch` defaults to `native`. `--eigen-source` and
+`--cudnn-frontend-source` optionally reuse dependency source directories.
+
+Preparation builds the current checkout in Release with LTO and installs
+separate CPU and CUDA Python environments. Their dependency versions are pinned
+in `manifests/application-{cpu,cuda}-requirements.txt`. Python numerical work
+runs in eager inference mode; startup does not prepay a compiler warm-up.
+Do not install quality-scoring packages into these deployment environments.
+
+The generated `applications.json` contains native binary patterns, Python
+interpreters, runtime library search paths and build provenance. It can also
+describe existing builds: each group has `engine`, `backend`, `device`,
+`binary_pattern`, optional `env`, and Python `prefix_args` of
+`["-I", "/absolute/path/to/benchmarks/families/application.py", "{family}"]`.
+Every OpenNN device requires exactly one Python baseline for that device.
+
+### Run
+
+```bash
+python benchmarks/run.py --family startup \
+  --config "$HOME/opennn-benchmark-data/applications/applications.json" --smoke
+python benchmarks/run.py --family startup \
+  --config "$HOME/opennn-benchmark-data/applications/applications.json" --rounds 3 --repeats 5
+python benchmarks/run.py --family deployment \
+  --config "$HOME/opennn-benchmark-data/applications/applications.json"
+```
+
+The parent Python needs NumPy, as does the existing common runner. The isolated
+application Python environments contain only their pinned runtime packages.
+Output defaults to a new directory in `benchmarks/results/scratch/`.
+An explicit `--out` must also be a new directory below that location.
+Raw JSON, CSV, readable Markdown tables, loader traces and file inventories are
+kept together. Failures remain visible and make the command fail.
+
+### Workloads and timing
+
+| Model | Small application |
+|---|---|
+| Dense | batch 2; 28 → 128 → 128 → 1; 20,353 parameters |
+| LSTM | batch 2; 8 steps × 15 features; 128 units → 1; 73,857 trainable parameters |
+| CNN | batch 2; RGB 32 × 32; convolutions 16/32 → dense 128 → 10; 268,650 parameters |
+| Transformer | batch 2; sequence 8; vocabulary 128; d32/h4/ff64; one encoder and decoder; 33,792 parameters |
+
+Startup spans the parent's process launch to the child's **first completed
+prediction in host memory**, using Linux CLOCK_MONOTONIC in both processes.
+It includes interpreter/imports, dynamic loading, context creation, model and
+input construction, and the first forward pass. It excludes post-prediction
+validation, printing and teardown. Process lifetime is recorded separately.
+No model file is loaded. This differs from the older `footprint` process-lifetime
+metric; do not mix their numbers.
+
+CPU uses FP32. CUDA uses FP32 and BF16, each with saved and empty application
+tuning caches. Filesystem caches stay warm. A separate process warms saved
+caches; empty-cache samples receive fresh directories. Two threads and a fixed
+0.2-second gap outside every timed region are used. Optional `--affinity` sets
+the same Linux CPU IDs for parent and children. Case order rotates by a fixed
+seed, and all repetitions are retained. The full matrix has 44 configurations;
+three rounds of five samples produce 660 timed processes.
+
+The runner records medians, ranges and CV. It does not enforce GPU clocks or
+host idleness. These observations remain diagnostic; CV above 3% and unlocked
+GPU clocks fail the publication contract. A smoke timing is never a speed claim.
+
+### Deployment and dependencies
+
+The primary OpenNN size includes its executable and exercised native runtime
+dependency closure. The primary PyTorch size includes the application, Python
+interpreter and standard library, its complete installed runtime packages, and
+exercised external native dependencies. This compares an OpenNN native bundle
+with a **standard Python installation**, not two maximally pruned bundles.
+
+The artifact separately reports observed runtime files for both engines using
+loader traces, memory maps, imported Python modules and recursive ELF dependency
+resolution. That subset is diagnostic, not a proven portable minimal bundle.
+Files are deduplicated by resolved path and counted as logical decimal bytes.
+OS/driver files, model weights, datasets, installers and generated caches are
+excluded. Missing native dependencies fail the measurement.
+
+Each case records its Python package inventory and count. OpenNN's zero Python
+packages does not mean zero native dependencies. CPU and CUDA Python
+installations have different package closures; do not quote one count for both.
+
+The September 10 measurements and original reproducibility archives imported
+from the presentation folder remain in ignored `results/scratch/`, with their
+original machine, source revisions and protocols. Older LibTorch comparisons
+remain supplementary archived results; they are not the Python baseline.
+
+## 14. Prediction quality
+
+`run.py --family quality` trains OpenNN C++ and PyTorch Python, then scores their
+held-out predictions in one neutral Python scorer. This is a separate experiment
+from the published short throughput runs. It does not infer accuracy from shape
+agreement, untrained inference, or equal training loss.
+
+| Model | Data | Primary metric |
+|---|---|---|
+| Dense | HIGGS | test accuracy, percent; higher is better |
+| LSTM | Beijing PM2.5 | test RMSE in original target units; lower is better |
+| CNN | ImageNet subset, ResNet-50 v1.5 | test top-1 accuracy, percent; higher is better |
+| Transformer | WMT14 English–German, base encoder-decoder | generated-translation SacreBLEU; higher is better |
+
+The published Rosenbrock regression result is a different workload. Do not copy
+its MSE into the HIGGS row or attribute these new runs to that historical report.
+
+### Prepare
+
+Use a separate Python environment with compatible torch/torchvision packages,
+NumPy, pandas, Pillow and SacreBLEU. `manifests/quality-requirements.txt` lists the
+versions/constraints. Install the CPU or CUDA wheel pair appropriate for the
+machine. Do not add these packages to the application deployment environments.
+
+Prepare the original datasets with the existing `prepare.py` commands, then:
+
+```bash
+python benchmarks/prepare.py quality --model all \
+  --data-root "$OPENNN_BENCH_DATA" --out "$OPENNN_BENCH_DATA/quality"
+```
+
+The destination must be new and outside the checkout. Each model receives a
+manifest and shared binary tensors. Input identity is checked before training.
+
+- Dense retains HIGGS's prepared train/test files and training-fitted scaling.
+- LSTM splits chronology 80/20 before forming windows, fits scaling on training
+  rows only and scores in original target units. The prepared source retains the
+  existing `prepare.py` missing-value interpolation; this is not a new raw-data
+  cleaning study. The model uses a plain LSTM and head on prepared tensors.
+- CNN splits each class 80/20 with a fixed seed, rejects identical image content
+  across splits, and performs one shared RGB/bilinear resize. Both models divide
+  the same uint8 inputs by 255. All classes remain present; no augmentation is used.
+- Transformer deduplicates normalized pairs before a fixed 90/10 split. One
+  vocabulary is fitted on training text and used by both engines. PAD/BOS/EOS
+  handling, shifted decoder inputs and reference text are shared. Training uses
+  causal decoder attention, dropout zero and cross-entropy averaged over non-PAD
+  tokens. Scoring uses greedy autoregressive predictions through EOS or the
+  fixed length, not teacher-forced token guesses. The SacreBLEU signature is saved.
+
+These splits and preprocessing rules differ from speed-only datasets that were
+used entirely for timing. Existing published speed figures are not relabeled as
+measurements of this quality protocol.
+
+### Build and run
+
+Enable `OpenNN_BUILD_BENCHMARKS=ON` in an external Release build, then build the
+`quality_opennn` target. It supports CPU FP32 and CUDA FP32/BF16. Both engines
+receive the same prepared tensors, batch size, epoch budget, learning rate and
+seed list. Choose the budget before inspecting test scores.
+
+```bash
+python benchmarks/run.py --family quality --model dense \
+  --manifest "$OPENNN_BENCH_DATA/quality" --epochs 100 --batch 256 \
+  --seeds 42,43,44,45,46 --device cuda --precision fp32 \
+  --opennn-binary /path/to/release/bin/quality_opennn
+```
+
+Repeat with `--model lstm`, `cnn` and `transformer`, choosing an adequate budget
+for each task. `--model all` applies one explicitly supplied budget to all four.
+`--python` selects a different PyTorch environment; by default it is the runner's
+interpreter. `--threads` applies to both engines. Long runs have a configurable
+`--timeout` per process (default 24 hours).
+Use `--opennn-library-path` and `--pytorch-library-path` when Linux/WSL needs
+different native library search paths for the two drivers. Their effective
+values are recorded, so a CUDA 12 OpenNN build need not load the CUDA 13
+Python wheel's cuDNN library.
+
+Adam uses beta1 .9, beta2 .999 and float32 epsilon in both engines. The default
+learning rate is .001, or .0001 for Transformer. There is no regularization,
+gradient clipping, early stopping, best-checkpoint restoration, training warm-up
+or CUDA graph replay. The prepared order is fixed and both engines train every
+tail sample. Use a batch that avoids singleton CNN training batches because
+training batch normalization needs more than one value per channel.
+
+Initial weights are independently seeded, **not identical tensors**. Dense
+uses Glorot initialization, LSTM follows each implementation's PyTorch-style
+initialization, and CNN/Transformer retain their engine initialization policies.
+Backend rounding and mixed-precision policies can also differ. These are
+framework training-outcome comparisons, not a claim of identical optimization
+trajectories. Review those differences before explaining a score gap.
+
+### Results and smoke checks
+
+Every run writes under `benchmarks/results/scratch/`: raw stdout/stderr,
+per-epoch training histories, binary predictions, driver metadata and hashes,
+plus an aggregate JSON, CSV and a Markdown table. Failed runs are retained and
+make the command return nonzero. The scorer reports means and sample standard
+deviations; one seed has no estimated standard deviation. Metrics are compared
+within a model, never averaged across different tasks.
+
+The quality gate is deliberately **unassessed**. Similar averages, overlapping
+spread or successful execution alone do not establish equivalence. Review
+achieved task quality and declare acceptable differences before a parity claim.
+Full training runs have not been substituted by synthetic checks.
+
+For a quick end-to-end check of all model paths, including a test tail batch:
+
+```bash
+python benchmarks/prepare.py quality --smoke --out "$OPENNN_BENCH_DATA/quality-smoke"
+python benchmarks/run.py --family quality --manifest "$OPENNN_BENCH_DATA/quality-smoke" \
+  --epochs 1 --batch 2 --seeds 42,43 --device cpu \
+  --opennn-binary /path/to/cpu/bin/quality_opennn
+python -m unittest discover -s tests -p 'benchmark*_test.py'
+```
+
+Smoke fixtures use small topologies and synthetic data. Their numbers are
+functional checks and must not appear as benchmark evidence in a presentation.
+
+## 15. Publication procedure
+
+The next release compares OpenNN C++ with **PyTorch's Python API**. The current
+evidence is consolidated, but the comparison is not yet ready to publish.
+Read the [results review](reports/README.md) for the values
+and the [website outline](reports/README.md#website-outline) for the proposed page.
+
+### One source for every number
+
+[`publication/selection.json`](publication/selection.json) identifies the observations already cited in the previous
+reports and the complete Python startup/deployment comparison. Each source has
+a SHA-256 hash. Selecting a record means it is being reviewed; it does not mean
+it passed the publication requirements. We do not select the fastest run from
+a collection of attempts.
+
+Generate a new review directory with:
+
+```powershell
+python benchmarks/tools/consolidate_results.py --out benchmarks/results/scratch/publication-review-new
+```
+
+The tool checks the selected source hashes, recalculates performance statistics
+from launches, checks startup medians against all timed processes, and checks
+deployment totals against the file inventories. It writes a readable report,
+an HTML preview, data tables, pending checks and a catalog of all result files.
+It never changes the inputs or publishes anything. Its output is a review of
+this historical selection, not an automatic certification tool.
+
+The catalog gives identical files one content entry and retains all their
+paths. It also identifies artifact types and copies the original status and
+session labels; those labels are not new approvals. `provenance.json` collects
+the selected source settings, software versions and recorded commands without
+filling missing information by inference. The September 11 relocation manifest maps each old path to its archive
+location. Copies and failed runs remain available; no observation was deleted
+to improve a result.
+
+### Complete the measurements
+
+| Topic | Required scope |
+|---|---|
+| Throughput | Dense, LSTM, CNN and Transformer; training and inference; CPU and GPU |
+| Memory | The same configurations, with CPU anonymous memory and GPU memory labelled separately |
+| Energy | The same configurations where the instrument is available; CPU package and GPU board energy separately |
+| Startup | All four small applications; CPU Eigen, CPU MKL + oneDNN, and GPU FP32/BF16 with saved/empty tuning caches |
+| Deployment | All four small applications and each backend; include native runtime files and the Python runtime |
+| Prediction quality | Four real-data tasks, held-out evaluation and five independent seeds |
+| Source size | Both repositories at named revisions, counted with the same file and comment rules |
+| Application size | Two applications that complete the same task, with imports and setup treated consistently |
+| Dependencies | Installed Python packages and native runtime libraries counted separately |
+
+Choose batch sizes, precision, training budgets, quality tolerances and stable
+runtime options before collecting the final session. State whether inference
+replays a resident batch or reads a dataset. State whether training includes
+input preparation or transfer. Both engines must do equivalent work inside the
+named measurement boundary.
+
+Record the release commit, input hashes, compiler, build settings, hardware,
+operating system, driver and library versions. Different machines and software
+stacks form separate result sets. Source counts and file sizes do not require
+locked clocks; timing and energy measurements require the applicable machine
+controls in [machine controls](#7-control-the-machine).
+
+Use three independent performance rounds and retain each launch. The primary
+throughput and energy values are medians; memory uses the highest observed
+peak. Include minimum, maximum, sample count and variation in the downloadable
+data. Report missing counters as "Not measured", never zero. Do not discard a
+slow run without a recorded failure that justifies excluding it.
+
+Set an acceptable quality difference before the final quality runs. Compare
+quality within each task, using mean and sample standard deviation across
+seeds. Similar averages alone do not establish equivalence. A smoke test does
+not establish trained-model quality, and a throughput test does not establish
+time or energy to a target quality.
+
+Check each deployment bundle on a clean target. A trace shows which files a
+particular run used; it does not by itself prove that every required file was
+collected. Show the normal Python installation as such. Do not describe it as
+PyTorch's smallest possible deployment.
+
+### Write the results in plain language
+
+Use a short opening sentence, a table or chart, and a short explanation of what
+the result means. Put the full settings and downloadable evidence below them.
+Prefer a subject, a verb and an object. Explain a term the first time it appears.
+
+| Metric | Caption |
+|---|---|
+| Throughput | OpenNN throughput ÷ PyTorch throughput. Higher is better. |
+| Memory | OpenNN memory ÷ PyTorch memory × 100. Lower is better. |
+| Energy | OpenNN energy ÷ PyTorch energy × 100. Lower is better. |
+| Startup | OpenNN startup time ÷ PyTorch startup time × 100. Lower is better. |
+| Deployment | OpenNN deployment size ÷ PyTorch deployment size × 100. Lower is better. |
+| Source lines | OpenNN lines of code ÷ PyTorch lines of code × 100. Lower is better. |
+
+Sixty percent of PyTorch's memory means forty percent less memory. Twice the
+throughput does not mean two hundred percent faster. Use the full values to
+calculate a ratio, then round it for display.
+
+Keep CPU and GPU summaries separate. If a complete, predefined group merits a
+summary, use the geometric mean of its paired ratios and name the group and
+number of comparisons. Do not pool quality metrics, hardware generations,
+unmatched sessions, startup timings and throughput into one number.
+
+Describe the tested result and its scope. Say that shorter training iterations
+can let a company test more configurations, rather than claim that a model will
+reach a target accuracy sooner without measuring that. Component energy can
+support an energy-efficiency statement; it does not directly measure a bill.
+Source size alone does not establish usability or feature parity.
+
+### Release order
+
+1. Resolve the issues in the publication review and save the new raw results.
+2. Check every value, ratio, unit, input record and measurement requirement.
+3. Update the results review and replace the pinned selection deliberately.
+4. Prepare the public raw-data download and test the reproduction commands from a clean environment.
+5. Replace the relevant website articles and their index cards together.
+
+A partial release may publish a clearly named subset that is ready. It must
+show which comparisons remain unmeasured and omit claims about the full matrix.
+The present consolidation does not change the live website.

@@ -6,29 +6,62 @@ memory and energy **from the same execution**.
 There are no numbers in this file. Results are generated locally under
 `results/`, with each artifact naming the commit, machine and session it came
 from. That directory is ignored completely by Git. Reviewed reports and their
-publication status are versioned under [`reports/`](reports/). This README is the quick entry
+publication status are versioned under [the results review](reports/README.md). This README is the quick entry
 point; [`PROTOCOL.md`](PROTOCOL.md) contains the complete, machine-neutral
 measurement contract. Changing a measurement rule means rerunning the affected
 cells.
 
-The [publication review](reports/publication-review.md) consolidates the current
+The [publication review](reports/README.md) consolidates the current
 evidence and identifies the measurements that still need work. The
-[publication guide](publication/README.md) explains the release process and
-plain-language reporting rules. Historical reports and raw observations remain
-in dated archives; a historical passing label does not approve a new release.
+[publication guide](PROTOCOL.md#15-publication-procedure) explains the release process and
+plain-language reporting rules. Historical reports remain in Git history and raw observations in ignored
+results archives; a historical passing label does not approve a new release.
+
+## Build the drivers
+
+These are measurement programs, separate from the learning examples. Build them
+in Release outside the checkout. For a CPU dense comparison:
+
+```sh
+cmake -S . -B ../opennn-bench-build -DCMAKE_BUILD_TYPE=Release -DOpenNN_DISABLE_CUDA=ON -DOpenNN_BUILD_TESTS=OFF -DOpenNN_BUILD_EXAMPLES=OFF -DOpenNN_BUILD_BENCHMARKS=ON
+cmake --build ../opennn-bench-build --config Release --target dense_opennn --parallel
+```
+
+Target `benchmarks` compiles all drivers without running them. GPU comparisons
+need a CUDA build. Install a matching PyTorch environment for the selected
+backend; family-specific pinned dependencies are in `manifests/`.
+
+Point the runner at the external executable. For this single-family run:
+
+```sh
+export OPENNN_BIN="$PWD/../opennn-bench-build/bin/dense_opennn"
+export OPENNN_BENCH_DATA="$HOME/opennn-benchmark-data"
+```
+
+In PowerShell with Visual Studio, use the actual executable path:
+
+```powershell
+$env:OPENNN_BIN = (Resolve-Path '../opennn-bench-build/bin/Release/dense_opennn.exe').Path
+$env:OPENNN_BENCH_DATA = Join-Path $env:USERPROFILE 'opennn-benchmark-data'
+```
+
+`OPENNN_BIN` selects one executable: update or unset it before changing families.
+Per-program overrides such as `OPENNN_DENSE_OPENNN_BIN` are also supported.
+Preparation downloads datasets; it does not train a publishable model or approve
+measurement conditions. See [the protocol](PROTOCOL.md) before a measured run.
 
 ## Running one
 
 Application startup, deployment size and prediction quality also use this
 directory's entry points. The baseline is **OpenNN C++ versus the PyTorch Python
-API**. See [APPLICATIONS.md](APPLICATIONS.md) for startup/deployment and
-[QUALITY.md](QUALITY.md) for the four-model training-quality comparison.
+API**. See [the application procedure](PROTOCOL.md#13-application-startup-and-deployment) for startup/deployment and
+[the quality procedure](PROTOCOL.md#14-prediction-quality) for the four-model training-quality comparison.
 Their provisional artifacts and generated tables go to `results/scratch/`.
 Presentation directories contain no benchmark code or raw measurements.
 
 ```bash
 python benchmarks/prepare.py dense                       # once per family
-python benchmarks/run.py --family dense --mode train --batch 8192
+python benchmarks/run.py --family dense --mode train --batch 8192 --device cpu --precision fp32
 ```
 
 That prints throughput, peak memory and energy for each engine, and writes an
@@ -84,8 +117,8 @@ Qwen uses the same `prepare.py` / `run.py --family qwen` entry points, shared
 provenance, monitoring and result-directory helpers as the other families.
 The PowerShell wrapper provides Windows setup and clock restoration; it does
 not define a reference machine. Each result records the detected GPU, CPU and
-operating system. Historical measurements remain in `reports/` with their
-original hardware identity.
+operating system. Historical measurements remain accessible through the results review with
+their original hardware identity.
 
 Before a measured run, set `OPENNN_BENCH_SM_CLOCK_MHZ` and
 `OPENNN_BENCH_MEMORY_CLOCK_MHZ` to supported, sustainable integer MHz values
@@ -191,6 +224,15 @@ The OpenNN runtime currently computes `output_token_hash` by retokenizing the
 decoded response. It is not a trace of the original sampler IDs; strict
 token-by-token optimization acceptance needs that additional validation.
 
+## Specialized procedures
+
+| Task | Procedure |
+| --- | --- |
+| Prepare and measure small applications | [Startup and deployment](PROTOCOL.md#13-application-startup-and-deployment) |
+| Train and score shared held-out datasets | [Prediction quality](PROTOCOL.md#14-prediction-quality) |
+| Recalculate results and prepare the website | [Publication](PROTOCOL.md#15-publication-procedure) |
+| Review current values and missing measurements | [Results](reports/README.md) |
+
 ## Files
 
 | | |
@@ -199,7 +241,7 @@ token-by-token optimization acceptance needs that additional validation.
 | [`prepare.py`](prepare.py) | dataset, model and external-runtime preparation by family |
 | [`families/`](families/) | C++ and Python implementations for each benchmark family |
 | [`PROTOCOL.md`](PROTOCOL.md) | detailed, machine-neutral measurement contract |
-| [`reports/`](reports/) | reviewed, versioned source of truth for official results |
+| [the results review](reports/README.md) | reviewed, versioned source of truth for official results |
 | [`tools/common.py`](tools/common.py) | provenance, binaries, sampling and metrics |
 | [`tools/gpu_clocks.sh`](tools/gpu_clocks.sh) | lock the GPU clock on Linux |
 | [`tools/qwen_benchmark.ps1`](tools/qwen_benchmark.ps1) | prepare, build, smoke-test and run Qwen on Windows |

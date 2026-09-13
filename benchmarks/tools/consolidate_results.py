@@ -594,7 +594,7 @@ def render_review(selection, perf, start, deploy, catalog, facts):
         "5. Recalculate every table from raw evidence, review the checks, and publish only the sections that meet their stated requirements.\n",
         "Keep unmeasured cells visible. A partial release must name its measured scope and must not claim that all models, devices or metrics improved. No overall improvement is reported while the intended comparison remains incomplete.\n",
         "## Evidence and preservation\n",
-        f"The catalog covers {sum(x['copies'] for x in catalog):,} files and {len(catalog):,} unique contents. Files with identical SHA-256 hashes share one catalog entry with all their paths. No measurement file was edited or deleted. Old reports are preserved under `reports/archive/2026-09-11/`.\n",
+        f"The catalog covers {sum(x['copies'] for x in catalog):,} files and {len(catalog):,} unique contents. Files with identical SHA-256 hashes share one catalog entry with all their paths. No measurement file was edited or deleted. Original reports are preserved in [Git history](https://github.com/Artelnics/opennn/tree/a379ec5e634d65436b8b175fcd03c044bc98182b/benchmarks/reports/archive/2026-09-11/).\n",
         "The accompanying `performance.json`, `observations.csv`, `startup.json`, `deployment.json`, `readiness.csv` and `catalog.json` retain source paths, hashes, raw-derived statistics and pending checks. `publication/selection.json` pins the evidence; selecting a file does not approve it for publication.\n",
     ]
     return "\n".join(sections)

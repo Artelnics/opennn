@@ -10,7 +10,7 @@
       "name": "verify-base",
       "hidden": true,
       "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build/${presetName}",
+      "binaryDir": "${sourceDir}/../opennn-build/${presetName}",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_FIND_USE_PACKAGE_REGISTRY": false,
@@ -55,15 +55,49 @@
       "name": "verify-cpu",
       "configurePreset": "verify-cpu",
       "targets": [
-        "opennn_tests"
+        "opennn_tests",
+        "opennn_response_tests"
       ]
     },
     {
       "name": "verify-cuda",
       "configurePreset": "verify-cuda",
       "targets": [
-        "opennn_tests"
+        "opennn_tests",
+        "opennn_response_tests"
       ]
+    },
+    {
+      "name": "verify-sanitizers",
+      "configurePreset": "verify-sanitizers",
+      "targets": [
+        "opennn_tests",
+        "opennn_response_tests"
+      ]
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "verify-cpu",
+      "configurePreset": "verify-cpu",
+      "output": { "outputOnFailure": true },
+      "environment": { "OPENNN_TEST_REQUIRE_CUDA": "0" }
+    },
+    {
+      "name": "verify-cuda",
+      "configurePreset": "verify-cuda",
+      "output": { "outputOnFailure": true },
+      "environment": { "OPENNN_TEST_REQUIRE_CUDA": "1" }
+    },
+    {
+      "name": "verify-sanitizers",
+      "configurePreset": "verify-sanitizers",
+      "output": { "outputOnFailure": true },
+      "environment": {
+        "OPENNN_TEST_REQUIRE_CUDA": "0",
+        "ASAN_OPTIONS": "detect_leaks=1:halt_on_error=1:allocator_may_return_null=1",
+        "UBSAN_OPTIONS": "halt_on_error=1:print_stacktrace=1"
+      }
     }
   ]
 }

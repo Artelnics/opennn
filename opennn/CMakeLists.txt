@@ -1,4 +1,3 @@
-
 option(OpenNN_BUILD_VISION "Build vision/seq layers, networks, and datasets" ON)
 option(OpenNN_BUILD_SHARED "Build OpenNN as a shared library (DLL) instead of static" OFF)
 option(OpenNN_INSTALL "Generate install rules for the OpenNN library" ON)
@@ -538,13 +537,10 @@ if(OpenNN_INSTALL)
         ${PROJECT_SOURCE_DIR}/LICENSE-GPL-3.0.txt
         ${PROJECT_SOURCE_DIR}/THIRD_PARTY_NOTICES.md
         ${PROJECT_SOURCE_DIR}/CHANGELOG.md
-        ${PROJECT_SOURCE_DIR}/MIGRATION.md
         ${PROJECT_SOURCE_DIR}/DATASETS.md
-        ${PROJECT_SOURCE_DIR}/QUALITY.md
+        ${PROJECT_SOURCE_DIR}/DEVELOPMENT.md
         ${PROJECT_SOURCE_DIR}/RELEASE_SCOPE.json
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/OpenNN)
-    install(FILES ${PROJECT_SOURCE_DIR}/tools/REPRODUCTION.md
-        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/OpenNN/tools)
     ExternalProject_Get_Property(opennn_libjpeg_turbo_ep SOURCE_DIR)
     install(FILES ${SOURCE_DIR}/LICENSE.md ${SOURCE_DIR}/README.ijg
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/OpenNN/libjpeg-turbo)

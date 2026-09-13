@@ -1,14 +1,17 @@
-option(OpenNN_BUILD_BLANK "Build the blank OpenNN example" ON)
+option(OpenNN_BUILD_BLANK "Build the minimal OpenNN inference example (blank)" ON)
 
 function(opennn_example name)
     add_executable(${name} "${name}/main.cpp")
     target_link_libraries(${name} PRIVATE opennn)
 
     if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${name}/data")
+        # Examples load ../data/<name> from their executable directory. Keep
+        # that layout for both bin/ and multi-configuration bin/Release/ builds.
         add_custom_command(TARGET ${name} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_directory
                 "${CMAKE_CURRENT_SOURCE_DIR}/${name}/data"
-                "${CMAKE_BINARY_DIR}/data/${name}")
+                "$<TARGET_FILE_DIR:${name}>/../data/${name}"
+            VERBATIM)
     endif()
 endfunction()
 
