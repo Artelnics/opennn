@@ -327,6 +327,75 @@ TEST_F(AdamTest, CudaGraphGroupedHostStagingReplay)
     EXPECT_TRUE(isfinite(adam.train().get_training_error()));
 }
 
+static void expect_graph_replay_matches_eager_training(Type dtype)
+{
+    if (!device::has_cuda_device()) GTEST_SKIP() << "No CUDA device.";
+    if (dtype == Type::BF16 && device::cuda_compute_capability() < 80)
+        GTEST_SKIP() << "BF16 requires an Ampere or newer CUDA device.";
+    const ScopedEnvironmentVariable graph_group_size("OPENNN_RNN_GRAPH_GROUP", "8");
+    Configuration::instance().set(Device::CUDA, dtype);
+
+    for (bool resident : {false, true})
+    {
+        SCOPED_TRACE(testing::Message() << "resident=" << resident);
+        TabularDataset dataset(35, {2}, {1});
+        MatrixR values(35, 3);
+        for (Index i = 0; i < 35; ++i)
+            values.row(i) << float(i % 7) / 8.0f, float(i % 5) / 8.0f,
+                             float(i % 3) / 4.0f;
+        dataset.set_data(values);
+        dataset.set_variable_scalers("None");
+        dataset.set_sample_roles(SampleRole::Training);
+        if (resident) dataset.set_storage_mode(Dataset::StorageMode::GPUPersistantData);
+
+        set_seed(29);
+        ApproximationNetwork eager_network({2}, {5}, {1});
+        ApproximationNetwork graph_network({2}, {5}, {1});
+        graph_network.set_parameters(VectorR(eager_network.get_parameters_map()));
+
+        const auto train = [&](ApproximationNetwork& network, bool graph)
+        {
+            Loss loss(&network, &dataset);
+            loss.set_error(Loss::Error::MeanSquaredError);
+            Adam optimizer(&loss);
+            optimizer.set_batch_size(2);
+            optimizer.set_maximum_epochs(3);
+            optimizer.set_display(false);
+            optimizer.set_shuffle(false);
+            optimizer.set_cuda_graph(graph);
+            optimizer.set_joint_gradient_arena(true);
+            const TrainingResult result = optimizer.train();
+            EXPECT_FALSE(optimizer.get_cuda_graph_capture_failed());
+            EXPECT_FALSE(dataset.is_device_resident());
+            return result;
+        };
+
+        // Group-capable staging uses two launches, one leftover full batch and
+        // a one-sample tail; host BF16 uses single-batch replay. Nonzero updates
+        // detect duplicated warmup/replay steps in both paths.
+        const TrainingResult eager = train(eager_network, false);
+        const TrainingResult graph = train(graph_network, true);
+        ASSERT_EQ(eager.get_epochs_number(), 3);
+        ASSERT_EQ(graph.get_epochs_number(), eager.get_epochs_number());
+        for (Index epoch = 0; epoch < eager.get_epochs_number(); ++epoch)
+            EXPECT_NEAR(graph.training_error_history(epoch), eager.training_error_history(epoch),
+                        1.0e-4f * max(1.0f, abs(eager.training_error_history(epoch))));
+        EXPECT_TRUE(logical_parameters_are_approx(
+            eager_network.get_parameter_specs(), VectorR(eager_network.get_parameters_map()),
+            VectorR(graph_network.get_parameters_map()), dtype == Type::BF16 ? 2.0e-4f : 2.0e-5f));
+    }
+}
+
+TEST_F(AdamTest, GroupedAndTailGraphUpdatesMatchEagerFP32)
+{
+    expect_graph_replay_matches_eager_training(Type::FP32);
+}
+
+TEST_F(AdamTest, GroupedAndTailGraphUpdatesMatchEagerBF16)
+{
+    expect_graph_replay_matches_eager_training(Type::BF16);
+}
+
 // The encoder-decoder Transformer's training step must capture into a CUDA
 // graph: an exported valid-length record that took a host round trip
 // (compute_token_valid_lengths D2H + stream sync) once broke every capture

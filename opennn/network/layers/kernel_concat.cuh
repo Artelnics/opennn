@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-2.1-or-later
 #ifndef KERNEL_CONCAT_CUH
 #define KERNEL_CONCAT_CUH
 

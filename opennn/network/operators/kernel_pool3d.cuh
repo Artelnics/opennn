@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-2.1-or-later
 #ifndef KERNEL_POOL3D_CUH
 #define KERNEL_POOL3D_CUH
 

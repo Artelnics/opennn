@@ -48,6 +48,13 @@ remaining limitations.
 
 ### Reliability and portability
 
+- Separate training epoch orchestration, CUDA graph staging and replay, and
+  remainder-batch execution into focused internal helpers. Preserve optimizer
+  settings and public interfaces, with regression checks for sample-weighted
+  metrics, callbacks, eager/graph updates and restored-model selection scores.
+- Include CUDA sources in complexity, duplication, dependency and SPDX checks,
+  with separate C++ and CUDA limits. Exercise complete tokenizer/model
+  persistence and embedding gradients across CPU and CUDA precision settings.
 - Preserve multistep forecasting mode and target dimensions across dataset
   save/load, and align lagged feature names with the actual input tensor order.
 - Invalidate GPU dataset copies and fitted transforms when their source values

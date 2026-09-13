@@ -1,6 +1,8 @@
 #include "tests/pch.h"
 
 #include "opennn/core/json.h"
+#include "opennn/core/configuration.h"
+#include "opennn/core/device_backend.h"
 #include "opennn/dataset/dataset.h"
 #include "opennn/dataset/time_series_dataset.h"
 #include "opennn/dataset/tabular_dataset.h"
@@ -195,6 +197,84 @@ TEST(ModelSelectionTest, MissingValidationCannotWinACandidateTrial)
         });
     EXPECT_TRUE(observed);
     EXPECT_EQ(result.validation_error, MAX);
+}
+
+namespace
+{
+void expect_candidate_scores_returned_model(Device device)
+{
+    Configuration::instance().set(device, Type::FP32);
+    const ScopeExit reset_configuration([] { Configuration::instance().set(Device::CPU, Type::FP32); });
+    for (bool restore_best : {false, true})
+        for (bool legacy_history_minimum : {false, true})
+        {
+            SCOPED_TRACE(testing::Message() << "restore=" << restore_best
+                                           << " legacy_minimum=" << legacy_history_minimum);
+            TabularDataset dataset(6, {1}, {1});
+            MatrixR values(6, 2);
+            values << 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0;
+            dataset.set_data(values);
+            dataset.set_variable_scalers("None");
+            dataset.set_sample_roles(vector<string>{"Training", "Training", "Training",
+                                                    "Validation", "Validation", "Validation"});
+            ApproximationNetwork network({1}, {}, {1});
+            Training training(&network, &dataset);
+            training.set_loss("MeanSquaredError");
+            training.set_optimization_algorithm("SGD");
+            auto* optimizer = dynamic_cast<SGD*>(training.get_optimization_algorithm());
+            ASSERT_NE(optimizer, nullptr);
+            optimizer->set_initial_learning_rate(0.1f);
+            optimizer->set_initial_decay(0.0f);
+            optimizer->set_batch_size(2);
+            optimizer->set_maximum_epochs(5);
+            optimizer->set_validation_period(2);
+            optimizer->set_display(false);
+            optimizer->set_shuffle(false);
+            optimizer->set_restore_best(restore_best);
+            optimizer->set_cuda_graph(device == Device::CUDA);
+            vector<float> training_errors;
+            vector<float> validation_errors;
+            optimizer->post_epoch_callback = [&](Index, float error, float validation_error, Network*)
+            {
+                training_errors.push_back(error);
+                validation_errors.push_back(validation_error);
+            };
+            Index trials = 0;
+            const CandidateEvaluation result = evaluate_candidate(
+                &training, &network, 1, {}, 1, legacy_history_minimum,
+                [&](Index trial, float error, float validation_error, bool improved)
+                {
+                    ++trials;
+                    EXPECT_EQ(trial, 0);
+                    EXPECT_TRUE(improved);
+                    EXPECT_TRUE(isfinite(error));
+                    EXPECT_TRUE(isfinite(validation_error));
+                },
+                [&](Index) { network.set_parameters(VectorR::Zero(network.get_parameters_buffer_size())); });
+
+            ASSERT_EQ(training_errors.size(), 5u);
+            ASSERT_EQ(validation_errors.size(), 5u);
+            EXPECT_EQ(trials, 1);
+            EXPECT_GT(validation_errors.back(), validation_errors.front());
+            const size_t reported_epoch = restore_best ? 0 : 4;
+            EXPECT_FLOAT_EQ(result.training_error, training_errors[reported_epoch]);
+            EXPECT_FLOAT_EQ(result.validation_error, validation_errors[reported_epoch]);
+            const float prediction = network.calculate_outputs(MatrixR::Zero(1, 1))(0, 0);
+            EXPECT_NEAR(result.validation_error, 0.5f * prediction * prediction, 1.0e-5f);
+            EXPECT_FALSE(optimizer->get_cuda_graph_capture_failed());
+        }
+}
+}
+
+TEST(ModelSelectionTest, CandidateScoringMatchesRestorationWithSparseValidationCPU)
+{
+    expect_candidate_scores_returned_model(Device::CPU);
+}
+
+TEST(ModelSelectionTest, CandidateScoringMatchesRestorationWithSparseValidationCUDA)
+{
+    if (!device::has_cuda_device()) GTEST_SKIP() << "No CUDA device.";
+    expect_candidate_scores_returned_model(Device::CUDA);
 }
 
 TEST(ModelSelectionTest, GrowingSelectorsRequireValidationBeforeChangingTheModel)

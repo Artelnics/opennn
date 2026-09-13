@@ -469,6 +469,96 @@ TEST(NetworkTest, SerializesTiedWeightRelationships)
     EXPECT_EQ(restored_writer.c_str(), writer.c_str());
 }
 
+TEST(NetworkTest, SavedCustomTokenizerPreservesTiedLanguageModelPredictions)
+{
+    Configuration::instance().set(Device::CPU, Type::FP32);
+    constexpr Index sequence_length = 4;
+    constexpr Index vocabulary_size = 5;
+    constexpr Index embedding_dimension = 2;
+    const filesystem::path model_path = filesystem::temp_directory_path()
+        / ("opennn_custom_tokenizer_" + to_string(::getpid()) + ".json");
+    filesystem::path parameter_path = model_path;
+    parameter_path.replace_extension(".bin");
+    const ScopeExit cleanup([&]
+    {
+        error_code error;
+        filesystem::remove(model_path, error);
+        filesystem::remove(parameter_path, error);
+    });
+
+    Network original;
+    original.set_task(NetworkTask::LanguageModeling);
+    auto tokenizer = make_unique<Tokenizer>(Shape{sequence_length});
+    auto word_level = make_unique<WordLevelTokenizer>(vector<string>{"[PAD]", "[UNK]"});
+    word_level->set_vocabulary({"[PAD]", "[UNK]", "alpha", "beta", "gamma"});
+    tokenizer->set_tokenizer(std::move(word_level));
+    original.add_layer(std::move(tokenizer));
+    auto embedding = make_unique<Embedding>(Shape{vocabulary_size, sequence_length}, embedding_dimension);
+    embedding->set_learned_positional(true);
+    Layer* const tied_source = embedding.get();
+    original.add_layer(std::move(embedding));
+    auto projection = make_unique<opennn::Dense>(Shape{sequence_length, embedding_dimension},
+        Shape{vocabulary_size}, "Identity");
+    projection->set_use_bias(false);
+    projection->set_tied_weight_source(tied_source);
+    original.add_layer(std::move(projection));
+    original.compile();
+
+    auto& embedding_parameters = original.get_layer(1)->get_parameter_views();
+    ASSERT_EQ(embedding_parameters.size(), 2);
+    embedding_parameters[0].as_matrix() << 0.0f, 0.0f, 0.25f, 0.5f, 1.0f, 0.0f,
+                                          0.0f, 1.0f, 1.0f, 1.0f;
+    embedding_parameters[1].as_matrix() << 0.125f, 0.25f, 0.375f, 0.5f,
+                                          0.625f, 0.75f, 0.875f, 1.0f;
+    const VectorR saved_parameters = original.get_parameters_map();
+    original.set_parameters(saved_parameters);
+
+    const auto encode_prompts = [=](const Network& network)
+    {
+        const auto* layer = dynamic_cast<const Tokenizer*>(network.get_layer(0).get());
+        throw_if(!layer || !layer->get_tokenizer(), "The restored network lost its tokenizer.");
+        MatrixR inputs = MatrixR::Zero(2, sequence_length);
+        const vector<string> prompts = {"alpha beta", "unknown gamma"};
+        for (size_t sample = 0; sample < prompts.size(); ++sample)
+        {
+            const auto ids = layer->get_tokenizer()->encode_sequence(prompts[sample], sequence_length);
+            for (size_t position = 0; position < ids.size(); ++position)
+                inputs(Index(sample), Index(position)) = float(ids[position]);
+        }
+        return inputs;
+    };
+    const MatrixR original_inputs = encode_prompts(original);
+    MatrixR expected_inputs(2, sequence_length);
+    expected_inputs << 2.0f, 3.0f, 0.0f, 0.0f, 1.0f, 4.0f, 0.0f, 0.0f;
+    ASSERT_TRUE(original_inputs.isApprox(expected_inputs, 0.0f));
+    const MatrixR expected_outputs = original.calculate_outputs(original_inputs);
+    ASSERT_EQ(expected_outputs.cols(), sequence_length * vocabulary_size);
+    EXPECT_FLOAT_EQ(expected_outputs(0, 2), 1.125f);
+    EXPECT_FLOAT_EQ(expected_outputs(0, vocabulary_size + 3), 1.5f);
+    EXPECT_FLOAT_EQ(expected_outputs(1, vocabulary_size + 4), 2.875f);
+    EXPECT_TRUE(expected_outputs.rightCols(2 * vocabulary_size).isZero());
+
+    original.save(model_path);
+    // The reload must get the saved weights, not a live alias to the original.
+    original.set_parameters(VectorR::Zero(saved_parameters.size()));
+    Network restored;
+    restored.load(model_path);
+    ASSERT_EQ(restored.get_layers_number(), 3);
+    EXPECT_EQ(restored.get_task(), NetworkTask::LanguageModeling);
+    EXPECT_EQ(restored.get_layer(2)->get_tied_weight().source, restored.get_layer(1).get());
+    EXPECT_TRUE(restored.get_parameters_map().isApprox(saved_parameters, 0.0f));
+    const auto* restored_embedding = dynamic_cast<const Embedding*>(restored.get_layer(1).get());
+    ASSERT_NE(restored_embedding, nullptr);
+    EXPECT_TRUE(restored_embedding->get_learned_positional());
+
+    const MatrixR restored_inputs = encode_prompts(restored);
+    EXPECT_TRUE(restored_inputs.isApprox(expected_inputs, 0.0f));
+    const MatrixR actual_outputs = restored.calculate_outputs(restored_inputs);
+    ASSERT_EQ(actual_outputs.rows(), expected_outputs.rows());
+    ASSERT_EQ(actual_outputs.cols(), expected_outputs.cols());
+    EXPECT_TRUE(actual_outputs.isApprox(expected_outputs, 1.0e-6f));
+}
+
 TEST(NetworkTest, CompleteSaveLoadPreservesModelOwnedState)
 {
     const filesystem::path directory = filesystem::temp_directory_path();

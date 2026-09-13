@@ -6,10 +6,11 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+from check_code_quality import source_files
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "opennn"
-INCLUDE = re.compile(r'^\s*#include\s+["<]opennn/([^">]+)[">]')
+INCLUDE = re.compile(r'^\s*#\s*include\s+["<]opennn/([^">]+)[">]')
 CUDA_TYPE = re.compile(
     r"\b(?:cuda(?:Stream|Event|Graph|DataType)_t|"
     r"cublas[A-Za-z0-9_]*_t|cudnn[A-Za-z0-9_]*_t)\b"
@@ -44,19 +45,19 @@ EXCEPTIONS = {
 }
 
 
-def module(path: Path) -> str:
-    parts = path.relative_to(SOURCE).parts
+def module(path: Path, source: Path = SOURCE) -> str:
+    parts = path.relative_to(source).parts
     return parts[0] if len(parts) > 1 else "root"
 
 
-def main() -> int:
+def check(source: Path = SOURCE) -> list[str]:
     violations = []
-    for path in SOURCE.rglob("*"):
-        if path.suffix not in {".cpp", ".h"} or "flash_attention_shim" in path.parts:
-            continue
-        relative = path.relative_to(SOURCE).as_posix()
-        source_module = module(path)
+    for path in source_files(source):
+        relative = path.relative_to(source).as_posix()
+        source_module = module(path, source)
         for number, line in enumerate(path.read_text(encoding="utf-8-sig").splitlines(), 1):
+            # .cuh files are CUDA implementation interfaces and may name vendor
+            # types. The portable .h boundary keeps its existing restriction.
             if (path.suffix == ".h"
                     and not relative.startswith("core/cuda/")
                     and relative != "core/opennn_types.h"
@@ -74,7 +75,11 @@ def main() -> int:
                 violations.append(
                     f"{relative}:{number}: {source_module} must not depend on {target_module}"
                 )
+    return violations
 
+
+def main() -> int:
+    violations = check()
     if violations:
         print("Architecture dependency check failed:\n" + "\n".join(violations))
         return 1

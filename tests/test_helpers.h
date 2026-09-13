@@ -11,12 +11,29 @@
 #include <cstdint>
 #include <filesystem>
 #include <initializer_list>
+#include <string>
 #include <string_view>
 
 #include "opennn/core/tensor_types.h"
 
 namespace opennn_test
 {
+
+// Restore the previous value, including an originally absent variable, on exit.
+class ScopedEnvironmentVariable
+{
+public:
+    ScopedEnvironmentVariable(const char* name, const char* value);
+    ~ScopedEnvironmentVariable();
+
+    ScopedEnvironmentVariable(const ScopedEnvironmentVariable&) = delete;
+    ScopedEnvironmentVariable& operator=(const ScopedEnvironmentVariable&) = delete;
+
+private:
+    std::string name;
+    std::string original;
+    bool had_original = false;
+};
 
 inline bool logical_parameters_are_approx(
     const std::vector<std::vector<opennn::TensorSpec>>& specs,

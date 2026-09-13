@@ -222,6 +222,8 @@ protected:
                            TrainingSession& training_session);
 
     struct WorkerProfileCounters;
+    struct GraphEpochContext;
+    struct TrainingEpochContext;
 
     unique_ptr<BatchPrefetchSession> start_batch_prefetch(
         ThreadSafeQueue<Batch*>&,

@@ -226,12 +226,12 @@ test because child-process instrumentation hangs on the tested WSL setup;
 ordinary CUDA verification includes that test. See [runner operations](#linux-cuda-runner)
 for the Linux GPU runner's requirements and availability.
 
-The Python checks cover benchmark behavior, example archives and CMake data
-staging. They use the same Python dependencies and require CMake; no PyTorch or
-CUDA runtime is needed. In an isolated Python environment:
+The Python checks cover benchmark behavior, example archives, CMake data
+staging and the source-quality checkers. Install both requirement files and
+provide CMake; no PyTorch or CUDA runtime is needed. In an isolated Python environment:
 
 ```sh
-python -m pip install -r tools/test-requirements.txt
+python -m pip install -r tools/test-requirements.txt -r tools/code-quality-requirements.txt
 python -B -m unittest discover -s tests -p '*_test.py'
 ```
 
@@ -290,17 +290,26 @@ invalid surrogate pairs, nesting beyond 256 containers and inputs over 256 MiB.
 
 ### Maintainability ratchets
 
-`python tools/check_code_quality.py` measures first-party C++ code while
-excluding the vendored FlashAttention shim. `CODE_QUALITY.json` is the reviewed
-upper bound for logical and physical lines, duplicate code, oversized functions
-and cyclomatic complexity. A change must simplify a regression or update the
-baseline explicitly during review; ordinary feature work cannot silently grow
-these measures.
+`python tools/check_code_quality.py` measures first-party `.cpp`, `.h`, `.cu`
+and `.cuh` files, excluding the vendored FlashAttention shim. It also checks
+their SPDX license identifiers. `CODE_QUALITY.json` records separate reviewed
+limits for C++ and CUDA logical and physical lines, duplicate code, oversized
+functions and cyclomatic complexity. The existing unprefixed keys cover C++;
+`cuda_` keys cover CUDA, and `combined_duplicate_percent` checks duplication
+across both. Adding CUDA cannot hide a regression in the C++ limits.
+
+CUDA metrics use Lizard's C++ token analysis with explicit source files. They
+include kernel bodies but do not evaluate preprocessor branches or replace
+NVCC compilation and GPU runtime tests. A change must simplify a regression
+or update the baseline explicitly during review; ordinary feature work cannot
+silently grow these measures.
 
 `python tools/check_architecture.py` enforces the dependency direction between
 core, datasets, networks, training, evaluation, model selection and response
 optimization. A small path-specific exception list records existing cycles so
-they cannot spread to other files.
+they cannot spread to other files. It uses the same C++/CUDA source inventory.
+Portable `.h` interfaces keep the restriction on exposed CUDA vendor types;
+CUDA implementation headers (`.cuh`) may use those types.
 
 Coverage is gated per module as well as repository-wide. Performance changes
 can be checked with `python benchmarks/compare.py baseline.json candidate.json`;

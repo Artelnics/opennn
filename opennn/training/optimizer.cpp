@@ -1455,59 +1455,57 @@ void Optimizer::clip_gradient_norm(BackPropagation& back_propagation,
     }
 }
 
-Loss::EvaluationResult Optimizer::run_graph_epoch(
-    TrainingSession& training_session,
-    OptimizerData& optimizer_data,
-    ForwardPropagation& forward_propagation,
-    BackPropagation& back_propagation,
-    ThreadSafeQueue<Batch*>& empty_queue,
-    const vector<vector<Index>>& batches,
-    const FeatureSelection& features)
+struct Optimizer::GraphEpochContext
 {
-    Network* network = loss->get_network();
-    const Index batches_number = Index(batches.size());
-    const bool tracks_accuracy = loss->get_error() == Loss::Error::CrossEntropy3d;
-
-    DeviceEpochMetricSums device_metrics(training_session.device_metrics);
-    device_metrics.reset();
-
-    const DeviceStream compute = device::get_compute_stream();
-    const DeviceStream transfer = device::get_transfer_stream();
-
-    auto& pipelines = training_session.pipelines;
-    const bool profile_this = env_flag_enabled("OPENNN_PROFILE");
-    if (profile_this)
+    GraphEpochContext(Optimizer& new_optimizer,
+                      TrainingSession& new_training_session,
+                      OptimizerData& new_optimizer_data,
+                      ForwardPropagation& new_forward_propagation,
+                      BackPropagation& new_back_propagation,
+                      ThreadSafeQueue<Batch*>& new_empty_queue,
+                      const vector<vector<Index>>& new_batches,
+                      const FeatureSelection& new_features)
+        : optimizer(new_optimizer), training_session(new_training_session),
+          optimizer_data(new_optimizer_data), forward_propagation(new_forward_propagation),
+          back_propagation(new_back_propagation), empty_queue(new_empty_queue),
+          batches(new_batches), features(new_features),
+          network(optimizer.loss->get_network()), batches_number(Index(batches.size())),
+          tracks_accuracy(optimizer.loss->get_error() == Loss::Error::CrossEntropy3d),
+          device_metrics(training_session.device_metrics),
+          compute(device::get_compute_stream()), transfer(device::get_transfer_stream()),
+          profile_this(env_flag_enabled("OPENNN_PROFILE")),
+          staged_h2d(!optimizer.loss->get_dataset()->is_device_resident()
+                     && training_session.fixed_batch()->input.type != Type::BF16),
+          resident_gather(optimizer.loss->get_dataset()->can_device_gather(
+              *training_session.fixed_batch(), features)),
+          group_size(recurrent_graph_group_size(network, forward_propagation.batch_size))
     {
-        profiler::set_enabled(true);
-        profiler::stats().clear();
+        device_metrics.reset();
+        if (profile_this)
+        {
+            profiler::set_enabled(true);
+            profiler::stats().clear();
+        }
+        epoch_t0 = chrono::steady_clock::now();
+        session = optimizer.start_batch_prefetch(empty_queue, batches, features,
+                                                 FillMode::Training,
+                                                 profile_this ? &worker_profile : nullptr);
     }
-    const auto epoch_t0 = chrono::steady_clock::now();
-    WorkerProfileCounters worker_profile;
 
-    auto session = start_batch_prefetch(empty_queue, batches, features,
-                                        FillMode::Training,
-                                        profile_this ? &worker_profile : nullptr);
-
-    const bool staged_h2d = !loss->get_dataset()->is_device_resident()
-                         && training_session.fixed_batch()->input.type != Type::BF16;
-
-    const auto stage_into_slot = [](const Batch& source, Batch& slot)
+    static void stage_into_slot(const Batch& source, Batch& slot)
     {
         const auto copy_section = [&](const BatchSlot& from, BatchSlot& to)
         {
             const Index values_count = from.shape.size();
             if (!from.host || !to.host || values_count <= 0) return;
-            memcpy(to.host.data(),
-                   from.host.data(),
-                   size_t(values_count) * sizeof(float));
+            memcpy(to.host.data(), from.host.data(), size_t(values_count) * sizeof(float));
         };
-
-        copy_section(source.input,   slot.input);
+        copy_section(source.input, slot.input);
         copy_section(source.decoder, slot.decoder);
-        copy_section(source.target,  slot.target);
-    };
+        copy_section(source.target, slot.target);
+    }
 
-    const auto issue_slot_h2d = [](Batch& slot, DeviceStream stream)
+    static void issue_slot_h2d(Batch& slot, DeviceStream stream)
     {
         const auto copy_section = [&](BatchSlot& section)
         {
@@ -1517,26 +1515,31 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
                                values_count * Index(sizeof(float)),
                                device::CopyKind::HostToDevice, stream);
         };
-
         copy_section(slot.input);
         copy_section(slot.decoder);
         copy_section(slot.target);
-    };
+    }
 
-    const auto run_compute_step = [&](Batch& slot)
+    void release_host_batch()
     {
-        network->forward_propagate(slot.get_inputs(),
-                                          forward_propagation, ForwardPropagationMode::Training);
-        if (!loss->back_propagate_device_metrics(slot,
-                                                 forward_propagation, back_propagation,
-                                                 device_metrics.error_sum(),
-                                                 tracks_accuracy ? device_metrics.accuracy_sum() : nullptr))
-            throw runtime_error("Device epoch metrics unexpectedly unsupported for this loss.");
-        update_parameters(back_propagation, optimizer_data, UpdateMode::Capturable);
-    };
+        if (!host_batch) return;
+        empty_queue.push(host_batch);
+        host_batch = nullptr;
+    }
 
-    const auto capture_or_run = [&](device::GraphExecHandle& exec,
-                                    const auto& operation)
+    void run_compute_step(Batch& slot)
+    {
+        network->forward_propagate(slot.get_inputs(), forward_propagation,
+                                  ForwardPropagationMode::Training);
+        if (!optimizer.loss->back_propagate_device_metrics(
+                slot, forward_propagation, back_propagation,
+                device_metrics.error_sum(), tracks_accuracy ? device_metrics.accuracy_sum() : nullptr))
+            throw runtime_error("Device epoch metrics unexpectedly unsupported for this loss.");
+        optimizer.update_parameters(back_propagation, optimizer_data, UpdateMode::Capturable);
+    }
+
+    template <typename Operation>
+    void capture_or_run(device::GraphExecHandle& exec, const Operation& operation)
     {
         if (exec)
         {
@@ -1559,243 +1562,242 @@ Loss::EvaluationResult Optimizer::run_graph_epoch(
         catch (const exception& capture_error)
         {
             training_session.disable_cuda_graph_capture();
-            cuda_graph_capture_failed = true;
+            optimizer.cuda_graph_capture_failed = true;
             logging::warning() << "CUDA graph capture failed (" << capture_error.what()
                  << "); continuing without graphs.\n";
             profiler::set_enabled(profiler_enabled);
             return operation();
         }
         profiler::set_enabled(profiler_enabled);
-    };
+    }
 
-    // Residency is not what selects the device path -- fill_batch also demands
-    // that there be no decoder and that the input and target columns each be
-    // contiguous. The branch below hands the host batch back to the empty queue
-    // and uploads from a slot that only a device gather would have filled, so
-    // asking the weaker question trains on whatever the slot happened to hold,
-    // which for a fresh arena is zeros and a training error of exactly 0.
-    const bool resident_gather =
-        loss->get_dataset()->can_device_gather(*training_session.fixed_batch(), features);
-
-    const Index M = recurrent_graph_group_size(network,
-                                                forward_propagation.batch_size);
-    Batch* host_batch = nullptr;
-
-    const auto run_grouped_epoch = [&](const auto& stage_slot,
-                                       const auto& launch_group,
-                                       const auto& stage_tail_slot)
+    void stage_resident_slot(Batch& slot)
     {
-        const Index groups = batches_number / M;
+        slot.device_gather = host_batch->device_gather;
+        release_host_batch();
+        slot.upload_to_device_batch_async(slot, transfer);
+        slot.wait_h2d_on_compute_stream();
+    }
 
-        // Count the pipelines that were actually populated rather than assuming
-        // all of them were: the allocation above stops early when the batch
-        // count cannot keep another one fed.
+    void stage_group_slot(Batch& slot)
+    {
+        if (resident_gather)
+        {
+            PROFILE_SCOPE_HOST("step:gather_issue");
+            stage_resident_slot(slot);
+        }
+        else
+        {
+            PROFILE_SCOPE_HOST("step:stage_copy");
+            stage_into_slot(*host_batch, slot);
+            release_host_batch();
+        }
+    }
+
+    void launch_group(TrainingSession::GraphPipeline& pipeline)
+    {
+        if (resident_gather)
+        {
+            return capture_or_run(pipeline.exec, [&]
+            {
+                for (Index slot = 0; slot < group_size; ++slot)
+                    run_compute_step(*pipeline.slots[size_t(slot)]);
+            });
+        }
+
+        if (!pipeline.fork_event) pipeline.fork_event.create();
+        for (Index slot = 0; slot < group_size; ++slot)
+            if (!pipeline.copy_done_events[size_t(slot)])
+                pipeline.copy_done_events[size_t(slot)].create();
+
+        capture_or_run(pipeline.exec, [&]
+        {
+            device::record_event(pipeline.fork_event.get(), compute);
+            device::stream_wait_event(transfer, pipeline.fork_event.get());
+            for (Index slot = 0; slot < group_size; ++slot)
+            {
+                issue_slot_h2d(*pipeline.slots[size_t(slot)], transfer);
+                device::record_event(pipeline.copy_done_events[size_t(slot)].get(), transfer);
+            }
+            for (Index slot = 0; slot < group_size; ++slot)
+            {
+                device::stream_wait_event(compute, pipeline.copy_done_events[size_t(slot)].get());
+                run_compute_step(*pipeline.slots[size_t(slot)]);
+            }
+        });
+    }
+
+    void run_grouped_epoch()
+    {
+        auto& pipelines = training_session.pipelines;
+        const Index groups = batches_number / group_size;
+
+        // Only populated pipelines may be selected; small epochs allocate fewer.
         size_t usable_pipelines = 1;
         while (usable_pipelines < pipelines.size()
-               && pipelines[usable_pipelines].slots[size_t(M) - 1])
+               && pipelines[usable_pipelines].slots[size_t(group_size) - 1])
             ++usable_pipelines;
 
         for (Index group = 0; group < groups; ++group)
         {
-            TrainingSession::GraphPipeline& pipeline =
-                pipelines[size_t(group) % usable_pipelines];
-            Batch& event_slot = *pipeline.slots[size_t(M) - 1];
-
+            auto& pipeline = pipelines[size_t(group) % usable_pipelines];
+            Batch& event_slot = *pipeline.slots[size_t(group_size) - 1];
             {
                 PROFILE_SCOPE_HOST("step:group_sync");
-
                 if (event_slot.h2d_done_recorded)
                     device::synchronize_event(event_slot.h2d_done_event.get());
             }
-
-            for (Index m = 0; m < M; ++m)
+            for (Index slot = 0; slot < group_size; ++slot)
             {
                 {
                     PROFILE_SCOPE_HOST("step:wait_fill");
-                    host_batch = session->wait(group * M + m);
+                    host_batch = session->wait(group * group_size + slot);
                 }
-                stage_slot(*pipeline.slots[size_t(m)]);
+                stage_group_slot(*pipeline.slots[size_t(slot)]);
             }
-
             launch_group(pipeline);
-
             event_slot.record_h2d_done(compute);
         }
 
-        for (Index iteration = groups * M; iteration < batches_number; ++iteration)
+        for (Index iteration = groups * group_size; iteration < batches_number; ++iteration)
         {
             host_batch = session->wait(iteration);
             Batch& slot = *training_session.fixed_batch();
             device::synchronize(compute);
-            stage_tail_slot(slot);
+            if (resident_gather)
+                stage_resident_slot(slot);
+            else
+            {
+                stage_into_slot(*host_batch, slot);
+                release_host_batch();
+                issue_slot_h2d(slot, compute);
+            }
             run_compute_step(slot);
         }
-    };
+    }
 
-    const bool grouped_slots_ready = pipelines[0].slots[size_t(M) - 1] != nullptr;
-
-    const bool can_group_batches = !post_batch_callback
-                                && batches_number >= M
-                                && grouped_slots_ready;
-
-    try
+    void run_single_epoch()
     {
-        if (resident_gather
-            && can_group_batches)
-        {
-            run_grouped_epoch(
-                [&](Batch& slot)
-                {
-                    PROFILE_SCOPE_HOST("step:gather_issue");
-                    slot.device_gather = host_batch->device_gather;
-                    empty_queue.push(host_batch);
-                    host_batch = nullptr;
+        auto& pipelines = training_session.pipelines;
+        const size_t usable_pipelines =
+            pipelines.size() > 1 && pipelines[1].slots[0] ? pipelines.size() : 1;
 
-                    slot.upload_to_device_batch_async(slot, transfer);
-                    slot.wait_h2d_on_compute_stream();
-                },
-                [&](TrainingSession::GraphPipeline& pipeline)
-                {
-                    const auto run_group = [&] {
-                        for (Index m = 0; m < M; ++m)
-                            run_compute_step(*pipeline.slots[size_t(m)]);
-                    };
-                    capture_or_run(pipeline.exec, run_group);
-                },
-                [&](Batch& slot)
-                {
-                    slot.device_gather = host_batch->device_gather;
-                    empty_queue.push(host_batch);
-                    host_batch = nullptr;
-                    slot.upload_to_device_batch_async(slot, transfer);
-                    slot.wait_h2d_on_compute_stream();
-                });
-        }
-        else if (staged_h2d
-            && can_group_batches)
+        for (Index iteration = 0; iteration < batches_number; ++iteration)
         {
-            run_grouped_epoch(
-                [&](Batch& slot)
+            auto& pipeline = pipelines[size_t(iteration) % usable_pipelines];
+            Batch& slot = *pipeline.slots[0];
+            {
+                PROFILE_SCOPE_HOST("step:wait_fill");
+                host_batch = session->wait(iteration);
+            }
+
+            if (staged_h2d)
+            {
                 {
                     PROFILE_SCOPE_HOST("step:stage_copy");
+                    if (slot.h2d_done_recorded)
+                        device::synchronize_event(slot.h2d_done_event.get());
                     stage_into_slot(*host_batch, slot);
-
-                    empty_queue.push(host_batch);
-                    host_batch = nullptr;
-                },
-                [&](TrainingSession::GraphPipeline& pipeline)
+                    release_host_batch();
+                }
+                capture_or_run(pipeline.exec, [&]
                 {
-                    if (!pipeline.fork_event)
-                        pipeline.fork_event.create();
-                    for (Index m = 0; m < M; ++m)
-                        if (!pipeline.copy_done_events[size_t(m)])
-                            pipeline.copy_done_events[size_t(m)].create();
-
-                    const auto run_group = [&] {
-                        device::record_event(pipeline.fork_event.get(), compute);
-                        device::stream_wait_event(transfer, pipeline.fork_event.get());
-                        for (Index m = 0; m < M; ++m)
-                        {
-                            issue_slot_h2d(*pipeline.slots[size_t(m)], transfer);
-                            device::record_event(pipeline.copy_done_events[size_t(m)].get(), transfer);
-                        }
-                        for (Index m = 0; m < M; ++m)
-                        {
-                            device::stream_wait_event(compute, pipeline.copy_done_events[size_t(m)].get());
-                            run_compute_step(*pipeline.slots[size_t(m)]);
-                        }
-                    };
-                    capture_or_run(pipeline.exec, run_group);
-                },
-                [&](Batch& slot)
-                {
-                    stage_into_slot(*host_batch, slot);
-                    empty_queue.push(host_batch);
-                    host_batch = nullptr;
                     issue_slot_h2d(slot, compute);
+                    run_compute_step(slot);
                 });
-        }
-        else
-        {
-            const size_t usable_pipelines =
-                pipelines.size() > 1 && pipelines[1].slots[0] ? pipelines.size() : 1;
-
-            for (Index iteration = 0; iteration < batches_number; ++iteration)
-            {
-                TrainingSession::GraphPipeline& pipeline =
-                    pipelines[size_t(iteration) % usable_pipelines];
-                Batch& slot = *pipeline.slots[0];
-
-                {
-                    PROFILE_SCOPE_HOST("step:wait_fill");
-                    host_batch = session->wait(iteration);
-                }
-
-                if (staged_h2d)
-                {
-                    {
-                        PROFILE_SCOPE_HOST("step:stage_copy");
-
-                        if (slot.h2d_done_recorded)
-                            device::synchronize_event(slot.h2d_done_event.get());
-                        stage_into_slot(*host_batch, slot);
-                        empty_queue.push(host_batch);
-                        host_batch = nullptr;
-                    }
-                    const auto run_slot = [&] {
-                        issue_slot_h2d(slot, compute);
-                        run_compute_step(slot);
-                    };
-                    capture_or_run(pipeline.exec, run_slot);
-                }
-                else
-                {
-                    {
-                        PROFILE_SCOPE_HOST("step:h2d_issue");
-
-                        if (slot.h2d_done_recorded)
-                            device::stream_wait_event(transfer, slot.h2d_done_event.get());
-                        host_batch->upload_to_device_batch_async(slot, transfer);
-                        host_batch->wait_h2d_on_compute_stream();
-                    }
-                    const auto run_slot = [&] { run_compute_step(slot); };
-                    capture_or_run(pipeline.exec, run_slot);
-                }
-
-                slot.record_h2d_done(compute);
-
-                if (post_batch_callback)
-                {
-                    device::synchronize(compute);
-                    post_batch_callback(network);
-                }
-
-                if (host_batch)
-                {
-                    empty_queue.push(host_batch);
-                    host_batch = nullptr;
-                }
             }
+            else
+            {
+                {
+                    PROFILE_SCOPE_HOST("step:h2d_issue");
+                    if (slot.h2d_done_recorded)
+                        device::stream_wait_event(transfer, slot.h2d_done_event.get());
+                    host_batch->upload_to_device_batch_async(slot, transfer);
+                    host_batch->wait_h2d_on_compute_stream();
+                }
+                capture_or_run(pipeline.exec, [&] { run_compute_step(slot); });
+            }
+            slot.record_h2d_done(compute);
+
+            if (optimizer.post_batch_callback)
+            {
+                device::synchronize(compute);
+                optimizer.post_batch_callback(network);
+            }
+            release_host_batch();
         }
-        device::synchronize(compute);
     }
-    catch (...)
+
+    Loss::EvaluationResult run()
     {
-        if (host_batch) empty_queue.push(host_batch);
-        throw;
+        // Residency alone is insufficient: gather also needs contiguous input
+        // and target columns and no decoder. Otherwise the slot needs host data.
+        const bool grouped_slots_ready =
+            training_session.pipelines[0].slots[size_t(group_size) - 1] != nullptr;
+        const bool can_group_batches = !optimizer.post_batch_callback
+                                    && batches_number >= group_size && grouped_slots_ready;
+        try
+        {
+            if ((resident_gather || staged_h2d) && can_group_batches)
+                run_grouped_epoch();
+            else
+                run_single_epoch();
+            device::synchronize(compute);
+        }
+        catch (...)
+        {
+            release_host_batch();
+            throw;
+        }
+        session->rethrow_if_error();
+
+        const Loss::EvaluationResult result =
+            average_epoch_metrics(device_metrics.read(), batches_number, tracks_accuracy);
+        back_propagation.metrics.error = result.error;
+        back_propagation.metrics.accuracy = result.accuracy;
+        if (profile_this)
+            worker_profile.print_epoch(epoch_t0, "Epoch breakdown (graph training)",
+                                       optimizer.workers_number);
+        return result;
     }
-    session->rethrow_if_error();
 
-    Loss::EvaluationResult epoch_result =
-        average_epoch_metrics(device_metrics.read(), batches_number, tracks_accuracy);
-    back_propagation.metrics.error = epoch_result.error;
-    back_propagation.metrics.accuracy = epoch_result.accuracy;
+    Optimizer& optimizer;
+    TrainingSession& training_session;
+    OptimizerData& optimizer_data;
+    ForwardPropagation& forward_propagation;
+    BackPropagation& back_propagation;
+    ThreadSafeQueue<Batch*>& empty_queue;
+    const vector<vector<Index>>& batches;
+    const FeatureSelection& features;
+    Network* network;
+    const Index batches_number;
+    const bool tracks_accuracy;
+    DeviceEpochMetricSums device_metrics;
+    const DeviceStream compute;
+    const DeviceStream transfer;
+    const bool profile_this;
+    const bool staged_h2d;
+    const bool resident_gather;
+    const Index group_size;
+    WorkerProfileCounters worker_profile;
+    chrono::steady_clock::time_point epoch_t0;
+    unique_ptr<BatchPrefetchSession> session;
+    Batch* host_batch = nullptr;
+};
 
-    if (profile_this)
-        worker_profile.print_epoch(epoch_t0, "Epoch breakdown (graph training)",
-                                   workers_number);
-
-    return epoch_result;
+Loss::EvaluationResult Optimizer::run_graph_epoch(
+    TrainingSession& training_session,
+    OptimizerData& optimizer_data,
+    ForwardPropagation& forward_propagation,
+    BackPropagation& back_propagation,
+    ThreadSafeQueue<Batch*>& empty_queue,
+    const vector<vector<Index>>& batches,
+    const FeatureSelection& features)
+{
+    GraphEpochContext context(*this, training_session, optimizer_data,
+                              forward_propagation, back_propagation,
+                              empty_queue, batches, features);
+    return context.run();
 }
 
 struct Optimizer::EpochLoopContext
@@ -1930,6 +1932,282 @@ struct EpochBatches
     }
 };
 
+struct Optimizer::TrainingEpochContext
+{
+    TrainingEpochContext(Optimizer& new_optimizer,
+                         TrainingContext& new_main_context,
+                         ThreadSafeQueue<Batch*>& new_empty_queue,
+                         const vector<vector<Index>>& batches,
+                         const FeatureSelection& new_features,
+                         TrainingSession& new_training_session,
+                         OptimizerData& new_optimizer_data,
+                         bool new_profile_this)
+        : optimizer(new_optimizer), main_context(new_main_context),
+          forward_propagation(main_context.forward), back_propagation(main_context.backward),
+          empty_queue(new_empty_queue), features(new_features),
+          training_session(new_training_session), optimizer_data(new_optimizer_data),
+          network(optimizer.loss->get_network()), epoch_batches(batches, forward_propagation.batch_size),
+          tracks_accuracy(optimizer.loss->get_error() == Loss::Error::CrossEntropy3d),
+          on_gpu(network->is_gpu()),
+          use_graph_batches(training_session.cuda_graph_capture_allowed
+                            && training_session.has_graph_batches()),
+          profile_this(new_profile_this)
+    {
+        if (profile_this)
+        {
+            profiler::set_enabled(true);
+            profiler::stats().clear();
+        }
+        epoch_t0 = chrono::steady_clock::now();
+    }
+
+    TrainingSession::TailContext& prepare_tail()
+    {
+        const vector<Index>& sample_indices = epoch_batches.tail();
+        const Index tail_size = Index(sample_indices.size());
+        auto& tail = training_session.tail;
+        if (!tail.context || tail.size != tail_size)
+        {
+            tail.batch = make_unique<Batch>(tail_size, optimizer.loss->get_dataset(),
+                                            network->get_config());
+            tail.context = make_unique<TrainingContext>(
+                tail_size, *optimizer.loss, true, &main_context,
+                main_context.backward.has_joint_gradient_arena());
+            tail.size = tail_size;
+            tail.capture_failed = false;
+        }
+        tail.batch->fill(sample_indices, features, FillMode::Training);
+        if (on_gpu)
+        {
+            optimizer.prefetch_batch(*tail.batch);
+            tail.batch->wait_h2d_on_compute_stream();
+        }
+        return tail;
+    }
+
+    Loss::EvaluationResult run_device_tail(TrainingSession::TailContext& tail)
+    {
+        DeviceEpochMetricSums tail_metrics(training_session.device_metrics);
+        tail_metrics.reset();
+        const bool graph_tail = use_graph_batches && !tail.capture_failed;
+        const auto run_tail_step = [&](UpdateMode update_mode)
+        {
+            network->forward_propagate(tail.batch->get_inputs(), tail.context->forward,
+                                      ForwardPropagationMode::Training);
+            if (!optimizer.loss->back_propagate_device_metrics(
+                    *tail.batch, tail.context->forward, tail.context->backward,
+                    tail_metrics.error_sum(), tracks_accuracy ? tail_metrics.accuracy_sum() : nullptr))
+                throw runtime_error("Tail CUDA graph requires device epoch metrics.");
+            optimizer.update_parameters(tail.context->backward, optimizer_data, update_mode);
+        };
+
+        const DeviceStream compute = device::get_compute_stream();
+        if (tail.exec)
+            device::launch_graph(tail.exec, compute);
+        else if (graph_tail && training_session.cuda_graph_capture_allowed)
+        {
+            const bool profiler_enabled = profiler::is_enabled();
+            profiler::set_enabled(false);
+            try
+            {
+                device::synchronize(compute);
+                device::StreamCapture capture(compute);
+                run_tail_step(UpdateMode::Capturable);
+                capture.end(tail.exec);
+                device::launch_graph(tail.exec, compute);
+            }
+            catch (const exception& capture_error)
+            {
+                tail.exec.reset();
+                tail.capture_failed = true;
+                optimizer.cuda_graph_capture_failed = true;
+                logging::warning() << "Tail CUDA graph capture failed (" << capture_error.what()
+                     << "); continuing eagerly.\n";
+                profiler::set_enabled(profiler_enabled);
+                run_tail_step(UpdateMode::Capturable);
+            }
+            profiler::set_enabled(profiler_enabled);
+        }
+        else
+            run_tail_step(graph_tail ? UpdateMode::Capturable : UpdateMode::Standard);
+
+        return tail_metrics.read();
+    }
+
+    Loss::EvaluationResult train_tail()
+    {
+        Loss::EvaluationResult result;
+        auto& tail = prepare_tail();
+        auto& tail_backward = tail.context->backward;
+        if (on_gpu && !optimizer.post_batch_callback && optimizer.loss->supports_device_epoch_metrics())
+            result = run_device_tail(tail);
+        else
+        {
+            network->forward_propagate(tail.batch->get_inputs(), tail.context->forward,
+                                      ForwardPropagationMode::Training);
+            optimizer.loss->back_propagate(*tail.batch, tail.context->forward, tail_backward);
+            if (!std::isnan(tail_backward.metrics.error))
+            {
+                result.error = tail_backward.metrics.error;
+                result.accuracy = tail_backward.metrics.accuracy;
+                result.active_tokens_count = tail_backward.metrics.active_tokens_count;
+                optimizer.update_parameters(tail_backward, optimizer_data);
+            }
+        }
+        if (optimizer.post_batch_callback) optimizer.post_batch_callback(network);
+        if (on_gpu) device::synchronize(device::get_compute_stream());
+        return result;
+    }
+
+    Loss::EvaluationResult run_cpu_batches()
+    {
+        Loss::EvaluationResult result;
+        Batch* batch = nullptr;
+        throw_if(!empty_queue.wait_pop(batch) || !batch,
+                 "Optimizer::train_epoch: batch queue did not provide a batch.");
+
+        for (Index iteration = 0; iteration < epoch_batches.number(); ++iteration)
+        {
+            {
+                PROFILE_SCOPE_HOST("step:fill");
+                batch->fill(epoch_batches.batches()[size_t(iteration)], features, FillMode::Training);
+            }
+            {
+                PROFILE_SCOPE("step:fwd_total");
+                network->forward_propagate(batch->get_inputs(), forward_propagation,
+                                          ForwardPropagationMode::Training);
+            }
+            {
+                PROFILE_SCOPE("step:bwd_total");
+                optimizer.loss->back_propagate(*batch, forward_propagation, back_propagation);
+            }
+            if (!std::isnan(back_propagation.metrics.error))
+            {
+                result.error += back_propagation.metrics.error;
+                if (tracks_accuracy) result.accuracy += back_propagation.metrics.accuracy;
+                {
+                    PROFILE_SCOPE("step:optim_total");
+                    optimizer.update_parameters(back_propagation, optimizer_data);
+                }
+            }
+            if (optimizer.post_batch_callback) optimizer.post_batch_callback(network);
+        }
+        empty_queue.push(batch);
+        return average_epoch_metrics(result, epoch_batches.number(), tracks_accuracy);
+    }
+
+    Loss::EvaluationResult run_device_batches()
+    {
+        const bool use_device_metrics = optimizer.loss->supports_device_epoch_metrics();
+        DeviceEpochMetricSums device_metrics(training_session.device_metrics);
+        if (use_device_metrics) device_metrics.reset();
+
+        EpochLoopContext context{
+            &empty_queue, &epoch_batches.batches(), &features, FillMode::Training,
+            true, network->has_recurrent_layers(), &training_session,
+            training_session.fixed_batch(), profile_this ? &worker_profile : nullptr, {}
+        };
+        context.step = [&](Batch& batch, Loss::EvaluationResult& result)
+        {
+            {
+                PROFILE_SCOPE("step:fwd_total");
+                network->forward_propagate(batch.get_inputs(), forward_propagation,
+                                          ForwardPropagationMode::Training);
+            }
+            {
+                PROFILE_SCOPE("step:bwd_total");
+                if (use_device_metrics)
+                {
+                    if (!optimizer.loss->back_propagate_device_metrics(
+                            batch, forward_propagation, back_propagation,
+                            device_metrics.error_sum(),
+                            tracks_accuracy ? device_metrics.accuracy_sum() : nullptr))
+                        throw runtime_error("Device epoch metrics unexpectedly unsupported for this loss.");
+                }
+                else
+                    optimizer.loss->back_propagate(batch, forward_propagation, back_propagation);
+            }
+            const bool batch_ok = use_device_metrics || !std::isnan(back_propagation.metrics.error);
+            if (!use_device_metrics && batch_ok)
+            {
+                result.error += back_propagation.metrics.error;
+                if (tracks_accuracy) result.accuracy += back_propagation.metrics.accuracy;
+            }
+            if (batch_ok)
+            {
+                PROFILE_SCOPE("step:optim_total");
+                optimizer.update_parameters(back_propagation, optimizer_data);
+            }
+            if (optimizer.post_batch_callback) optimizer.post_batch_callback(network);
+        };
+
+        Loss::EvaluationResult result;
+        if (epoch_batches.number() > 0) result = optimizer.run_epoch_loop(context);
+        if (use_device_metrics) result = device_metrics.read();
+        result = average_epoch_metrics(result, epoch_batches.number(), tracks_accuracy);
+        if (use_device_metrics)
+        {
+            back_propagation.metrics.error = result.error;
+            back_propagation.metrics.accuracy = result.accuracy;
+        }
+        return result;
+    }
+
+    void finalize_metrics(Loss::EvaluationResult& result)
+    {
+        if (epoch_batches.has_tail())
+        {
+            const Loss::EvaluationResult tail_result = train_tail();
+            epoch_batches.merge_tail(result, tail_result,
+                                     forward_propagation.batch_size, tracks_accuracy);
+            back_propagation.metrics.error = result.error;
+            back_propagation.metrics.accuracy = result.accuracy;
+            back_propagation.metrics.active_tokens_count = result.active_tokens_count;
+        }
+        const TensorView parameters(network->get_parameters_data(),
+                                    {network->get_parameters_buffer_size()}, Type::FP32,
+                                    network->get_device());
+        back_propagation.metrics.regularization = optimizer.loss->calculate_regularization(parameters);
+        back_propagation.metrics.loss_value = result.error + back_propagation.metrics.regularization;
+    }
+
+    Loss::EvaluationResult run()
+    {
+        Loss::EvaluationResult result;
+        if (!on_gpu)
+            result = run_cpu_batches();
+        else if (use_graph_batches)
+            result = optimizer.run_graph_epoch(training_session, optimizer_data,
+                                                forward_propagation, back_propagation,
+                                                empty_queue, epoch_batches.batches(), features);
+        else
+            result = run_device_batches();
+
+        finalize_metrics(result);
+        if (profile_this && !(on_gpu && use_graph_batches))
+            worker_profile.print_epoch(epoch_t0, "Epoch breakdown (training)",
+                                       on_gpu ? optimizer.workers_number : 0);
+        return result;
+    }
+
+    Optimizer& optimizer;
+    TrainingContext& main_context;
+    ForwardPropagation& forward_propagation;
+    BackPropagation& back_propagation;
+    ThreadSafeQueue<Batch*>& empty_queue;
+    const FeatureSelection& features;
+    TrainingSession& training_session;
+    OptimizerData& optimizer_data;
+    Network* network;
+    EpochBatches epoch_batches;
+    const bool tracks_accuracy;
+    const bool on_gpu;
+    const bool use_graph_batches;
+    const bool profile_this;
+    chrono::steady_clock::time_point epoch_t0;
+    WorkerProfileCounters worker_profile;
+};
+
 Loss::EvaluationResult Optimizer::train_epoch(
     TrainingContext& main_context,
     ThreadSafeQueue<Batch*>& empty_queue,
@@ -1938,348 +2216,11 @@ Loss::EvaluationResult Optimizer::train_epoch(
     TrainingSession& training_session,
     OptimizerData& optimizer_data)
 {
-    Loss::EvaluationResult epoch_result;
-
-    ForwardPropagation& forward_propagation = main_context.forward;
-    BackPropagation& back_propagation = main_context.backward;
-
-    Network* network = loss->get_network();
-    if(batches.empty()) return epoch_result;
-
-    const EpochBatches epoch_batches(batches, forward_propagation.batch_size);
-    const Index batches_number = epoch_batches.number();
-
-    const bool tracks_accuracy = loss->get_error() == Loss::Error::CrossEntropy3d;
-    const bool on_gpu = network->is_gpu();
-    const bool use_graph_batches = training_session.cuda_graph_capture_allowed
-        && training_session.has_graph_batches();
-
+    if (batches.empty()) return {};
     static const bool profile_this = env_flag_enabled("OPENNN_PROFILE");
-
-    if(profile_this)
-    {
-        profiler::set_enabled(true);
-        profiler::stats().clear();
-    }
-
-    const chrono::steady_clock::time_point epoch_t0 = chrono::steady_clock::now();
-    WorkerProfileCounters worker_profile;
-
-    const auto finalize_epoch = [&](Loss::EvaluationResult& result)
-    {
-        const TensorView parameters(network->get_parameters_data(),
-                                    {network->get_parameters_buffer_size()},
-                                    Type::FP32,
-                                    network->get_device());
-
-        back_propagation.metrics.regularization = loss->calculate_regularization(parameters);
-        back_propagation.metrics.loss_value = result.error + back_propagation.metrics.regularization;
-    };
-
-    const auto train_tail = [&]
-    {
-        Loss::EvaluationResult result;
-        if(!epoch_batches.has_tail()) return result;
-
-        const vector<Index>& sample_indices = epoch_batches.tail();
-        const Index tail_size = Index(sample_indices.size());
-
-        TrainingSession::TailContext& tail = training_session.tail;
-        if (!tail.context || tail.size != tail_size)
-        {
-            tail.batch = make_unique<Batch>(tail_size, loss->get_dataset(),
-                                            network->get_config());
-            tail.context = make_unique<TrainingContext>(
-                tail_size, *loss, true, &main_context,
-                main_context.backward.has_joint_gradient_arena());
-            tail.size = tail_size;
-            tail.capture_failed = false;
-        }
-
-        Batch& batch = *tail.batch;
-        ForwardPropagation& tail_forward_propagation = tail.context->forward;
-        BackPropagation& tail_back_propagation = tail.context->backward;
-
-        batch.fill(sample_indices, features, FillMode::Training);
-
-        if(on_gpu)
-        {
-            prefetch_batch(batch);
-            batch.wait_h2d_on_compute_stream();
-        }
-
-        const bool device_metric_tail = on_gpu
-                                     && !post_batch_callback
-                                     && loss->supports_device_epoch_metrics();
-        const bool graph_tail = use_graph_batches
-                             && device_metric_tail
-                             && !tail.capture_failed;
-
-        if (device_metric_tail)
-        {
-            DeviceEpochMetricSums tail_metrics(training_session.device_metrics);
-            tail_metrics.reset();
-
-            const auto run_tail_step = [&](UpdateMode update_mode)
-            {
-                network->forward_propagate(batch.get_inputs(),
-                                                  tail_forward_propagation,
-                                                  ForwardPropagationMode::Training);
-                if (!loss->back_propagate_device_metrics(
-                        batch,
-                        tail_forward_propagation,
-                        tail_back_propagation,
-                        tail_metrics.error_sum(),
-                        tracks_accuracy ? tail_metrics.accuracy_sum() : nullptr))
-                    throw runtime_error(
-                        "Tail CUDA graph requires device epoch metrics.");
-                update_parameters(tail_back_propagation, optimizer_data, update_mode);
-            };
-
-            const DeviceStream compute = device::get_compute_stream();
-            if (tail.exec)
-                device::launch_graph(tail.exec, compute);
-            else if (graph_tail && training_session.cuda_graph_capture_allowed)
-            {
-                const bool profiler_enabled = profiler::is_enabled();
-                profiler::set_enabled(false);
-                try
-                {
-                    device::synchronize(compute);
-                    device::StreamCapture capture(compute);
-                    run_tail_step(UpdateMode::Capturable);
-                    capture.end(tail.exec);
-                    device::launch_graph(tail.exec, compute);
-                }
-                catch (const exception& capture_error)
-                {
-                    tail.exec.reset();
-                    tail.capture_failed = true;
-                    cuda_graph_capture_failed = true;
-                    logging::warning() << "Tail CUDA graph capture failed (" << capture_error.what()
-                         << "); continuing eagerly.\n";
-                    profiler::set_enabled(profiler_enabled);
-                    run_tail_step(UpdateMode::Capturable);
-                }
-                profiler::set_enabled(profiler_enabled);
-            }
-            else
-                run_tail_step(graph_tail ? UpdateMode::Capturable
-                                         : UpdateMode::Standard);
-
-            result = tail_metrics.read();
-        }
-        else
-        {
-            network->forward_propagate(batch.get_inputs(),
-                                              tail_forward_propagation,
-                                              ForwardPropagationMode::Training);
-            loss->back_propagate(batch,
-                                 tail_forward_propagation,
-                                 tail_back_propagation);
-
-            if(!std::isnan(tail_back_propagation.metrics.error))
-            {
-                result.error = tail_back_propagation.metrics.error;
-                result.accuracy = tail_back_propagation.metrics.accuracy;
-                result.active_tokens_count = tail_back_propagation.metrics.active_tokens_count;
-                update_parameters(tail_back_propagation, optimizer_data);
-            }
-        }
-
-        if(post_batch_callback)
-            post_batch_callback(network);
-
-        if(on_gpu)
-            device::synchronize(device::get_compute_stream());
-
-        return result;
-    };
-
-    const auto merge_tail = [&](Loss::EvaluationResult& result)
-    {
-        if(!epoch_batches.has_tail()) return;
-
-        const Loss::EvaluationResult tail_result = train_tail();
-        epoch_batches.merge_tail(result, tail_result,
-                                 forward_propagation.batch_size,
-                                 tracks_accuracy);
-
-        back_propagation.metrics.error = result.error;
-        back_propagation.metrics.accuracy = result.accuracy;
-        back_propagation.metrics.active_tokens_count = result.active_tokens_count;
-    };
-
-    if(!on_gpu)
-    {
-        Batch* batch = nullptr;
-        throw_if(!empty_queue.wait_pop(batch) || !batch,
-                 "Optimizer::train_epoch: batch queue did not provide a batch.");
-
-        for(Index iteration = 0; iteration < batches_number; ++iteration)
-        {
-            {
-                PROFILE_SCOPE_HOST("step:fill");
-                batch->fill(epoch_batches.batches()[size_t(iteration)], features, FillMode::Training);
-            }
-
-            {
-                PROFILE_SCOPE("step:fwd_total");
-                network->forward_propagate(batch->get_inputs(),
-                                                  forward_propagation,
-                                                  ForwardPropagationMode::Training);
-            }
-
-            {
-                PROFILE_SCOPE("step:bwd_total");
-                loss->back_propagate(*batch, forward_propagation, back_propagation);
-            }
-
-            if (!std::isnan(back_propagation.metrics.error))
-            {
-                epoch_result.error += back_propagation.metrics.error;
-
-                if(tracks_accuracy)
-                    epoch_result.accuracy += back_propagation.metrics.accuracy;
-
-                {
-                    PROFILE_SCOPE("step:optim_total");
-                    update_parameters(back_propagation, optimizer_data);
-                }
-            }
-
-            if(post_batch_callback)
-                post_batch_callback(network);
-        }
-
-        empty_queue.push(batch);
-
-        epoch_result =
-            average_epoch_metrics(epoch_result, batches_number, tracks_accuracy);
-
-        merge_tail(epoch_result);
-        finalize_epoch(epoch_result);
-
-        if(profile_this)
-            worker_profile.print_epoch(epoch_t0, "Epoch breakdown (training)", 0);
-
-        return epoch_result;
-    }
-
-    if(use_graph_batches)
-    {
-        epoch_result = run_graph_epoch(training_session,
-                                       optimizer_data,
-                                       forward_propagation,
-                                       back_propagation,
-                                       empty_queue,
-                                       epoch_batches.batches(),
-                                       features);
-
-        merge_tail(epoch_result);
-        finalize_epoch(epoch_result);
-        return epoch_result;
-    }
-
-    const bool use_device_metrics = loss->supports_device_epoch_metrics();
-
-    DeviceEpochMetricSums device_metrics(training_session.device_metrics);
-
-    if(use_device_metrics)
-        device_metrics.reset();
-
-    EpochLoopContext context{
-        &empty_queue,
-        &epoch_batches.batches(),
-        &features,
-        FillMode::Training,
-        true,
-        network->has_recurrent_layers(),
-        &training_session,
-        training_session.fixed_batch(),
-        profile_this ? &worker_profile : nullptr,
-        {}
-    };
-
-    context.step = [&](Batch& batch, Loss::EvaluationResult& result)
-    {
-        {
-            PROFILE_SCOPE("step:fwd_total");
-            network->forward_propagate(batch.get_inputs(),
-                                              forward_propagation,
-                                              ForwardPropagationMode::Training);
-        }
-
-        {
-            PROFILE_SCOPE("step:bwd_total");
-
-            if(use_device_metrics)
-            {
-                if(!loss->back_propagate_device_metrics(
-                       batch,
-                       forward_propagation,
-                       back_propagation,
-                       device_metrics.error_sum(),
-                       tracks_accuracy ? device_metrics.accuracy_sum() : nullptr))
-                {
-                    throw runtime_error(
-                        "Device epoch metrics unexpectedly unsupported for this loss.");
-                }
-            }
-            else
-            {
-                loss->back_propagate(batch,
-                                     forward_propagation,
-                                     back_propagation);
-            }
-        }
-
-        const bool batch_ok = use_device_metrics || !std::isnan(back_propagation.metrics.error);
-
-        if (!use_device_metrics && batch_ok)
-        {
-            result.error += back_propagation.metrics.error;
-
-            if(tracks_accuracy)
-                result.accuracy += back_propagation.metrics.accuracy;
-        }
-
-        if (batch_ok)
-        {
-            PROFILE_SCOPE("step:optim_total");
-            update_parameters(back_propagation, optimizer_data);
-        }
-
-        if(post_batch_callback)
-            post_batch_callback(network);
-    };
-
-    if(batches_number > 0)
-        epoch_result = run_epoch_loop(context);
-
-    if(use_device_metrics)
-        epoch_result = device_metrics.read();
-
-    epoch_result =
-        average_epoch_metrics(epoch_result, batches_number, tracks_accuracy);
-
-    if(use_device_metrics)
-    {
-        back_propagation.metrics.error = epoch_result.error;
-        back_propagation.metrics.accuracy = epoch_result.accuracy;
-    }
-
-    merge_tail(epoch_result);
-    finalize_epoch(epoch_result);
-
-    if(profile_this)
-    {
-        worker_profile.print_epoch(epoch_t0,
-                                   "Epoch breakdown (training)",
-                                   workers_number);
-    }
-
-    return epoch_result;
+    TrainingEpochContext context(*this, main_context, empty_queue, batches, features,
+                                 training_session, optimizer_data, profile_this);
+    return context.run();
 }
 
 Loss::EvaluationResult Optimizer::evaluate_epoch(

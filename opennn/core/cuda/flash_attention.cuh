@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-2.1-or-later
 #ifndef FLASH_ATTENTION_CUH
 #define FLASH_ATTENTION_CUH
 
