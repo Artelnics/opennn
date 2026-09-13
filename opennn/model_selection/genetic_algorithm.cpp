@@ -480,6 +480,7 @@ void GeneticAlgorithm::perform_mutation()
 
 InputSelectionResult GeneticAlgorithm::perform_input_selection()
 {
+    validate_selection_training(training, folds_number, "GeneticAlgorithm");
     Loss* loss = training->get_loss();
 
     Dataset* dataset = loss->get_dataset();
@@ -487,10 +488,6 @@ InputSelectionResult GeneticAlgorithm::perform_input_selection()
     original_input_indices = dataset->get_variable_indices(VariableRole::Input);
     original_target_indices = dataset->get_variable_indices(VariableRole::Target);
     const vector<Index> time_variable_indices = dataset->get_variable_indices(VariableRole::Time);
-
-    throw_if(folds_number <= 1 && !dataset->has_validation(),
-             "dataset has no validation samples. "
-             "The genetic algorithm uses validation error to rank individuals.");
 
     InputSelectionResult input_selection_results(maximum_epochs);
 
@@ -588,6 +585,9 @@ InputSelectionResult GeneticAlgorithm::perform_input_selection()
 
         perform_mutation();
     }
+
+    throw_if(input_selection_results.optimum_validation_error == MAX,
+             "GeneticAlgorithm found no candidate with a finite validation error.");
 
     install_optimal_inputs(network, dataset,
                            genes_to_variable_indices(input_selection_results.optimal_inputs),

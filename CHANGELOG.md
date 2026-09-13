@@ -48,6 +48,24 @@ remaining limitations.
 
 ### Reliability and portability
 
+- Preserve multistep forecasting mode and target dimensions across dataset
+  save/load, and align lagged feature names with the actual input tensor order.
+- Invalidate GPU dataset copies and fitted transforms when their source values
+  change, and upload resident training data after preparing its scaling.
+- Reject unsupported BF16/INT8 non-maximum-suppression configurations before
+  buffer access. Keep positional embeddings for invalid token IDs consistent
+  across CPU and CUDA, including quantized weights.
+- Preserve custom WordLevel tokenizer framing and unknown-token settings in
+  JSON. Legacy files retain their default framing; tokenizer cache fingerprints
+  now include these settings, so existing caches are rebuilt.
+- Report errors for the restored model consistently in getters, console output
+  and saved summaries. Unavailable validation error is now NaN instead of zero.
+- Balance small cross-validation folds and reject empty or invalid partitions.
+  Model selection requires validation data and rejects unavailable scores.
+- Reject undefined constraint expressions and nonfinite model outputs during
+  response feasibility checks.
+- Publish downloaded assets only after a successful transfer, allowing failed
+  or interrupted downloads to be retried without accepting partial files.
 - Enforce strict bounded JSON syntax and run its parser under libFuzzer, ASan
   and UBSan from a checked-in seed corpus.
 - Add explicit `NATIVE` and `PORTABLE` CPU targets, recording the selected

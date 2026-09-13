@@ -15,12 +15,15 @@ class Training;
 class Network;
 class Dataset;
 
+void validate_selection_training(const Training*, Index folds_number, string_view algorithm);
+
 struct CandidateEvaluation
 {
     float training_error = MAX;
     float validation_error = MAX;
 };
 
+// The history-minimum flag is retained for compatibility; returned-model metrics take precedence.
 CandidateEvaluation evaluate_candidate(Training*,
                                        Network*,
                                        Index folds_number,

@@ -71,6 +71,7 @@ void TextGenerationDataset::create_vocabulary(const vector<string_view>& corpus_
 
 void TextGenerationDataset::read_txt()
 {
+    invalidate_data();
     logging::info() << "Reading .txt file..." << "\n";
 
     throw_if(sequence_length <= 0,

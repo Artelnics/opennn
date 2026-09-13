@@ -3,12 +3,16 @@
 #include "opennn/core/json.h"
 #include "opennn/dataset/dataset.h"
 #include "opennn/dataset/time_series_dataset.h"
+#include "opennn/dataset/tabular_dataset.h"
 #include "opennn/model_selection/cross_validation.h"
 #include "opennn/model_selection/selection_utilities.h"
 #include "opennn/training/training.h"
 #include "opennn/model_selection/model_selection.h"
 #include "opennn/models/models.h"
 #include "opennn/model_selection/growing_neurons.h"
+#include "opennn/model_selection/growing_inputs.h"
+#include "opennn/model_selection/genetic_algorithm.h"
+#include "opennn/training/sgd.h"
 
 using namespace opennn;
 
@@ -82,6 +86,145 @@ TEST(ModelSelectionTest, OrderedDatasetsProduceContiguousFolds)
     EXPECT_EQ(folds[0], vector<Index>({0, 1}));
     EXPECT_EQ(folds[1], vector<Index>({2, 3, 4}));
     EXPECT_EQ(folds[2], vector<Index>({5, 6, 7}));
+}
+
+TEST(ModelSelectionTest, SmallStratifiedPartitionsHaveBalancedNonemptyFolds)
+{
+    TabularDataset dataset(4, {1}, {1});
+    MatrixR data(4, 2);
+    data << 0, 0, 1, 0, 2, 1, 3, 1;
+    dataset.set_data(data);
+    dataset.set_sample_roles(SampleRole::Training);
+    Network network;
+    Training training(&network, &dataset);
+
+    for (const Index count : {Index(2), Index(3), Index(4)})
+    {
+        const auto folds = build_fold_partition(&training, count, 17);
+        EXPECT_EQ(folds, build_fold_partition(&training, count, 17));
+        vector<Index> samples;
+        size_t smallest = 4;
+        size_t largest = 0;
+        for (const auto& fold : folds)
+        {
+            EXPECT_FALSE(fold.empty());
+            smallest = min(smallest, fold.size());
+            largest = max(largest, fold.size());
+            samples.insert(samples.end(), fold.begin(), fold.end());
+        }
+        EXPECT_LE(largest - smallest, 1u);
+        ranges::sort(samples);
+        EXPECT_EQ(samples, vector<Index>({0, 1, 2, 3}));
+    }
+    for (const Index count : {Index(-1), Index(0), Index(1), Index(5)})
+        EXPECT_THROW(build_fold_partition(&training, count), runtime_error);
+}
+
+TEST(ModelSelectionTest, InvalidPartitionsAreRejectedBeforeTraining)
+{
+    TabularDataset dataset(5, {1}, {1});
+    dataset.set_sample_roles(SampleRole::Training);
+    dataset.set_sample_role(4, SampleRole::Testing);
+    ApproximationNetwork network({1}, {}, {1});
+    const VectorR original_parameters = network.get_parameters_map();
+    const auto original_roles = dataset.get_sample_roles();
+    Training training(&network, &dataset);
+    const vector<vector<vector<Index>>> invalid_partitions = {
+        {}, {{0, 1, 2, 3}}, {{0, 1}, {2, 3}, {}},
+        {{0, 0, 1}, {2, 3}}, {{0, 1}, {1, 2, 3}},
+        {{0, 1}, {2}}, {{0, 1}, {2, 3, 4}},
+        {{0, 1}, {2, 3, -1}}, {{0, 1}, {2, 3, 5}}
+    };
+    for (const auto& partition : invalid_partitions)
+    {
+        EXPECT_THROW(evaluate_folds(&training, partition), runtime_error);
+        EXPECT_EQ(dataset.get_sample_roles(), original_roles);
+        EXPECT_TRUE(network.get_parameters_map().isApprox(original_parameters, 0.0f));
+    }
+}
+
+TEST(ModelSelectionTest, SmallCrossValidationMeasuresEveryFold)
+{
+    TabularDataset dataset(4, {1}, {1});
+    MatrixR data(4, 2);
+    data << 0, 0, 1, 0, 2, 1, 3, 1;
+    dataset.set_data(data);
+    dataset.set_variable_scalers("None");
+    dataset.set_sample_roles(SampleRole::Training);
+    ApproximationNetwork network({1}, {}, {1});
+    Training training(&network, &dataset);
+    training.set_optimization_algorithm("SGD");
+    auto* optimizer = dynamic_cast<SGD*>(training.get_optimization_algorithm());
+    ASSERT_NE(optimizer, nullptr);
+    optimizer->set_initial_learning_rate(0.0f);
+    optimizer->set_maximum_epochs(1);
+    optimizer->set_display(false);
+    vector<float> errors;
+    optimizer->post_epoch_callback = [&](Index, float, float validation_error, Network*)
+    {
+        EXPECT_GT(dataset.get_samples_number(SampleRole::Validation), 0);
+        EXPECT_GT(dataset.get_samples_number(SampleRole::Training), 0);
+        EXPECT_TRUE(isfinite(validation_error));
+        errors.push_back(validation_error);
+    };
+
+    const auto result = evaluate_folds(&training, build_fold_partition(&training, 3));
+    ASSERT_EQ(errors.size(), 3u);
+    EXPECT_NEAR(result.validation_error, (errors[0] + errors[1] + errors[2]) / 3.0f, 1e-6f);
+    EXPECT_EQ(dataset.get_samples_number(SampleRole::Training), 4);
+    EXPECT_EQ(dataset.get_samples_number(SampleRole::Validation), 0);
+}
+
+TEST(ModelSelectionTest, MissingValidationCannotWinACandidateTrial)
+{
+    TabularDataset dataset(4, {1}, {1});
+    dataset.set_data_constant(0.0f);
+    dataset.set_variable_scalers("None");
+    dataset.set_sample_roles(SampleRole::Training);
+    ApproximationNetwork network({1}, {}, {1});
+    Training training(&network, &dataset);
+    training.get_optimization_algorithm()->set_maximum_epochs(1);
+    training.get_optimization_algorithm()->set_display(false);
+    bool observed = false;
+    const auto result = evaluate_candidate(&training, &network, 1, {}, 1, false,
+        [&](Index, float, float validation_error, bool improved)
+        {
+            observed = true;
+            EXPECT_TRUE(isnan(validation_error));
+            EXPECT_FALSE(improved);
+        });
+    EXPECT_TRUE(observed);
+    EXPECT_EQ(result.validation_error, MAX);
+}
+
+TEST(ModelSelectionTest, GrowingSelectorsRequireValidationBeforeChangingTheModel)
+{
+    TabularDataset dataset(4, {1}, {1});
+    dataset.set_sample_roles(SampleRole::Training);
+    ApproximationNetwork network({1}, {2}, {1});
+    const VectorR original_parameters = network.get_parameters_map();
+    const auto original_inputs = dataset.get_variable_indices(VariableRole::Input);
+    Training training(&network, &dataset);
+    GrowingInputs inputs(&training);
+    GrowingNeurons neurons(&training);
+    EXPECT_THROW(inputs.perform_input_selection(), runtime_error);
+    EXPECT_THROW(neurons.perform_neurons_selection(), runtime_error);
+    EXPECT_EQ(dataset.get_variable_indices(VariableRole::Input), original_inputs);
+    EXPECT_TRUE(network.get_parameters_map().isApprox(original_parameters, 0.0f));
+}
+
+TEST(ModelSelectionTest, SelectorsRejectMissingTrainingConfiguration)
+{
+    Training empty_training;
+    for (Training* training : {static_cast<Training*>(nullptr), &empty_training})
+    {
+        GrowingInputs inputs(training);
+        GrowingNeurons neurons(training);
+        GeneticAlgorithm genetic(training);
+        EXPECT_THROW(inputs.perform_input_selection(), runtime_error);
+        EXPECT_THROW(neurons.perform_neurons_selection(), runtime_error);
+        EXPECT_THROW(genetic.perform_input_selection(), runtime_error);
+    }
 }
 
 TEST(ModelSelectionTest, ConfiguresForecastingInputsThroughDatasetContract)

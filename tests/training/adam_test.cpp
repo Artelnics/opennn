@@ -452,7 +452,16 @@ TEST_F(AdamTest, CudaGraphGroupedResidentBf16Replay)
     adam.set_maximum_epochs(1);
     adam.set_display(false);
 
+    bool resident_during_training = false;
+    adam.post_epoch_callback = [&](Index, float, float, Network*)
+    {
+        resident_during_training = dataset.uses_device_residency();
+        EXPECT_TRUE(resident_during_training);
+        EXPECT_EQ(dataset.get_device_data_columns(), raw.cols());
+    };
+
     EXPECT_TRUE(isfinite(adam.train().get_training_error()));
+    EXPECT_TRUE(resident_during_training);
     EXPECT_TRUE(dataset.get_data().isApprox(raw, 0.0f));
     EXPECT_TRUE(dataset.requests_device_residency());
     EXPECT_FALSE(dataset.is_device_resident());

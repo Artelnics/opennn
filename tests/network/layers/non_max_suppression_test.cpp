@@ -244,3 +244,48 @@ TEST(NonMaxSuppression, GpuStagingIsPropagationOwned)
     EXPECT_NE(first.layer_pinned_storage[0].data(),
               second.layer_pinned_storage[0].data());
 }
+
+TEST(NonMaxSuppression, RejectsUnsupportedPrecisionBeforeInference)
+{
+    NonMaxSuppression layer(Shape{1, 1, 6});
+    EXPECT_NO_THROW(layer.set_compute_dtype(Type::FP32));
+    EXPECT_THROW(layer.set_compute_dtype(Type::BF16), runtime_error);
+    EXPECT_THROW(layer.set_compute_dtype(Type::INT8), runtime_error);
+
+    float input[6]{};
+    vector<uint8_t> output(64, 0xA5);
+    ForwardPropagation forward;
+    forward.inputs = {{TensorView(input, {1, 1, 1, 6})}};
+    forward.slots = {{TensorView{}, TensorView(output.data(), {1, 1, 6}, Type::BF16)}};
+    NonMaxSuppressionOperator op;
+    op.set({1, 1, 6}, 1, 0.5f, 0.4f);
+    EXPECT_THROW(op.forward_propagate(forward, 0, ForwardPropagationMode::Inference), runtime_error);
+    EXPECT_EQ(output, vector<uint8_t>(64, 0xA5));
+
+    forward.inputs[0][0] = TensorView(input, {1, 1, 1, 6}, Type::BF16);
+    forward.slots[0][1] = TensorView(output.data(), {1, 1, 6});
+    EXPECT_THROW(op.forward_propagate(forward, 0, ForwardPropagationMode::Inference), runtime_error);
+    EXPECT_EQ(output, vector<uint8_t>(64, 0xA5));
+}
+
+TEST(NonMaxSuppression, CudaCompileRejectsBf16AndInt8)
+{
+    if (!device::has_cuda_device() || device::cuda_compute_capability() < 80)
+        GTEST_SKIP() << "An Ampere or newer CUDA device is required.";
+
+    for (const Type type : {Type::BF16, Type::INT8})
+    {
+        Configuration::instance().set(Device::CUDA, type);
+        Network network;
+        network.add_layer(make_unique<NonMaxSuppression>(Shape{1, 1, 6}));
+        try
+        {
+            network.compile(Device::CUDA);
+            FAIL() << "NMS must reject a network with BF16 activations.";
+        }
+        catch (const runtime_error& error)
+        {
+            EXPECT_NE(string(error.what()).find("NonMaxSuppression layer supports FP32"), string::npos);
+        }
+    }
+}

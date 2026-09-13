@@ -49,6 +49,13 @@ public:
 
     bool accepts_input_rank(Index rank) const override { return is_one_of(rank, 3); }
 
+    void on_compute_dtype_changed() override
+    {
+        throw_if(get_compute_dtype() != Type::FP32,
+                 "{} layer supports FP32 activations only; compile the network with Type::FP32.",
+                 get_name());
+    }
+
     void apply_input_shape(const Shape&) override;
 
     float get_confidence_threshold() const { return nms.confidence_threshold; }

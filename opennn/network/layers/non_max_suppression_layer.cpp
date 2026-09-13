@@ -46,6 +46,9 @@ void NonMaxSuppressionOperator::forward_propagate(ForwardPropagation& forward_pr
 
     if (is_training(pass)) return;
 
+    throw_if(input.get_type() != Type::FP32 || output.get_type() != Type::FP32,
+             "NonMaxSuppressionOperator: input and output must use FP32.");
+
 #ifdef OPENNN_HAS_CUDA
     if (input.is_cuda())
     {

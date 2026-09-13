@@ -151,10 +151,14 @@ public:
     const MatrixR& get_data() const noexcept { return data; }
     void set_data(const MatrixR&);
     void set_data(MatrixR&&);
-    void set_data_constant(float new_value) { data.setConstant(new_value); }
+    void set_data_constant(float new_value) { invalidate_data(); data.setConstant(new_value); }
 
     virtual void enable_device_residency();
-    void disable_device_residency() { data_device.resize_bytes(0, Device::CUDA); }
+    void disable_device_residency()
+    {
+        data_device.resize_bytes(0, Device::CUDA);
+        device_data_columns = 0;
+    }
     bool is_device_resident() const noexcept { return data_device.data() != nullptr; }
     bool requests_device_residency() const noexcept
     {
@@ -339,6 +343,13 @@ protected:
     StorageMode storage_mode = StorageMode::Matrix;
 
     void upload_device_matrix(const MatrixR&);
+
+    // Call before replacing or editing host data, including reloads and preprocessing.
+    void invalidate_data()
+    {
+        clear_training_scaling();
+        disable_device_residency();
+    }
 
     MatrixR data;
 

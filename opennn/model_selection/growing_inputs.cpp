@@ -77,11 +77,15 @@ void GrowingInputs::set_maximum_inputs_number(const Index new_maximum_inputs_num
 InputSelectionResult GrowingInputs::perform_input_selection()
 {
 
+    validate_selection_training(training, folds_number, "GrowingInputs");
     Dataset* dataset = training->get_dataset();
     const Index original_input_variables_number = dataset->get_variables_number(VariableRole::Input);
 
     if (dataset->has_nan())
         dataset->scrub_missing_values();
+
+    const vector<vector<Index>> fold_partition =
+        folds_number > 1 ? build_fold_partition(training, folds_number) : vector<vector<Index>>{};
 
     if (display) logging::info() << "Performing growing input selection...\n";
 
@@ -131,9 +135,6 @@ InputSelectionResult GrowingInputs::perform_input_selection()
     time(&beginning_time);
 
     Index epoch = 0;
-
-    const vector<vector<Index>> fold_partition =
-        folds_number > 1 ? build_fold_partition(training, folds_number) : vector<vector<Index>>{};
 
     ParameterSnapshot warm_snapshot;
     ParameterSnapshot candidate_snapshot;
@@ -283,6 +284,9 @@ InputSelectionResult GrowingInputs::perform_input_selection()
 
     input_selection_results.elapsed_time = get_time(elapsed_time);
     input_selection_results.resize_history(epoch);
+
+    throw_if(input_selection_results.optimum_validation_error == MAX,
+             "GrowingInputs found no candidate with a finite validation error.");
 
     install_optimal_inputs(network, dataset,
                            input_selection_results.optimal_input_variables_indices,

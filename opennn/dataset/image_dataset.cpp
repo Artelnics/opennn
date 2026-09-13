@@ -120,6 +120,7 @@ void ImageDataset::set_input_scaling(const vector<Descriptives>& descriptives,
     throw_if(ssize(descriptives) != channels || ssize(scalers) != channels,
              "ImageDataset::set_input_scaling: channel count mismatch.");
 
+    disable_device_residency();
     input_scale.resize(size_t(channels));
     input_offset.resize(size_t(channels));
 
@@ -332,6 +333,7 @@ VectorI ImageDataset::calculate_target_distribution() const
 
 void ImageDataset::read_images()
 {
+    invalidate_data();
     const chrono::high_resolution_clock::time_point start_time = chrono::high_resolution_clock::now();
 
     data.resize(0, 0);

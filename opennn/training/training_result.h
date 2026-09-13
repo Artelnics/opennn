@@ -22,8 +22,10 @@ struct TrainingResult
 
     string write_stopping_condition() const;
 
+    // Report the restored model's epoch when available; histories retain every epoch.
     float get_training_error() const;
 
+    // Without restoration, return the latest finite measurement, or NaN if unavailable.
     float get_validation_error() const;
 
     Index get_epochs_number() const { return training_error_history.size(); }

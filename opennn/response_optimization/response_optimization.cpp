@@ -68,6 +68,8 @@ float ResponseOptimization::Constraint::calculate_residual(const VectorR& input,
 
     const float value = expression.evaluate(input, output);
 
+    if (!isfinite(value)) return numeric_limits<float>::infinity();
+
     if (condition == Condition::AllowedSet)
     {
         const float nearest = *ranges::min_element(values, {},
@@ -148,22 +150,28 @@ pair<VectorR, VectorR> ResponseOptimization::get_feasible_point(VectorR input,
 {
     const Index constraints_number = Index(constraints.size());
 
-    const auto evaluate = [&](const VectorR& point, VectorR& point_values, VectorR& point_residuals)
+    const auto evaluate = [&](const VectorR& point, VectorR& point_values,
+                              VectorR& point_residuals, VectorR& point_output)
     {
-        const VectorR point_output = network->calculate_outputs(point.transpose()).row(0).transpose();
+        point_output = network->calculate_outputs(point.transpose()).row(0).transpose();
+        if (!point_output.allFinite()) return false;
 
         for (Index i = 0; i < constraints_number; i++)
         {
             const Constraint& constraint = constraints[size_t(i)];
 
             point_values(i) = constraint.expression.evaluate(point, point_output);
+            if (!isfinite(point_values(i))) return false;
 
             const float residual = constraint.calculate_residual(point, point_output, feasibility_margin);
 
-            point_residuals(i) = isfinite(residual) ? residual : 0.0f;
+            // NaN is the legacy satisfied-constraint sentinel. Undefined
+            // expressions were rejected above; infinite residuals are invalid.
+            if (isinf(residual)) return false;
+            point_residuals(i) = isnan(residual) ? 0.0f : residual;
         }
 
-        return point_output;
+        return true;
     };
 
     input = assign_categories(input.cwiseMax(domain.first).cwiseMin(domain.second));
@@ -171,7 +179,8 @@ pair<VectorR, VectorR> ResponseOptimization::get_feasible_point(VectorR input,
     VectorR values(constraints_number);
     VectorR residuals(constraints_number);
 
-    VectorR output = evaluate(input, values, residuals);
+    VectorR output;
+    if (!evaluate(input, values, residuals, output)) return {};
 
     if ((residuals.array() == 0.0f).all())
         return {input, output};
@@ -220,7 +229,11 @@ pair<VectorR, VectorR> ResponseOptimization::get_feasible_point(VectorR input,
         {
             trial = assign_categories((input + length*direction).cwiseMax(domain.first).cwiseMin(domain.second));
 
-            trial_output = evaluate(trial, trial_values, trial_residuals);
+            if (!evaluate(trial, trial_values, trial_residuals, trial_output))
+            {
+                length *= 0.5f;
+                continue;
+            }
 
             if (trial_residuals.cwiseAbs().maxCoeff() < residuals.cwiseAbs().maxCoeff())
             {

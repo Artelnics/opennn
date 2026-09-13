@@ -283,6 +283,48 @@ WordLevelTokenizer::WordLevelTokenizer(vector<string> new_reserved_tokens)
     end_id = resolve_id("[END]");
 }
 
+void WordLevelTokenizer::to_JSON(JsonWriter& printer) const
+{
+    TokenizerOperator::to_JSON(printer);
+    write_json(printer, {
+        {"ReservedTokens", json_array(reserved_tokens)},
+        {"UnknownTokenId", unk_id},
+        {"StartTokenId", start_id},
+        {"EndTokenId", end_id}
+    });
+}
+
+void WordLevelTokenizer::from_JSON(const Json* element)
+{
+    // Legacy documents used the default word-level constructor on loading.
+    // Keep that behavior when the explicit configuration is absent.
+    const WordLevelTokenizer defaults = element->has("ReservedTokens")
+        ? WordLevelTokenizer(read_json_strings(element, "ReservedTokens"))
+        : WordLevelTokenizer();
+    reserved_tokens = defaults.reserved_tokens;
+    unk_id = defaults.unk_id;
+    start_id = defaults.start_id;
+    end_id = defaults.end_id;
+
+    TokenizerOperator::from_JSON(element);
+
+    if (element->has("UnknownTokenId")) unk_id = read_json_index(element, "UnknownTokenId");
+    if (element->has("StartTokenId")) start_id = read_json_index(element, "StartTokenId");
+    if (element->has("EndTokenId")) end_id = read_json_index(element, "EndTokenId");
+    throw_if(unk_id < 0 || start_id < -1 || end_id < -1,
+             "WordLevelTokenizer: unknown token ID must be nonnegative; framing IDs must be -1 or nonnegative.");
+}
+
+uint64_t WordLevelTokenizer::fingerprint() const
+{
+    uint64_t hash = TokenizerOperator::fingerprint();
+    for (const string& token : reserved_tokens) hash_bytes(hash, token);
+    hash_number(hash, uint64_t(unk_id));
+    hash_number(hash, uint64_t(start_id));
+    hash_number(hash, uint64_t(end_id));
+    return hash;
+}
+
 vector<string> WordLevelTokenizer::tokenize(string_view text) const
 {
     const string lowered = ascii_lowercase(text);

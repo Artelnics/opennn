@@ -102,19 +102,21 @@ Tensor3 TimeSeriesDataset::get_data(const string& sample_role, const string& fea
 
 void TimeSeriesDataset::set_past_time_steps(const Index new_past_time_steps)
 {
+    throw_if(new_past_time_steps <= 0, "Past time steps must be positive.");
+    detail::checked_index_add(new_past_time_steps, future_time_steps, "Forecasting window");
+    const Shape new_shape{new_past_time_steps, get_features_number(VariableRole::Input)};
     past_time_steps = new_past_time_steps;
-    input_shape = { past_time_steps, get_features_number(VariableRole::Input) };
+    input_shape = new_shape;
     refresh_forecasting_roles();
 }
 
 void TimeSeriesDataset::set_future_time_steps(const Index new_future_time_steps)
 {
+    throw_if(new_future_time_steps <= 0, "Future time steps must be positive.");
+    detail::checked_index_add(past_time_steps, new_future_time_steps, "Forecasting window");
+    const Shape new_shape = forecasting_target_shape(new_future_time_steps, multi_target);
     future_time_steps = new_future_time_steps;
-    if (multi_target)
-    {
-        const Index n_targets = get_features_number(VariableRole::Target);
-        target_shape = { future_time_steps * (n_targets > 0 ? n_targets : 1) };
-    }
+    target_shape = new_shape;
     refresh_forecasting_roles();
 }
 
@@ -142,11 +144,16 @@ void TimeSeriesDataset::refresh_forecasting_roles()
 
 void TimeSeriesDataset::set_multi_target(bool new_multi_target)
 {
+    const Shape new_shape = forecasting_target_shape(future_time_steps, new_multi_target);
     multi_target = new_multi_target;
+    target_shape = new_shape;
+}
 
-    const Index n_targets = get_features_number(VariableRole::Target);
-    target_shape = multi_target ? Shape{ future_time_steps * (n_targets > 0 ? n_targets : 1) }
-                                : Shape{ n_targets > 0 ? n_targets : 1 };
+Shape TimeSeriesDataset::forecasting_target_shape(Index future_steps, bool multiple_targets) const
+{
+    const Index targets = max(Index(1), get_features_number(VariableRole::Target));
+    return {detail::checked_index_multiply(targets, multiple_targets ? future_steps : 1,
+                                            "Forecasting targets")};
 }
 
 void TimeSeriesDataset::resize_input_shape(Index input_features_count)
@@ -160,8 +167,8 @@ vector<Variable> TimeSeriesDataset::get_model_input_variables() const
     vector<Variable> model_variables;
     model_variables.reserve(feature_names.size() * size_t(past_time_steps));
 
-    for (const string& feature_name : feature_names)
-        for (Index lag = 0; lag < past_time_steps; ++lag)
+    for (Index lag = 0; lag < past_time_steps; ++lag)
+        for (const string& feature_name : feature_names)
             model_variables.emplace_back(
                 format("{}_lag{}", feature_name.empty() ? "variable" : feature_name, lag),
                 "Input",
@@ -182,6 +189,7 @@ void TimeSeriesDataset::to_JSON(JsonWriter& printer) const
         {"MissingValuesLabel", missing_values_label},
         {"LagsNumber", get_past_time_steps()},
         {"StepsAhead", get_future_time_steps()},
+        {"MultiTarget", get_multi_target()},
         {"Codification", get_codification_string()}
     });
 
@@ -205,16 +213,21 @@ void TimeSeriesDataset::from_JSON(const JsonDocument& data_set_document)
     set_has_header(read_json_bool(data_source_element, "HasHeader"));
     set_has_ids(read_json_bool(data_source_element, "HasSamplesId"));
     set_missing_values_label(read_json_string(data_source_element, "MissingValuesLabel"));
-    set_past_time_steps(parse_int(read_json_string(data_source_element, "LagsNumber"), "LagsNumber"));
-    set_future_time_steps(parse_int(read_json_string(data_source_element, "StepsAhead"), "StepsAhead"));
+    const Index new_past = parse_int(read_json_string(data_source_element, "LagsNumber"), "LagsNumber");
+    const Index new_future = parse_int(read_json_string(data_source_element, "StepsAhead"), "StepsAhead");
+    throw_if(new_past <= 0 || new_future <= 0, "Forecasting time steps must be positive.");
+    detail::checked_index_add(new_past, new_future, "Forecasting window");
     set_codification(read_json_string(data_source_element, "Codification"));
 
     read_json_blocks(data_set_element);
 
     set_display(read_json_bool(data_set_element, "Display"));
 
+    past_time_steps = new_past;
+    future_time_steps = new_future;
     input_shape = { past_time_steps, get_features_number(VariableRole::Input) };
-    target_shape = { get_features_number(VariableRole::Target) };
+    set_multi_target(data_source_element->has("MultiTarget")
+                     && read_json_bool(data_source_element, "MultiTarget"));
 }
 
 void TimeSeriesDataset::read_csv()
@@ -241,7 +254,7 @@ void TimeSeriesDataset::configure_forecasting()
     }
 
     input_shape = {past_time_steps, get_features_number(VariableRole::Input)};
-    target_shape = {get_features_number(VariableRole::Target)};
+    target_shape = forecasting_target_shape(future_time_steps, multi_target);
 
     refresh_forecasting_roles();
 }
@@ -278,6 +291,8 @@ void TimeSeriesDataset::impute_missing_values_unuse()
 
 void TimeSeriesDataset::impute_missing_values_interpolate()
 {
+    require_in_memory_data("TimeSeriesDataset::impute_missing_values_interpolate");
+    invalidate_data();
     const vector<Index> used_sample_indices = get_used_sample_indices();
 
     const Index used_samples_number = used_sample_indices.size();
@@ -404,9 +419,13 @@ void TimeSeriesDataset::fill_targets(const vector<Index>& sample_indices,
     if (sample_indices.empty() || target_indices.empty()) return;
 
     const Index batch_size = ssize(sample_indices);
-    const Index targets_number = get_target_shape()[0];
+    const Index targets_number = get_target_shape().size();
     const Index total_rows_in_data = data.rows();
     const Index target_columns = ssize(target_indices);
+
+    throw_if(targets_number != detail::checked_index_multiply(
+                 target_columns, multi_target ? future_time_steps : 1, "Forecasting targets"),
+             "TimeSeriesDataset target shape does not match the forecasting horizon.");
 
     for (const Index sample_index : sample_indices)
         throw_if(sample_index < 0 || sample_index >= total_rows_in_data,
@@ -492,6 +511,11 @@ void TimeSeriesDataset::fill_batch(Batch& batch,
 
     throw_if(Index(sample_indices.size()) != batch.batch_size,
              "fill_batch sample count does not match the batch size.");
+    throw_if((batch.input.shape != Shape{batch.batch_size, past_time_steps, ssize(input_indices)}
+             || batch.target.shape != Shape{batch.batch_size,
+                 detail::checked_index_multiply(ssize(target_indices),
+                     multi_target ? future_time_steps : 1, "Forecasting targets")}),
+             "TimeSeriesDataset batch shape does not match the forecasting window.");
 
     if (batch.input.type != Type::BF16
         && can_device_gather(batch, features))

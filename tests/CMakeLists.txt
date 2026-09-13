@@ -35,6 +35,10 @@ add_executable(opennn_tests ${TEST_SOURCES})
 
 target_link_libraries(opennn_tests PRIVATE GTest::gtest opennn)
 
+if(WIN32)
+    target_link_libraries(opennn_tests PRIVATE ws2_32)
+endif()
+
 add_executable(opennn_response_tests ${RESPONSE_SCENARIO_SOURCES})
 
 target_link_libraries(opennn_response_tests PRIVATE GTest::gtest_main opennn)

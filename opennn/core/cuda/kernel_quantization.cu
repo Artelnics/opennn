@@ -194,12 +194,13 @@ __global__ void embedding_forward_w8_kernel(
         const int dim_index = i % embedding_dimension;
         const int token_id = static_cast<int>(inputs[token_index]);
 
-        float val = (token_id > 0 && token_id < vocabulary_size)
+        const bool valid_token = token_id > 0 && token_id < vocabulary_size;
+        float val = valid_token
             ? scale * weight_scales[token_id]
                 * float(weights[size_t(token_id) * embedding_dimension + dim_index])
             : 0.0f;
 
-        if (positional_encoding != nullptr && token_id > 0)
+        if (positional_encoding != nullptr && valid_token)
         {
             const int seq_index = token_index % sequence_length;
             val += positional_encoding[seq_index * embedding_dimension + dim_index];

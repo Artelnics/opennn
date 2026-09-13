@@ -458,6 +458,7 @@ static NumberFormat detect_number_format(const vector<string_view>& lines,
 
 void TabularDataset::read_csv()
 {
+    invalidate_data();
     const string separator_string = get_separator_string();
     const char file_separator = separator_string.empty() ? ',' : separator_string[0];
 

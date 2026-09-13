@@ -152,6 +152,7 @@ void Dataset::get_batches(const vector<Index>& sample_indices,
 
 void Dataset::set_storage_mode(StorageMode new_storage_mode)
 {
+    disable_device_residency();
     storage_mode = new_storage_mode;
 
     if (new_storage_mode == StorageMode::BinaryFile)
@@ -185,6 +186,7 @@ void Dataset::set_data(const MatrixR& new_data)
     throw_if(new_data.cols() != get_features_number(),
              "Columns number is not equal to variables number");
 
+    invalidate_data();
     data = new_data;
     set_storage_mode(StorageMode::Matrix);
 }
@@ -196,6 +198,7 @@ void Dataset::set_data(MatrixR&& new_data)
     throw_if(new_data.cols() != get_features_number(),
              "Columns number is not equal to variables number");
 
+    invalidate_data();
     data = std::move(new_data);
     set_storage_mode(StorageMode::Matrix);
 }
@@ -888,6 +891,7 @@ void Dataset::write_json_footer(JsonWriter& printer) const
 
 void Dataset::read_json_blocks(const Json* dataset_element)
 {
+    invalidate_data();
     if (const Json* variables_element = dataset_element->find("Variables"))
         variables_from_JSON(variables_element);
     if (const Json* samples_element = dataset_element->find("Samples"))

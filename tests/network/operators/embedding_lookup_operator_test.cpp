@@ -175,6 +175,82 @@ TEST(EmbeddingLookupOperatorTest, ValidLengthsCountNonPaddingTokensPerRow)
     EXPECT_EQ(valid_lengths[1], 0);
 }
 
+TEST(EmbeddingLookupOperatorTest, CudaPositionalEncodingKeepsInvalidTokensZeroAcrossPrecisions)
+{
+    if (!device::has_cuda_device()) GTEST_SKIP() << "No CUDA device.";
+
+    MatrixR weights = embedding_table();
+    MatrixR positional(sequence_length, embedding_dimension);
+    positional << 10.0f, 20.0f, 30.0f, 40.0f, 50.0f, 60.0f;
+    VectorR indices(tokens);
+    indices << 0.0f, float(vocabulary_size), 99.0f, -4.0f, 1.0f, 4.0f;
+    const TensorView host_indices(indices.data(), {batch, sequence_length});
+    MatrixR expected(tokens, embedding_dimension);
+    TensorView expected_view = matrix_view(expected);
+    embedding_lookup_forward(host_indices, matrix_view(weights), matrix_view(positional),
+                             expected_view, sequence_length, embedding_dimension,
+                             vocabulary_size, false, true);
+    EXPECT_TRUE(expected.topRows(4).isZero());
+
+    const auto upload = [](const void* data, Index bytes)
+    {
+        Buffer result(Device::CUDA);
+        result.resize_bytes(bytes, Device::CUDA);
+        device::copy_async(result.data(), data, bytes, device::CopyKind::HostToDevice);
+        return result;
+    };
+    const VectorR scales = VectorR::Ones(vocabulary_size);
+    vector<uint16_t> bf16_weights(size_t(weights.size()));
+    float_2_bfloat16_host(weights.size(), weights.data(), bf16_weights.data());
+    vector<int8_t> int8_weights(size_t(weights.size()));
+    for (Index i = 0; i < weights.size(); ++i) int8_weights[size_t(i)] = int8_t(weights.data()[i]);
+
+    Buffer gpu_indices = upload(indices.data(), indices.size() * Index(sizeof(float)));
+    Buffer gpu_positional = upload(positional.data(), positional.size() * Index(sizeof(float)));
+    Buffer gpu_scales = upload(scales.data(), scales.size() * Index(sizeof(float)));
+    Buffer gpu_fp32_weights = upload(weights.data(), weights.size() * Index(sizeof(float)));
+    Buffer gpu_bf16_weights = upload(bf16_weights.data(), weights.size() * Index(sizeof(uint16_t)));
+    Buffer gpu_int8_weights = upload(int8_weights.data(), weights.size() * Index(sizeof(int8_t)));
+    const TensorView device_indices(gpu_indices.data(), {batch, sequence_length}, Type::FP32, Device::CUDA);
+    const TensorView device_positional(gpu_positional.data(), {sequence_length, embedding_dimension}, Type::FP32, Device::CUDA);
+    const TensorView device_scales(gpu_scales.data(), {vocabulary_size}, Type::FP32, Device::CUDA);
+
+    for (const Type weight_type : {Type::FP32, Type::BF16, Type::INT8})
+    {
+        const Buffer& weight_buffer = weight_type == Type::FP32 ? gpu_fp32_weights
+                                    : weight_type == Type::BF16 ? gpu_bf16_weights : gpu_int8_weights;
+        const TensorView device_weights(weight_buffer.data(), {vocabulary_size, embedding_dimension}, weight_type, Device::CUDA);
+        for (const Type output_type : {Type::FP32, Type::BF16})
+        {
+            SCOPED_TRACE(format("weights={}, outputs={}", int(weight_type), int(output_type)));
+            Buffer gpu_output(Device::CUDA);
+            gpu_output.resize_bytes(expected.size() * type_bytes(output_type), Device::CUDA);
+            TensorView output(gpu_output.data(), {batch, sequence_length, embedding_dimension}, output_type, Device::CUDA);
+            embedding_lookup_forward(device_indices, device_weights, device_positional, output,
+                                     sequence_length, embedding_dimension, vocabulary_size,
+                                     false, true, device_scales);
+
+            MatrixR actual(tokens, embedding_dimension);
+            if (output_type == Type::FP32)
+            {
+                device::copy_async(actual.data(), gpu_output.data(), actual.size() * Index(sizeof(float)),
+                                   device::CopyKind::DeviceToHost);
+                device::synchronize();
+            }
+            else
+            {
+                vector<uint16_t> host_output(size_t(actual.size()));
+                device::copy_async(host_output.data(), gpu_output.data(), actual.size() * Index(sizeof(uint16_t)),
+                                   device::CopyKind::DeviceToHost);
+                device::synchronize();
+                for (Index i = 0; i < actual.size(); ++i)
+                    actual.data()[i] = bfloat16_to_float_host(host_output[size_t(i)]);
+            }
+            EXPECT_TRUE(actual.isApprox(expected, 0.0f));
+        }
+    }
+}
+
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2026 Artificial Intelligence, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

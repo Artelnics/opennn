@@ -76,6 +76,7 @@ public:
 private:
 
     void configure_forecasting();
+    Shape forecasting_target_shape(Index, bool) const;
 
     Index past_time_steps = 2;
 

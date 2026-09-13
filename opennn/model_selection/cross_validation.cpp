@@ -18,12 +18,18 @@ namespace opennn
 
 vector<vector<Index>> build_fold_partition(Training* training, Index folds_number, Index folds_seed)
 {
+    throw_if(!training || !training->get_dataset(),
+             "Cross-validation requires a training configuration with a dataset.");
     Dataset* dataset = training->get_dataset();
-    const Index k = max<Index>(folds_number, Index(1));
+    const Index k = folds_number;
 
     vector<Index> development = dataset->get_sample_indices(SampleRole::Training);
     const vector<Index> validation = dataset->get_sample_indices(SampleRole::Validation);
     development.insert(development.end(), validation.begin(), validation.end());
+
+    throw_if(k < 2 || k > ssize(development),
+             "Cross-validation requires between 2 and {} nonempty folds; requested {}.",
+             development.size(), k);
 
     vector<vector<Index>> folds(static_cast<size_t>(k));
 
@@ -35,10 +41,14 @@ vector<vector<Index>> build_fold_partition(Training* training, Index folds_numbe
                 folds[size_t(f)].push_back(items[j]);
     };
 
-    auto deal_round_robin = [&folds, k](const vector<Index>& items)
+    size_t next_fold = 0;
+    auto deal_round_robin = [&folds, k, &next_fold](const vector<Index>& items)
     {
-        for (size_t i = 0; i < items.size(); ++i)
-            folds[i % size_t(k)].push_back(items[i]);
+        for (const Index sample : items)
+        {
+            folds[next_fold].push_back(sample);
+            next_fold = (next_fold + 1) % size_t(k);
+        }
     };
 
     if (dataset->sample_order_matters())
@@ -80,16 +90,40 @@ vector<vector<Index>> build_fold_partition(Training* training, Index folds_numbe
 
 FoldEvaluation evaluate_folds(Training* training, const vector<vector<Index>>& fold_partition)
 {
+    throw_if(!training || !training->get_dataset() || !training->get_network()
+             || !training->get_optimization_algorithm(),
+             "Cross-validation requires a dataset, network and optimizer.");
     Dataset* dataset = training->get_dataset();
-    Network* network = training->get_loss()->get_network();
+    Network* network = training->get_network();
     const Index k = ssize(fold_partition);
+    throw_if(k < 2, "Cross-validation requires at least two nonempty folds.");
+
+    vector<Index> eligible = dataset->get_sample_indices(SampleRole::Training);
+    const vector<Index> validation = dataset->get_sample_indices(SampleRole::Validation);
+    eligible.insert(eligible.end(), validation.begin(), validation.end());
+    const std::set<Index> eligible_set(eligible.begin(), eligible.end());
+    std::set<Index> seen;
 
     vector<Index> development;
     for (const vector<Index>& fold : fold_partition)
-        development.insert(development.end(), fold.begin(), fold.end());
+    {
+        throw_if(fold.empty(), "Cross-validation folds cannot be empty.");
+        for (const Index sample : fold)
+        {
+            throw_if(!eligible_set.contains(sample),
+                     "Cross-validation sample {} is not a training or validation sample.", sample);
+            throw_if(!seen.insert(sample).second,
+                     "Cross-validation sample {} appears more than once.", sample);
+            development.push_back(sample);
+        }
+    }
+    throw_if(seen.size() != eligible_set.size(),
+             "Cross-validation folds must cover every training and validation sample.");
 
-    float validation_error_sum = 0.0f;
-    float training_error_sum = 0.0f;
+    double validation_error_sum = 0.0;
+    double training_error_sum = 0.0;
+    bool valid_validation_errors = true;
+    bool valid_training_errors = true;
     Index epochs_sum = 0;
 
     for (Index f = 0; f < k; ++f)
@@ -107,26 +141,24 @@ FoldEvaluation evaluate_folds(Training* training, const vector<vector<Index>>& f
         network->set_parameters_random();
         const TrainingResult training_results = training->train();
 
-        float validation_error = training_results.get_validation_error();
-        float training_error = training_results.get_training_error();
-        if (!isfinite(validation_error)) validation_error = MAX;
-        if (!isfinite(training_error))   training_error   = MAX;
+        const float validation_error = training_results.get_validation_error();
+        const float training_error = training_results.get_training_error();
+        valid_validation_errors = valid_validation_errors && isfinite(validation_error);
+        valid_training_errors = valid_training_errors && isfinite(training_error);
 
         const Index fold_epochs = training_results.restored_epoch
             ? *training_results.restored_epoch + 1
             : training_results.get_epochs_number();
 
-        validation_error_sum += validation_error;
-        training_error_sum += training_error;
+        if (isfinite(validation_error)) validation_error_sum += double(validation_error);
+        if (isfinite(training_error)) training_error_sum += double(training_error);
         epochs_sum += max<Index>(fold_epochs, Index(1));
     }
 
-    const Index divisor = k > 0 ? k : 1;
-
     FoldEvaluation evaluation;
-    evaluation.validation_error = validation_error_sum / float(divisor);
-    evaluation.training_error = training_error_sum / float(divisor);
-    evaluation.epochs = max<Index>(epochs_sum / divisor, Index(1));
+    evaluation.validation_error = valid_validation_errors ? float(validation_error_sum / double(k)) : MAX;
+    evaluation.training_error = valid_training_errors ? float(training_error_sum / double(k)) : MAX;
+    evaluation.epochs = max<Index>(epochs_sum / k, Index(1));
     return evaluation;
 }
 

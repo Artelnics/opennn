@@ -74,6 +74,8 @@ void GrowingNeurons::load(const filesystem::path& file_name)
 
 NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
 {
+    validate_selection_training(training, folds_number, "GrowingNeurons");
+
     NeuronsSelectionResult neuron_selection_results(maximum_epochs);
 
     if (display) logging::info() << "Performing growing neuron selection...\n";
@@ -220,6 +222,9 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
             break;
         }
     }
+
+    throw_if(neuron_selection_results.optimum_validation_error == MAX,
+             "GrowingNeurons found no candidate with a finite validation error.");
 
     if (display)
         logging::info() << "Parameters number: " << neuron_selection_results.optimal_parameters.size() << "\n";

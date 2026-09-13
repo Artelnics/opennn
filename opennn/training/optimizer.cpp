@@ -863,6 +863,12 @@ TrainingResult Optimizer::train()
             dataset->disable_device_residency();
     });
 
+    set_names();
+    ScopeExit scaling_cleanup([dataset] { dataset->clear_training_scaling(); });
+    prepare_training_artifacts();
+
+    // Upload the fitted training representation before admitting batch memory.
+    // Preparing scaling after upload would invalidate the resident matrix.
     if (on_gpu && dataset->requests_device_residency())
         dataset->enable_device_residency();
 
@@ -892,10 +898,6 @@ TrainingResult Optimizer::train()
 
     vector<vector<Index>> training_batches(training_batches_number);
     vector<vector<Index>> validation_batches;
-
-    set_names();
-    ScopeExit scaling_cleanup([dataset] { dataset->clear_training_scaling(); });
-    prepare_training_artifacts();
 
     BatchPools batch_pools;
     OptimizerData optimizer_data;
