@@ -67,9 +67,31 @@ repeating the transformations above; a changed upstream file needs review.
 These records describe verified equivalence, not a byte-for-byte regeneration
 script for every derived file. No existing dataset is removed by this review.
 
+## Storage and extraction
+
+Active image datasets are stored in `examples/mnist/data/images.zip` and
+`examples/melanoma_cancer/data/images.zip`. Each archive contains the original
+class folders and BMP filenames. CMake extracts only the selected example's
+archive into its build data directory. Small text datasets and attribution
+notices stay readable beside their example; the concrete network keeps its
+required JSON/binary pair in `concrete/nn/`.
+
+`examples/legacy_8/reference.zip` preserves all 12 historical source, project and
+data files under their original relative paths. It is excluded from current
+builds. The bundle descriptions below use the **logical paths inside these
+archives**. No dataset, model bytes or redistribution status changed during
+consolidation.
+
+The inventory checker and reproduction tool share `tools/example_assets.py`.
+They read indexed ZIP members as their original logical paths, so all 14
+reviewed group hashes and all 10,131 asset identities remain unchanged. Stage
+archive changes before running `python tools/check_dataset_manifest.py`.
+Keep archive member names unique, retain attribution notices, and regenerate an
+archive from reviewed files when its contents change.
+
 ## Verified MNIST image conversion
 
-`mnist/data` contains exactly the 10,000 MNIST test-set images, converted to
+`mnist/data/images.zip` contains exactly the 10,000 MNIST test-set images, converted to
 28x28 grayscale BMP files and grouped by digit label. Every decoded pixel and
 folder label matches the test split distributed by
 [Keras](https://keras.io/api/datasets/mnist/); no training-set images or

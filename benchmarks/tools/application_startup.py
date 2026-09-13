@@ -314,7 +314,7 @@ def main(argv=None):
     parser.add_argument("--family", choices=["startup"], default="startup")
     parser.add_argument("--config", required=True, type=Path)
     parser.add_argument(
-        "--out", type=Path, help="New directory under benchmarks/results/scratch"
+        "--out", type=Path, help="New directory under the benchmark results scratch directory"
     )
     parser.add_argument("--rounds", type=int, default=3)
     parser.add_argument("--repeats", type=int, default=5)

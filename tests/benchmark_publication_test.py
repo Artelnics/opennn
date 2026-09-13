@@ -8,7 +8,7 @@ import tempfile
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "benchmarks/tools"))
-from consolidate_results import deployment, inventory, performance, preview, stats
+from consolidate_results import deployment, inventory, performance, preview, source_path, stats
 
 
 def performance_fixture():
@@ -121,7 +121,7 @@ class BenchmarkPublicationTest(unittest.TestCase):
     def test_duplicate_evidence_and_previous_reviews_are_not_new_observations(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
-            results = root / "results"
+            results = root / "external evidence with spaces"
             results.mkdir()
             raw = json.dumps({"benchmark_id": "cpu-dense-infer", "label": "publish"})
             (results / "a.json").write_text(raw)
@@ -132,12 +132,22 @@ class BenchmarkPublicationTest(unittest.TestCase):
                 json.dumps({"status": "review_only"})
             )
             (old / "generated.json").write_text(raw)
-            rows = inventory(root, results / "new-review", {"results/pinned.json"})
+            rows = inventory(results, results / "new-review", {"results/pinned.json"})
             self.assertEqual(len(rows), 1)
             self.assertEqual(rows[0]["copies"], 2)
             self.assertEqual(rows[0]["canonical_path"], "results/pinned.json")
             self.assertEqual(rows[0]["recorded_status"], "publish")
             self.assertEqual(rows[0]["role"], "selected_for_review")
+
+    def test_historical_paths_resolve_in_relocated_evidence(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder) / "external evidence with spaces"
+            self.assertEqual(source_path("results/archive/run.json", root),
+                             (root / "archive/run.json").resolve())
+            for name in ("results/../secret", "/results/run.json", "elsewhere/run.json",
+                         "results/C:/run.json", "results\\run.json", "results"):
+                with self.subTest(name=name), self.assertRaises(ValueError):
+                    source_path(name, root)
 
 
 if __name__ == "__main__":

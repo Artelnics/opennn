@@ -3,9 +3,10 @@
 OpenNN against reference runtimes on model families, measuring throughput, peak
 memory and energy **from the same execution**.
 
-There are no numbers in this file. Results are generated locally under
-`results/`, with each artifact naming the commit, machine and session it came
-from. That directory is ignored completely by Git. Reviewed reports and their
+Results are generated outside the checkout, under
+`../opennn-benchmark-results/` by default. Set `OPENNN_BENCH_RESULTS` to an
+absolute path to choose another location. Each artifact names its commit,
+machine and session. Reviewed reports and their
 publication status are versioned under [the results review](reports/README.md). This README is the quick entry
 point; [`PROTOCOL.md`](PROTOCOL.md) contains the complete, machine-neutral
 measurement contract. Changing a measurement rule means rerunning the affected
@@ -14,8 +15,9 @@ cells.
 The [publication review](reports/README.md) consolidates the current
 evidence and identifies the measurements that still need work. The
 [publication guide](PROTOCOL.md#15-publication-procedure) explains the release process and
-plain-language reporting rules. Historical reports remain in Git history and raw observations in ignored
-results archives; a historical passing label does not approve a new release.
+plain-language reporting rules. Historical reports remain in Git history and raw
+observations in external result archives. A historical passing label does not
+approve a new release.
 
 ## Build the drivers
 
@@ -56,7 +58,8 @@ Application startup, deployment size and prediction quality also use this
 directory's entry points. The baseline is **OpenNN C++ versus the PyTorch Python
 API**. See [the application procedure](PROTOCOL.md#13-application-startup-and-deployment) for startup/deployment and
 [the quality procedure](PROTOCOL.md#14-prediction-quality) for the four-model training-quality comparison.
-Their provisional artifacts and generated tables go to `results/scratch/`.
+Their provisional artifacts and generated tables go to `scratch/` inside the
+selected results directory.
 Presentation directories contain no benchmark code or raw measurements.
 
 ```bash
@@ -123,7 +126,7 @@ their original hardware identity.
 Before a measured run, set `OPENNN_BENCH_SM_CLOCK_MHZ` and
 `OPENNN_BENCH_MEMORY_CLOCK_MHZ` to supported, sustainable integer MHz values
 for the GPU under test. There are no default clock targets: missing targets or
-failed locks make the run diagnostic-only in `results/scratch/`. The current
+failed locks make the run diagnostic-only in the results directory's `scratch/` area. The current
 instrumentation uses NVIDIA device 0; use a single-GPU setup for comparisons.
 Builds target the detected CUDA architecture (`native`); override with
 `OPENNN_CUDA_ARCHITECTURES` when needed. Non-standard cuDNN installations use
@@ -208,8 +211,8 @@ idle reading;
 `torch.cuda.max_memory_allocated()` never appears, because it excludes the CUDA
 context and cached blocks and so flatters PyTorch by construction.
 
-A dirty tree writes to `results/scratch/`, never to the valid-results area.
-That is enforced in code. Neither location is committed.
+A dirty tree writes to `scratch/` inside the external results directory.
+That separation is enforced in code. Neither location is committed.
 
 OpenNN Qwen results also include `inference_memory`: reserved KV capacity and
 bytes, the decode arena **view** size (not the complete shared prefill arena),
@@ -233,6 +236,18 @@ token-by-token optimization acceptance needs that additional validation.
 | Recalculate results and prepare the website | [Publication](PROTOCOL.md#15-publication-procedure) |
 | Review current values and missing measurements | [Results](reports/README.md) |
 
+## Result locations and existing evidence
+
+Use the same `OPENNN_BENCH_RESULTS` setting for preparation, execution and
+report generation. Its default is a sibling of this checkout, so results remain
+available while switching between `dev` and `master`.
+
+For an older checkout with `benchmarks/results/`, move that whole directory to
+`../opennn-benchmark-results/`, or set `OPENNN_BENCH_RESULTS` to its existing
+absolute path. Do not merge or overwrite result directories. The logical
+`results/...` paths in `reports/selection.json` resolve inside the selected store;
+original observations and their hashes remain unchanged.
+
 ## Files
 
 | | |
@@ -251,7 +266,8 @@ token-by-token optimization acceptance needs that additional validation.
 | [`manifests/imagenet_subset.manifest`](manifests/imagenet_subset.manifest) | exact, hashed CNN image subset |
 | [`manifests/qwen_manifest.json`](manifests/qwen_manifest.json) | Qwen revisions, asset hashes and protocol defaults |
 | [`CMakeLists.txt`](CMakeLists.txt) | builds one `<family>_opennn` per family |
-| `results/` | generated raw local artifacts; ignored completely by Git |
+| [`reports/selection.json`](reports/selection.json) | pinned identities of evidence used by the results review |
+| `../opennn-benchmark-results/` | external raw artifacts; `scratch/` holds diagnostic runs |
 
 Datasets, model weights and external runtimes never enter the repository. The
 committed manifests pin the exact CNN image subset and every Qwen asset needed

@@ -98,31 +98,25 @@ dependencies and compiler compatibility.
 | Folder | What it contains |
 | --- | --- |
 | [`opennn/`](opennn/) | The library: public headers, implementations, models and CPU/CUDA backends. See the [module map](DEVELOPMENT.md#source-map). |
-| [`examples/`](examples/README.md) | Runnable applications, export checks and their bundled assets. `legacy_8/` is historical reference material. |
-| [`tests/`](tests/) | C++ unit tests, response-optimization scenarios and Python benchmark tests. |
+| [`examples/`](examples/README.md) | Runnable applications, export checks and bundled data. Unsupported 8.x material is isolated in `legacy_8/reference.zip`. |
+| [`tests/`](tests/) | C++ unit tests, response-optimization scenarios and Python checks for benchmarks and example assets. |
 | [`benchmarks/`](benchmarks/README.md) | Comparison drivers, input manifests, measurement procedures and reviewed results. |
 | [`tools/`](DEVELOPMENT.md#maintenance-tools) | Verification, packaging, asset reproduction and release checks. |
 | [`.github/workflows/`](.github/workflows/) | Hosted CI and Linux CUDA verification. |
 
 Build directories, dependency downloads, logs and raw benchmark results are
-generated locally and are not repository contents. Most tracked files are
-example images and data; the [data review](DATASETS.md) explains their sources
-and reproduction status.
+generated locally outside the checkout. Image datasets are bundled as ZIP files;
+CMake expands them into the build directory when their example is built.
+The [data guide](DATASETS.md) explains sources, attribution and reproduction.
 
 ## Documentation
 
-| Guide | Contents |
-| --- | --- |
-| [Examples](examples/README.md) | Choose an example, run training, check exports and identify download requirements |
-| [Development](DEVELOPMENT.md) | Build settings, source map, tools, tests and the `dev` → `master` workflow |
-| [Changelog and migration](CHANGELOG.md) | Release changes, renamed APIs and saved-model migration |
-| [Example data](DATASETS.md) | Attribution, unresolved records and reconstruction recipes |
-| [Benchmarks](benchmarks/README.md) | Commands, the [protocol](benchmarks/PROTOCOL.md) and [reviewed results](benchmarks/reports/README.md) |
-| [Third-party notices](THIRD_PARTY_NOTICES.md) | Dependency licences and attribution |
-
-Tutorials are available on [opennn.net](https://www.opennn.net/).
-The benchmark results describe their recorded models and computers; the current
-review lists the measurements still required before website publication.
+The guides linked above cover examples, development, data and benchmarks.
+[CHANGELOG.md](CHANGELOG.md) records release changes, renamed APIs and saved-model
+migration. Tutorials are available on [opennn.net](https://www.opennn.net/).
+The [benchmark protocol](benchmarks/PROTOCOL.md) defines measurement rules;
+[reviewed results](benchmarks/reports/README.md) identify their models, computers
+and the measurements still required before website publication.
 
 ## Contributing and support
 

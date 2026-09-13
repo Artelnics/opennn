@@ -1,7 +1,7 @@
 # OpenNN — instructions for coding agents
 
-See [README.md](README.md) for the project overview, requirements, build
-instructions and public CMake options. Keep this file focused on repository-wide
+See [README.md](README.md) for the project overview and first build, and
+[DEVELOPMENT.md](DEVELOPMENT.md) for CMake options. Keep this file focused on repository-wide
 engineering rules that are not tied to one workstation.
 
 ## Working branches
@@ -66,7 +66,8 @@ files.
 - Benchmark usage and the measurement contract live in
   [benchmarks/README.md](benchmarks/README.md) and
   [benchmarks/PROTOCOL.md](benchmarks/PROTOCOL.md).
-- Raw benchmark output belongs in `benchmarks/results/`, which is ignored.
+- Raw benchmark output belongs outside the checkout, in
+  `../opennn-benchmark-results/` by default; `OPENNN_BENCH_RESULTS` overrides it.
   Only reviewed reports belong in `benchmarks/reports/`.
 
 ## Pending repository hygiene
@@ -76,6 +77,9 @@ Their provenance and unresolved licensing records are documented in
 `DATASETS.md`, with indexed content inventories in `datasets.manifest.json`.
 Do not remove them until each affected example has a reproducible replacement.
 Stage reviewed asset changes before running `python tools/check_dataset_manifest.py`.
+Bundled ZIPs preserve logical asset paths and bytes; the checker expands their
+contents in memory. Update archives and loose files together, retaining source
+notices. CMake unpacks active image datasets into the external build directory.
 The `--release` check additionally requires every bundle's redistribution
 clearance; do not mark an unknown source as cleared merely to pass that gate.
 

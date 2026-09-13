@@ -5,13 +5,21 @@ function(opennn_example name)
     target_link_libraries(${name} PRIVATE opennn)
 
     if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${name}/data")
-        # Examples load ../data/<name> from their executable directory. Keep
-        # that layout for both bin/ and multi-configuration bin/Release/ builds.
-        add_custom_command(TARGET ${name} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_directory
-                "${CMAKE_CURRENT_SOURCE_DIR}/${name}/data"
-                "$<TARGET_FILE_DIR:${name}>/../data/${name}"
+        # Re-stage changed data even when the executable does not need relinking.
+        # Preserve ../data/<name> for single- and multi-configuration generators.
+        file(GLOB_RECURSE data_files CONFIGURE_DEPENDS "${name}/data/*")
+        set(data_script "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/prepare_data.cmake")
+        set(data_stamp "${CMAKE_CURRENT_BINARY_DIR}/${name}-data-$<CONFIG>.stamp")
+        add_custom_command(OUTPUT "${data_stamp}"
+            COMMAND ${CMAKE_COMMAND}
+                "-DOPENNN_DATA_SOURCE=${CMAKE_CURRENT_SOURCE_DIR}/${name}/data"
+                "-DOPENNN_DATA_DESTINATION=$<TARGET_FILE_DIR:${name}>/../data/${name}"
+                -P "${data_script}"
+            COMMAND ${CMAKE_COMMAND} -E touch "${data_stamp}"
+            DEPENDS ${data_files} "${data_script}"
             VERBATIM)
+        add_custom_target(${name}_data DEPENDS "${data_stamp}")
+        add_dependencies(${name} ${name}_data)
     endif()
 endfunction()
 

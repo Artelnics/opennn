@@ -14,12 +14,12 @@ import hashlib
 import html
 import json
 import math
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import re
 import statistics
 from collections import defaultdict
 
-BENCHMARKS = Path(__file__).resolve().parents[1]
+from common import BENCHMARKS, RESULTS
 MODELS = ("dense", "lstm", "cnn", "transformer")
 NAMES = {"dense": "Dense", "lstm": "LSTM", "cnn": "CNN", "transformer": "Transformer"}
 UNITS = {
@@ -290,23 +290,35 @@ def describe_artifact(path):
     return description
 
 
+def source_path(name, root=RESULTS):
+    """Resolve historical results/... identities in the current evidence store."""
+    path = PurePosixPath(name)
+    if (not path.parts or path.parts[0] != "results" or ".." in path.parts
+            or "\\" in name or ":" in name):
+        raise ValueError(f"Invalid evidence path: {name}")
+    resolved = root.joinpath(*path.parts[1:]).resolve()
+    if not resolved.is_relative_to(root.resolve()) or resolved == root.resolve():
+        raise ValueError(f"Evidence path leaves the results directory: {name}")
+    return resolved
+
+
 def inventory(root, excluded, pinned):
     groups = defaultdict(list)
     previous_reviews = []
-    for marker in (root / "results").rglob("verification.json"):
+    for marker in root.rglob("verification.json"):
         try:
             if read(marker).get("status") == "review_only":
                 previous_reviews.append(marker.parent)
         except (ValueError, AttributeError):
             pass
-    for path in sorted((root / "results").rglob("*")):
+    for path in sorted(root.rglob("*")):
         if (
             not path.is_file()
             or path.is_relative_to(excluded)
             or any(path.is_relative_to(p) for p in previous_reviews)
         ):
             continue
-        relative = path.relative_to(root).as_posix()
+        relative = "results/" + path.relative_to(root).as_posix()
         groups[digest(path)].append({"path": relative, "bytes": path.stat().st_size})
     rows = []
     for sha, aliases in sorted(groups.items()):
@@ -321,7 +333,7 @@ def inventory(root, excluded, pinned):
                 "role": "selected_for_review"
                 if aliases[0]["path"] in pinned
                 else "archived_or_supporting",
-                **describe_artifact(root / aliases[0]["path"]),
+                **describe_artifact(source_path(aliases[0]["path"], root)),
             }
         )
     return rows
@@ -595,7 +607,7 @@ def render_review(selection, perf, start, deploy, catalog, facts):
         "Keep unmeasured cells visible. A partial release must name its measured scope and must not claim that all models, devices or metrics improved. No overall improvement is reported while the intended comparison remains incomplete.\n",
         "## Evidence and preservation\n",
         f"The catalog covers {sum(x['copies'] for x in catalog):,} files and {len(catalog):,} unique contents. Files with identical SHA-256 hashes share one catalog entry with all their paths. No measurement file was edited or deleted. Original reports are preserved in [Git history](https://github.com/Artelnics/opennn/tree/a379ec5e634d65436b8b175fcd03c044bc98182b/benchmarks/reports/archive/2026-09-11/).\n",
-        "The accompanying `performance.json`, `observations.csv`, `startup.json`, `deployment.json`, `readiness.csv` and `catalog.json` retain source paths, hashes, raw-derived statistics and pending checks. `publication/selection.json` pins the evidence; selecting a file does not approve it for publication.\n",
+        "The accompanying `performance.json`, `observations.csv`, `startup.json`, `deployment.json`, `readiness.csv` and `catalog.json` retain source paths, hashes, raw-derived statistics and pending checks. `reports/selection.json` pins the evidence; selecting a file does not approve it for publication.\n",
     ]
     return "\n".join(sections)
 
@@ -643,38 +655,35 @@ def preview(markdown):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--selection", type=Path, default=BENCHMARKS / "publication/selection.json"
+        "--selection", type=Path, default=BENCHMARKS / "reports/selection.json"
     )
     parser.add_argument(
         "--out",
         type=Path,
         required=True,
-        help="New directory below benchmarks/results/scratch",
+        help=f"New directory below {RESULTS / 'scratch'}",
     )
     args = parser.parse_args(argv)
     out = args.out.resolve()
-    scratch = (BENCHMARKS / "results/scratch").resolve()
+    scratch = (RESULTS / "scratch").resolve()
     if out == scratch or not out.is_relative_to(scratch) or out.exists():
-        parser.error("Output must be a new directory below benchmarks/results/scratch")
+        parser.error(f"Output must be a new directory below {scratch}")
     selection = read(args.selection)
     sources = selection["performance"] + [
         selection[x] for x in ("startup", "deployment", "source_counts")
     ]
     for entry in sources:
-        path = (BENCHMARKS / entry["path"]).resolve()
-        if (
-            not path.is_relative_to(BENCHMARKS / "results")
-            or digest(path) != entry["sha256"]
-        ):
+        path = source_path(entry["path"])
+        if digest(path) != entry["sha256"]:
             raise ValueError(f"Source path or hash mismatch: {entry['path']}")
     perf = [
-        performance(read(BENCHMARKS / s["path"]), s) for s in selection["performance"]
+        performance(read(source_path(s["path"])), s) for s in selection["performance"]
     ]
-    start_path = BENCHMARKS / selection["startup"]["path"]
+    start_path = source_path(selection["startup"]["path"])
     start = startup(read(start_path), start_path)
-    deploy = deployment(read(BENCHMARKS / selection["deployment"]["path"]))
-    catalog = inventory(BENCHMARKS, out, {s["path"] for s in sources})
-    facts = read(BENCHMARKS / selection["source_counts"]["path"])
+    deploy = deployment(read(source_path(selection["deployment"]["path"])))
+    catalog = inventory(RESULTS, out, {s["path"] for s in sources})
+    facts = read(source_path(selection["source_counts"]["path"]))
     out.mkdir(parents=True)
     for name, value in (
         ("performance", perf),
@@ -686,7 +695,7 @@ def main(argv=None):
     write_json(out / "selection.json", selection)
     provenance = []
     for source in sources:
-        data = read(BENCHMARKS / source["path"])
+        data = read(source_path(source["path"]))
         provenance.append(
             {
                 "source": source["path"],

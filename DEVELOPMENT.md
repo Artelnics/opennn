@@ -14,6 +14,7 @@ The [README](README.md) covers building and using OpenNN; the
 - [Installation packages](#installation-packages)
 - [Linux CUDA runner](#linux-cuda-runner)
 - [Verification records](#verification-records)
+- [Repository maintenance](#repository-layout-and-maintenance)
 
 ## Working branches
 
@@ -74,8 +75,10 @@ and optional CUDA kernels are recorded in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_N
 
 ### CPU threads
 
-OpenNN sizes one thread per CPU the process may run on (`sched_getaffinity`,
-so `taskset` is honoured) and gives that count to Eigen, OpenMP and MKL alike.
+On Linux, OpenNN sizes one thread per CPU the process may run on
+(`sched_getaffinity`, so `taskset` is honoured). Other platforms use the reported
+hardware concurrency, with OpenMP as a fallback. OpenNN gives that count to
+Eigen, OpenMP and MKL alike.
 `OPENNN_THREADS=n` overrides it. Every parallel region asks for the same team
 on purpose: libgomp keeps a single pool sized to the last region, and a region
 that wants fewer threads makes the surplus exit and the next full one recreate
@@ -116,7 +119,7 @@ header `pch.h` in an application.
 | Module | Responsibility and starting points |
 | --- | --- |
 | `opennn/core/` | Configuration, tensor/storage types, backend operations, persistence utilities; CUDA kernels are under `core/cuda/`. Start with `configuration.h` and `opennn_types.h`. |
-| `opennn/network/` | `Network`, layers, operators, propagation, save/load, chat and `ModelExpression` source export. |
+| `opennn/network/` | `Network`, propagation, save/load, chat and `ModelExpression` source export; `layers/` contains network layers and `operators/` reusable computation operators. |
 | `opennn/models/` | Ready-made tabular, image, language and forecasting models declared in `models.h`. |
 | `opennn/dataset/` | `TabularDataset` and specialized image, language and time-series data handling. |
 | `opennn/training/` | `Training`, losses and optimizers such as `Adam` and `SGD`. |
@@ -127,9 +130,13 @@ header `pch.h` in an application.
 `core` is the foundation. `network` and `models` define computation; datasets
 feed training, and evaluation and selection use those interfaces. This is not
 a strict linear dependency chain: [the architecture checker](tools/check_architecture.py)
-records the allowed directions and specific existing exceptions. Tests generally
-mirror these source modules. Public APIs may have consumers outside this
-repository, including Neural Designer; local call counts are not removal criteria.
+records the allowed directions and specific existing exceptions. Public APIs may
+have consumers outside this repository, including Neural Designer; local call
+counts are not removal criteria.
+Keep public headers at their existing include paths. The small
+`core/cuda/flash_attention_shim/` include hierarchy is required by the optional
+external backend. Tests mirror library modules and distinguish network layers
+from operators; helpers at the test root are shared.
 
 ## Maintenance tools
 
@@ -142,10 +149,10 @@ Most users need the library and one example. These tools support development:
 | Coverage and public-header checks | `tools/check_coverage.py`, `tools/check_headers.sh` |
 | CUDA memory errors and JSON fuzzing | `tools/check_cuda_memory.sh`, `tools/fuzz/` |
 | Installed-package checks and C++ consumer | `tools/check_installed_package.py`, `tools/package_smoke/` |
-| Dataset inventory and release scope | `tools/check_dataset_manifest.py`, `tools/check_release_scope.py` |
+| Dataset inventory and release scope | `tools/check_dataset_manifest.py`, `tools/check_release_scope.py`; shared archive reading in `tools/example_assets.py` |
 | Reconstruct data and train reference models | `tools/reproduce_datasets.py`, `tools/reproduce_models/`; see [recipes](DATASETS.md#reproduction) |
 | Full example/device matrix | `tools/run-opennn-examples/SKILL.md` |
-| Benchmark preparation and execution | `benchmarks/prepare.py`, `benchmarks/run.py`; helpers stay in `benchmarks/tools/` |
+| Benchmark preparation and execution | `benchmarks/prepare.py`, `benchmarks/run.py`; see the [benchmark file map](benchmarks/README.md#files) for drivers, helpers, manifests and reviewed evidence |
 
 The root JSON files are maintained inputs, not scratch results:
 
@@ -194,8 +201,10 @@ runs on pushes to `dev` and `master`, by manual dispatch, and nightly on the def
 branch. It needs an online self-hosted runner labeled `linux` and `cuda` with the
 GPU toolchain installed; otherwise the job remains queued.
 
-For Python export execution tests, install both NumPy and pandas:
-`python -m pip install numpy==2.4.4 pandas==2.3.3`.
+Install the shared Python test dependencies before running export execution tests:
+`python -m pip install -r tools/test-requirements.txt`.
+This includes NumPy and pandas for generated Python models and SacreBLEU for
+benchmark checks.
 JavaScript export execution tests require Node.js on `PATH`; CI uses Node 24.
 Those tests report a skip when Node is unavailable locally. They compare
 generated formulas and categorical controls with native network predictions.
@@ -217,12 +226,13 @@ test because child-process instrumentation hangs on the tested WSL setup;
 ordinary CUDA verification includes that test. See [runner operations](#linux-cuda-runner)
 for the Linux GPU runner's requirements and availability.
 
-The benchmark harness tests need only NumPy and SacreBLEU, not a PyTorch or
-CUDA runtime. In an isolated Python environment:
+The Python checks cover benchmark behavior, example archives and CMake data
+staging. They use the same Python dependencies and require CMake; no PyTorch or
+CUDA runtime is needed. In an isolated Python environment:
 
 ```sh
-python -m pip install numpy==2.4.4 sacrebleu==2.5.1
-python -m unittest discover -s tests -p 'benchmark*_test.py'
+python -m pip install -r tools/test-requirements.txt
+python -B -m unittest discover -s tests -p '*_test.py'
 ```
 
 Choose checks appropriate to the change. Documentation edits need working links
@@ -261,14 +271,19 @@ sources. It also enforces the reviewed per-module floors in
 artifacts; thresholds should rise as tests are added.
 
 The sanitizer build also links `opennn_json_fuzz` with libFuzzer, ASan and
-UBSan. CI runs 20,000 mutations from the checked-in corpus. Longer local runs
+UBSan. CI runs 20,000 mutations from the checked-in corpus. New corpus entries
+and crash artifacts belong in the external build directory. Longer local runs
 can use:
 
 ```sh
 cmake --preset verify-sanitizers -B ../build-fuzz -DOpenNN_BUILD_FUZZERS=ON
 cmake --build ../build-fuzz --target opennn_json_fuzz --parallel 2
-../build-fuzz/bin/opennn_json_fuzz -max_total_time=3600 tools/fuzz/corpus
+mkdir -p ../build-fuzz/corpus ../build-fuzz/artifacts
+../build-fuzz/bin/opennn_json_fuzz -max_total_time=3600 -artifact_prefix=../build-fuzz/artifacts/ ../build-fuzz/corpus tools/fuzz/corpus
 ```
+
+libFuzzer writes discoveries to the first corpus directory and reads the four
+checked-in seeds from the second.
 
 The JSON parser rejects non-standard numbers, unescaped control characters,
 invalid surrogate pairs, nesting beyond 256 containers and inputs over 256 MiB.
@@ -451,30 +466,23 @@ git show a379ec5e6:RELEASE_VERIFICATION.md
 ```
 
 
-## Repository audit follow-up
+## Repository layout and maintenance
 
-The September 11, 2026 navigation audit covered the tracked source tree, examples,
-tests, benchmarks, build/package files, workflows and the GitHub landing branch.
-The library already has distinct modules; no public symbols need moving merely
-to make the repository easier to browse. The largest current content group is
-bundled example assets. It contains 10,131 indexed files, including 10,000 MNIST
-test images and 102 melanoma images. These assets remain subject to [their
-provenance review](DATASETS.md); replacing them requires reproducible alternatives.
+The [README folder map](README.md#repository-contents), [source map](#source-map)
+and [example catalog](examples/README.md) describe the maintained layout.
+Update those guides when changing it. Image datasets and preserved 8.x files
+are consolidated into three ZIPs whose logical contents match the reviewed
+inventories; see [storage and extraction](DATASETS.md#storage-and-extraction).
+Retain unresolved assets until a reproducible replacement is reviewed.
 
-The first-use guide now leads to a real inference example and a catalog of all
-16 current example targets. Build presets include both test executables, example
-data follows the executable directory for multi-configuration builds, and CI
-checks all three Python benchmark test modules. Historical 8.x projects are
-explicitly marked in the example catalog rather than presented as current targets.
+Builds and downloaded dependencies belong outside the checkout. Benchmark
+results use `../opennn-benchmark-results/`, overridable with
+`OPENNN_BENCH_RESULTS`; the [benchmark guide](benchmarks/README.md#result-locations-and-existing-evidence)
+explains moving existing evidence. Python caches and editor backups are local
+artifacts, never source files. Use `python -B` for maintenance checks when a cache
+is unnecessary.
 
-Remaining follow-up:
-
-- GitHub's default branch is `master`, whose 8.x tree still contains the older
-  layout, vendored dependencies, editor cache and a stale Travis badge. The
-  `dev` improvements reach that landing page only through an approved release
-  promotion; changing branches locally does not update it.
-- The current guides are an entry point, not a complete generated API reference.
-  Extend API documentation in the existing public headers as behavior is reviewed.
-- Resolve outstanding asset records and real-data benchmark measurements before
-  making the corresponding publication claims. Existing tests do not close those
-  reviews. Source and benchmark history stay available without additional clones.
+GitHub's default branch remains `master`; these improvements become the landing
+page through an approved promotion of `dev`. API documentation, unresolved asset
+records and real-data benchmark measurements remain separate ongoing work. Keep
+audit evidence outside the checkout and update these existing guides.

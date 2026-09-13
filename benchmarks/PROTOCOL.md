@@ -62,9 +62,12 @@ material. If a downloaded or converted file does not match its manifest, stop
 before measurement. Never update a manifest merely to accept an unexplained
 hash difference.
 
-Raw artifacts are written below `benchmarks/results/`. That directory is
-ignored by Git and is never committed. A run that is provisional or fails a
-validity gate is written below `benchmarks/results/scratch/`; it is retained for
+Raw artifacts are written outside the checkout, below
+`../opennn-benchmark-results/` by default. Set `OPENNN_BENCH_RESULTS` to an absolute
+path to override the result store for every runner and report tool. The logical
+`results/...` paths in selection manifests are relative to that store. It is
+outside Git and is never committed. A run that is provisional or fails a
+validity gate is written below `../opennn-benchmark-results/scratch/`; it is retained for
 diagnosis but is not a publishable result.
 
 Reviewed project results live in `benchmarks/reports/`. These committed reports
@@ -471,7 +474,7 @@ python benchmarks/run.py --family deployment \
 
 The parent Python needs NumPy, as does the existing common runner. The isolated
 application Python environments contain only their pinned runtime packages.
-Output defaults to a new directory in `benchmarks/results/scratch/`.
+Output defaults to a new directory in `../opennn-benchmark-results/scratch/`.
 An explicit `--out` must also be a new directory below that location.
 Raw JSON, CSV, readable Markdown tables, loader traces and file inventories are
 kept together. Failures remain visible and make the command fail.
@@ -525,7 +528,7 @@ packages does not mean zero native dependencies. CPU and CUDA Python
 installations have different package closures; do not quote one count for both.
 
 The September 10 measurements and original reproducibility archives imported
-from the presentation folder remain in ignored `results/scratch/`, with their
+from the presentation folder remain in the external results store's `scratch/` area, with their
 original machine, source revisions and protocols. Older LibTorch comparisons
 remain supplementary archived results; they are not the Python baseline.
 
@@ -622,7 +625,7 @@ trajectories. Review those differences before explaining a score gap.
 
 ### Results and smoke checks
 
-Every run writes under `benchmarks/results/scratch/`: raw stdout/stderr,
+Every run writes under `../opennn-benchmark-results/scratch/`: raw stdout/stderr,
 per-epoch training histories, binary predictions, driver metadata and hashes,
 plus an aggregate JSON, CSV and a Markdown table. Failed runs are retained and
 make the command return nonzero. The scorer reports means and sample standard
@@ -656,7 +659,7 @@ and the [website outline](reports/README.md#website-outline) for the proposed pa
 
 ### One source for every number
 
-[`publication/selection.json`](publication/selection.json) identifies the observations already cited in the previous
+[`reports/selection.json`](reports/selection.json) identifies the observations already cited in the previous
 reports and the complete Python startup/deployment comparison. Each source has
 a SHA-256 hash. Selecting a record means it is being reviewed; it does not mean
 it passed the publication requirements. We do not select the fastest run from
@@ -665,7 +668,7 @@ a collection of attempts.
 Generate a new review directory with:
 
 ```powershell
-python benchmarks/tools/consolidate_results.py --out benchmarks/results/scratch/publication-review-new
+python benchmarks/tools/consolidate_results.py --out ../opennn-benchmark-results/scratch/publication-review-new
 ```
 
 The tool checks the selected source hashes, recalculates performance statistics

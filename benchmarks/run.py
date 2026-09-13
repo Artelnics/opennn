@@ -360,21 +360,13 @@ def _is_number(text: str) -> bool:
         return False
 
 def main() -> int:
-    from experiment import dispatch
+    from experiment import SPECIALIZED_FAMILIES, dispatch
     specialized = dispatch(sys.argv[1:])
     if specialized is not None:
         return specialized
-    # Qwen is a token-length/runtime matrix rather than the batch/epoch matrix
-    # used by the supervised families.  Keep one public entry point while
-    # letting the family own its materially different command-line contract.
-    if any(argument == "qwen" or argument == "--family=qwen"
-           for argument in sys.argv[1:]):
-        from families.qwen import main as qwen_main
-        return qwen_main(sys.argv[1:])
-
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--family", default="dense", choices=sorted(FAMILIES) + ["startup", "deployment", "quality"],
+    parser.add_argument("--family", default="dense", choices=sorted(FAMILIES.keys() | SPECIALIZED_FAMILIES.keys()),
                         help="Specialized families expose their own options with --family NAME --help")
     parser.add_argument("--mode", default="train", choices=("train", "infer"))
     parser.add_argument("--engines", default="opennn,pytorch")
@@ -481,8 +473,8 @@ def main() -> int:
                 f"{'-' + args.label if args.label else ''}-{run_id}.json")
         path = result_destination(git.get("dirty"), "cpu", machine_busy) / name
         path.write_text(json.dumps(artifact, indent=2, default=str))
-        if git.get("dirty"):
-            print("\n  dirty tree -> results/scratch/, not the evidence store")
+        if git.get("dirty") is not False:
+            print("\n  dirty or unknown tree -> results/scratch/, not the evidence store")
         print(f"\nwrote {path}")
         return 0
 
@@ -670,8 +662,8 @@ def main() -> int:
     if not gate:
         print(f"\n  QUALITY GATE FAILED: accuracies disagree beyond {args.tolerance:.0%}"
               f" -- the speed numbers above are not a like-for-like comparison")
-    if git.get("dirty"):
-        print("\n  dirty tree -> results/scratch/, not the evidence store")
+    if git.get("dirty") is not False:
+        print("\n  dirty or unknown tree -> results/scratch/, not the evidence store")
     elif machine_busy:
         # The largest of the three readings, because any can be what tripped
         # the threshold: `busy_before` catches a machine that was already

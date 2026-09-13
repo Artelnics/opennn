@@ -135,13 +135,19 @@ build-wrapper-dump.json
 # Generated test data
 /tests/data/*.xml
 
+# Bundled archives are unpacked into external build or reference directories.
+/examples/mnist/data/*/
+/examples/melanoma_cancer/data/*/
+/examples/legacy_8/*/
+
 # Benchmark exports and measurements; binaries belong in external build trees.
 /benchmarks/**/*.onnx
 /benchmarks/**/*.onnx.data
 /benchmarks/**/*.csv
 /benchmarks/**/pred_*.txt
 
-# All benchmark result artifacts are local and must never be committed.
+# Keep the former in-tree result location ignored for existing configurations.
+# Current benchmark results default to ../opennn-benchmark-results/.
 /benchmarks/results/
 
 # OneDrive leaves these when it syncs the repo between machines.

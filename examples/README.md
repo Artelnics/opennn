@@ -17,8 +17,8 @@ some language and detection examples require large downloads or a CUDA device.
 | [`forecasting_tinyml`](forecasting_tinyml/main.cpp) | RNN/LSTM export parity | Constructs inputs; CPU FP32; optional emulator tools |
 | [`amazon_reviews`](amazon_reviews/main.cpp) | Sentiment classification | Bundled labelled text |
 | [`emotion_analysis`](emotion_analysis/main.cpp) | Multi-class text classification | Bundled labelled text |
-| [`mnist`](mnist/main.cpp) | Image classification | Bundled digit images |
-| [`melanoma_cancer`](melanoma_cancer/main.cpp) | Binary image classification | Bundled images; attribution review pending |
+| [`mnist`](mnist/main.cpp) | Image classification | Bundled `data/images.zip`; unpacked automatically |
+| [`melanoma_cancer`](melanoma_cancer/main.cpp) | Binary image classification | Bundled `data/images.zip`; unpacked automatically; attribution review pending |
 | [`bert`](bert/main.cpp) | Fine-tuning a pretrained text classifier | Bundled SST-2 text; downloads model weights; accepts text and model-directory arguments |
 | [`translation`](translation/main.cpp) | Encoder-decoder text translation | Bundled text; explicitly requests CUDA |
 | [`gpt2`](gpt2/main.cpp) | Pretrained text generation | Downloads weights; explicitly requests CUDA; optional prompt argument |
@@ -27,8 +27,26 @@ some language and detection examples require large downloads or a CUDA device.
 
 Targets without an explicit device selection use the configured library backend;
 inspect their source before a controlled CPU/GPU comparison. The maintained target
-list is in [CMakeLists.txt](CMakeLists.txt). `legacy_8/` contains preserved,
-unsupported applications and old project files; see [the historical scope](#preserved-8x-examples).
+list is in [CMakeLists.txt](CMakeLists.txt). Unsupported 8.x applications are
+kept together in [a reference archive](#preserved-8x-examples).
+
+## Folder layout
+
+Each maintained example has a `main.cpp` and, when needed, a `data/` directory.
+MNIST and melanoma keep their images in one ZIP per dataset, with the original
+class folders and filenames inside. Building either target extracts its ZIP
+outside the checkout; no separate download or Python setup is required.
+
+The additional folders serve specific purposes:
+
+| Folder | Purpose |
+| --- | --- |
+| `concrete/nn/` | Saved network and parameters shared with response-optimization tests |
+| `iris_plant/tinyml/` | C/Python export checks and shared PC, AVR and ARM harnesses |
+| `legacy_8/` | One historical archive; excluded from current builds |
+
+`CMakeLists.txt` selects targets and `prepare_data.cmake` stages their data.
+Both are build support files; users run the commands below.
 
 ## Build and run
 
@@ -39,7 +57,7 @@ cmake -S . -B ../opennn-build -DCMAKE_BUILD_TYPE=Release -DOpenNN_DISABLE_CUDA=O
 cmake --build ../opennn-build --config Release --target iris_plant --parallel
 ```
 
-Run examples from their executable directory. Build rules place bundled data at
+Run examples from their executable directory. Build rules copy or unpack bundled data at
 `../data/<example>` relative to that directory:
 
 ```sh
@@ -246,11 +264,15 @@ The float32 PC/ARM table implementations used the same operation order.
 
 ## Preserved 8.x examples
 
-These files were recovered from `master` at `efd566b38` during the 9.0
-reconciliation. They are historical reference material, **not supported 9.x
-CMake targets**. The source still uses the flat 8.x headers and XML-era APIs.
-Inspect that original layout with `git show efd566b38:path/to/file`;
-another checkout is not needed. Do not point these project files at the 9.x library.
+The [reference archive](legacy_8/reference.zip) preserves the 12 source, project
+and data files recovered during the 9.0 reconciliation. Every member is identical
+to [the pre-cleanup revision](https://github.com/Artelnics/opennn/tree/89d185d75fcd04070484b50389f1214ced792f21/examples/legacy_8).
+They use the flat 8.x headers and XML-era APIs and are **not supported 9.x targets**.
+Keeping them in one archive preserves their unresolved data records without
+presenting obsolete project files as runnable examples.
+
+Browse the historical revision online, or extract the archive into a separate
+directory with a ZIP tool. No additional Git checkout is needed.
 
 - `n2o_forecast`: action-conditioned wastewater forecasting; bundled CSV
   retained pending verification of its transformations and attribution.

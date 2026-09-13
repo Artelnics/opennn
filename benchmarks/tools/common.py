@@ -8,6 +8,7 @@ import math
 import os
 import platform
 import re
+import shutil
 import subprocess
 import sys
 import threading
@@ -38,26 +39,40 @@ def repo_root(start: Path | None = None) -> Path:
 
 REPO_ROOT = repo_root()
 BENCHMARKS = Path(__file__).resolve().parent.parent
-RESULTS = BENCHMARKS / "results"
+RESULTS = Path(os.environ.get(
+    "OPENNN_BENCH_RESULTS", REPO_ROOT.parent / "opennn-benchmark-results"
+)).expanduser().resolve()
 
 def git_metadata(root: Path | None = None) -> dict[str, Any]:
-    """Commit, branch, and whether the tree was dirty.
+    """Record provenance, retaining unknown state when any Git query fails.
 
-    `dirty` decides whether a result can ever be regenerated, so it is recorded
-    as a boolean plus a capped sample -- a very dirty tree should not be able
-    to fill the artifact with its own status output.
+    Windows Git avoids slow per-file stat calls on WSL-mounted checkouts.
+    Keep a capped status sample so a dirty tree cannot fill the artifact.
     """
+    executable = "git"
     target = str(root or REPO_ROOT)
-    status = run_text(["git", "-C", target, "status", "--porcelain"])
-    lines = status.splitlines() if status else []
 
-    return {
-        "commit": run_text(["git", "-C", target, "rev-parse", "HEAD"]),
-        "branch": run_text(["git", "-C", target, "rev-parse", "--abbrev-ref", "HEAD"]),
-        "dirty": bool(lines),
-        "dirty_count": len(lines),
-        "dirty_sample": lines[:20],
-    }
+    def read(*arguments):
+        return subprocess.check_output(
+            [executable, "-C", target, *arguments], text=True, timeout=30
+        ).strip()
+
+    try:
+        if target.startswith("/mnt/") and (windows_git := shutil.which("git.exe")):
+            executable = windows_git
+            target = subprocess.check_output(
+                ["wslpath", "-w", target], text=True, timeout=30
+            ).strip()
+        lines = read("status", "--porcelain").splitlines()
+        return {
+            "commit": read("rev-parse", "HEAD"),
+            "branch": read("rev-parse", "--abbrev-ref", "HEAD"),
+            "dirty": bool(lines),
+            "dirty_count": len(lines),
+            "dirty_sample": lines[:20],
+        }
+    except (OSError, subprocess.SubprocessError) as error:
+        return {"commit": None, "branch": None, "dirty": None, "error": str(error)}
 
 def framework_versions(python: str | None = None) -> dict[str, Any]:
     """Python, the frameworks, what they were built against, and the GPU.
@@ -309,13 +324,10 @@ class ForeignActivity:
 
 def result_destination(dirty: bool | None = None, device: str = "cuda",
                        busy: bool = False) -> Path:
-    """Select local results or scratch for dirty, busy or unlocked-GPU runs."""
-    if dirty is None:
-        dirty = bool(git_metadata().get("dirty", True))
-
+    """Use scratch unless provenance is explicitly clean and conditions pass."""
     unlocked = device == "cuda" and not clocks_locked()
     destination = (RESULTS / "scratch"
-                   if (dirty or unlocked or bool(busy)) else RESULTS)
+                   if (dirty is not False or unlocked or bool(busy)) else RESULTS)
     destination.mkdir(parents=True, exist_ok=True)
     return destination
 

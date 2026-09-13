@@ -3,15 +3,23 @@
 Run with: python -m unittest discover -s tests -p benchmark_runner_test.py
 """
 
+import contextlib
+import io
+import json
+import subprocess
 import sys
+import tempfile
 import time
 import unittest
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "benchmarks"))
 import run as runner
 import compare as benchmark_compare
+import common
+import deployment_facts
+from experiment import dispatch
 from families import footprint
 
 
@@ -42,6 +50,119 @@ class BenchmarkRunnerTest(unittest.TestCase):
         candidate["machine_quiet"]["quiet"] = False
         candidate["shape_gate"]["agrees"] = False
         self.assertEqual(len(benchmark_compare.compare(baseline, candidate)), 2)
+
+    def test_failed_git_queries_preserve_unknown_provenance(self):
+        for error in (FileNotFoundError("git"),
+                      subprocess.TimeoutExpired("git", 30),
+                      subprocess.CalledProcessError(128, "git")):
+            for successful_queries in ([], [""], ["", "commit"]):
+                with self.subTest(error=error, successful_queries=successful_queries), \
+                        patch.object(common.subprocess, "check_output",
+                                     side_effect=[*successful_queries, error]):
+                    metadata = common.git_metadata()
+                self.assertIsNone(metadata["dirty"])
+                self.assertIsNone(metadata["commit"])
+                self.assertIn("error", metadata)
+
+    def test_git_provenance_preserves_root_and_status(self):
+        root = Path("checkout with spaces")
+        for status, dirty in (("", False), (" M README.md\n?? generated.txt", True)):
+            with self.subTest(status=status), \
+                    patch.object(common.subprocess, "check_output",
+                                 side_effect=[status, "commit\n", "dev\n"]) as query:
+                metadata = common.git_metadata(root)
+            self.assertEqual(metadata["dirty"], dirty)
+            self.assertEqual(metadata["dirty_count"], len(status.splitlines()))
+            self.assertEqual(metadata["branch"], "dev")
+            self.assertEqual(query.call_args_list[0].args[0],
+                             ["git", "-C", str(root), "status", "--porcelain"])
+
+    def test_wsl_git_conversion_failure_is_unknown(self):
+        root = "/mnt/c/checkout with spaces"
+        with patch.object(common.shutil, "which", return_value="/usr/bin/git.exe"), \
+                patch.object(common.subprocess, "check_output", side_effect=[
+                    "C:\\checkout with spaces\n", "", "commit", "dev"
+                ]) as query:
+            self.assertFalse(common.git_metadata(root)["dirty"])
+            self.assertEqual(query.call_args_list[1].args[0],
+                             ["/usr/bin/git.exe", "-C", "C:\\checkout with spaces",
+                              "status", "--porcelain"])
+        with patch.object(common.shutil, "which", return_value="/usr/bin/git.exe"), \
+                patch.object(common.subprocess, "check_output",
+                             side_effect=subprocess.CalledProcessError(1, "wslpath")):
+            self.assertIsNone(common.git_metadata(root)["dirty"])
+
+    def test_unknown_provenance_always_uses_scratch(self):
+        with tempfile.TemporaryDirectory() as folder, \
+                patch.object(common, "RESULTS", Path(folder)), \
+                patch.object(common, "git_metadata", return_value={"dirty": False}) as query, \
+                patch.object(common, "clocks_locked", return_value=True):
+            for dirty in (None, True, False):
+                for busy in (False, True):
+                    with self.subTest(dirty=dirty, busy=busy):
+                        expected = Path(folder)
+                        if dirty is not False or busy:
+                            expected /= "scratch"
+                        self.assertEqual(common.result_destination(dirty, "cpu", busy), expected)
+            query.assert_not_called()
+
+    def test_specialized_dispatch_uses_only_the_selected_family(self):
+        for arguments in (["--family", "qwen"], ["--family=qwen"],
+                          ["--family", "dense", "--family=qwen"]):
+            with self.subTest(arguments=arguments), patch("importlib.import_module") as imported:
+                imported.return_value.main.return_value = 7
+                self.assertEqual(dispatch(arguments), 7)
+                imported.assert_called_once_with("families.qwen")
+                imported.return_value.main.assert_called_once_with(arguments)
+        for arguments in (["--family", "dense", "--label", "qwen"],
+                          ["--family=qwen", "--family=dense"], ["--label", "qwen"]):
+            with self.subTest(arguments=arguments), patch("importlib.import_module") as imported:
+                self.assertIsNone(dispatch(arguments))
+                imported.assert_not_called()
+
+    def test_qwen_label_keeps_standard_runner_and_help_lists_qwen(self):
+        output = io.StringIO()
+        with patch.object(sys, "argv", ["run.py", "--family", "dense", "--label", "qwen", "--help"]), \
+                contextlib.redirect_stdout(output), self.assertRaises(SystemExit) as stopped:
+            runner.main()
+        self.assertEqual(stopped.exception.code, 0)
+        self.assertIn("--epochs", output.getvalue())
+        self.assertIn("qwen", output.getvalue().split("--family", 1)[1].split("}", 1)[0])
+
+    def test_deployment_facts_routes_the_recorded_git_snapshot(self):
+        probes = {
+            "count_tree": {"code_lines": 1, "total_lines": 1, "files": 1},
+            "read_models": {"count": 0},
+            "read_layers": {"count": 0},
+            "measure_examples": {"count": 0},
+            "measure_application_lines": {"opennn": {}, "pytorch": {}},
+            "read_needed_libraries": {},
+            "read_packages": {},
+            "measure_deployment_bytes": {},
+        }
+        for dirty in (None, True, False):
+            for override in (False, True):
+                with self.subTest(dirty=dirty, override=override), \
+                        tempfile.TemporaryDirectory() as folder:
+                    root = Path(folder)
+                    arguments = ["deployment_facts.py"]
+                    if override:
+                        arguments += ["--out", str(root / "explicit")]
+                    metadata = {"commit": "recorded", "dirty": dirty}
+                    with patch.object(sys, "argv", arguments), \
+                            patch.object(common, "RESULTS", root / "results"), \
+                            patch.object(deployment_facts, "git_metadata", return_value=metadata) as query, \
+                            patch.multiple(deployment_facts, **{
+                                name: Mock(return_value=value) for name, value in probes.items()
+                            }), contextlib.redirect_stdout(io.StringIO()):
+                        self.assertEqual(deployment_facts.main(), 0)
+                    query.assert_called_once_with(deployment_facts.ROOT)
+                    destination = root / "explicit" if override else root / "results"
+                    if not override and dirty is not False:
+                        destination /= "scratch"
+                    artifacts = list(destination.glob("*.json"))
+                    self.assertEqual(len(artifacts), 1)
+                    self.assertEqual(json.loads(artifacts[0].read_text())["git"], metadata)
 
     def test_failure_classification(self):
         for code, stdout, stderr, expected in (

@@ -4,7 +4,8 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
-import subprocess
+
+from example_assets import indexed_files
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "datasets.manifest.json"
@@ -12,27 +13,10 @@ TEXT = {".csv", ".txt", ".json", ".md", ".js"}
 
 
 def inventory():
-    records = subprocess.check_output(
-        ["git", "ls-files", "-s", "-z", "examples"], cwd=ROOT
-    ).decode("utf-8").split("\0")
-    paths = []
-    for record in filter(None, records):
-        metadata, name = record.split("\t", 1)
-        if "/data/" in name or "/nn/" in name:
-            paths.append((name, metadata.split()[1]))
-    paths.sort()
-    blobs = subprocess.run(
-        ["git", "cat-file", "--batch"], cwd=ROOT, check=True,
-        input="".join(f"{oid}\n" for _, oid in paths).encode("ascii"),
-        stdout=subprocess.PIPE,
-    ).stdout
-    offset = 0
     groups = {}
-    for name, _ in paths:
-        end = blobs.index(b"\n", offset)
-        size = int(blobs[offset:end].split()[-1])
-        data = blobs[end + 1:end + 1 + size]
-        offset = end + 2 + size
+    for name, data in sorted(indexed_files()):
+        if "/data/" not in name and "/nn/" not in name:
+            continue
         path = ROOT / name
         # Git checkouts may use CRLF on Windows; content identity is portable.
         if path.suffix.lower() in TEXT:

@@ -255,7 +255,7 @@ and index cards together once the evidence is approved.
 
 The catalog covers 2,868 files and 2,634 unique contents. Files with identical SHA-256 hashes share one catalog entry with all their paths. No measurement file was edited or deleted. Original reports are preserved in [Git history](https://github.com/Artelnics/opennn/tree/a379ec5e634d65436b8b175fcd03c044bc98182b/benchmarks/reports/archive/2026-09-11/).
 
-The accompanying `performance.json`, `observations.csv`, `startup.json`, `deployment.json`, `readiness.csv` and `catalog.json` retain source paths, hashes, raw-derived statistics and pending checks. [`publication/selection.json`](../publication/selection.json) pins the evidence; selecting a file does not approve it for publication.
+The accompanying `performance.json`, `observations.csv`, `startup.json`, `deployment.json`, `readiness.csv` and `catalog.json` retain source paths, hashes, raw-derived statistics and pending checks. [`selection.json`](selection.json) pins the evidence; selecting a file does not approve it for publication.
 
 
 The [former family reports](https://github.com/Artelnics/opennn/tree/a379ec5e634d65436b8b175fcd03c044bc98182b/benchmarks/reports/),
@@ -269,6 +269,6 @@ about later runs. Inspect them locally without creating another checkout:
 git show a379ec5e6:benchmarks/reports/archive/2026-09-11/dense.md
 ```
 
-Generated review files and every raw observation remain under the ignored
-`benchmarks/results/` tree. This documentation consolidation changes no raw
+Generated review files and every raw observation remain under the external
+`../opennn-benchmark-results/` tree. This documentation consolidation changes no raw
 measurement, source hash, selection record or publication decision.
