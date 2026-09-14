@@ -25,7 +25,6 @@ enum class ConfusionCell
 
 class Evaluation
 {
-
 public:
 
     explicit Evaluation(Network* = nullptr, Dataset* = nullptr);
@@ -33,25 +32,19 @@ public:
     struct GoodnessOfFitAnalysis
     {
         float determination = 0.0f;
-
         VectorR targets;
         VectorR outputs;
 
         void set(const VectorR&, const VectorR&, float);
-
         void save(const filesystem::path&) const;
-
         void print() const;
     };
 
     struct RocAnalysis
     {
         MatrixR roc_curve;
-
         float area_under_curve = 0;
-
         float confidence_limit = 0;
-
         float optimal_threshold = 0;
 
         void print() const;
@@ -60,11 +53,8 @@ public:
     struct BinaryClassificationRates
     {
         vector<Index> true_positives_indices;
-
         vector<Index> false_positives_indices;
-
         vector<Index> false_negatives_indices;
-
         vector<Index> true_negatives_indices;
     };
 
@@ -82,68 +72,66 @@ public:
     void set_dataset(Dataset* new_dataset) { dataset = new_dataset; }
     void set_batch_size(Index new_batch_size) { batch_size = new_batch_size; }
     void check() const;
+    pair<MatrixR, MatrixR> get_targets_and_outputs(const string& sample_role) const;
 
+    // Regression errors and fit.
     Tensor3 calculate_error_data() const;
     MatrixR calculate_percentage_error_data() const;
-
     vector<vector<Descriptives>> calculate_error_data_descriptives() const;
-
     vector<Histogram> calculate_error_data_histograms(const Index = 10) const;
-
     VectorR calculate_errors(const MatrixR&, const MatrixR&) const;
     VectorR calculate_errors(const string&) const;
-
-    VectorR calculate_binary_classification_errors(const string& sample_role) const { return calculate_classification_errors(sample_role, true); }
-
-    VectorR calculate_multiple_classification_errors(const string& sample_role) const { return calculate_classification_errors(sample_role, false); }
-
     float calculate_determination(const VectorR&, const VectorR&) const;
-
     Tensor<GoodnessOfFitAnalysis, 1> perform_goodness_of_fit_analysis() const;
     void print_goodness_of_fit_analysis() const;
-    VectorR calculate_binary_classification_tests(const float = 0.50) const;
-    VectorR calculate_binary_classification_tests(const MatrixR&, const MatrixR&, float = 0.50) const;
 
+    // Reconstruction and anomaly detection.
     VectorR calculate_reconstruction_errors(const MatrixR&, const MatrixR&) const;
     VectorR calculate_reconstruction_errors(const string&) const;
     ReconstructionErrorStatistics calculate_reconstruction_error_statistics(const VectorR&) const;
     float calculate_anomaly_threshold(const ReconstructionErrorStatistics&, float = 1.0f) const;
     VectorI calculate_anomaly_predictions(const VectorR&, float) const;
 
+    // Classification metrics, confusion counts and original sample IDs.
+    VectorR calculate_binary_classification_errors(const string& sample_role) const
+    { return calculate_classification_errors(sample_role, true); }
+    VectorR calculate_multiple_classification_errors(const string& sample_role) const
+    { return calculate_classification_errors(sample_role, false); }
+    VectorR calculate_binary_classification_tests(const float = 0.50) const;
+    VectorR calculate_binary_classification_tests(const MatrixR&, const MatrixR&, float = 0.50) const;
     void print_binary_classification_tests() const;
     void print_multiple_classification_tests() const;
     MatrixI calculate_confusion(const MatrixR&, const MatrixR&, float = 0.50) const;
     MatrixI calculate_confusion(const float = 0.50) const;
-
     VectorI calculate_positives_negatives_rate(const MatrixR&, const MatrixR&) const;
+    BinaryClassificationRates calculate_binary_classification_rates(const float = 0.50) const;
+
+    vector<Index> calculate_true_positive_samples(const MatrixR& targets, const MatrixR& outputs,
+        const vector<Index>& indices, float threshold) const
+    { return filter_classification_samples(targets, outputs, indices, threshold, ConfusionCell::TruePositive); }
+    vector<Index> calculate_false_positive_samples(const MatrixR& targets, const MatrixR& outputs,
+        const vector<Index>& indices, float threshold) const
+    { return filter_classification_samples(targets, outputs, indices, threshold, ConfusionCell::FalsePositive); }
+    vector<Index> calculate_false_negative_samples(const MatrixR& targets, const MatrixR& outputs,
+        const vector<Index>& indices, float threshold) const
+    { return filter_classification_samples(targets, outputs, indices, threshold, ConfusionCell::FalseNegative); }
+    vector<Index> calculate_true_negative_samples(const MatrixR& targets, const MatrixR& outputs,
+        const vector<Index>& indices, float threshold) const
+    { return filter_classification_samples(targets, outputs, indices, threshold, ConfusionCell::TrueNegative); }
+
+    Tensor<VectorI, 2> calculate_multiple_classification_rates() const;
+    Tensor<VectorI, 2> calculate_multiple_classification_rates(const MatrixR&, const MatrixR&, const vector<Index>&) const;
+
+    // Ranking curves.
     RocAnalysis perform_roc_analysis() const;
-
     MatrixR calculate_roc_curve(const MatrixR&, const MatrixR&) const;
-
     float calculate_area_under_curve(const MatrixR&) const;
     float calculate_area_under_curve_confidence_limit(const MatrixR&, const MatrixR&) const;
     float calculate_area_under_curve_confidence_limit(float, Index, Index) const;
     float calculate_optimal_threshold(const MatrixR&) const;
-
     MatrixR perform_lift_chart_analysis() const;
     MatrixR calculate_cumulative_gain(const MatrixR&, const MatrixR&) const;
     MatrixR calculate_lift_chart(const MatrixR&) const;
-
-    BinaryClassificationRates calculate_binary_classification_rates(const float = 0.50) const;
-
-    vector<Index> calculate_true_positive_samples(const MatrixR& targets, const MatrixR& outputs,
-                                                               const vector<Index>& testing_indices, float threshold) const { return filter_classification_samples(targets, outputs, testing_indices, threshold, ConfusionCell::TruePositive); }
-    vector<Index> calculate_false_positive_samples(const MatrixR& targets, const MatrixR& outputs,
-                                                                const vector<Index>& testing_indices, float threshold) const { return filter_classification_samples(targets, outputs, testing_indices, threshold, ConfusionCell::FalsePositive); }
-    vector<Index> calculate_false_negative_samples(const MatrixR& targets, const MatrixR& outputs,
-                                                                const vector<Index>& testing_indices, float threshold) const { return filter_classification_samples(targets, outputs, testing_indices, threshold, ConfusionCell::FalseNegative); }
-    vector<Index> calculate_true_negative_samples(const MatrixR& targets, const MatrixR& outputs,
-                                                               const vector<Index>& testing_indices, float threshold) const { return filter_classification_samples(targets, outputs, testing_indices, threshold, ConfusionCell::TrueNegative); }
-    Tensor<VectorI, 2> calculate_multiple_classification_rates() const;
-
-    Tensor<VectorI, 2> calculate_multiple_classification_rates(const MatrixR&, const MatrixR&, const vector<Index>&) const;
-
-    pair<MatrixR, MatrixR> get_targets_and_outputs(const string&) const;
 
 private:
 
@@ -153,11 +141,8 @@ private:
     VectorR calculate_classification_errors(const string&, bool binary) const;
 
     Network* network = nullptr;
-
     Dataset* dataset = nullptr;
-
     Index batch_size = 0;
-
 };
 
 }

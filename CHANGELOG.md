@@ -48,6 +48,10 @@ remaining limitations.
 
 ### Reliability and portability
 
+- Consolidate evaluation classification traversal, positive counts and metric
+  ratios. Reuse inference batch targets and stream sample indices, preserving
+  bounded CPU/CUDA inference, metric formulas and curve tie handling. Group the
+  public API by analysis type and validate classification shapes before indexing.
 - Consolidate core token and quoted-field parsing, random fills, statistics and
   memory-pool ordering. Share CUDA top-k selection and normalization shape
   dispatch, and give matmul resources automatic ownership. Preserve numerical

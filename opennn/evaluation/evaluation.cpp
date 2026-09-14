@@ -6,16 +6,15 @@
 #include <sstream>
 #include <numeric>
 #include <limits>
+#include <utility>
 
 #include "opennn/dataset/dataset.h"
-#include "opennn/dataset/correlations.h"
 #include "opennn/core/parallel_algorithms.h"
 #include "opennn/core/scaling.h"
 #include "opennn/network/network.h"
 #include "opennn/core/statistics.h"
 #include "opennn/training/error_functions.h"
 #include "opennn/network/forward_propagation.h"
-#include "opennn/network/back_propagation.h"
 #include "opennn/dataset/batch.h"
 
 namespace opennn
@@ -50,12 +49,46 @@ VectorR get_scaling_ranges(const FeatureScaling& scaling, Index outputs_number)
     return ranges;
 }
 
+void check_classification_data(const MatrixR& targets, const MatrixR& outputs, bool binary = false)
+{
+    throw_if(targets.rows() != outputs.rows() || targets.cols() != outputs.cols()
+             || targets.cols() == 0 || (binary && targets.cols() != 1),
+             "Classification requires equally shaped targets and outputs with {}.",
+             binary ? "one column" : "at least one column");
+}
+
+template<typename Visit>
+void for_each_classification(const MatrixR& targets, const MatrixR& outputs, float threshold, Visit&& visit,
+                             bool binary_only = false)
+{
+    check_classification_data(targets, outputs, binary_only);
+    const bool binary = outputs.cols() == 1;
+    for (Index row = 0; row < targets.rows(); ++row)
+    {
+        const Index target = binary ? (targets(row, 0) >= threshold ? 0 : 1)
+                                    : maximal_index(targets.row(row));
+        const Index output = binary ? (outputs(row, 0) >= threshold ? 0 : 1)
+                                    : maximal_index(outputs.row(row));
+        visit(row, target, output);
+    }
+}
+
+Index count_binary_positives(const MatrixR& targets, const MatrixR& outputs)
+{
+    check_classification_data(targets, outputs, true);
+    return (targets.array() >= 0.5f).count();
+}
+
+float classification_ratio(float numerator, Index denominator)
+{
+    return denominator == 0 ? 0.0f : numerator / float(denominator);
+}
+
 }
 
 Evaluation::Evaluation(Network* new_network, Dataset* new_dataset)
+    : network(new_network), dataset(new_dataset)
 {
-    network = new_network;
-    dataset = new_dataset;
 }
 
 void Evaluation::check() const
@@ -69,16 +102,8 @@ void Evaluation::check() const
 
 Tensor<Evaluation::GoodnessOfFitAnalysis, 1> Evaluation::perform_goodness_of_fit_analysis() const
 {
-    check();
-
-    const Index testing_samples_number = dataset->get_samples_number(SampleRole::Testing);
-
-    throw_if(testing_samples_number == 0,
-             "Number of testing samples is zero.\n");
-
-    const Index outputs_number = network->get_outputs_number();
-
     const auto [all_targets, all_outputs] = get_targets_and_outputs("Testing");
+    const Index outputs_number = all_outputs.cols();
     Tensor<GoodnessOfFitAnalysis, 1> goodness_of_fit_results(outputs_number);
 
     for (Index i = 0; i < outputs_number; ++i)
@@ -106,89 +131,61 @@ pair<MatrixR, MatrixR> Evaluation::get_targets_and_outputs(const string& sample_
 {
     check();
 
-    const Index samples_number = dataset->get_samples_number(sample_role);
+    const vector<Index> sample_indices = dataset->get_sample_indices(sample_role);
+    const Index samples_number = ssize(sample_indices);
 
     throw_if(samples_number == 0,
              "Number of samples is zero.\n");
 
-    const vector<Index> sample_indices = dataset->get_sample_indices(sample_role);
     const FeatureSelection features = dataset->get_feature_selection();
-    const vector<Index>& target_feature_indices = features.targets;
-
     const Index target_width = dataset->get_target_shape().size();
 
-    // Bounded on both devices. The CPU default used to be samples_number --
-    // the whole split in one batch -- which builds an activation arena
-    // proportional to the test set: 500,000 rows of a 1024-wide model reached
-    // 1,024 MiB, sixteen times what training the same model used, and would
-    // simply fail on a larger split. Evaluation is batch-invariant for a
-    // feedforward network, so bounding it changes memory and not results.
+    // Bound inference memory independently of the number of evaluated samples.
     constexpr Index maximum_cpu_batch_size = 4096;
-
     const Index default_batch_size =
-        network->is_gpu() ? Index(256)
-                                 : min<Index>(maximum_cpu_batch_size, samples_number);
+        network->is_gpu() ? Index(256) : maximum_cpu_batch_size;
     const Index current_batch_size =
-        (batch_size <= 0) ? default_batch_size
-                          : min<Index>(batch_size, samples_number);
-
-    vector<vector<Index>> testing_batches;
-    for (Index start = 0; start < samples_number; start += current_batch_size)
-    {
-        const Index end = min(start + current_batch_size, samples_number);
-        testing_batches.emplace_back(sample_indices.begin() + start,
-                                     sample_indices.begin() + end);
-    }
+        min(batch_size <= 0 ? default_batch_size : batch_size, samples_number);
 
     MatrixR target_data(samples_number, target_width);
     MatrixR output_data;
+    vector<Index> batch_indices;
+    batch_indices.reserve(size_t(current_batch_size));
 
     EffectiveConfig host_config;
     host_config.device = Device::CPU;
     host_config.training_type = Type::FP32;
 
-    // The batch and the activation arena are reused across chunks, rebuilt
-    // only when the chunk size changes -- which happens at most once, for a
-    // short final chunk. Allocating them per chunk meant a 500,000-row split
-    // at batch 4,096 built and destroyed the same 32 MiB arena 122 times per
-    // pass, which costs time rather than memory but costs it for nothing.
-    //
-    // Only on the host path. calculate_outputs owns device residency and
-    // graph capture for a GPU network, and its evaluation batch is 256, so
-    // there is little to reclaim and a great deal to get wrong.
+    // Reuse the CPU arena until the batch size changes. GPU residency and
+    // graph capture remain owned by Network::calculate_outputs.
     const bool reuse_arena = !network->is_gpu();
 
     unique_ptr<Batch> batch;
     unique_ptr<ForwardPropagation> propagation;
-    Index built_for = 0;
 
-    Index row_cursor = 0;
-    for (const vector<Index>& batch_indices : testing_batches)
+    for (Index start = 0; start < samples_number; start += current_batch_size)
     {
-        if (batch_indices.empty()) continue;
-        const Index n = batch_indices.size();
+        const Index n = min(current_batch_size, samples_number - start);
+        batch_indices.assign(sample_indices.begin() + start, sample_indices.begin() + start + n);
 
-        dataset->fill_targets(batch_indices, target_feature_indices,
-                              target_data.data() + row_cursor * target_width,
-                              FillMode::Inference);
-
-        if (!batch || built_for != n)
+        if (!batch || batch->get_batch_size() != n)
         {
             batch = make_unique<Batch>(n, dataset, host_config);
             if (reuse_arena)
                 propagation = make_unique<ForwardPropagation>(
                     n, network, ForwardPropagationMode::Inference);
-            built_for = n;
         }
 
         batch->fill(batch_indices, features, FillMode::Inference);
+        if (target_width > 0)
+            target_data.middleRows(start, n) = batch->get_targets().as_matrix();
 
         MatrixR batch_outputs;
 
         if (reuse_arena)
         {
             network->forward_propagate(batch->get_inputs(), *propagation,
-                                              ForwardPropagationMode::Inference);
+                                       ForwardPropagationMode::Inference);
             batch_outputs = propagation->get_outputs().as_matrix();
         }
         else
@@ -199,25 +196,17 @@ pair<MatrixR, MatrixR> Evaluation::get_targets_and_outputs(const string& sample_
         if (output_data.size() == 0)
             output_data.resize(samples_number, batch_outputs.cols());
 
-        output_data.middleRows(row_cursor, n) = batch_outputs;
-        row_cursor += n;
+        output_data.middleRows(start, n) = batch_outputs;
     }
 
-    return {target_data, output_data};
+    return {std::move(target_data), std::move(output_data)};
 }
 
 Tensor3 Evaluation::calculate_error_data() const
 {
-    check();
-
-    const Index testing_samples_number = dataset->get_samples_number(SampleRole::Testing);
-
-    throw_if(testing_samples_number == 0,
-             "Number of testing samples is zero.\n");
-
-    const Index outputs_number = network->get_outputs_number();
-
     const auto [targets, outputs] = get_targets_and_outputs("Testing");
+    const Index testing_samples_number = targets.rows();
+    const Index outputs_number = outputs.cols();
 
     const VectorR ranges = get_scaling_ranges(
         get_output_scaling(*network), outputs_number);
@@ -246,17 +235,10 @@ Tensor3 Evaluation::calculate_error_data() const
 
 MatrixR Evaluation::calculate_percentage_error_data() const
 {
-    check();
-
-    const Index testing_samples_number = dataset->get_samples_number(SampleRole::Testing);
-
-    throw_if(testing_samples_number == 0,
-             "Number of testing samples is zero.\n");
-
     const auto [targets, outputs] = get_targets_and_outputs("Testing");
 
     const VectorR ranges = get_scaling_ranges(
-        get_output_scaling(*network), network->get_outputs_number());
+        get_output_scaling(*network), outputs.cols());
     const MatrixR errors = targets - outputs;
     MatrixR error_data = ((errors.array() * 100.0f).rowwise() / ranges.transpose().array()).matrix();
     error_data = error_data.array().isFinite().select(error_data.array(), 0.0f).matrix();
@@ -366,18 +348,12 @@ Evaluation::calculate_reconstruction_error_statistics(const VectorR& errors) con
     throw_if(!errors.array().isFinite().all(),
              "Evaluation::calculate_reconstruction_error_statistics: errors must be finite.");
 
-    ReconstructionErrorStatistics statistics;
-    statistics.minimum = errors.minCoeff();
-    statistics.maximum = errors.maxCoeff();
-
     const auto errors_double = errors.cast<double>();
     const double mean = errors_double.mean();
     const double variance = (errors_double.array() - mean).square().mean();
 
-    statistics.mean = static_cast<float>(mean);
-    statistics.population_standard_deviation = static_cast<float>(sqrt(variance));
-
-    return statistics;
+    return {errors.minCoeff(), errors.maxCoeff(), static_cast<float>(mean),
+            static_cast<float>(sqrt(variance))};
 }
 
 float Evaluation::calculate_anomaly_threshold(
@@ -462,13 +438,9 @@ float Evaluation::calculate_determination(const VectorR& outputs, const VectorR&
 
 VectorI Evaluation::calculate_positives_negatives_rate(const MatrixR& targets, const MatrixR& outputs) const
 {
-    const MatrixI confusion = calculate_confusion(targets, outputs, 0.5f);
-
+    const Index positives = count_binary_positives(targets, outputs);
     VectorI positives_negatives_rate(2);
-
-    positives_negatives_rate << (confusion(0,0) + confusion(0,1)),
-                                (confusion(1,0) + confusion(1,1));
-
+    positives_negatives_rate << positives, targets.rows() - positives;
     return positives_negatives_rate;
 }
 
@@ -483,33 +455,19 @@ MatrixI Evaluation::calculate_confusion(const MatrixR& targets,
                                              const MatrixR& outputs,
                                              float decision_threshold) const
 {
-    const Index samples = targets.rows();
     const Index outputs_number = outputs.cols();
     const Index num_classes = (outputs_number == 1) ? 2 : outputs_number;
 
     MatrixI confusion = MatrixI::Zero(num_classes + 1, num_classes + 1);
 
-    for (Index i = 0; i < samples; ++i)
+    for_each_classification(targets, outputs, decision_threshold, [&](Index, Index target_class, Index output_class)
     {
-        Index target_class, output_class;
-
-        if (outputs_number == 1)
-        {
-            target_class = targets(i, 0) >= decision_threshold ? 0 : 1;
-            output_class = outputs(i, 0) >= decision_threshold ? 0 : 1;
-        }
-        else
-        {
-            target_class = maximal_index(targets.row(i));
-            output_class = maximal_index(outputs.row(i));
-        }
-
         confusion(target_class, output_class)++;
         confusion(target_class, num_classes)++;
         confusion(num_classes, output_class)++;
-    }
+    });
 
-    confusion(num_classes, num_classes) = samples;
+    confusion(num_classes, num_classes) = targets.rows();
 
     return confusion;
 }
@@ -533,13 +491,10 @@ Evaluation::RocAnalysis Evaluation::perform_roc_analysis() const
 
 MatrixR Evaluation::calculate_roc_curve(const MatrixR& targets, const MatrixR& outputs) const
 {
-    throw_if(targets.cols() != 1 || outputs.cols() != 1
-             || targets.rows() == 0 || targets.rows() != outputs.rows(),
-             "ROC requires equally sized, nonempty single-column targets and scores.");
+    const Index total_positives = count_binary_positives(targets, outputs);
     throw_if(!targets.array().isFinite().all() || !outputs.array().isFinite().all(),
              "ROC targets and scores must be finite.");
 
-    const Index total_positives = (targets.array() >= 0.5f).count();
     const Index total_negatives = targets.rows() - total_positives;
     throw_if(total_positives == 0 || total_negatives == 0,
              "ROC requires both positive and negative samples.");
@@ -553,20 +508,17 @@ MatrixR Evaluation::calculate_roc_curve(const MatrixR& targets, const MatrixR& o
     Index true_positive = total_positives;
     Index false_positive = total_negatives;
     Index row = 0;
-    for(size_t first = 0; first < order.size();)
+    for (const Index index : order)
     {
-        const float threshold = outputs(order[first], 0);
-        roc_curve(row, 0) = float(false_positive) / float(total_negatives);
-        roc_curve(row, 1) = float(true_positive) / float(total_positives);
-        roc_curve(row++, 2) = threshold;
-        size_t end = first;
-        while(end < order.size() && outputs(order[end], 0) == threshold)
+        const float threshold = outputs(index, 0);
+        if (row == 0 || threshold != roc_curve(row - 1, 2))
         {
-            if(targets(order[end], 0) >= 0.5f) --true_positive;
-            else --false_positive;
-            ++end;
+            roc_curve(row, 0) = float(false_positive) / float(total_negatives);
+            roc_curve(row, 1) = float(true_positive) / float(total_positives);
+            roc_curve(row++, 2) = threshold;
         }
-        first = end;
+        if (targets(index, 0) >= 0.5f) --true_positive;
+        else --false_positive;
     }
     roc_curve(row, 0) = 0.0f;
     roc_curve(row, 1) = 0.0f;
@@ -652,7 +604,7 @@ MatrixR Evaluation::perform_lift_chart_analysis() const
 
 MatrixR Evaluation::calculate_cumulative_gain(const MatrixR& targets, const MatrixR& outputs) const
 {
-    const Index total_positives = calculate_positives_negatives_rate(targets, outputs)(0);
+    const Index total_positives = count_binary_positives(targets, outputs);
 
     throw_if(total_positives == 0,
              "Number of positive samples ({}) must be greater than zero.\n", total_positives);
@@ -665,8 +617,6 @@ MatrixR Evaluation::calculate_cumulative_gain(const MatrixR& targets, const Matr
     stable_sort_parallel_if_large(
         sorted_indices.begin(), sorted_indices.end(),
         [&outputs](Index i, Index j) { return outputs(i, 0) > outputs(j, 0); });
-
-    const VectorR sorted_targets = targets(sorted_indices, 0);
 
     const Index points_number = 21;
     const Index buckets_number = points_number - 1;
@@ -685,7 +635,7 @@ MatrixR Evaluation::calculate_cumulative_gain(const MatrixR& targets, const Matr
                                         testing_samples_number);
 
         for (; next_row < maximum_index; ++next_row)
-            if (sorted_targets(next_row) >= 0.5f)
+            if (targets(sorted_indices[size_t(next_row)], 0) >= 0.5f)
                 ++positives;
 
         cumulative_gain(i + 1, 0) = float(i + 1) / float(buckets_number);
@@ -697,19 +647,12 @@ MatrixR Evaluation::calculate_cumulative_gain(const MatrixR& targets, const Matr
 
 MatrixR Evaluation::calculate_lift_chart(const MatrixR& cumulative_gain) const
 {
-    const Index rows_number = cumulative_gain.rows();
-
-    MatrixR lift_chart(rows_number, cumulative_gain.cols());
-
-    lift_chart(0, 0) = 0.0f;
-    lift_chart(0, 1) = 1.0f;
-
-    for (Index i = 1; i < rows_number; ++i)
-    {
-        lift_chart(i, 0) = cumulative_gain(i, 0);
-        lift_chart(i, 1) = cumulative_gain(i, 1) / cumulative_gain(i, 0);
-    }
-
+    throw_if(cumulative_gain.rows() == 0 || cumulative_gain.cols() != 2,
+             "Lift chart requires a nonempty two-column cumulative gain curve.");
+    MatrixR lift_chart = cumulative_gain;
+    lift_chart.row(0) << 0.0f, 1.0f;
+    for (Index i = 1; i < lift_chart.rows(); ++i)
+        lift_chart(i, 1) /= lift_chart(i, 0);
     return lift_chart;
 }
 
@@ -719,13 +662,17 @@ Evaluation::BinaryClassificationRates Evaluation::calculate_binary_classificatio
 
     const vector<Index> testing_indices = dataset->get_sample_indices(SampleRole::Testing);
 
+    throw_if(ssize(testing_indices) != targets.rows(), "Classification sample-index count must match the data rows.");
     BinaryClassificationRates binary_classification_rates;
-
-    binary_classification_rates.true_positives_indices = calculate_true_positive_samples(targets, outputs, testing_indices, decision_threshold);
-    binary_classification_rates.false_positives_indices = calculate_false_positive_samples(targets, outputs, testing_indices, decision_threshold);
-    binary_classification_rates.false_negatives_indices = calculate_false_negative_samples(targets, outputs, testing_indices, decision_threshold);
-    binary_classification_rates.true_negatives_indices = calculate_true_negative_samples(targets, outputs, testing_indices, decision_threshold);
-
+    const std::array<vector<Index>*, 4> cells{
+        &binary_classification_rates.true_positives_indices,
+        &binary_classification_rates.false_negatives_indices,
+        &binary_classification_rates.false_positives_indices,
+        &binary_classification_rates.true_negatives_indices};
+    for_each_classification(targets, outputs, decision_threshold, [&](Index row, Index target, Index output)
+    {
+        cells[size_t(2 * target + output)]->push_back(testing_indices[size_t(row)]);
+    }, true);
     return binary_classification_rates;
 }
 
@@ -735,26 +682,17 @@ vector<Index> Evaluation::filter_classification_samples(const MatrixR& targets,
                                                               float decision_threshold,
                                                               ConfusionCell cell) const
 {
-    const bool target_positive = cell == ConfusionCell::TruePositive
-                              || cell == ConfusionCell::FalseNegative;
-
-    const bool output_positive = cell == ConfusionCell::TruePositive
-                              || cell == ConfusionCell::FalsePositive;
-
-    const Index rows_number = targets.rows();
+    throw_if(ssize(testing_indices) != targets.rows(), "Classification sample-index count must match the data rows.");
+    const Index target_class = cell == ConfusionCell::TruePositive || cell == ConfusionCell::FalseNegative ? 0 : 1;
+    const Index output_class = cell == ConfusionCell::TruePositive || cell == ConfusionCell::FalsePositive ? 0 : 1;
 
     vector<Index> result;
-    result.reserve(rows_number);
-
-    for (Index i = 0; i < rows_number; ++i)
+    result.reserve(targets.rows());
+    for_each_classification(targets, outputs, decision_threshold, [&](Index row, Index target, Index output)
     {
-        const bool t_pos = targets(i, 0) >= decision_threshold;
-        const bool o_pos = outputs(i, 0) >= decision_threshold;
-
-        if (t_pos == target_positive && o_pos == output_positive)
-            result.push_back(testing_indices[i]);
-    }
-
+        if (target == target_class && output == output_class)
+            result.push_back(testing_indices[size_t(row)]);
+    }, true);
     return result;
 }
 
@@ -771,34 +709,28 @@ Tensor<VectorI, 2> Evaluation::calculate_multiple_classification_rates(const Mat
                                                                                     const MatrixR& outputs,
                                                                                     const vector<Index>& testing_indices) const
 {
-    const Index samples_number = targets.rows();
     const Index targets_number = targets.cols();
 
     throw_if(targets_number < 2 || outputs.cols() != targets_number,
              "Evaluation::calculate_multiple_classification_rates requires one column per class "
              "(got {} target and {} output columns); use calculate_binary_classification_rates for a single output.",
              targets_number, outputs.cols());
+    throw_if(ssize(testing_indices) != targets.rows(), "Classification sample-index count must match the data rows.");
 
     Tensor< VectorI, 2> multiple_classification_rates(targets_number, targets_number);
 
-    const MatrixI confusion = calculate_confusion(targets, outputs);
+    MatrixI positions = calculate_confusion(targets, outputs);
 
     for (Index i = 0; i < targets_number; ++i)
         for (Index j = 0; j < targets_number; ++j)
-            multiple_classification_rates(i, j).resize(confusion(i, j));
+            multiple_classification_rates(i, j).resize(positions(i, j));
 
-    MatrixI indices = MatrixI::Zero(targets_number, targets_number);
-
-    for (Index i = 0; i < samples_number; ++i)
+    positions.setZero();
+    for_each_classification(targets, outputs, 0.5f, [&](Index row, Index target_index, Index output_index)
     {
-        const Index target_index = maximal_index(targets.row(i));
-        const Index output_index = maximal_index(outputs.row(i));
-
-        multiple_classification_rates(target_index, output_index)(indices(target_index, output_index))
-            = testing_indices[i];
-
-        indices(target_index, output_index)++;
-    }
+        VectorI& samples = multiple_classification_rates(target_index, output_index);
+        samples(positions(target_index, output_index)++) = testing_indices[size_t(row)];
+    });
 
     return multiple_classification_rates;
 }
@@ -813,6 +745,7 @@ VectorR Evaluation::calculate_binary_classification_tests(const MatrixR& targets
                                                                const MatrixR& outputs,
                                                                const float decision_threshold) const
 {
+    check_classification_data(targets, outputs, true);
     const MatrixI confusion = calculate_confusion(targets, outputs, decision_threshold);
 
     const Index true_positive = confusion(0,0);
@@ -822,25 +755,14 @@ VectorR Evaluation::calculate_binary_classification_tests(const MatrixR& targets
 
     const Index total = true_positive + true_negative + false_positive + false_negative;
 
-    const float classification_accuracy = (total == 0)
-                                             ? 0.0f
-                                             : float(true_positive + true_negative) / float(total);
-
-    const float error_rate = (total == 0)
-                                ? 0.0f
-                                : float(false_positive + false_negative) / float(total);
-
+    const float classification_accuracy = classification_ratio(float(true_positive + true_negative), total);
     const Index tp_plus_fn = true_positive + false_negative;
     const Index fp_plus_tn = false_positive + true_negative;
     const Index tp_plus_fp = true_positive + false_positive;
 
-    const float sensitivity = (tp_plus_fn == 0) ? 0.0f : float(true_positive) / float(tp_plus_fn);
-
-    const float false_positive_rate = (fp_plus_tn == 0) ? 0.0f : float(false_positive) / float(fp_plus_tn);
-
-    const float specificity = (fp_plus_tn == 0) ? 0.0f : float(true_negative) / float(fp_plus_tn);
-
-    const float precision = (tp_plus_fp == 0) ? 0.0f : float(true_positive) / float(tp_plus_fp);
+    const float sensitivity = classification_ratio(float(true_positive), tp_plus_fn);
+    const float specificity = classification_ratio(float(true_negative), fp_plus_tn);
+    const float precision = classification_ratio(float(true_positive), tp_plus_fp);
 
     const bool accuracy_is_one = abs(classification_accuracy - 1.0f) < EPSILON;
 
@@ -853,17 +775,8 @@ VectorR Evaluation::calculate_binary_classification_tests(const MatrixR& targets
         : (1.0f - sensitivity) / specificity;
 
     const Index f1_denominator = 2 * true_positive + false_positive + false_negative;
-    const float f1_score = (f1_denominator == 0)
-                              ? 0.0f
-                              : 2.0f * float(true_positive) / float(f1_denominator);
-
-    const float false_discovery_rate = (tp_plus_fp == 0) ? 0.0f : float(false_positive) / float(tp_plus_fp);
-
-    const float false_negative_rate = (tp_plus_fn == 0) ? 0.0f : float(false_negative) / float(tp_plus_fn);
-
     const Index tn_plus_fn = true_negative + false_negative;
-
-    const float negative_predictive_value = (tn_plus_fn == 0) ? 0.0f : float(true_negative) / float(tn_plus_fn);
+    const float negative_predictive_value = classification_ratio(float(true_negative), tn_plus_fn);
 
     const double matthews_denominator = sqrt(double(tp_plus_fp) * double(tp_plus_fn)
                                            * double(fp_plus_tn) * double(tn_plus_fn));
@@ -874,8 +787,6 @@ VectorR Evaluation::calculate_binary_classification_tests(const MatrixR& targets
                                                              - double(false_positive) * double(false_negative))
                                                               / matthews_denominator);
 
-    const float informedness = sensitivity + specificity - 1.0f;
-
     const float markedness = (fp_plus_tn == 0)
                                 ? precision - 1.0f
                                 : precision + negative_predictive_value - 1.0f;
@@ -883,19 +794,19 @@ VectorR Evaluation::calculate_binary_classification_tests(const MatrixR& targets
     VectorR binary_classification_test(15);
 
     binary_classification_test << classification_accuracy,
-                                  error_rate,
+                                  classification_ratio(float(false_positive + false_negative), total), // Error rate
                                   sensitivity,
                                   specificity,
                                   precision,
                                   positive_likelihood,
                                   negative_likelihood,
-                                  f1_score,
-                                  false_positive_rate,
-                                  false_discovery_rate,
-                                  false_negative_rate,
+                                  classification_ratio(2.0f * float(true_positive), f1_denominator), // F1 score
+                                  classification_ratio(float(false_positive), fp_plus_tn), // False positive rate
+                                  classification_ratio(float(false_positive), tp_plus_fp), // False discovery rate
+                                  classification_ratio(float(false_negative), tp_plus_fn), // False negative rate
                                   negative_predictive_value,
                                   Matthews_correlation_coefficient,
-                                  informedness,
+                                  sensitivity + specificity - 1.0f, // Informedness
                                   markedness;
 
     return binary_classification_test;
@@ -925,13 +836,8 @@ void Evaluation::print_multiple_classification_tests() const
     const MatrixI confusion = calculate_confusion(targets, outputs);
     const Index samples_number = confusion(classes_number, classes_number);
 
-    Index correct = 0;
-    for (Index i = 0; i < classes_number; ++i)
-        correct += confusion(i, i);
-
-    const float accuracy = samples_number == 0
-                         ? 0.0f
-                         : float(correct) / float(samples_number);
+    const Index correct = confusion.topLeftCorner(classes_number, classes_number).trace();
+    const float accuracy = classification_ratio(float(correct), samples_number);
 
     ostringstream report;
     report << "Multiple classification tests: \n"
