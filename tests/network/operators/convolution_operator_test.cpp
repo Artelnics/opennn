@@ -17,8 +17,15 @@
 // different model.
 
 #include "tests/pch.h"
+#include "tests/numerical_derivatives.h"
 
+#include "opennn/core/configuration.h"
 #include "opennn/core/tensor_types.h"
+#include "opennn/dataset/tabular_dataset.h"
+#include "opennn/network/layers/convolutional_layer.h"
+#include "opennn/network/layers/dense_layer.h"
+#include "opennn/network/layers/flatten_layer.h"
+#include "opennn/network/network.h"
 #include "opennn/network/operators/convolution_operator.h"
 
 using namespace opennn;
@@ -139,6 +146,54 @@ TEST(ConvolutionOperatorTest, GlorotCountsTheKernelAreaInBothFans)
 
     for (Index i = 0; i < bias_storage.size(); ++i)
         EXPECT_FLOAT_EQ(bias_storage(i), 0.0f) << "at index " << i;
+}
+
+TEST(ConvolutionOperatorTest, RectangularStridedPatchGradientsWithAndWithoutPadding)
+{
+    Configuration::instance().set(Device::CPU, Type::FP32);
+    const Shape input_shape{5, 8, 1};
+    TabularDataset dataset(3, input_shape, Shape{1});
+    MatrixR data(3, 41);
+    for (Index i = 0; i < data.size(); ++i)
+        data.data()[i] = float((i * 7) % 19 + 1) / 32.0f;
+    dataset.set_data(std::move(data));
+    dataset.set_sample_roles("Training");
+
+    for (const string padding : {"Valid", "Same"})
+    {
+        SCOPED_TRACE(padding);
+        Network network;
+        network.add_layer(make_unique<Convolutional>(
+            input_shape, Shape{1, 1, 1, 2}, "Identity"));
+
+        // The trainable stem makes this test observe the second convolution's
+        // input gradient: its overlapping patches must accumulate correctly.
+        network.add_layer(make_unique<Convolutional>(
+            network.get_layer(0)->get_output_shape(), Shape{3, 5, 2, 1}, "Identity",
+            Shape{2, 3}, padding));
+        const Shape output_shape = network.get_layer(1)->get_output_shape();
+        const Index side = padding == "Same" ? 3 : 2;
+        ASSERT_EQ(output_shape, (Shape{side, side, 1}));
+        const auto& convolution = static_cast<const Convolutional&>(*network.get_layer(1));
+        EXPECT_EQ(convolution.get_padding_height(), padding == "Same" ? 1 : 0);
+        EXPECT_EQ(convolution.get_padding_width(), padding == "Same" ? 2 : 0);
+
+        network.add_layer(make_unique<Flatten>(output_shape));
+        network.add_layer(make_unique<opennn::Dense>(
+            network.get_layer(2)->get_output_shape(), Shape{1}, "Identity"));
+        network.compile();
+        VectorMap parameters = network.get_parameters_map();
+        for (Index i = 0; i < parameters.size(); ++i)
+            parameters(i) = 0.05f + 0.01f * float(i % 7);
+
+        Loss loss(&network, &dataset);
+        loss.set_error(Loss::Error::MeanSquaredError);
+        const VectorR gradient = calculate_gradient(loss);
+        const VectorR numerical = calculate_numerical_gradient(loss);
+        ASSERT_EQ(gradient.size(), numerical.size());
+        EXPECT_GT(gradient.head(network.get_layer(0)->get_parameters_number()).cwiseAbs().maxCoeff(), 1.0e-5f);
+        EXPECT_LT((gradient - numerical).cwiseAbs().maxCoeff(), 1.0e-4f);
+    }
 }
 
 // OpenNN: Open Neural Networks Library.

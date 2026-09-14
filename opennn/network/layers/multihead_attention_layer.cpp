@@ -126,33 +126,24 @@ void MultiHeadAttention::set(Index new_query_sequence_length,
 
     apply_sdpa_choice();
 
-    for (auto* proj : {&query_projection, &key_projection, &value_projection})
+    const auto configure_projection = [&](MultiHeadProjectionOperator& projection,
+                                           size_t output_slot, size_t delta_slot,
+                                           size_t input_view, bool accumulate_source)
     {
-        proj->input_slots  = {Input};
-        proj->scratch_slot = TransposeScratch;
-        proj->input_delta_slot_self = InputQueryDelta;
-    }
-
-    query_projection.output_slots = {Query};
-    query_projection.input_view_index = 0;
-    query_projection.output_delta_slots = {QueryHeadDelta};
-    query_projection.input_delta_slot_cross = InputQueryDelta;
-    query_projection.accumulate_input_delta_self  = false;
-    query_projection.accumulate_input_delta_cross = false;
-
-    key_projection.output_slots = {Key};
-    key_projection.input_view_index = 1;
-    key_projection.output_delta_slots = {KeyHeadDelta};
-    key_projection.input_delta_slot_cross = InputSourceDelta;
-    key_projection.accumulate_input_delta_self  = true;
-    key_projection.accumulate_input_delta_cross = false;
-
-    value_projection.output_slots = {Value};
-    value_projection.input_view_index = 1;
-    value_projection.output_delta_slots = {ValueHeadDelta};
-    value_projection.input_delta_slot_cross = InputSourceDelta;
-    value_projection.accumulate_input_delta_self  = true;
-    value_projection.accumulate_input_delta_cross = true;
+        projection.input_slots = {Input};
+        projection.output_slots = {output_slot};
+        projection.output_delta_slots = {delta_slot};
+        projection.scratch_slot = TransposeScratch;
+        projection.input_view_index = input_view;
+        projection.input_delta_slot_self = InputQueryDelta;
+        projection.input_delta_slot_cross = input_view == 0 ? InputQueryDelta : InputSourceDelta;
+        projection.accumulate_input_delta_self = input_view != 0;
+        projection.accumulate_input_delta_cross = accumulate_source;
+    };
+    // Query starts the shared self-attention delta; key starts the cross-attention source delta.
+    configure_projection(query_projection, Query, QueryHeadDelta, 0, false);
+    configure_projection(key_projection, Key, KeyHeadDelta, 1, false);
+    configure_projection(value_projection, Value, ValueHeadDelta, 1, true);
 
     attention.input_slots  = {Query, Key, Value, Input};
     attention.output_slots = {AttentionWeights, AttentionWeightsDropped};

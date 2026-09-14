@@ -35,31 +35,22 @@ Shape Dense::get_output_shape() const
 vector<TensorSpec> Dense::get_forward_specs(Index batch_size) const
 {
     const Shape full   = Shape{batch_size}.append(get_output_shape());
-    const Shape stats  = Shape{output_features};
+    const bool normalize = !gated && batch_norm.active();
+    const Shape stats = normalize ? Shape{output_features} : Shape{};
     const Shape dropout_mask = dropout.active() ? full : Shape{};
     const Index rows = output_features > 0 ? full.size() / output_features : 0;
-    const Shape drelu_mask = combination.emit_relu_mask
+    const Shape drelu_mask = !gated && combination.emit_relu_mask
         ? Shape{rows, output_features / 8}
         : Shape{};
 
-    if (gated)
-        return {
-            {full,    compute_dtype},
-            {Shape{}, Type::FP32   },
-            {Shape{}, Type::FP32   },
-            {full,    compute_dtype},
-            {Shape{}, Type::INT8   },
-            {dropout_mask, Type::INT8},
-            {full,    compute_dtype},
-        };
-
-    const bool keep_pre_activation = batch_norm.active() || activation_needs_input(activation_operator.activation_function);
+    const bool keep_pre_activation = gated || normalize
+        || activation_needs_input(activation_operator.activation_function);
 
     return {
         {keep_pre_activation ? full  : Shape{}, compute_dtype},
-        {batch_norm.active() ? stats : Shape{}, Type::FP32   },
-        {batch_norm.active() ? stats : Shape{}, Type::FP32   },
-        {saves_pre_dropout_activation() ? full : Shape{}, compute_dtype},
+        {stats, Type::FP32},
+        {stats, Type::FP32},
+        {gated || saves_pre_dropout_activation() ? full : Shape{}, compute_dtype},
         {drelu_mask,                             Type::INT8   },
         {dropout_mask,                           Type::INT8   },
         {full,                                  compute_dtype},
@@ -80,17 +71,11 @@ vector<TensorSpec> Dense::get_backward_specs(Index batch_size) const
 
     vector<TensorSpec> specs = {{Shape{batch_size}.append(get_input_shape()), compute_dtype}};
 
-    if (gated)
-    {
-
-        const Shape full = Shape{batch_size}.append(get_output_shape());
-        specs.push_back({full, compute_dtype});
-        specs.push_back({full, compute_dtype});
-        return specs;
-    }
-
-    if (activation_needs_input(activation_operator.activation_function))
-        specs.push_back({Shape{batch_size}.append(get_output_shape()), compute_dtype});
+    const size_t intermediates = gated ? 2
+        : activation_needs_input(activation_operator.activation_function) ? 1 : 0;
+    if (intermediates > 0)
+        specs.insert(specs.end(), intermediates,
+                     {Shape{batch_size}.append(get_output_shape()), compute_dtype});
 
     return specs;
 }

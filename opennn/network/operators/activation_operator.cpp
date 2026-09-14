@@ -74,17 +74,14 @@ void ActivationOperator::back_propagate(ForwardPropagation& forward_propagation,
         ? get_input(forward_propagation, layer)
         : forward_propagation.slots[layer][read_slot];
 
-    if (!input_slots.empty() && input_slots[0] != output_slots[0])
+    const bool separate_delta = !input_slots.empty() && input_slots[0] != output_slots[0];
+    TensorView& delta = separate_delta ? get_input_delta(back_propagation, layer) : output_delta;
+    if (separate_delta)
     {
-        TensorView& input_delta = get_input_delta(back_propagation, layer);
-        if (input_delta.empty()) return;
-        copy(output_delta, input_delta);
-        activation_backward(outputs, input_delta, activation_function);
+        if (delta.empty()) return;
+        copy(output_delta, delta);
     }
-    else
-    {
-        activation_backward(outputs, output_delta, activation_function);
-    }
+    activation_backward(outputs, delta, activation_function);
 }
 
 void ActivationOperator::to_JSON(JsonWriter& w) const

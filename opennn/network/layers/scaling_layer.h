@@ -111,6 +111,7 @@ protected:
 
     void refresh_op_storage(Device);
     static string affine_expression(string_view input, const AffineMap&);
+    string write_scaling_expression(const vector<string>&, const vector<string>&, bool inverse) const;
 };
 
 }

@@ -48,6 +48,10 @@ remaining limitations.
 
 ### Reliability and portability
 
+- Consolidate operator execution, convolution patch traversal, recurrent gate
+  handling, layer buffer specifications and scaling expressions. Preserve public
+  interfaces and model formats, with gradient coverage for rectangular, strided
+  convolutions and padded image boundaries.
 - Share cuBLASLt launch and algorithm checks, CUDA activation traversal, and
   mixed-precision upload and parameter-layout handling. Preserve public APIs,
   kernel selection and cache formats.

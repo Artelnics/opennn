@@ -42,24 +42,16 @@ Shape Normalization3d::get_output_shape() const
 
 vector<TensorSpec> Normalization3d::get_forward_specs(Index batch_size) const
 {
-    if (get_method() == NormalizationMethod::RMS)
-    {
-
-        const bool need_normalized = get_compute_device() != Device::CUDA;
-        return {
-            {{batch_size, sequence_length}, Type::FP32},
-            {Shape{},                       Type::FP32},
-            {need_normalized ? Shape{batch_size, sequence_length, embedding_dimension} : Shape{}, compute_dtype},
-            {{batch_size, sequence_length, embedding_dimension}, compute_dtype},
-        };
-    }
-
-    const bool need_sum = layer_normalization.fuse_add || get_compute_device() != Device::CUDA;
+    const bool rms = get_method() == NormalizationMethod::RMS;
+    const Shape stats{batch_size, sequence_length};
+    const Shape full{batch_size, sequence_length, embedding_dimension};
+    const bool need_intermediate = get_compute_device() != Device::CUDA
+        || (!rms && layer_normalization.fuse_add);
     return {
-        {{batch_size, sequence_length},                      Type::FP32},
-        {{batch_size, sequence_length},                      Type::FP32},
-        {need_sum ? Shape{batch_size, sequence_length, embedding_dimension} : Shape{}, compute_dtype},
-        {{batch_size, sequence_length, embedding_dimension}, compute_dtype},
+        {stats, Type::FP32},
+        {rms ? Shape{} : stats, Type::FP32},
+        {need_intermediate ? full : Shape{}, compute_dtype},
+        {full, compute_dtype},
     };
 }
 
@@ -127,17 +119,10 @@ void Normalization3d::write_JSON_body(JsonWriter& printer) const
 {
     const char* method = get_method() == NormalizationMethod::RMS ? "RMS" : "LayerNorm";
 
-    if (get_method() == NormalizationMethod::RMS)
-        write_json(printer, {
-            {"Method", method},
-            {"Epsilon", layer_normalization.epsilon}
-        });
-    else
-        write_json(printer, {
-            {"Method", method},
-            {"FuseAdd", layer_normalization.fuse_add},
-            {"Epsilon", layer_normalization.epsilon}
-        });
+    add_json_field(printer, "Method", method);
+    if (get_method() != NormalizationMethod::RMS)
+        add_json_field(printer, "FuseAdd", layer_normalization.fuse_add);
+    add_json_field(printer, "Epsilon", layer_normalization.epsilon);
 }
 
 }

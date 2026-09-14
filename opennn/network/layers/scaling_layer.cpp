@@ -475,12 +475,18 @@ string Scaling::affine_expression(string_view input, const AffineMap& affine)
 }
 
 string Scaling::write_expression(const vector<string>& input_names,
-                                 const vector<string>&) const
+                                 const vector<string>& output_names) const
+{
+    return write_scaling_expression(input_names, output_names, false);
+}
+
+string Scaling::write_scaling_expression(const vector<string>& input_names,
+                                         const vector<string>& output_names, bool inverse) const
 {
     const Index outputs_number = get_outputs_number();
     throw_if(outputs_number == 0 || ssize(scalers) == 0
              || outputs_number % ssize(scalers) != 0,
-             "Scaling::write_expression: layer not configured.");
+             "{}::write_expression: layer not configured.", inverse ? "Unscaling" : "Scaling");
 
     ostringstream buffer;
 
@@ -488,18 +494,24 @@ string Scaling::write_expression(const vector<string>& input_names,
     {
         const size_t feature = size_t(i % ssize(scalers));
         const ScalerMethod scaler = scalers[feature];
+        const string& input = input_names[i];
+
+        if (inverse) buffer << output_names[i] << "=";
+        else         buffer << "scaled_" << input << " = ";
 
         if (scaler == ScalerMethod::Logarithm)
         {
-            buffer << "scaled_" << input_names[i] << " = log(max(" << input_names[i]
-                   << ", " << EPSILON << "));\n";
-            continue;
+            if (inverse) buffer << "exp(" << input << ")";
+            else         buffer << "log(max(" << input << ", " << EPSILON << "))";
         }
-
-        buffer << "scaled_" << input_names[i] << " = "
-               << affine_expression(input_names[i], scaling_affine(
-                      scaler, descriptives[feature], min_range, max_range))
-               << ";\n";
+        else
+        {
+            const AffineMap affine = inverse
+                ? unscaling_affine(scaler, descriptives[feature], min_range, max_range)
+                : scaling_affine(scaler, descriptives[feature], min_range, max_range);
+            buffer << affine_expression(input, affine);
+        }
+        buffer << ";\n";
     }
 
     return buffer.str();

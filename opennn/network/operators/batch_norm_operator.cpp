@@ -641,56 +641,49 @@ void BatchNormalizationOperator::apply_delta_gpu(
 
             const auto rung = device::rung<device::BatchNormBackwardRung>();
 
-            vector<Attempt> attempts;
+            optional<Attempt> attempt;
 
             switch (rung)
             {
             case device::BatchNormBackwardRung::StagedFp32:
-                attempts.push_back({Type::FP32, fuse_relu && !fuse_add, false, false});
+                attempt = Attempt{Type::FP32, fuse_relu && !fuse_add, false, false};
                 break;
 
             case device::BatchNormBackwardRung::PlainNative:
-                attempts.push_back({input.get_type(), false, false, false});
+                attempt = Attempt{input.get_type(), false, false, false};
                 break;
 
             case device::BatchNormBackwardRung::Auto:
-                attempts.push_back({input.get_type(), fuse_relu, fork_capable, false});
+                attempt = Attempt{input.get_type(), fuse_relu, fork_capable, false};
                 break;
 
             case device::BatchNormBackwardRung::OwnKernel:
                 break;
             }
 
-            exception_ptr last_failure;
-
-            for (const auto& attempt : attempts)
+            if (attempt)
             {
                 try
                 {
                     cudnn_frontend::build_bn_backward(
                         entry, batch, features, spatial,
-                        attempt.fuse_relu, attempt.dtype, attempt.fork);
+                        attempt->fuse_relu, attempt->dtype, attempt->fork);
 
                     entry.bwd_choice = attempt;
-                    break;
                 }
                 catch (...)
                 {
                     entry.bwd_Y = nullptr;
                     entry.bwd_DPre = nullptr;
-                    last_failure = current_exception();
+                    if (rung == device::BatchNormBackwardRung::StagedFp32
+                        || rung == device::BatchNormBackwardRung::PlainNative)
+                        throw;
                 }
             }
 
             if (!entry.bwd_choice)
-            {
-                if (rung == device::BatchNormBackwardRung::StagedFp32
-                    || rung == device::BatchNormBackwardRung::PlainNative)
-                    rethrow_exception(last_failure);
-
                 entry.bwd_choice =
                     Attempt{input.get_type(), fuse_relu, has_residual, true};
-            }
 
             const auto& chosen = *entry.bwd_choice;
 

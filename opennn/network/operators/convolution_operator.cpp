@@ -218,6 +218,38 @@ string conv_timing_label(const ConvolutionOperator& op, const char* kind)
                                           op.row_stride);
 }
 
+bool run_convolution_forward(const ConvolutionOperator& op,
+                             const TensorView& input, TensorView& output,
+                             void* weights, const TensorView& bias,
+                             bool relu, bool folded, const TensorView* residual = nullptr)
+{
+    return frontend_enabled()
+        && run_frontend(*op.conv_graph_cache, "ConvolutionOperator", [&](auto& cache)
+    {
+        const Index batch = input.get_shape()[0];
+        const bool use_bias = folded || op.use_bias;
+        const bool with_residual = residual && residual->get_data();
+
+        // Folded variants use negative keys; the residual variant has its own
+        // offset so both can coexist with the ordinary forward graph.
+        const Index key = !folded ? batch : with_residual ? -batch - (Index(1) << 20) : -batch;
+        auto& entry = detail::bounded_cache_entry(cache.entries, key, graph_cache_capacity);
+        if (!entry.fwd.graph)
+            build_forward(entry, make_dims(op, batch), relu, use_bias, input.get_type(), with_residual);
+
+        VariantPack tensors;
+        tensors[entry.fwd_X] = input.get_data();
+        tensors[entry.fwd_W] = weights;
+        if (use_bias) tensors[entry.fwd_B] = bias.get_data();
+        if (with_residual) tensors[entry.fwd_R] = residual->get_data();
+        tensors[entry.fwd_Y] = output.get_data();
+
+        run_slot(entry.fwd, tensors,
+                 folded ? "ConvolutionOperator fwd folded" : "ConvolutionOperator fwd",
+                 conv_timing_label(op, folded ? "conv_fwd_folded" : "conv_fwd"), true);
+    });
+}
+
 template<typename Build>
 bool build_preferred(const ConvolutionOperator& op, const char* kind, int64_t batch,
                      const char* consequence, Build&& build)
@@ -340,37 +372,47 @@ void ConvolutionOperator::back_propagate(ForwardPropagation& forward_propagation
 namespace
 {
 
-void im2col(const float* image, Index input_height, Index input_width, Index channels,
+// Gather copies images into patches; scatter accumulates their gradients back
+// in the same window order, retaining the contiguous-row path in both cases.
+template<bool scatter>
+void transform_patches(conditional_t<scatter, float, const float>* image,
+            Index input_height, Index input_width, Index channels,
             Index kernel_height, Index kernel_width,
             Index padding_height, Index padding_width,
             Index row_stride, Index column_stride,
             Index output_height, Index output_width,
-            float* col)
+            conditional_t<scatter, const float, float>* col)
 {
     const Index patch_size = kernel_height * kernel_width * channels;
+    const auto transfer = [](auto* patch, auto* pixels, Index count) {
+        if constexpr (scatter)
+            Map<VectorR>(pixels, count) += Map<const VectorR>(patch, count);
+        else
+            copy_n(pixels, count, patch);
+    };
 
     for (Index output_row = 0; output_row < output_height; ++output_row)
         for (Index output_column = 0; output_column < output_width; ++output_column)
         {
-            float* patch = col + (output_row * output_width + output_column) * patch_size;
+            auto* patch = col + (output_row * output_width + output_column) * patch_size;
             const Index first_input_column = output_column * column_stride - padding_width;
 
             for (Index kernel_row = 0; kernel_row < kernel_height; ++kernel_row)
             {
                 const Index input_row = output_row * row_stride + kernel_row - padding_height;
-                float* patch_row = patch + kernel_row * kernel_width * channels;
+                auto* patch_row = patch + kernel_row * kernel_width * channels;
 
                 if (input_row < 0 || input_row >= input_height)
                 {
-                    fill_n(patch_row, kernel_width * channels, 0.0f);
+                    if constexpr (!scatter) fill_n(patch_row, kernel_width * channels, 0.0f);
                     continue;
                 }
 
-                const float* source = image + (input_row * input_width + first_input_column) * channels;
+                auto* image_row = image + input_row * input_width * channels;
 
                 if (first_input_column >= 0 && first_input_column + kernel_width <= input_width)
                 {
-                    copy_n(source, kernel_width * channels, patch_row);
+                    transfer(patch_row, image_row + first_input_column * channels, kernel_width * channels);
                     continue;
                 }
 
@@ -378,52 +420,13 @@ void im2col(const float* image, Index input_height, Index input_width, Index cha
                 {
                     const Index input_column = first_input_column + kernel_column;
                     if (input_column < 0 || input_column >= input_width)
-                        fill_n(patch_row + kernel_column * channels, channels, 0.0f);
+                    {
+                        if constexpr (!scatter)
+                            fill_n(patch_row + kernel_column * channels, channels, 0.0f);
+                    }
                     else
-                        copy_n(source + kernel_column * channels, channels,
-                               patch_row + kernel_column * channels);
-                }
-            }
-        }
-}
-
-void col2im(const float* col, Index input_height, Index input_width, Index channels,
-            Index kernel_height, Index kernel_width,
-            Index padding_height, Index padding_width,
-            Index row_stride, Index column_stride,
-            Index output_height, Index output_width,
-            float* image)
-{
-    const Index patch_size = kernel_height * kernel_width * channels;
-
-    for (Index output_row = 0; output_row < output_height; ++output_row)
-        for (Index output_column = 0; output_column < output_width; ++output_column)
-        {
-            const float* patch = col + (output_row * output_width + output_column) * patch_size;
-            const Index first_input_column = output_column * column_stride - padding_width;
-
-            for (Index kernel_row = 0; kernel_row < kernel_height; ++kernel_row)
-            {
-                const Index input_row = output_row * row_stride + kernel_row - padding_height;
-                if (input_row < 0 || input_row >= input_height) continue;
-
-                const float* patch_row = patch + kernel_row * kernel_width * channels;
-                float* destination = image + (input_row * input_width + first_input_column) * channels;
-
-                if (first_input_column >= 0 && first_input_column + kernel_width <= input_width)
-                {
-                    Map<VectorR>(destination, kernel_width * channels) +=
-                        Map<const VectorR>(patch_row, kernel_width * channels);
-                    continue;
-                }
-
-                for (Index kernel_column = 0; kernel_column < kernel_width; ++kernel_column)
-                {
-                    const Index input_column = first_input_column + kernel_column;
-                    if (input_column < 0 || input_column >= input_width) continue;
-
-                    Map<VectorR>(destination + kernel_column * channels, channels) +=
-                        Map<const VectorR>(patch_row + kernel_column * channels, channels);
+                        transfer(patch_row + kernel_column * channels,
+                                 image_row + input_column * channels, channels);
                 }
             }
         }
@@ -460,7 +463,7 @@ void ConvolutionOperator::apply_cpu(const TensorView& input, TensorView& output)
         #pragma omp for schedule(static)
         for (Index image_index = 0; image_index < batch_size; ++image_index)
         {
-            im2col(input.as<float>() + image_index * input_size,
+            transform_patches<false>(input.as<float>() + image_index * input_size,
                    input_height, input_width, kernel_channels,
                    kernel_height, kernel_width, padding_height, padding_width,
                    row_stride, column_stride, output_height, output_width,
@@ -518,7 +521,7 @@ void ConvolutionOperator::apply_delta_cpu(const TensorView& input,
         #pragma omp for schedule(static)
         for (Index image_index = 0; image_index < batch_size; ++image_index)
         {
-            im2col(input.as<float>() + image_index * input_size,
+            transform_patches<false>(input.as<float>() + image_index * input_size,
                    input_height, input_width, kernel_channels,
                    kernel_height, kernel_width, padding_height, padding_width,
                    row_stride, column_stride, output_height, output_width,
@@ -541,11 +544,11 @@ void ConvolutionOperator::apply_delta_cpu(const TensorView& input,
 
                 float* const image_delta = input_delta.as<float>() + image_index * input_size;
                 fill_n(image_delta, input_size, 0.0f);
-                col2im(delta_col_data,
+                transform_patches<true>(image_delta,
                        input_height, input_width, kernel_channels,
                        kernel_height, kernel_width, padding_height, padding_width,
                        row_stride, column_stride, output_height, output_width,
-                       image_delta);
+                       delta_col_data);
             }
         }
     }
@@ -586,25 +589,8 @@ void ConvolutionOperator::apply_gpu(const TensorView& input, TensorView& output)
         weights_data = dequantized;
     }
 
-    const bool ran = cudnn_frontend::frontend_enabled()
-        && cudnn_frontend::run_frontend(*conv_graph_cache, "ConvolutionOperator", [&](ConvGraphCache& cache)
-    {
-        auto& entry = detail::bounded_cache_entry(
-            cache.entries, input.get_shape()[0],
-            cudnn_frontend::graph_cache_capacity);
-        if (!entry.fwd.graph)
-            cudnn_frontend::build_forward(entry, cudnn_frontend::make_dims(*this, input.get_shape()[0]),
-                                    fuse_relu, use_bias, input.get_type());
-
-        cudnn_frontend::VariantPack tensors;
-        tensors[entry.fwd_X] = input.get_data();
-        tensors[entry.fwd_W] = weights_data;
-        if (use_bias) tensors[entry.fwd_B] = bias.get_data();
-        tensors[entry.fwd_Y] = output.get_data();
-
-        cudnn_frontend::run_slot(entry.fwd, tensors, "ConvolutionOperator fwd",
-                                 cudnn_frontend::conv_timing_label(*this, "conv_fwd"), true);
-    });
+    const bool ran = cudnn_frontend::run_convolution_forward(
+        *this, input, output, weights_data, bias, fuse_relu, false);
 
     if (!ran) cudnn_frontend::throw_frontend_unavailable("ConvolutionOperator: GPU convolution");
 }
@@ -624,38 +610,8 @@ void ConvolutionOperator::apply_gpu_folded(const TensorView& input,
     // good for that shape. The forward graph already ends in ADD and RELU
     // pointwises, so the folded weights and bias drop straight into it and the
     // batch norm pass disappears with no kernel downgrade.
-    //
-    // The folded graph is a second entry in the same cache, keyed by the
-    // negated batch so it cannot collide with the unfolded one, and built with
-    // bias on regardless of what the bare convolution was configured for.
-    const bool ran = cudnn_frontend::frontend_enabled()
-        && cudnn_frontend::run_frontend(*conv_graph_cache, "ConvolutionOperator", [&](ConvGraphCache& cache)
-    {
-        const Index batch = input.get_shape()[0];
-        const bool with_residual = residual && residual->get_data();
-
-        // Two folded variants share the cache: with and without the residual.
-        // Keyed off the negated batch so neither collides with the unfolded
-        // entry, and separated by a large stride so they do not collide with
-        // each other.
-        const Index key = with_residual ? -batch - (Index(1) << 20) : -batch;
-
-        auto& entry = detail::bounded_cache_entry(
-            cache.entries, key, cudnn_frontend::graph_cache_capacity);
-        if (!entry.fwd.graph)
-            cudnn_frontend::build_forward(entry, cudnn_frontend::make_dims(*this, batch),
-                                          relu, true, input.get_type(), with_residual);
-
-        cudnn_frontend::VariantPack tensors;
-        tensors[entry.fwd_X] = input.get_data();
-        tensors[entry.fwd_W] = folded_weights.get_data();
-        tensors[entry.fwd_B] = folded_bias.get_data();
-        if (with_residual) tensors[entry.fwd_R] = residual->get_data();
-        tensors[entry.fwd_Y] = output.get_data();
-
-        cudnn_frontend::run_slot(entry.fwd, tensors, "ConvolutionOperator fwd folded",
-                                 cudnn_frontend::conv_timing_label(*this, "conv_fwd_folded"), true);
-    });
+    const bool ran = cudnn_frontend::run_convolution_forward(
+        *this, input, output, folded_weights.get_data(), folded_bias, relu, true, residual);
 
     if (!ran)
         linear_forward(input, folded_weights, folded_bias, output,
