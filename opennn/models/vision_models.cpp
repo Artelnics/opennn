@@ -10,36 +10,19 @@
 #include "opennn/core/string_utilities.h"
 #include "opennn/network/layers/activation_layer.h"
 #include "opennn/network/layers/addition_layer.h"
-#include "opennn/network/layers/clamping_layer.h"
-#include "opennn/network/layers/c2psa_layer.h"
 #include "opennn/network/layers/concatenation_layer.h"
 #include "opennn/network/layers/convolutional_layer.h"
 #include "opennn/network/layers/dense_layer.h"
 #include "opennn/network/layers/detection_layer.h"
 #include "opennn/network/layers/detection_v8_layer.h"
-#include "opennn/network/layers/embedding_layer.h"
 #include "opennn/network/layers/flatten_layer.h"
-#include "opennn/network/layers/grouped_query_attention_layer.h"
-#include "opennn/network/layers/lstm_layer.h"
-#include "opennn/network/layers/multihead_attention_layer.h"
 #include "opennn/network/layers/non_max_suppression_layer.h"
-#include "opennn/network/layers/normalization_layer_3d.h"
 #include "opennn/network/layers/pooling_layer.h"
-#include "opennn/network/layers/pooling_layer_3d.h"
-#include "opennn/network/layers/recurrent_layer.h"
 #include "opennn/network/layers/scaling_layer.h"
-#include "opennn/network/layers/tokenizer_layer.h"
-#include "opennn/network/layers/unscaling_layer.h"
 #include "opennn/network/layers/upsampling_layer.h"
 
 namespace opennn
 {
-
-static void finalize_build(Network& network)
-{
-    network.compile();
-    network.set_parameters_glorot();
-}
 
 static void bias_v8_class_logits(Network& network)
 {
@@ -131,7 +114,7 @@ ImageClassificationNetwork::ImageClassificationNetwork(const Shape& input_shape,
                                    BatchNormalization::No,
                                    "classification_layer"));
 
-    finalize_build(*this);
+    finalize_build();
 }
 
 ResNet::ResNet(const Shape& input_shape,
@@ -177,44 +160,28 @@ ResNet::ResNet(const Shape& input_shape,
         return add_layer(std::move(conv), {input_index, skip_index});
     };
 
-    auto add_basic_block = [&](Index input_index, size_t stage, Index block,
-                               Index filters) -> Index {
+    auto add_block = [&](Index input_index, size_t stage, Index block, Index filters) -> Index {
         const Shape input_shape  = get_layer(input_index)->get_output_shape();
         const Index input_channels   = input_shape[2];
+        const Index output_channels  = use_bottleneck ? filters * bottleneck_expansion : filters;
         const Index stride    = (stage > 0 && block == 0) ? 2 : 1;
         const string prefix   = format("s{}b{}", stage, block);
-
-        const Index main_index = add_conv(input_index,
-            Shape{3, 3, input_channels, filters}, "ReLU",
-            Shape{stride, stride}, prefix + "_conv1");
-
-        const Index skip_index = add_skip(input_index, input_channels, filters,
-                                          stride, prefix);
-
-        return add_residual_conv(main_index, skip_index,
-            Shape{3, 3, filters, filters}, prefix + "_conv2");
-    };
-
-    auto add_bottleneck_block = [&](Index input_index, size_t stage, Index block,
-                                    Index filters) -> Index {
-        const Shape input_shape  = get_layer(input_index)->get_output_shape();
-        const Index input_channels   = input_shape[2];
-        const Index output_channels  = filters * bottleneck_expansion;
-        const Index stride    = (stage > 0 && block == 0) ? 2 : 1;
-        const string prefix   = format("s{}b{}", stage, block);
+        const Index outer_kernel = use_bottleneck ? 1 : 3;
 
         Index main_index = add_conv(input_index,
-            Shape{1, 1, input_channels, filters}, "ReLU",
-            Shape{1, 1}, prefix + "_conv1");
-        main_index = add_conv(main_index,
-            Shape{3, 3, filters, filters}, "ReLU",
-            Shape{stride, stride}, prefix + "_conv2");
+            Shape{outer_kernel, outer_kernel, input_channels, filters}, "ReLU",
+            use_bottleneck ? Shape{1, 1} : Shape{stride, stride}, prefix + "_conv1");
+        if (use_bottleneck)
+            main_index = add_conv(main_index,
+                Shape{3, 3, filters, filters}, "ReLU",
+                Shape{stride, stride}, prefix + "_conv2");
 
         const Index skip_index = add_skip(input_index, input_channels, output_channels,
                                           stride, prefix);
 
         return add_residual_conv(main_index, skip_index,
-            Shape{1, 1, filters, output_channels}, prefix + "_conv3");
+            Shape{outer_kernel, outer_kernel, filters, output_channels},
+            prefix + (use_bottleneck ? "_conv3" : "_conv2"));
     };
 
     add_layer(make_unique<Scaling>(input_shape, ScalerMethod::ImageMinMax));
@@ -230,9 +197,7 @@ ResNet::ResNet(const Shape& input_shape,
 
     for (size_t i = 0; i < blocks_per_stage.size(); ++i)
         for (Index j = 0; j < blocks_per_stage[i]; ++j)
-            last_index = use_bottleneck
-                ? add_bottleneck_block(last_index, i, j, initial_filters[i])
-                : add_basic_block(last_index, i, j, initial_filters[i]);
+            last_index = add_block(last_index, i, j, initial_filters[i]);
 
     const Shape pre_pool = get_layer(last_index)->get_output_shape();
     last_index = add_layer(make_unique<Pooling>(pre_pool,
@@ -375,16 +340,15 @@ struct YoloBuilder
         const Index projected = add_block(input_index, Shape{1, 1, channels, half}, prefix + "_in");
         const Shape shape = get_layer(projected)->get_output_shape();
 
-        const Index pool_1 = add_layer(make_unique<Pooling>(
-            shape, Shape{5, 5}, Shape{1, 1}, Shape{2, 2}, PoolingMethod::MaxPooling, prefix + "_p1"), {projected});
-        const Index pool_2 = add_layer(make_unique<Pooling>(
-            shape, Shape{5, 5}, Shape{1, 1}, Shape{2, 2}, PoolingMethod::MaxPooling, prefix + "_p2"), {pool_1});
-        const Index pool_3 = add_layer(make_unique<Pooling>(
-            shape, Shape{5, 5}, Shape{1, 1}, Shape{2, 2}, PoolingMethod::MaxPooling, prefix + "_p3"), {pool_2});
+        vector<Index> pooled = {projected};
+        for (Index i = 1; i <= 3; ++i)
+            pooled.push_back(add_layer(make_unique<Pooling>(
+                shape, Shape{5, 5}, Shape{1, 1}, Shape{2, 2}, PoolingMethod::MaxPooling,
+                prefix + format("_p{}", i)), {pooled.back()}));
 
         const Index concatenated = add_layer(make_unique<Concatenation>(
             shape, vector<Index>{half, half, half, half}, prefix + "_cat"),
-            {projected, pool_1, pool_2, pool_3});
+            pooled);
 
         return add_block(concatenated, Shape{1, 1, 4 * half, channels}, prefix + "_out");
     }
@@ -657,73 +621,67 @@ struct YoloBuilder
         const Shape& input_shape,
         Yolo::ModelSize model_size) const
     {
-        const Index c1 = scale_csp_v11_channels(64, model_size);
-        const Index c2 = scale_csp_v11_channels(128, model_size);
-        const Index c3 = scale_csp_v11_channels(256, model_size);
-        const Index c4 = scale_csp_v11_channels(512, model_size);
-        const Index c5 = scale_csp_v11_channels(1024, model_size);
-
-        const Index d1 = scale_csp_v11_depth(3, model_size);
-        const Index d2 = scale_csp_v11_depth(6, model_size);
-        const Index d3 = scale_csp_v11_depth(6, model_size);
-        const Index d4 = scale_csp_v11_depth(3, model_size);
+        constexpr array<Index, 4> stage_channels = {128, 256, 512, 1024};
+        constexpr array<Index, 4> stage_depths = {3, 6, 6, 3};
+        Index channels = scale_csp_v11_channels(64, model_size);
         const Shape stride_2{2, 2};
 
         Index last_index = add_layer(make_unique<Convolutional>(
-            input_shape, Shape{3, 3, input_shape[2], c1},
+            input_shape, Shape{3, 3, input_shape[2], channels},
             "Identity", stride_2, "Same", BatchNormalization::Yes, "c8_stem"), {});
         last_index = add_layer(make_unique<Activation>(
             get_layer(last_index)->get_output_shape(), act, "c8_stem_act"),
             {last_index});
 
-        last_index = add_csp_v11_block(last_index,
-            Shape{3, 3, c1, c2}, stride_2, "c8_s1_down");
-        last_index = add_c2f(last_index, c2, c2, d1, true, "c8_s1");
+        BackboneFeatures features;
+        for (size_t stage = 0; stage < stage_channels.size(); ++stage)
+        {
+            const Index output_channels = scale_csp_v11_channels(stage_channels[stage], model_size);
+            const Index blocks = scale_csp_v11_depth(stage_depths[stage], model_size);
+            const string prefix = format("c8_s{}", stage + 1);
+            last_index = add_csp_v11_block(last_index,
+                Shape{3, 3, channels, output_channels}, stride_2, prefix + "_down");
+            last_index = add_c2f(last_index, output_channels, output_channels, blocks, true, prefix);
+            channels = output_channels;
+            if (stage == 1) features.c3 = last_index;
+            if (stage == 2) features.c4 = last_index;
+        }
 
-        last_index = add_csp_v11_block(last_index,
-            Shape{3, 3, c2, c3}, stride_2, "c8_s2_down");
-        last_index = add_c2f(last_index, c3, c3, d2, true, "c8_s2");
-        const Index c3_index = last_index;
-
-        last_index = add_csp_v11_block(last_index,
-            Shape{3, 3, c3, c4}, stride_2, "c8_s3_down");
-        last_index = add_c2f(last_index, c4, c4, d3, true, "c8_s3");
-        const Index c4_index = last_index;
-
-        last_index = add_csp_v11_block(last_index,
-            Shape{3, 3, c4, c5}, stride_2, "c8_s4_down");
-        last_index = add_c2f(last_index, c5, c5, d4, true, "c8_s4");
-        last_index = add_sppf(last_index, c5, "c8_sppf",
+        features.c5 = add_sppf(last_index, channels, "c8_sppf",
             [&](Index next_input, const Shape& kernel, const string& name)
             {
                 return add_csp_v11_block(next_input, kernel, stride, name);
             });
 
-        return {.c3 = c3_index, .c4 = c4_index, .c5 = last_index};
+        return features;
     }
 
     Index add_yolo_neck(Index idx, Index in_ch,
-                        Index ch_small, Index ch_large, const string& pfx) const
+                        Index ch_small, Index ch_large, const string& pfx,
+                        Index pairs = 2) const
     {
         Index x = add_conv(idx, Shape{1, 1, in_ch,     ch_small}, act, stride, BatchNormalization::Yes, pfx+"_c1");
-        x       = add_conv(x,   Shape{3, 3, ch_small, ch_large},  act, stride, BatchNormalization::Yes, pfx+"_c2");
-        x       = add_conv(x,   Shape{1, 1, ch_large, ch_small},  act, stride, BatchNormalization::Yes, pfx+"_c3");
-        x       = add_conv(x,   Shape{3, 3, ch_small, ch_large},  act, stride, BatchNormalization::Yes, pfx+"_c4");
-        x       = add_conv(x,   Shape{1, 1, ch_large, ch_small},  act, stride, BatchNormalization::Yes, pfx+"_c5");
+        for (Index i = 0; i < pairs; ++i)
+        {
+            x = add_conv(x, Shape{3, 3, ch_small, ch_large}, act, stride,
+                         BatchNormalization::Yes, pfx + format("_c{}", 2 * i + 2));
+            x = add_conv(x, Shape{1, 1, ch_large, ch_small}, act, stride,
+                         BatchNormalization::Yes, pfx + format("_c{}", 2 * i + 3));
+        }
         return x;
     }
 
     Index add_top_down(Index lateral_index, Index c_index,
-                       const string& upper, const string& lower) const
+                       const string& upsampling_name, const string& concatenation_name) const
     {
         const Index up_index = add_layer(make_unique<Upsampling>(get_layer(lateral_index)->get_output_shape(),
-                                                                 2, "fpn_" + upper + "_upsampling"),
+                                                                 2, upsampling_name),
                                          {lateral_index});
 
         return add_layer(make_unique<Concatenation>(get_layer(c_index)->get_output_shape(),
                              vector<Index>{get_layer(up_index)->get_output_shape()[2],
                                            get_layer(c_index)->get_output_shape()[2]},
-                             "fpn_" + lower + "_concatenation"),
+                             concatenation_name),
                          {up_index, c_index});
     }
 
@@ -848,7 +806,8 @@ Yolo::Yolo(const Shape& input_shape,
                 Shape{1, 1, get_layer(last_index)->get_output_shape()[2], 128},
                 act, stride, BatchNormalization::Yes, "fpn_p5_lateral");
 
-            const Index p4_concat = builder.add_top_down(p5_lateral, c3_index, "p5", "p4");
+            const Index p4_concat = builder.add_top_down(
+                p5_lateral, c3_index, "fpn_p5_upsampling", "fpn_p4_concatenation");
 
             const Index p4_conv = builder.add_conv(p4_concat,
                 Shape{3, 3, get_layer(p4_concat)->get_output_shape()[2], 256},
@@ -879,17 +838,13 @@ Yolo::Yolo(const Shape& input_shape,
             const Index n21_ch = builder.scale_csp_v11_channels(1024, model_size);
             const Index nd_n = builder.scale_csp_v11_depth(3, model_size);
 
-            add_layer(make_unique<Upsampling>(get_layer(p5_idx)->get_output_shape(), 2, "c8_fpn_p5_upsampling"), {p5_idx});
-            add_layer(make_unique<Concatenation>(get_layer(p4_idx)->get_output_shape(),
-                                                 vector<Index>{c5,c4}, "c8_fpn_p4_cat"),
-                      {get_layers_number()-1, p4_idx});
-            const Index c8_n12 = builder.add_c2f(get_layers_number()-1, c5+c4, n12_ch, nd_n, false, "c8_n12");
+            const Index p4_concat = builder.add_top_down(
+                p5_idx, p4_idx, "c8_fpn_p5_upsampling", "c8_fpn_p4_cat");
+            const Index c8_n12 = builder.add_c2f(p4_concat, c5+c4, n12_ch, nd_n, false, "c8_n12");
 
-            add_layer(make_unique<Upsampling>(get_layer(c8_n12)->get_output_shape(), 2, "c8_fpn_p4_upsampling"), {c8_n12});
-            add_layer(make_unique<Concatenation>(get_layer(p3_idx)->get_output_shape(),
-                                                 vector<Index>{n12_ch,c3}, "c8_fpn_p3_cat"),
-                      {get_layers_number()-1, p3_idx});
-            const Index c8_n15 = builder.add_c2f(get_layers_number()-1, n12_ch+c3, n15_ch, nd_n, false, "c8_n15");
+            const Index p3_concat = builder.add_top_down(
+                c8_n12, p3_idx, "c8_fpn_p4_upsampling", "c8_fpn_p3_cat");
+            const Index c8_n15 = builder.add_c2f(p3_concat, n12_ch+c3, n15_ch, nd_n, false, "c8_n15");
 
             const Index n15_down = builder.add_csp_v11_block(c8_n15, Shape{3,3,n15_ch,n15_ch}, stride_2, "c8_pan_n4_down");
             add_layer(make_unique<Concatenation>(get_layer(c8_n12)->get_output_shape(),
@@ -933,19 +888,13 @@ Yolo::Yolo(const Shape& input_shape,
             const Index p5n = builder.add_yolo_neck(entry, 1024, 512, 1024, pfx + "neck_p5");
 
             const Index p5l = builder.add_conv(p5n, Shape{1, 1, 512, 256}, act, stride, BatchNormalization::Yes, pfx + "neck_p5_lat");
-            const Index p5u = add_layer(make_unique<Upsampling>(get_layer(p5l)->get_output_shape(), 2, pfx + "fpn_p5_upsampling"), {p5l});
-
-            const Index p4c = add_layer(make_unique<Concatenation>(get_layer(c4_index)->get_output_shape(),
-                                                                   vector<Index>{256, 512}, pfx + "fpn_p4_cat"),
-                                        {p5u, c4_index});
+            const Index p4c = builder.add_top_down(
+                p5l, c4_index, pfx + "fpn_p5_upsampling", pfx + "fpn_p4_cat");
             const Index p4n = builder.add_yolo_neck(p4c, 768, 256, 512, pfx + "neck_p4");
 
             const Index p4l = builder.add_conv(p4n, Shape{1, 1, 256, 128}, act, stride, BatchNormalization::Yes, pfx + "neck_p4_lat");
-            const Index p4u = add_layer(make_unique<Upsampling>(get_layer(p4l)->get_output_shape(), 2, pfx + "fpn_p4_upsampling"), {p4l});
-
-            const Index p3c = add_layer(make_unique<Concatenation>(get_layer(c3_index)->get_output_shape(),
-                                                                   vector<Index>{128, 256}, pfx + "fpn_p3_cat"),
-                                        {p4u, c3_index});
+            const Index p3c = builder.add_top_down(
+                p4l, c3_index, pfx + "fpn_p4_upsampling", pfx + "fpn_p3_cat");
             return {p5n, p4n, builder.add_yolo_neck(p3c, 384, 128, 256, pfx + "neck_p3")};
         };
 
@@ -982,18 +931,11 @@ Yolo::Yolo(const Shape& input_shape,
                 const Index p3d = builder.add_conv(p3n, Shape{3, 3, 128, 256}, act, stride, BatchNormalization::Yes, "neck_p3_pre");
                 builder.add_det_head(p3d, anchors_small, "small");
 
-                auto add_pan_block = [&](Index idx, Index in_ch, Index ch_s, Index ch_l, const string& pfx) -> Index {
-                    Index x = builder.add_conv(idx, Shape{1, 1, in_ch, ch_s}, act, stride, BatchNormalization::Yes, pfx+"_c1");
-                    x       = builder.add_conv(x,   Shape{3, 3, ch_s,  ch_l}, act, stride, BatchNormalization::Yes, pfx+"_c2");
-                    x       = builder.add_conv(x,   Shape{1, 1, ch_l,  ch_s}, act, stride, BatchNormalization::Yes, pfx+"_c3");
-                    return x;
-                };
-
                 const Index n3_down = builder.add_conv(p3n, Shape{3, 3, 128, 256}, act, stride_2, BatchNormalization::Yes, "pan_n3_down");
                 const Index n4c = add_layer(make_unique<Concatenation>(get_layer(p4n)->get_output_shape(),
                                                                        vector<Index>{256, 256}, "pan_n4_cat"),
                                             {n3_down, p4n});
-                const Index n4n = add_pan_block(n4c, 512, 256, 512, "pan_n4");
+                const Index n4n = builder.add_yolo_neck(n4c, 512, 256, 512, "pan_n4", 1);
                 const Index n4d = builder.add_conv(n4n, Shape{3, 3, 256, 512}, act, stride, BatchNormalization::Yes, "pan_n4_pre");
                 builder.add_det_head(n4d, anchors_medium, "medium");
 
@@ -1001,7 +943,7 @@ Yolo::Yolo(const Shape& input_shape,
                 const Index n5c = add_layer(make_unique<Concatenation>(get_layer(p5n)->get_output_shape(),
                                                                        vector<Index>{512, 512}, "pan_n5_cat"),
                                             {n4_down, p5n});
-                const Index n5n = add_pan_block(n5c, 1024, 512, 1024, "pan_n5");
+                const Index n5n = builder.add_yolo_neck(n5c, 1024, 512, 1024, "pan_n5", 1);
                 const Index n5d = builder.add_conv(n5n, Shape{3, 3, 512, 1024}, act, stride, BatchNormalization::Yes, "pan_n5_pre");
                 builder.add_det_head(n5d, anchors_large, "large");
             }
@@ -1057,14 +999,16 @@ Yolo::Yolo(const Shape& input_shape,
                 act, stride, BatchNormalization::Yes, "fpn_p5_lateral");
             builder.add_det_head(p5_lateral, anchors_large, "large");
 
-            const Index p4_concatenation = builder.add_top_down(p5_lateral, c4_index, "p5", "p4");
+            const Index p4_concatenation = builder.add_top_down(
+                p5_lateral, c4_index, "fpn_p5_upsampling", "fpn_p4_concatenation");
 
             const Index p4_lateral = builder.add_conv(p4_concatenation,
                 Shape{1, 1, get_layer(p4_concatenation)->get_output_shape()[2], 256},
                 act, stride, BatchNormalization::Yes, "fpn_p4_lateral");
             builder.add_det_head(p4_lateral, anchors_medium, "medium");
 
-            const Index p3_concatenation = builder.add_top_down(p4_lateral, c3_index, "p4", "p3");
+            const Index p3_concatenation = builder.add_top_down(
+                p4_lateral, c3_index, "fpn_p4_upsampling", "fpn_p3_concatenation");
 
             const Index p3_lateral = builder.add_conv(p3_concatenation,
                 Shape{1, 1, get_layer(p3_concatenation)->get_output_shape()[2], 128},

@@ -10,8 +10,6 @@
 namespace opennn
 {
 
-class TokenizerOperator;
-
 class ApproximationNetwork : public Network
 {
 

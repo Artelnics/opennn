@@ -18,6 +18,10 @@
 #include "opennn/network/back_propagation.h"
 #include "opennn/network/forward_propagation.h"
 #include "opennn/network/layers/dense_layer.h"
+#include "opennn/network/layers/tokenizer_layer.h"
+#ifndef OPENNN_NO_VISION
+#include "opennn/network/layers/multihead_attention_layer.h"
+#endif
 #include "opennn/network/model_expression.h"
 #include "opennn/network/operators/combination_operator.h"
 #include "opennn/registry.h"
@@ -36,6 +40,24 @@ using network_detail::quantize_int8_host;
 
 namespace
 {
+
+template<typename NetworkType>
+auto& get_tokenizer_layer(NetworkType& network, const string& label,
+                          const source_location location = source_location::current())
+{
+    using TokenizerType = conditional_t<is_const_v<NetworkType>, const Tokenizer, Tokenizer>;
+    TokenizerType* tokenizer = nullptr;
+    for (const auto& layer : network.get_layers())
+        if (layer->get_label() == label)
+        {
+            tokenizer = dynamic_cast<TokenizerType*>(layer.get());
+            break;
+        }
+    throw_if(!tokenizer,
+             "{}: network has no '{}' layer. Rebuild the network or "
+             "re-save the model with a tokenizer.", location.function_name(), label);
+    return *tokenizer;
+}
 
 #ifdef OPENNN_HAS_CUDA
 vector<CombinationOperator*> get_combination_operators(Layer& layer)
@@ -146,6 +168,105 @@ void Network::compile(const Device device)
 {
     if (get_layers_number() == 0) return;
     compile(Configuration::instance().resolve_for(device));
+}
+
+void Network::finalize_build()
+{
+    compile();
+    set_parameters_glorot();
+}
+
+void Network::configure_layers(const function<void(Layer&)>& apply)
+{
+    const auto forward_before = get_forward_specs(1);
+    const auto backward_before = get_backward_specs(1);
+    for (const auto& layer : layers)
+        if (layer) apply(*layer);
+    if (forward_before == get_forward_specs(1) && backward_before == get_backward_specs(1))
+        return;
+
+    const HostParametersGuard parameters_guard(*this);
+    const HostStatesGuard states_guard(*this);
+    const VectorR saved_parameters = parameter_store.master.as_vector();
+    const VectorR saved_states = states.as_vector();
+    compile(config);
+    if (saved_parameters.size() > 0) set_parameters(saved_parameters);
+    if (saved_states.size() > 0) set_states(saved_states);
+}
+
+void Network::set_attention_and_dense_dropout(float rate, initializer_list<string_view> dense_prefixes)
+{
+    configure_layers([&](Layer& layer)
+    {
+#ifndef OPENNN_NO_VISION
+        if (auto* attention = dynamic_cast<MultiHeadAttention*>(&layer))
+        {
+            attention->set_dropout_rate(rate);
+            return;
+        }
+#endif
+        if (starts_with_any(layer.get_label(), dense_prefixes))
+            if (auto* dense = dynamic_cast<Dense*>(&layer)) dense->set_dropout_rate(rate);
+    });
+}
+
+void Network::set_attention_sdpa_auto([[maybe_unused]] bool enabled)
+{
+#ifndef OPENNN_NO_VISION
+    configure_layers([&](Layer& layer)
+    {
+        if (auto* attention = dynamic_cast<MultiHeadAttention*>(&layer)) attention->set_sdpa_auto(enabled);
+    });
+#endif
+}
+
+void Network::set_attention_sdpa_min_sequence_length([[maybe_unused]] Index threshold)
+{
+#ifndef OPENNN_NO_VISION
+    configure_layers([&](Layer& layer)
+    {
+        if (auto* attention = dynamic_cast<MultiHeadAttention*>(&layer)) attention->set_sdpa_min_sequence_length(threshold);
+    });
+#endif
+}
+
+void Network::set_tokenizer(unique_ptr<TokenizerOperator> tokenizer, const string& label)
+{
+    get_tokenizer_layer(*this, label).set_tokenizer(std::move(tokenizer));
+}
+
+const TokenizerOperator* Network::get_tokenizer(const string& label) const
+{
+    return get_tokenizer_layer(*this, label).get_tokenizer();
+}
+
+void Network::set_vocabulary(const vector<string>& vocabulary, const string& label)
+{
+    get_tokenizer_layer(*this, label).set_vocabulary(vocabulary);
+}
+
+const vector<string>& Network::get_vocabulary(const string& label) const
+{
+    return get_tokenizer_layer(*this, label).get_vocabulary();
+}
+
+MatrixR Network::calculate_text_outputs(const Tensor<string, 1>& documents)
+{
+    const Tokenizer& layer = get_tokenizer_layer(*this, "tokenizer");
+    const TokenizerOperator* tokenizer = layer.get_tokenizer();
+    throw_if(!tokenizer || tokenizer->get_vocabulary_size() == 0,
+             "Network::calculate_text_outputs: the tokenizer has no vocabulary; "
+             "call set_tokenizer() first.");
+
+    const Index sequence_length = layer.get_output_shape()[0];
+    MatrixR inputs = MatrixR::Zero(documents.size(), sequence_length);
+    for (Index i = 0; i < documents.size(); ++i)
+    {
+        const vector<Index> ids = tokenizer->encode_sequence(documents.data()[i], sequence_length);
+        for (Index j = 0; j < min(ssize(ids), sequence_length); ++j)
+            inputs(i, j) = float(ids[size_t(j)]);
+    }
+    return calculate_outputs(inputs);
 }
 
 void Network::compile(EffectiveConfig new_config, const bool allocate_parameter_master)

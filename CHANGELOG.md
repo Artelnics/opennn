@@ -48,6 +48,11 @@ remaining limitations.
 
 ### Reliability and portability
 
+- Share model finalization, named-tokenizer access, text inference and attention
+  configuration through `Network`. Preserve model-specific dropout policies and
+  retain learned parameters, layer states and device settings when configuration
+  changes require recompilation. Consolidate forecasting, ResNet and YOLO builders
+  while preserving layer names, connections and initialization choices.
 - Consolidate operator execution, convolution patch traversal, recurrent gate
   handling, layer buffer specifications and scaling expressions. Preserve public
   interfaces and model formats, with gradient coverage for rectangular, strided
