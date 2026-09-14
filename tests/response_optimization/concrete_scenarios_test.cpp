@@ -26,7 +26,7 @@
 #include "opennn/registry.h"
 #include "opennn/response_optimization/domain_contraction.h"
 #include "opennn/response_optimization/genetic_response.h"
-#include "opennn/neural_network/layers/scaling_layer.h"
+#include "opennn/network/layers/scaling_layer.h"
 #include "opennn/core/random_utilities.h"
 
 namespace

@@ -198,6 +198,42 @@ TEST(TabularDataset, TrainingScalingTransformsBatchesWithoutMutatingData)
     EXPECT_NEAR(inputs[2], 30.0f, EPSILON);
 }
 
+TEST(TabularDataset, ReplacingDataDiscardsPreviouslyFittedTrainingScaling)
+{
+    TabularDataset dataset(3, {1}, {1});
+    MatrixR raw(3, 2);
+    raw << 10.0f, 100.0f, 20.0f, 200.0f, 30.0f, 300.0f;
+    dataset.set_data(raw);
+    dataset.set_sample_roles(SampleRole::Training);
+    dataset.set_variable_scalers("MinimumMaximum");
+    dataset.prepare_training_scaling(VariableRole::Input, FeatureScaling{}, 1);
+
+    const MatrixR replacement = 10.0f * raw;
+    dataset.set_data(replacement);
+    std::array<float, 3> inputs{};
+    dataset.fill_inputs({0, 1, 2}, {0}, inputs.data(), FillMode::Training);
+    EXPECT_EQ(inputs, (std::array<float, 3>{100.0f, 200.0f, 300.0f}));
+
+    const FeatureScaling scaling =
+        dataset.prepare_training_scaling(VariableRole::Input, FeatureScaling{}, 1);
+    EXPECT_FLOAT_EQ(scaling.descriptives[0].minimum, 100.0f);
+    EXPECT_FLOAT_EQ(scaling.descriptives[0].maximum, 300.0f);
+    dataset.fill_inputs({0, 1, 2}, {0}, inputs.data(), FillMode::Training);
+    EXPECT_EQ(inputs, (std::array<float, 3>{-1.0f, 0.0f, 1.0f}));
+
+    dataset.set_data_constant(7.0f);
+    dataset.fill_inputs({0, 1, 2}, {0}, inputs.data(), FillMode::Training);
+    EXPECT_EQ(inputs, (std::array<float, 3>{7.0f, 7.0f, 7.0f}));
+
+    dataset.prepare_training_scaling(VariableRole::Input, FeatureScaling{}, 1);
+    dataset.set(3, {2}, {1});
+    dataset.set_data_constant(9.0f);
+    std::array<float, 6> resized_inputs{};
+    dataset.fill_inputs({0, 1, 2}, {0, 1}, resized_inputs.data(), FillMode::Training);
+    EXPECT_TRUE(ranges::all_of(resized_inputs, [](float value) { return value == 9.0f; }));
+    EXPECT_NO_THROW(dataset.prepare_training_scaling(VariableRole::Input, FeatureScaling{}, 2));
+}
+
 TEST(TabularDataset, SharedTargetReusesConfiguredInputTransform)
 {
     TabularDataset dataset(3, {1}, {1});

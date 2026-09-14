@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   S T R I N G   U T I L I T I E S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/core/string_utilities.h"
 
@@ -356,13 +351,9 @@ void display_progress_bar(Index completed, Index total)
     const float progress = total > 0 ? static_cast<float>(completed) / total : 0.0f;
     const int position = min(static_cast<int>(width * progress), width);
 
-    cout << "\r[" << string(position, '=');
-
-    if (position < width)
-        cout << ">" << string(width - position - 1, ' ');
-
-    cout << "] " << int(progress * 100.0) << " %   ";
-    cout.flush();
+    logging::info() << "\r[" << string(position, '=')
+                    << (position < width ? ">" + string(width - position - 1, ' ') : "")
+                    << "] " << int(progress * 100.0) << " %   ";
 }
 
 void string_to_vector(const string& input, VectorR& values)
@@ -429,7 +420,3 @@ long long env_int_or(const char* name, long long default_value) noexcept
 }
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

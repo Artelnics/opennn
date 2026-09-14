@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   G R O W I N G   N E U R O N S   C L A S S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/model_selection/growing_neurons.h"
 
@@ -13,9 +8,9 @@
 #include "opennn/core/string_utilities.h"
 #include "opennn/model_selection/cross_validation.h"
 #include "opennn/model_selection/selection_utilities.h"
-#include "opennn/neural_network/neural_network.h"
-#include "opennn/training_strategy/optimizer.h"
-#include "opennn/training_strategy/training_strategy.h"
+#include "opennn/network/network.h"
+#include "opennn/training/optimizer.h"
+#include "opennn/training/training.h"
 
 namespace opennn
 {
@@ -33,14 +28,14 @@ void require_grows_by_neurons(const Layer& layer)
 
 }
 
-GrowingNeurons::GrowingNeurons(TrainingStrategy* new_training_strategy)
+GrowingNeurons::GrowingNeurons(Training* new_training)
 {
-    set(new_training_strategy);
+    set(new_training);
 }
 
-void GrowingNeurons::set(TrainingStrategy* new_training_strategy)
+void GrowingNeurons::set(Training* new_training)
 {
-    training_strategy = new_training_strategy;
+    training = new_training;
 
     set_default();
 }
@@ -57,13 +52,13 @@ void GrowingNeurons::set_default()
     maximum_time = 3600.0f;
     display = true;
 
-    const NeuralNetwork* neural_network = training_strategy
-        ? training_strategy->get_neural_network()
+    const Network* network = training
+        ? training->get_network()
         : nullptr;
 
-    if (!neural_network) return;
+    if (!network) return;
 
-    maximum_neurons = 2 * (neural_network->get_inputs_number() + neural_network->get_outputs_number());
+    maximum_neurons = 2 * (network->get_inputs_number() + network->get_outputs_number());
     trials_number = 1;
 }
 
@@ -79,13 +74,15 @@ void GrowingNeurons::load(const filesystem::path& file_name)
 
 NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
 {
+    validate_selection_training(training, folds_number, "GrowingNeurons");
+
     NeuronsSelectionResult neuron_selection_results(maximum_epochs);
 
-    if (display) cout << "Performing growing neuron selection...\n";
+    if (display) logging::info() << "Performing growing neuron selection...\n";
 
-    NeuralNetwork* neural_network = training_strategy->get_neural_network();
+    Network* network = training->get_network();
 
-    const Index last_trainable_layer_index = neural_network->get_last_trainable_layer_index();
+    const Index last_trainable_layer_index = network->get_last_trainable_layer_index();
 
     throw_if(last_trainable_layer_index < 1,
              "GrowingNeurons requires a layer before the last trainable layer to resize.");
@@ -103,40 +100,40 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
     time(&beginning_time);
 
     const vector<vector<Index>> fold_partition =
-        folds_number > 1 ? build_fold_partition(training_strategy, folds_number) : vector<vector<Index>>{};
+        folds_number > 1 ? build_fold_partition(training, folds_number) : vector<vector<Index>>{};
 
     ParameterSnapshot warm_snapshot;
     ParameterSnapshot candidate_snapshot;
 
     for (Index epoch = 0; epoch < maximum_epochs; ++epoch)
     {
-        if (display) cout << "\nGrowing neurons epoch: " << epoch << "\n";
+        if (display) logging::info() << "\nGrowing neurons epoch: " << epoch << "\n";
 
         neurons_number = minimum_neurons + epoch*neurons_increment;
 
         const Shape neurons_shape = { neurons_number };
-        require_grows_by_neurons(*neural_network->get_layer(last_trainable_layer_index));
+        require_grows_by_neurons(*network->get_layer(last_trainable_layer_index));
 
-        neural_network->get_layer(last_trainable_layer_index - 1)->set_output_shape(neurons_shape);
-        neural_network->get_layer(last_trainable_layer_index)->set_input_shape(neurons_shape);
+        network->get_layer(last_trainable_layer_index - 1)->set_output_shape(neurons_shape);
+        network->get_layer(last_trainable_layer_index)->set_input_shape(neurons_shape);
 
-        neural_network->compile();
+        network->compile();
 
         neuron_selection_results.neurons_number_history(epoch) = neurons_number;
 
         const CandidateEvaluation candidate_evaluation = evaluate_candidate(
-            training_strategy, neural_network, folds_number, fold_partition, trials_number, true,
+            training, network, folds_number, fold_partition, trials_number, true,
             [&](Index trial, float training_error, float validation_error, bool improved)
             {
                 if (display)
-                    cout << "Trial: " << trial+1 << "\n"
+                    logging::info() << "Trial: " << trial+1 << "\n"
                          << "Training error: " << training_error << "\n"
                          << "Validation error: " << validation_error << "\n";
 
                 if (improved)
                 {
                     if (warm_start)
-                        candidate_snapshot = capture_parameter_snapshot(neural_network);
+                        candidate_snapshot = capture_parameter_snapshot(network);
 
                     neuron_selection_results.training_error_history(epoch) = training_error;
                     neuron_selection_results.validation_error_history(epoch) = validation_error;
@@ -144,8 +141,8 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
                     if (validation_error < neuron_selection_results.optimum_validation_error)
                     {
                         neuron_selection_results.optimal_neurons_number = neurons_number;
-                        neural_network->copy_parameters_host();
-                        neuron_selection_results.optimal_parameters = neural_network->get_parameters_map();
+                        network->copy_parameters_host();
+                        neuron_selection_results.optimal_parameters = network->get_parameters_map();
                         neuron_selection_results.optimum_training_error = training_error;
                         neuron_selection_results.optimum_validation_error = validation_error;
                     }
@@ -153,10 +150,10 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
             },
             [&](Index trial)
             {
-                neural_network->set_parameters_random();
+                network->set_parameters_random();
 
                 if (trial == 0 && warm_start && !warm_snapshot.empty())
-                    seed_parameters_from_snapshot(neural_network, warm_snapshot);
+                    seed_parameters_from_snapshot(network, warm_snapshot);
             });
 
         if (warm_start && !candidate_snapshot.empty())
@@ -182,14 +179,14 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
             }
 
             if (display)
-                cout << "Neurons: " << neurons_number << ", " << folds_number
+                logging::info() << "Neurons: " << neurons_number << ", " << folds_number
                      << "-fold CV validation error " << minimum_validation_error << "\n";
         }
 
         elapsed_time = get_elapsed_time(beginning_time);
 
         if (display)
-            cout << "Neurons number: " << neurons_number << "\n"
+            logging::info() << "Neurons number: " << neurons_number << "\n"
                  << "Training error: " << minimum_training_error << "\n"
                  << "Validation error: " << minimum_validation_error << "\n"
                  << "Elapsed time: " << get_time(elapsed_time) << "\n";
@@ -226,18 +223,21 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
         }
     }
 
-    if (display)
-        cout << "Parameters number: " << neuron_selection_results.optimal_parameters.size() << "\n";
+    throw_if(neuron_selection_results.optimum_validation_error == MAX,
+             "GrowingNeurons found no candidate with a finite validation error.");
 
-    require_grows_by_neurons(*neural_network->get_layer(last_trainable_layer_index));
+    if (display)
+        logging::info() << "Parameters number: " << neuron_selection_results.optimal_parameters.size() << "\n";
+
+    require_grows_by_neurons(*network->get_layer(last_trainable_layer_index));
 
     const Shape optimal_shape = { neuron_selection_results.optimal_neurons_number };
-    neural_network->get_layer(last_trainable_layer_index - 1)->set_output_shape(optimal_shape);
-    neural_network->get_layer(last_trainable_layer_index)->set_input_shape(optimal_shape);
+    network->get_layer(last_trainable_layer_index - 1)->set_output_shape(optimal_shape);
+    network->get_layer(last_trainable_layer_index)->set_input_shape(optimal_shape);
 
-    neural_network->compile();
+    network->compile();
 
-    finalize_selected_model(training_strategy, neural_network,
+    finalize_selected_model(training, network,
                             neuron_selection_results.optimal_parameters, folds_number, display, "neurons");
 
     if (display) neuron_selection_results.print();
@@ -304,7 +304,7 @@ void NeuronsSelectionResult::resize_history(const Index new_size)
 
 void NeuronsSelectionResult::print() const
 {
-    cout << "\n"
+    logging::info() << "\n"
          << "Neuron Selection Results" << "\n"
          << "Optimal neurons number: " << optimal_neurons_number << "\n"
          << "Optimum training error: " << optimum_training_error << "\n"
@@ -312,7 +312,3 @@ void NeuronsSelectionResult::print() const
 }
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

@@ -242,8 +242,10 @@ RepairedCloud repair_from_random_starts(FeasibleSetProbe& probe,
         kept++;
     }
 
-    cloud.points = cloud.points.topRows(kept).eval();
-    cloud.responses = cloud.responses.topRows(kept).eval();
+    // Preserve retained rows before shrinking: assigning an unevaluated view
+    // of the same matrix can read storage invalidated by the resize.
+    cloud.points.conservativeResize(kept, Eigen::NoChange);
+    cloud.responses.conservativeResize(kept, Eigen::NoChange);
 
     return cloud;
 }

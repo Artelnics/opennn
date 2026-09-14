@@ -1,4 +1,3 @@
-
 option(OpenNN_BUILD_VISION "Build vision/seq layers, networks, and datasets" ON)
 option(OpenNN_BUILD_SHARED "Build OpenNN as a shared library (DLL) instead of static" OFF)
 option(OpenNN_INSTALL "Generate install rules for the OpenNN library" ON)
@@ -10,6 +9,14 @@ endif()
 option(OpenNN_ENABLE_LTO "Enable interprocedural optimization/LTO for release builds"
     ${_opennn_lto_default})
 option(OpenNN_ENABLE_MKL "Use Intel MKL as Eigen BLAS/LAPACK backend" OFF)
+set(OpenNN_CPU_TARGET "NATIVE" CACHE STRING
+    "CPU instruction target: NATIVE preserves maximum local throughput; PORTABLE builds distributable binaries")
+set_property(CACHE OpenNN_CPU_TARGET PROPERTY STRINGS NATIVE PORTABLE)
+string(TOUPPER "${OpenNN_CPU_TARGET}" OpenNN_CPU_TARGET)
+set(OpenNN_CPU_TARGET "${OpenNN_CPU_TARGET}" CACHE STRING "CPU instruction target" FORCE)
+if(NOT OpenNN_CPU_TARGET STREQUAL "NATIVE" AND NOT OpenNN_CPU_TARGET STREQUAL "PORTABLE")
+    message(FATAL_ERROR "OpenNN_CPU_TARGET must be NATIVE or PORTABLE, not '${OpenNN_CPU_TARGET}'")
+endif()
 set(OpenNN_MKL_ROOT "" CACHE PATH "Intel MKL root prefix (e.g. /opt/intel/oneapi/mkl/latest or extracted /usr prefix)")
 # AUTO, ON or OFF. AUTO uses oneDNN when it can be found and says so either way;
 # ON fails the configure if it cannot; OFF never looks. Defaulting to AUTO
@@ -22,11 +29,33 @@ set(OpenNN_ENABLE_ONEDNN "AUTO" CACHE STRING
 set_property(CACHE OpenNN_ENABLE_ONEDNN PROPERTY STRINGS AUTO ON OFF)
 set(OpenNN_ONEDNN_ROOT "" CACHE PATH "oneDNN prefix (for example /usr or an extracted package root/usr)")
 option(OpenNN_DISABLE_CUDA "Disable CUDA even if the toolkit is found" OFF)
+option(OpenNN_REQUIRE_CUDA "Fail configuration unless CUDA is enabled" OFF)
 
 list(PREPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/core/cuda")
 
 include(FetchContent)
 include(CheckLanguage)
+
+if(APPLE)
+    find_path(LIBOMP_INCLUDE_DIR omp.h
+        PATHS /opt/homebrew/opt/libomp/include /usr/local/opt/libomp/include)
+    find_library(LIBOMP_LIBRARY NAMES omp libomp.dylib
+        PATHS /opt/homebrew/opt/libomp/lib /usr/local/opt/libomp/lib)
+    if(NOT LIBOMP_INCLUDE_DIR OR NOT LIBOMP_LIBRARY)
+        message(FATAL_ERROR
+            "OpenNN requires OpenMP C++ support. Install libomp (for example, "
+            "with 'brew install libomp') or set LIBOMP_INCLUDE_DIR and "
+            "LIBOMP_LIBRARY to an existing libomp installation.")
+    endif()
+else()
+    find_package(OpenMP QUIET COMPONENTS CXX)
+    if(NOT OpenMP_CXX_FOUND)
+        message(FATAL_ERROR
+            "OpenNN requires OpenMP C++ support. Install the OpenMP development "
+            "runtime for the selected compiler, or select a C++ compiler with "
+            "OpenMP support.")
+    endif()
+endif()
 
 if(NOT OpenNN_DISABLE_CUDA)
     check_language(CUDA)
@@ -67,6 +96,10 @@ else()
     set(OPENNN_HAS_CUDA OFF)
 endif()
 
+if(OpenNN_REQUIRE_CUDA AND NOT OPENNN_HAS_CUDA)
+    message(FATAL_ERROR "OpenNN_REQUIRE_CUDA requires a CUDA compiler and OpenNN_DISABLE_CUDA=OFF")
+endif()
+
 FetchContent_Declare(
     eigen
     GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
@@ -90,18 +123,6 @@ if(OpenNN_CHECK_HEADERS AND NOT MSVC)
                 "$<TARGET_PROPERTY:Eigen3::Eigen,INTERFACE_INCLUDE_DIRECTORIES>")
 endif()
 
-if(APPLE)
-    find_path(LIBOMP_INCLUDE_DIR omp.h
-        PATHS /opt/homebrew/opt/libomp/include /usr/local/opt/libomp/include)
-    find_library(LIBOMP_LIBRARY NAMES omp libomp.dylib
-        PATHS /opt/homebrew/opt/libomp/lib /usr/local/opt/libomp/lib)
-    if(NOT LIBOMP_INCLUDE_DIR OR NOT LIBOMP_LIBRARY)
-        message(WARNING "OpenMP not found. Continuing without OpenMP support.")
-    endif()
-else()
-    find_package(OpenMP)
-endif()
-
 file(GLOB_RECURSE CPP_SOURCES CONFIGURE_DEPENDS "*.cpp")
 file(GLOB_RECURSE HEADER_FILES CONFIGURE_DEPENDS "*.h")
 list(FILTER CPP_SOURCES EXCLUDE REGEX "-DESKTOP-[^/\\\\]*\\.cpp$")
@@ -110,7 +131,7 @@ list(FILTER HEADER_FILES EXCLUDE REGEX "/core/cuda/flash_attention_shim/")
 
 if(NOT OpenNN_BUILD_VISION)
     set(_opennn_vision_pattern
-        ".*/(convolutional_layer|pooling_layer|pooling_layer_3d|normalization_layer_3d|grouped_query_attention_layer|flatten_layer|embedding_layer|multihead_attention_layer|detection_layer|detection_v8_layer|detection_v8_operator|yolo_dataset)\\.cpp$")
+        ".*/(convolutional_layer|pooling_layer|pooling_layer_3d|normalization_layer_3d|grouped_query_attention_layer|flatten_layer|embedding_layer|multihead_attention_layer|detection_layer|detection_v8_layer|detection_v8_operator|yolo_dataset(_io)?)\\.cpp$")
     list(FILTER CPP_SOURCES EXCLUDE REGEX "${_opennn_vision_pattern}")
 endif()
 
@@ -130,6 +151,13 @@ if(OpenNN_ENABLE_LTO)
     check_ipo_supported(RESULT OPENNN_LTO_OK LANGUAGES CXX)
     if(OPENNN_LTO_OK)
         set_property(TARGET opennn PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
+        if(NOT OpenNN_BUILD_SHARED AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+            # A Clang LTO archive contains LLVM bitcode. Consumers need the
+            # compiler's LTO link flags even when their own objects are native,
+            # including a Debug consumer of an installed Release archive.
+            target_link_options(opennn INTERFACE
+                ${CMAKE_CXX_COMPILE_OPTIONS_IPO} ${CMAKE_CXX_LINK_OPTIONS_IPO})
+        endif()
     else()
         message(STATUS "OpenNN: IPO/LTO is not supported by this toolchain.")
     endif()
@@ -159,7 +187,8 @@ set(ZLIB_BUILD_TESTING OFF CACHE BOOL "" FORCE)
 set(ZLIB_INSTALL ${OpenNN_INSTALL} CACHE BOOL "" FORCE)
 FetchContent_Declare(
     opennn_zlib
-    URL https://zlib.net/fossils/zlib-1.3.2.tar.gz
+    URL https://github.com/madler/zlib/releases/download/v1.3.2/zlib-1.3.2.tar.gz
+        https://zlib.net/fossils/zlib-1.3.2.tar.gz
     URL_HASH SHA256=bb329a0a2cd0274d05519d61c667c062e06990d72e125ee2dfa8de64f0119d16
     DOWNLOAD_EXTRACT_TIMESTAMP TRUE)
 FetchContent_MakeAvailable(opennn_zlib)
@@ -183,6 +212,7 @@ endif()
 file(MAKE_DIRECTORY ${_opennn_jpeg_include_dir} ${_opennn_jpeg_lib_dir})
 
 set(_opennn_jpeg_cmake_args
+    -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
     -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
     -DCMAKE_INSTALL_INCLUDEDIR=${CMAKE_INSTALL_INCLUDEDIR}
     -DCMAKE_INSTALL_LIBDIR=${CMAKE_INSTALL_LIBDIR}
@@ -195,6 +225,10 @@ set(_opennn_jpeg_cmake_args
     -DWITH_TURBOJPEG=OFF)
 if(MSVC)
     list(APPEND _opennn_jpeg_cmake_args -DWITH_CRT_DLL=ON)
+    if(DEFINED CMAKE_MSVC_RUNTIME_LIBRARY)
+        list(APPEND _opennn_jpeg_cmake_args
+            "-DCMAKE_MSVC_RUNTIME_LIBRARY:STRING=${CMAKE_MSVC_RUNTIME_LIBRARY}")
+    endif()
 endif()
 if(OpenNN_BUILD_SHARED)
     list(APPEND _opennn_jpeg_cmake_args -DCMAKE_POSITION_INDEPENDENT_CODE=ON)
@@ -220,13 +254,20 @@ set_target_properties(opennn_jpeg PROPERTIES
 add_dependencies(opennn opennn_libjpeg_turbo_ep)
 target_link_libraries(opennn PUBLIC
     $<BUILD_INTERFACE:opennn_jpeg>
-    $<INSTALL_INTERFACE:libjpeg-turbo::jpeg-static>)
+    $<INSTALL_INTERFACE:OpenNN::jpeg>)
 
 target_include_directories(opennn PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 target_link_libraries(opennn PUBLIC Eigen3::Eigen)
+
+# Restrict Eigen to its MPL-2.0 subset. OpenNN includes only Core, Dense, LU, QR
+# and Cholesky, which are MPL-2.0, plus unsupported/Eigen/CXX11/Tensor, which is
+# Apache-2.0. It uses no Sparse or OrderingMethods module, which are the parts
+# carrying LGPL-derived code. The define makes that a build-time guarantee, so an
+# LGPL-licensed Eigen module can never be pulled in by accident.
+target_compile_definitions(opennn PUBLIC EIGEN_MPL2_ONLY)
 
 # Parallel std algorithms. MSVC implements them in its own runtime; libstdc++
 # declares them (so __cpp_lib_parallel_algorithm is defined either way) but
@@ -331,12 +372,11 @@ if(APPLE)
         $<BUILD_INTERFACE:-fexperimental-library>)
     target_link_options(opennn PUBLIC
         $<BUILD_INTERFACE:-fexperimental-library>)
-    if(LIBOMP_INCLUDE_DIR AND LIBOMP_LIBRARY)
-        target_compile_options(opennn PRIVATE -Xpreprocessor -fopenmp)
-        target_include_directories(opennn SYSTEM PRIVATE "${LIBOMP_INCLUDE_DIR}")
-        target_link_libraries(opennn PUBLIC "${LIBOMP_LIBRARY}")
-    endif()
-elseif(OpenMP_FOUND)
+    target_compile_options(opennn PRIVATE -Xpreprocessor -fopenmp)
+    target_include_directories(opennn SYSTEM PUBLIC
+        $<BUILD_INTERFACE:${LIBOMP_INCLUDE_DIR}>)
+    target_link_libraries(opennn PUBLIC "${LIBOMP_LIBRARY}")
+else()
     # MSVC's plain -openmp is OpenMP 2.0 and rejects `#pragma omp simd` with
     # C7660, which stops the whole build the first time a kernel uses one.
     # -openmp:experimental is the same runtime plus the OpenMP 3/4 constructs,
@@ -412,7 +452,7 @@ if(OPENNN_HAS_CUDA)
     endif()
 
     set_property(
-        SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/neural_network/operators/attention_operator.cpp
+        SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/network/operators/attention_operator.cpp
         APPEND PROPERTY COMPILE_DEFINITIONS HAVE_CUDNN_FRONTEND)
 
     if(TARGET opennn_flash_attention)
@@ -423,8 +463,7 @@ if(OPENNN_HAS_CUDA)
 endif()
 
 if(MSVC)
-    target_compile_options(opennn PUBLIC
-        $<BUILD_INTERFACE:$<$<AND:$<COMPILE_LANGUAGE:CXX>,$<NOT:$<CONFIG:DEBUG>>>:/arch:AVX2>>
+    target_compile_options(opennn PRIVATE
         # The cudnn-frontend graph API instantiates enough templates in one
         # translation unit to pass COFF's section limit: attention_operator.cpp
         # stopped fitting at frontend v1.27.0 with "fatal error C1128". The
@@ -432,22 +471,34 @@ if(MSVC)
         # with the code, and raising it costs nothing.
         $<BUILD_INTERFACE:$<$<COMPILE_LANGUAGE:CXX>:/bigobj>>
     )
+    if(OpenNN_CPU_TARGET STREQUAL "NATIVE")
+        target_compile_options(opennn PUBLIC
+            $<BUILD_INTERFACE:$<$<AND:$<COMPILE_LANGUAGE:CXX>,$<NOT:$<CONFIG:DEBUG>>>:/arch:AVX2>>)
+    endif()
 elseif(APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "arm64|aarch64")
     target_compile_options(opennn PRIVATE
         $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<CONFIG:DEBUG>>:-O0 -g>
         $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<NOT:$<CONFIG:DEBUG>>>:-O3>
     )
-    target_compile_options(opennn PUBLIC
-        $<BUILD_INTERFACE:$<$<COMPILE_LANGUAGE:CXX>:-mcpu=apple-m1>>
-    )
+    if(OpenNN_CPU_TARGET STREQUAL "NATIVE")
+        target_compile_options(opennn PUBLIC
+            $<BUILD_INTERFACE:$<$<COMPILE_LANGUAGE:CXX>:-mcpu=apple-m1>>)
+    endif()
 else()
     target_compile_options(opennn PRIVATE
         $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<CONFIG:DEBUG>>:-O0 -g>
         $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<NOT:$<CONFIG:DEBUG>>>:-O3>
     )
-    target_compile_options(opennn PUBLIC
-        $<BUILD_INTERFACE:$<$<COMPILE_LANGUAGE:CXX>:-march=native>>
-    )
+    if(OpenNN_CPU_TARGET STREQUAL "NATIVE")
+        target_compile_options(opennn PUBLIC
+            $<BUILD_INTERFACE:$<$<COMPILE_LANGUAGE:CXX>:-march=native>>)
+    endif()
+
+    if(WIN32)
+        target_compile_options(opennn PUBLIC
+            $<BUILD_INTERFACE:$<$<COMPILE_LANGUAGE:CXX>:-mno-avx>>
+        )
+    endif()
 endif()
 
 target_compile_definitions(opennn PUBLIC
@@ -465,9 +516,9 @@ target_precompile_headers(opennn PRIVATE
 
 if(MSVC AND OPENNN_HAS_CUDA)
     set_source_files_properties(
-        ${CMAKE_CURRENT_SOURCE_DIR}/neural_network/operators/attention_operator.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/neural_network/operators/batch_norm_operator.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/neural_network/operators/convolution_operator.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/network/operators/attention_operator.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/network/operators/batch_norm_operator.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/network/operators/convolution_operator.cpp
         PROPERTIES SKIP_PRECOMPILE_HEADERS ON
     )
 endif()
@@ -480,6 +531,41 @@ endif()
 
 if(OpenNN_INSTALL)
     include(CMakePackageConfigHelpers)
+
+    install(FILES
+        ${PROJECT_SOURCE_DIR}/LICENSE.txt
+        ${PROJECT_SOURCE_DIR}/LICENSE-GPL-3.0.txt
+        ${PROJECT_SOURCE_DIR}/THIRD_PARTY_NOTICES.md
+        ${PROJECT_SOURCE_DIR}/CHANGELOG.md
+        ${PROJECT_SOURCE_DIR}/DATASETS.md
+        ${PROJECT_SOURCE_DIR}/DEVELOPMENT.md
+        ${PROJECT_SOURCE_DIR}/RELEASE_SCOPE.json
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/OpenNN)
+    ExternalProject_Get_Property(opennn_libjpeg_turbo_ep SOURCE_DIR)
+    install(FILES ${SOURCE_DIR}/LICENSE.md ${SOURCE_DIR}/README.ijg
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/OpenNN/libjpeg-turbo)
+    if(eigen_SOURCE_DIR)
+        install(FILES
+            ${eigen_SOURCE_DIR}/COPYING.MPL2
+            ${eigen_SOURCE_DIR}/COPYING.APACHE
+            ${eigen_SOURCE_DIR}/COPYING.BSD
+            ${eigen_SOURCE_DIR}/COPYING.MINPACK
+            ${eigen_SOURCE_DIR}/COPYING.README
+            DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/OpenNN/Eigen)
+    endif()
+    if(OPENNN_HAS_CUDA)
+        install(FILES
+            ${cudnn_frontend_SOURCE_DIR}/LICENSE.txt
+            ${cudnn_frontend_SOURCE_DIR}/LICENSE-MIT.txt
+            ${cudnn_frontend_SOURCE_DIR}/LICENSING.md
+            ${cudnn_frontend_SOURCE_DIR}/NOTICE
+            ${cudnn_frontend_SOURCE_DIR}/THIRD_PARTY_LICENSES.txt
+            DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/OpenNN/cudnn-frontend)
+    endif()
+    file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/build-info-$<CONFIG>.json"
+        CONTENT "{\n  \"version\": \"${PROJECT_VERSION}\",\n  \"compiler\": \"${CMAKE_CXX_COMPILER_ID}\",\n  \"compiler_version\": \"${CMAKE_CXX_COMPILER_VERSION}\",\n  \"configuration\": \"$<CONFIG>\",\n  \"cpu_target\": \"${OpenNN_CPU_TARGET}\",\n  \"cuda\": \"${OPENNN_HAS_CUDA}\",\n  \"shared\": \"${OpenNN_BUILD_SHARED}\",\n  \"lto\": \"${OpenNN_ENABLE_LTO}\"\n}\n")
+    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/build-info-$<CONFIG>.json"
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/OpenNN RENAME build-info.json)
 
     # The FlashAttention-2 kernels go with it: a static opennn carries the calls
     # into them, so an installed one needs the archive that defines them.
@@ -496,13 +582,18 @@ if(OpenNN_INSTALL)
     install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/opennn
         FILES_MATCHING PATTERN "*.h"
+        PATTERN "network_internal.h" EXCLUDE
+        PATTERN "yolo_dataset_internal.h" EXCLUDE
         PATTERN "*-DESKTOP-*.h" EXCLUDE
         PATTERN "flash_attention_shim" EXCLUDE)
 
     install(DIRECTORY ${_opennn_jpeg_install_dir}/${CMAKE_INSTALL_INCLUDEDIR}/
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-    install(DIRECTORY ${_opennn_jpeg_install_dir}/${CMAKE_INSTALL_LIBDIR}/
+    # Upstream JPEG exports contain absolute build-machine paths. Ship the
+    # archive with our own relocatable imported target instead of those exports.
+    install(FILES ${_opennn_jpeg_library}
         DESTINATION ${CMAKE_INSTALL_LIBDIR})
+    get_filename_component(_opennn_jpeg_filename "${_opennn_jpeg_library}" NAME)
 
     install(EXPORT OpenNNTargets
         FILE OpenNNTargets.cmake
@@ -510,7 +601,7 @@ if(OpenNN_INSTALL)
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenNN)
 
     set(_opennn_needs_openmp OFF)
-    if(NOT APPLE AND OpenMP_FOUND AND NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    if(NOT APPLE AND NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         set(_opennn_needs_openmp ON)
     endif()
     set(_opennn_needs_cudnn OFF)
@@ -526,7 +617,8 @@ if(OpenNN_INSTALL)
     configure_package_config_file(
         ${CMAKE_CURRENT_SOURCE_DIR}/OpenNNConfig.cmake.in
         ${CMAKE_CURRENT_BINARY_DIR}/OpenNNConfig.cmake
-        INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenNN)
+        INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenNN
+        PATH_VARS CMAKE_INSTALL_LIBDIR CMAKE_INSTALL_INCLUDEDIR)
 
     write_basic_package_version_file(
         ${CMAKE_CURRENT_BINARY_DIR}/OpenNNConfigVersion.cmake

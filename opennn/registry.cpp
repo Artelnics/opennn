@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   R E G I S T R Y
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/registry.h"
 
@@ -15,35 +10,35 @@
 #include <string_view>
 #include <unordered_map>
 
-#include "opennn/neural_network/layers/activation_layer.h"
-#include "opennn/neural_network/layers/addition_layer.h"
-#include "opennn/neural_network/layers/clamping_layer.h"
-#include "opennn/neural_network/layers/c2psa_layer.h"
-#include "opennn/neural_network/layers/concatenation_layer.h"
-#include "opennn/neural_network/layers/dense_layer.h"
-#include "opennn/neural_network/layers/long_short_term_memory_layer.h"
-#include "opennn/neural_network/layers/non_max_suppression_layer.h"
-#include "opennn/neural_network/layers/recurrent_layer.h"
-#include "opennn/neural_network/layers/scaling_layer.h"
-#include "opennn/neural_network/layers/tokenizer_layer.h"
-#include "opennn/neural_network/layers/unscaling_layer.h"
-#include "opennn/neural_network/layers/upsampling_layer.h"
+#include "opennn/network/layers/activation_layer.h"
+#include "opennn/network/layers/addition_layer.h"
+#include "opennn/network/layers/clamping_layer.h"
+#include "opennn/network/layers/c2psa_layer.h"
+#include "opennn/network/layers/concatenation_layer.h"
+#include "opennn/network/layers/dense_layer.h"
+#include "opennn/network/layers/lstm_layer.h"
+#include "opennn/network/layers/non_max_suppression_layer.h"
+#include "opennn/network/layers/recurrent_layer.h"
+#include "opennn/network/layers/scaling_layer.h"
+#include "opennn/network/layers/tokenizer_layer.h"
+#include "opennn/network/layers/unscaling_layer.h"
+#include "opennn/network/layers/upsampling_layer.h"
 #ifndef OPENNN_NO_VISION
-#include "opennn/neural_network/layers/convolutional_layer.h"
-#include "opennn/neural_network/layers/detection_layer.h"
-#include "opennn/neural_network/layers/detection_v8_layer.h"
-#include "opennn/neural_network/layers/embedding_layer.h"
-#include "opennn/neural_network/layers/flatten_layer.h"
-#include "opennn/neural_network/layers/grouped_query_attention_layer.h"
-#include "opennn/neural_network/layers/multihead_attention_layer.h"
-#include "opennn/neural_network/layers/normalization_layer_3d.h"
-#include "opennn/neural_network/layers/pooling_layer.h"
-#include "opennn/neural_network/layers/pooling_layer_3d.h"
+#include "opennn/network/layers/convolutional_layer.h"
+#include "opennn/network/layers/detection_layer.h"
+#include "opennn/network/layers/detection_v8_layer.h"
+#include "opennn/network/layers/embedding_layer.h"
+#include "opennn/network/layers/flatten_layer.h"
+#include "opennn/network/layers/grouped_query_attention_layer.h"
+#include "opennn/network/layers/multihead_attention_layer.h"
+#include "opennn/network/layers/normalization_layer_3d.h"
+#include "opennn/network/layers/pooling_layer.h"
+#include "opennn/network/layers/pooling_layer_3d.h"
 #endif
-#include "opennn/training_strategy/adaptive_moment_estimation.h"
-#include "opennn/training_strategy/levenberg_marquardt_algorithm.h"
-#include "opennn/training_strategy/quasi_newton_method.h"
-#include "opennn/training_strategy/stochastic_gradient_descent.h"
+#include "opennn/training/adam.h"
+#include "opennn/training/levenberg_marquardt.h"
+#include "opennn/training/quasi_newton.h"
+#include "opennn/training/sgd.h"
 #include "opennn/model_selection/genetic_algorithm.h"
 #include "opennn/model_selection/growing_inputs.h"
 
@@ -105,7 +100,7 @@ constexpr std::array<LayerRegistration, layer_types_number> layer_registrations 
      OPENNN_VISION_FACTORY(construct_layer<Embedding>)},
     {LayerType::Flatten,                "Flatten",
      OPENNN_VISION_FACTORY(construct_layer<Flatten>)},
-    {LayerType::LongShortTermMemory,    "LongShortTermMemory",    construct_layer<LongShortTermMemory>},
+    {LayerType::LSTM,    "LSTM",    construct_layer<LSTM>},
     {LayerType::MultiHeadAttention,     "MultiHeadAttention",
      OPENNN_VISION_FACTORY(construct_layer<MultiHeadAttention>)},
     {LayerType::Normalization3d,        "Normalization3d",
@@ -241,27 +236,23 @@ unique_ptr<Layer> create_layer(const string& name)
 unique_ptr<Optimizer> create_optimizer(const string& name)
 {
     static const unordered_map<string_view, unique_ptr<Optimizer>(*)()> factories = {
-        {"AdaptiveMomentEstimation", construct<Optimizer, AdaptiveMomentEstimation>},
-        {"LevenbergMarquardt", construct<Optimizer, LevenbergMarquardtAlgorithm>},
-        {"QuasiNewtonMethod", construct<Optimizer, QuasiNewtonMethod>},
-        {"StochasticGradientDescent", construct<Optimizer, StochasticGradientDescent>},
+        {"Adam", construct<Optimizer, Adam>},
+        {"LevenbergMarquardt", construct<Optimizer, LevenbergMarquardt>},
+        {"QuasiNewton", construct<Optimizer, QuasiNewton>},
+        {"SGD", construct<Optimizer, SGD>},
     };
 
     return create(factories, name);
 }
 
-unique_ptr<InputsSelection> create_inputs_selection(const string& name)
+unique_ptr<InputSelection> create_input_selection(const string& name)
 {
-    static const unordered_map<string_view, unique_ptr<InputsSelection>(*)()> factories = {
-        {"GeneticAlgorithm", construct<InputsSelection, GeneticAlgorithm>},
-        {"GrowingInputs", construct<InputsSelection, GrowingInputs>},
+    static const unordered_map<string_view, unique_ptr<InputSelection>(*)()> factories = {
+        {"GeneticAlgorithm", construct<InputSelection, GeneticAlgorithm>},
+        {"GrowingInputs", construct<InputSelection, GrowingInputs>},
     };
 
     return create(factories, name);
 }
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

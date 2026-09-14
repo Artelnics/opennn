@@ -1,12 +1,8 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   T E X T   G E N E R A T I O N   D A T A S E T   C L A S S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/dataset/text_generation_dataset.h"
+#include "opennn/core/log.h"
 
 #include <utility>
 
@@ -75,7 +71,8 @@ void TextGenerationDataset::create_vocabulary(const vector<string_view>& corpus_
 
 void TextGenerationDataset::read_txt()
 {
-    cout << "Reading .txt file..." << "\n";
+    invalidate_data();
+    logging::info() << "Reading .txt file..." << "\n";
 
     throw_if(sequence_length <= 0,
              "TextGenerationDataset: sequence_length must be > 0.");
@@ -102,7 +99,7 @@ void TextGenerationDataset::read_txt()
         && load_cache_metadata(metadata_path, tokenizer_fingerprint))
     {
         split_samples_random();
-        cout << "Reading finished (cached)" << "\n";
+        logging::info() << "Reading finished (cached)" << "\n";
         return;
     }
 
@@ -111,7 +108,7 @@ void TextGenerationDataset::read_txt()
     vector<Index> token_ids;
     if (fixed_vocabulary)
     {
-        cout << "Tokenizing corpus (subword)..." << "\n";
+        logging::info() << "Tokenizing corpus (subword)..." << "\n";
         token_ids = tokenizer->encode(buffer);
     }
     else
@@ -155,7 +152,7 @@ void TextGenerationDataset::read_txt()
 
     split_samples_random();
 
-    cout << "Reading finished" << "\n";
+    logging::info() << "Reading finished" << "\n";
 }
 
 void TextGenerationDataset::set_tokenizer(unique_ptr<TokenizerOperator> new_tokenizer)
@@ -392,7 +389,3 @@ void TextGenerationDataset::from_JSON(const JsonDocument& data_set_document)
 }
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

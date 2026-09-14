@@ -1,0 +1,4 @@
+# Python checks and generated-model export tests; no GPU runtime is required.
+numpy==2.4.4
+pandas==2.3.3
+sacrebleu==2.5.1

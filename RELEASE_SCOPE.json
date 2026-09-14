@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "binary_package": {
+    "publishable": true,
+    "includes_example_assets": false,
+    "description": "CMake/CPack installation packages exclude examples and their dataset/model assets."
+  },
+  "full_source_archive": {
+    "publishable": false,
+    "reason": "Tracked example assets include unresolved redistribution records in datasets.manifest.json."
+  },
+  "historical_model_compatibility": {
+    "claim": "not_claimed",
+    "reason": "No complete OpenNN 8.x production model with architecture, parameters, preprocessing contract and reference predictions is available."
+  },
+  "neural_designer_compatibility": {
+    "claim": "not_evaluated",
+    "reason": "Excluded from this release review at the owner's request."
+  }
+}

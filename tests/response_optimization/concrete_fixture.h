@@ -15,7 +15,8 @@
 
 #include <filesystem>
 
-#include "opennn/neural_network/neural_network.h"
+#include "opennn/core/configuration.h"
+#include "opennn/network/network.h"
 #include "opennn/response_optimization/response_optimization.h"
 
 using namespace opennn;
@@ -43,9 +44,15 @@ inline float bound_slack(const float bound) { return max(1e-2f, abs(bound)*1e-3f
 
 // One shared network for every test in the binary. Nothing writes to it.
 
-inline NeuralNetwork& concrete_network()
+inline Network& concrete_network()
 {
-    static NeuralNetwork network(std::filesystem::path(CONCRETE_NETWORK_DIR) / "nn" / "concrete_uci.json");
+    static Network network = []
+    {
+        // These scenarios exercise the optimizers with a small 8-52-1 model.
+        // Pin it to CPU so their runtime does not depend on GPU launch overhead.
+        Configuration::instance().set(Device::CPU, Type::FP32);
+        return Network(std::filesystem::path(CONCRETE_NETWORK_DIR) / "nn" / "concrete_uci.json");
+    }();
 
     return network;
 }

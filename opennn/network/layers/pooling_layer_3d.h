@@ -1,0 +1,58 @@
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
+
+#pragma once
+
+#include "opennn/network/layers/layer.h"
+#include "opennn/network/layers/pooling_layer.h"
+#include "opennn/network/operators/pool3d_operator.h"
+
+namespace opennn
+{
+
+class Pooling3d final : public Layer
+{
+public:
+
+    Pooling3d(const Shape& = {0, 0},
+              const PoolingMethod& = PoolingMethod::MaxPooling,
+              const string& = "sequence_pooling_layer");
+
+    Shape get_input_shape() const noexcept override { return {sequence_length, input_features}; }
+    Shape get_output_shape() const override;
+
+    Index get_sequence_length() const { return sequence_length; }
+    Index get_input_features() const { return input_features; }
+
+    PoolingMethod get_pooling_method() const { return pooling_method; }
+
+    vector<TensorSpec> get_forward_specs(Index) const override;
+
+    void set(const Shape&, const PoolingMethod&, const string&);
+
+    bool accepts_input_rank(Index rank) const override { return is_one_of(rank, 2); }
+
+    void apply_input_shape(const Shape& new_input_shape) override
+    {
+        set(new_input_shape, pooling_method, get_label());
+    }
+
+    void set_pooling_method(PoolingMethod);
+    void set_pooling_method(const string&);
+
+    void read_JSON_body(const Json*) override;
+    void write_JSON_body(JsonWriter&) const override;
+
+private:
+
+    Index sequence_length = 0;
+    Index input_features = 0;
+
+    PoolingMethod pooling_method = PoolingMethod::MaxPooling;
+
+    Pool3dOperator pool3d;
+
+    enum Forward { Input, MaximalIndices, Output };
+};
+
+}

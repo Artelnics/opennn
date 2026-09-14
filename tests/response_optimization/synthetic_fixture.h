@@ -18,10 +18,10 @@
 #include "opennn/core/statistics.h"
 #include "opennn/core/variable.h"
 #include "opennn/core/random_utilities.h"
-#include "opennn/neural_network/neural_network.h"
-#include "opennn/neural_network/standard_networks.h"
-#include "opennn/neural_network/layers/scaling_layer.h"
-#include "opennn/neural_network/layers/unscaling_layer.h"
+#include "opennn/network/network.h"
+#include "opennn/network/standard_networks.h"
+#include "opennn/network/layers/scaling_layer.h"
+#include "opennn/network/layers/unscaling_layer.h"
 #include "opennn/response_optimization/response_optimization.h"
 
 using namespace opennn;
@@ -161,7 +161,7 @@ struct CategoricalApproximation
 // The best response the network gives inside each category, found by scanning. What a
 // search over the categories has to match.
 
-inline vector<float> scan_categories(NeuralNetwork& network,
+inline vector<float> scan_categories(Network& network,
                                      const Index numeric_number,
                                      const Index categories_number,
                                      const float input_minimum,
@@ -218,7 +218,7 @@ inline Index read_category(const MatrixR& results,
 // The median response of an untrained network, and the spread around it. A test that has
 // to name a reachable value asks for it here rather than assuming one.
 
-inline pair<float, float> sample_response(NeuralNetwork& network,
+inline pair<float, float> sample_response(Network& network,
                                           const Index inputs_number,
                                           const float input_minimum,
                                           const float input_maximum,

@@ -1,23 +1,21 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   S E L E C T I O N   U T I L I T I E S   H E A D E R
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #pragma once
 
 #include "opennn/core/opennn_types.h"
+#include "opennn/core/log.h"
 #include "opennn/core/scaling.h"
 #include "opennn/core/tensor_types.h"
 
 namespace opennn
 {
 
-class TrainingStrategy;
-class NeuralNetwork;
+class Training;
+class Network;
 class Dataset;
+
+void validate_selection_training(const Training*, Index folds_number, string_view algorithm);
 
 struct CandidateEvaluation
 {
@@ -25,8 +23,9 @@ struct CandidateEvaluation
     float validation_error = MAX;
 };
 
-CandidateEvaluation evaluate_candidate(TrainingStrategy*,
-                                       NeuralNetwork*,
+// The history-minimum flag is retained for compatibility; returned-model metrics take precedence.
+CandidateEvaluation evaluate_candidate(Training*,
+                                       Network*,
                                        Index folds_number,
                                        const vector<vector<Index>>& fold_partition,
                                        Index trials_number,
@@ -43,16 +42,16 @@ struct ParameterSnapshot
 
 FeatureScaling capture_input_scaling(Dataset*);
 
-void apply_input_scaling(NeuralNetwork*, FeatureScaling);
+void apply_input_scaling(Network*, FeatureScaling);
 
-ParameterSnapshot capture_parameter_snapshot(NeuralNetwork*);
+ParameterSnapshot capture_parameter_snapshot(Network*);
 
-void seed_parameters_from_snapshot(NeuralNetwork*,
+void seed_parameters_from_snapshot(Network*,
                                    const ParameterSnapshot&,
                                    const vector<Index>& input_row_map = {});
 
-void finalize_selected_model(TrainingStrategy*,
-                             NeuralNetwork*,
+void finalize_selected_model(Training*,
+                             Network*,
                              const VectorR& optimal_parameters,
                              Index folds_number,
                              bool display,
@@ -76,7 +75,7 @@ optional<Condition> first_stopping_condition(const bool display,
     const auto check = ranges::find(checks, true, &StoppingCheck<Condition>::fired);
     if (check != checks.end())
     {
-        if (display) cout << check->message;
+        if (display) logging::info() << check->message;
         return check->condition;
     }
 
@@ -84,7 +83,3 @@ optional<Condition> first_stopping_condition(const bool display,
 }
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

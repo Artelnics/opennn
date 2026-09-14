@@ -2,9 +2,9 @@
 
 #include "opennn/core/configuration.h"
 #include "opennn/core/tensor_types.h"
-#include "opennn/neural_network/forward_propagation.h"
-#include "opennn/neural_network/layers/dense_layer.h"
-#include "opennn/neural_network/neural_network.h"
+#include "opennn/network/forward_propagation.h"
+#include "opennn/network/layers/dense_layer.h"
+#include "opennn/network/network.h"
 
 using namespace opennn;
 
@@ -24,7 +24,7 @@ TEST(ContractionForwardTest, LargeBatchDenseForwardMatchesTheDefinition)
     const Index inputs_number = 1024;
     const Index outputs_number = 1024;
 
-    NeuralNetwork network;
+    Network network;
     network.add_layer(make_unique<opennn::Dense>(Shape{inputs_number}, Shape{outputs_number}, "ReLU"));
     network.compile();
     network.set_parameters_glorot();

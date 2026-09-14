@@ -12,9 +12,9 @@
 #include <iostream>
 #include <memory>
 
-#include "opennn/neural_network/chat.h"
+#include "opennn/network/chat.h"
 #include "opennn/models/models.h"
-#include "opennn/neural_network/operators/tokenizer_operator.h"
+#include "opennn/network/operators/tokenizer_operator.h"
 
 using namespace opennn;
 

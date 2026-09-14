@@ -180,6 +180,33 @@ TEST(FieldParsingTest, IsDateTimeString)
     EXPECT_FALSE(is_date_time_string(""));
 }
 
+TEST(FieldParsingTest, PaddedFieldsAreNumbers)
+{
+    // Data files pad their fields (" 4.00 "). A padded number must stay a number:
+    // otherwise it falls through to the date check and the column is typed DateTime.
+    EXPECT_TRUE(is_numeric_string(" 4.00 "));
+    EXPECT_TRUE(is_numeric_string("  -2.5e-3"));
+    EXPECT_TRUE(is_numeric_string(" 50% "));
+    EXPECT_FALSE(is_numeric_string("   "));
+
+    EXPECT_FALSE(is_date_time_string(" 4.00 "));
+
+    float value = 0.0f;
+    ASSERT_TRUE(parse_real(" 4.00 ", value));
+    EXPECT_FLOAT_EQ(value, 4.0f);
+}
+
+TEST(FieldParsingTest, TwoFieldDatesNeedALeadingYear)
+{
+    // is_date_time_string must only accept what date_to_timestamp can resolve.
+    EXPECT_TRUE(is_date_time_string("2020-01"));
+    EXPECT_NE(date_to_timestamp("2020-01", 0, Auto), time_t(-1));
+
+    EXPECT_FALSE(is_date_time_string("1-2"));
+    EXPECT_FALSE(is_date_time_string("12/05"));
+    EXPECT_EQ(date_to_timestamp("12/05", 0, Auto), time_t(-1));
+}
+
 TEST(FieldParsingTest, DateToTimestampRoundTrip)
 {
     const time_t timestamp = date_to_timestamp("2020-06-15 12:30:45", 0, Ymd);

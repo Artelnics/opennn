@@ -365,6 +365,28 @@ TEST(ImageDataset, SetInputScalingChannelMismatchThrows)
     EXPECT_ANY_THROW(image_dataset.set_input_scaling(descriptives, scalers, 0.0f, 1.0f));
 }
 
+TEST(ImageDataset, SetInputScalingDisablesDeviceResidency)
+{
+    if (!device::has_cuda_device()) GTEST_SKIP() << "CUDA device unavailable.";
+    ImageFixture fixture(2, 2, 1);
+    ImageDataset dataset(fixture.root);
+    dataset.enable_device_residency();
+    ASSERT_TRUE(dataset.is_device_resident());
+
+    const Index channels = dataset.get_input_shape()[2];
+    vector<Descriptives> descriptives(size_t(channels), Descriptives{});
+    for (Descriptives& descriptive : descriptives)
+    {
+        descriptive.minimum = 0.0f;
+        descriptive.maximum = 255.0f;
+    }
+    dataset.set_input_scaling(descriptives,
+                              vector<ScalerMethod>(size_t(channels), ScalerMethod::MinimumMaximum),
+                              -1.0f, 1.0f);
+    EXPECT_FALSE(dataset.is_device_resident());
+    EXPECT_EQ(dataset.get_device_data_columns(), 0);
+}
+
 TEST(ImageDataset, SetAugmentationPolicyDisablesDeviceResidency)
 {
     if (!device::has_cuda_device()) GTEST_SKIP() << "CUDA device unavailable.";

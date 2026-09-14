@@ -1,6 +1,6 @@
 // The LSTM family, defined once, driven four ways.
 //
-// PLAN.md. LSTM forecasting on UCI Beijing PM2.5, hourly, predicting the next
+// LSTM forecasting on UCI Beijing PM2.5, hourly, predicting the next
 // reading from a window of past ones.
 //
 //   lstm train    <csv> <csv> [epochs] [batch,...] [hidden] [past] [dev] [prec]
@@ -38,16 +38,17 @@
 #endif
 
 #include "opennn/core/configuration.h"
+#include "opennn/core/memory_debug.h"
 #include "opennn/core/tensor_operations.h"
 #include "opennn/core/random_utilities.h"
 #include "opennn/core/tensor_types.h"
 #include "opennn/dataset/time_series_dataset.h"
-#include "opennn/neural_network/forward_propagation.h"
-#include "opennn/neural_network/layers/dense_layer.h"
-#include "opennn/neural_network/layers/long_short_term_memory_layer.h"
+#include "opennn/network/forward_propagation.h"
+#include "opennn/network/layers/dense_layer.h"
+#include "opennn/network/layers/lstm_layer.h"
 #include "opennn/models/models.h"
-#include "opennn/training_strategy/adaptive_moment_estimation.h"
-#include "opennn/training_strategy/training_strategy.h"
+#include "opennn/training/adam.h"
+#include "opennn/training/training.h"
 
 using namespace opennn;
 using clock_type = chrono::steady_clock;
@@ -103,18 +104,18 @@ unique_ptr<ForecastingLstmNetwork> build(TimeSeriesDataset& dataset, const Optio
     return network;
 }
 
-unique_ptr<NeuralNetwork> build_inference(const TimeSeriesDataset& dataset,
+unique_ptr<Network> build_inference(const TimeSeriesDataset& dataset,
                                           const Options& options)
 {
     set_seed(SEED);
 
-    auto network = make_unique<NeuralNetwork>();
+    auto network = make_unique<Network>();
     network->set_task(NetworkTask::Forecasting);
 
-    auto recurrent = make_unique<LongShortTermMemory>(dataset.get_shape("Input"),
+    auto recurrent = make_unique<LSTM>(dataset.get_shape("Input"),
                                                        Shape{options.hidden},
                                                        "Tanh", "Sigmoid",
-                                                       "long_short_term_memory_layer");
+                                                       "lstm_layer");
     recurrent->set_return_sequences(false);
     network->add_layer(std::move(recurrent));
 
@@ -152,10 +153,6 @@ Index use_all_valid_windows(TimeSeriesDataset& dataset, SampleRole role,
     vector<Index> valid(static_cast<size_t>(windows));
     iota(valid.begin(), valid.end(), Index(0));
 
-    // TimeSeriesDataset normally installs a chronological 60/20/20 split.
-    // This benchmark, like the PyTorch driver, uses the complete CSV. Keep
-    // only starts whose full input window and target are in range; marking
-    // every raw row used to append `past` zero-padded pseudo-windows.
     dataset.set_sample_roles(SampleRole::None);
     dataset.set_sample_roles(valid, role);
     return windows;
@@ -185,12 +182,12 @@ Options parse_options(int argc, char* argv[], int first)
     return options;
 }
 
-AdaptiveMomentEstimation* configure(TrainingStrategy& strategy, Index batch)
+Adam* configure(Training& training, Index batch)
 {
-    strategy.set_loss("MeanSquaredError");
-    strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
+    training.set_loss("MeanSquaredError");
+    training.set_optimization_algorithm("Adam");
 
-    auto* adam = dynamic_cast<AdaptiveMomentEstimation*>(strategy.get_optimization_algorithm());
+    auto* adam = dynamic_cast<Adam*>(training.get_optimization_algorithm());
     adam->set_batch_size(batch);
     adam->set_display(false);
     adam->set_display_period(1000000);
@@ -199,7 +196,7 @@ AdaptiveMomentEstimation* configure(TrainingStrategy& strategy, Index batch)
     return adam;
 }
 
-void describe(const TimeSeriesDataset& dataset, const NeuralNetwork& network, const Options& options)
+void describe(const TimeSeriesDataset& dataset, const Network& network, const Options& options)
 {
     cout << "samples=" << dataset.get_used_samples_number()
          << " inputs=" << dataset.get_shape("Input").back()
@@ -258,8 +255,8 @@ int main(int argc, char* argv[])
             const bool graph = options.device == Device::CUDA
                                && getenv("OPENNN_NO_CUDA_GRAPH") == nullptr;
 
-            TrainingStrategy strategy(network.get(), dataset.get());
-            auto* adam = configure(strategy, batch);
+            Training training(network.get(), dataset.get());
+            auto* adam = configure(training, batch);
             adam->set_cuda_graph(graph);
             adam->set_maximum_epochs(warmup + epochs);
 
@@ -272,7 +269,7 @@ int main(int argc, char* argv[])
             vector<double> epoch_seconds;
             auto previous_mark = clock_type::now();
 
-            adam->post_epoch_callback = [&](Index epoch, float, float, NeuralNetwork*)
+            adam->post_epoch_callback = [&](Index epoch, float, float, Network*)
             {
                 const auto now = clock_type::now();
                 const double elapsed = chrono::duration<double>(now - previous_mark).count();
@@ -289,7 +286,7 @@ int main(int argc, char* argv[])
                          << unix_now() << "\n" << defaultfloat;
             };
 
-            strategy.train();
+            training.train();
 
             if (Index(epoch_seconds.size()) != epochs)
             {
@@ -386,6 +383,12 @@ int main(int argc, char* argv[])
             // which aborted every CPU inference cell in this family. The
             // warm-up pass still has to happen, so it is the upload that is
             // conditional, not the pass.
+            // Deploy the parameters for inference before the warm-up: the
+            // forward pass reads the bf16 mirror, so the fp32 master is
+            // released rather than kept resident beside it -- the footprint
+            // the PyTorch driver reaches with model.to(torch.bfloat16).
+            if (options.device == Device::CUDA)
+                network->upload_parameters_bf16_inference();
             run_once(options.device == Device::CUDA);
             run_pass();
 
@@ -443,13 +446,13 @@ int main(int argc, char* argv[])
             auto network = build(*dataset, options);
             describe(*dataset, *network, options);
 
-            TrainingStrategy strategy(network.get(), dataset.get());
-            configure(strategy, batch)->set_maximum_epochs(1);
-            strategy.train();
+            Training training(network.get(), dataset.get());
+            configure(training, batch)->set_maximum_epochs(1);
+            training.train();
         }
         catch (const exception& error)
         {
-            cout << "fits=0\nreason=" << error.what() << "\nRESULT=OOM\n" << flush;
+            cout << "fits=0\nreason=" << error.what() << "\nRESULT=ERROR\n" << flush;
             return 1;
         }
 
@@ -460,6 +463,9 @@ int main(int argc, char* argv[])
     {
         return usage();
     }
+
+    // OPENNN_MEMORY_DEBUG=1 attributes the resident set member by member.
+    if (memory_debug::enabled()) memory_debug::print(cout);
 
     cout << "RESULT=OK\n";
 

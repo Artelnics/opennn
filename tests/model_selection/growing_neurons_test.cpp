@@ -1,12 +1,12 @@
 #include "tests/pch.h"
 
-#include "opennn/training_strategy/training_strategy.h"
+#include "opennn/training/training.h"
 #include "opennn/dataset/dataset.h"
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/models/models.h"
 #include "opennn/model_selection/growing_neurons.h"
-#include "opennn/neural_network/layers/dense_layer.h"
-#include "opennn/neural_network/layers/normalization_layer_3d.h"
+#include "opennn/network/layers/dense_layer.h"
+#include "opennn/network/layers/normalization_layer_3d.h"
 
 using namespace opennn;
 
@@ -34,14 +34,14 @@ TEST(GrowingNeuronsTest, RefusesALastLayerThatCannotTakeANeuronCount)
     dataset.set_data(data);
     dataset.split_samples_random();
 
-    NeuralNetwork neural_network;
-    neural_network.add_layer(make_unique<opennn::Dense>(Shape{1}, Shape{2}, "Linear"));
-    neural_network.add_layer(make_unique<Normalization3d>(Shape{2, 2}));
-    neural_network.compile();
+    Network network;
+    network.add_layer(make_unique<opennn::Dense>(Shape{1}, Shape{2}, "Linear"));
+    network.add_layer(make_unique<Normalization3d>(Shape{2, 2}));
+    network.compile();
 
-    TrainingStrategy training_strategy(&neural_network, &dataset);
+    Training training(&network, &dataset);
 
-    GrowingNeurons growing_neurons(&training_strategy);
+    GrowingNeurons growing_neurons(&training);
     growing_neurons.set_display(false);
     growing_neurons.set_maximum_neurons(3);
 
@@ -62,9 +62,9 @@ TEST(GrowingNeuronsTest, RefusesALastLayerThatCannotTakeANeuronCount)
 
 TEST(GrowingNeuronsTest, GeneralConstructor)
 {
-    TrainingStrategy training_strategy;
+    Training training;
 
-    GrowingNeurons growing_neurons(&training_strategy);
+    GrowingNeurons growing_neurons(&training);
 }
 
 TEST(GrowingNeuronsTest, NeuronsSelection)
@@ -96,11 +96,11 @@ TEST(GrowingNeuronsTest, NeuronsSelection)
     dataset.set_data(data);
     dataset.split_samples_random();
 
-    ApproximationNetwork neural_network({1}, {3}, {1});
+    ApproximationNetwork network({1}, {3}, {1});
 
-    TrainingStrategy training_strategy(&neural_network, &dataset);
+    Training training(&network, &dataset);
 
-    GrowingNeurons growing_neurons(&training_strategy);
+    GrowingNeurons growing_neurons(&training);
     growing_neurons.set_trials_number(1);
     growing_neurons.set_maximum_neurons(7);
     growing_neurons.set_display(false);
@@ -138,11 +138,11 @@ TEST(GrowingNeuronsTest, PerformNeuronsSelection)
     dataset.set_data(data);
     dataset.split_samples_random();
 
-    ApproximationNetwork neural_network({1}, {3}, {1});
+    ApproximationNetwork network({1}, {3}, {1});
 
-    TrainingStrategy training_strategy(&neural_network, &dataset);
+    Training training(&network, &dataset);
 
-    GrowingNeurons growing_neurons(&training_strategy);
+    GrowingNeurons growing_neurons(&training);
     growing_neurons.set_trials_number(1);
     growing_neurons.set_maximum_neurons(5);
     growing_neurons.set_display(false);
@@ -182,10 +182,10 @@ TEST(GrowingNeuronsTest, StopByTime)
     dataset.set_data(data);
     dataset.split_samples_random();
 
-    ApproximationNetwork neural_network({1}, {1}, {1});
-    TrainingStrategy training_strategy(&neural_network, &dataset);
+    ApproximationNetwork network({1}, {1}, {1});
+    Training training(&network, &dataset);
 
-    GrowingNeurons growing_neurons(&training_strategy);
+    GrowingNeurons growing_neurons(&training);
     growing_neurons.set_maximum_neurons(100);
     growing_neurons.set_maximum_time(type(0));
     growing_neurons.set_display(false);
@@ -212,10 +212,10 @@ TEST(GrowingNeuronsTest, OptimalNeuronsFound)
     dataset.set_data(data);
     dataset.split_samples_random();
 
-    ApproximationNetwork neural_network({1}, {1}, {1});
-    TrainingStrategy training_strategy(&neural_network, &dataset);
+    ApproximationNetwork network({1}, {1}, {1});
+    Training training(&network, &dataset);
 
-    GrowingNeurons growing_neurons(&training_strategy);
+    GrowingNeurons growing_neurons(&training);
     growing_neurons.set_trials_number(1);
     growing_neurons.set_maximum_neurons(5);
     growing_neurons.set_display(false);
@@ -240,10 +240,10 @@ TEST(GrowingNeuronsTest, NeuronsIncrement)
     dataset.set_data(data);
     dataset.split_samples_random();
 
-    ApproximationNetwork neural_network({1}, {1}, {1});
-    TrainingStrategy training_strategy(&neural_network, &dataset);
+    ApproximationNetwork network({1}, {1}, {1});
+    Training training(&network, &dataset);
 
-    GrowingNeurons growing_neurons(&training_strategy);
+    GrowingNeurons growing_neurons(&training);
     growing_neurons.set_neurons_increment(2);
     growing_neurons.set_maximum_neurons(7);
     growing_neurons.set_display(false);
@@ -271,10 +271,10 @@ TEST(GrowingNeuronsTest, CrossValidationKeepsPersistentRoles)
 
     const vector<SampleRole> roles_before = dataset.get_sample_roles();
 
-    ApproximationNetwork neural_network({1}, {3}, {1});
-    TrainingStrategy training_strategy(&neural_network, &dataset);
+    ApproximationNetwork network({1}, {3}, {1});
+    Training training(&network, &dataset);
 
-    GrowingNeurons growing_neurons(&training_strategy);
+    GrowingNeurons growing_neurons(&training);
     growing_neurons.set_display(false);
     growing_neurons.set_trials_number(1);
     growing_neurons.set_maximum_neurons(4);

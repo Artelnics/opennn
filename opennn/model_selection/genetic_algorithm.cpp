@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   G E N E T I C   A L G O R I T H M   C L A S S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/model_selection/genetic_algorithm.h"
 
@@ -13,13 +8,13 @@
 #include "opennn/dataset/dataset.h"
 #include "opennn/model_selection/cross_validation.h"
 #include "opennn/model_selection/selection_utilities.h"
-#include "opennn/training_strategy/training_strategy.h"
+#include "opennn/training/training.h"
 
 namespace opennn
 {
 
-GeneticAlgorithm::GeneticAlgorithm(TrainingStrategy* new_training_strategy)
-    : InputsSelection(new_training_strategy)
+GeneticAlgorithm::GeneticAlgorithm(Training* new_training)
+    : InputSelection(new_training)
 {
     set_default();
 }
@@ -28,10 +23,10 @@ void GeneticAlgorithm::set_default()
 {
     name = "GeneticAlgorithm";
 
-    if (!training_strategy || !training_strategy->get_neural_network() || !training_strategy->get_dataset())
+    if (!training || !training->get_network() || !training->get_dataset())
         return;
 
-    const Dataset* dataset = training_strategy->get_dataset();
+    const Dataset* dataset = training->get_dataset();
 
     const Index individuals_number = 40;
 
@@ -63,12 +58,19 @@ void GeneticAlgorithm::set_default()
 
     elitism_size = (individuals_number + 3) / 4;
 
-    initialization_method = "Correlations";
+    initialization_method = "Random";
+}
+
+void GeneticAlgorithm::set_initialization_method(const string& method)
+{
+    throw_if(method != "Random" && method != "Correlations",
+             "Unknown genetic algorithm initialization method: {}", method);
+    initialization_method = method;
 }
 
 void GeneticAlgorithm::set_maximum_inputs_number(const Index new_maximum_inputs_number)
 {
-    const Dataset* dataset = training_strategy ? training_strategy->get_dataset() : nullptr;
+    const Dataset* dataset = training ? training->get_dataset() : nullptr;
     const Index inputs_number = dataset ? dataset->get_variables_number(VariableRole::Input) : 0;
 
     maximum_inputs_number = (inputs_number == 0)
@@ -78,7 +80,7 @@ void GeneticAlgorithm::set_maximum_inputs_number(const Index new_maximum_inputs_
 
 void GeneticAlgorithm::set_individuals_number(const Index new_individuals_number)
 {
-    throw_if(!training_strategy || !training_strategy->get_dataset(),
+    throw_if(!training || !training->get_dataset(),
              "training strategy or dataset is not set.");
 
     const Index genes_number = get_genes_number();
@@ -95,6 +97,10 @@ void GeneticAlgorithm::set_individuals_number(const Index new_individuals_number
 
 void GeneticAlgorithm::initialize_population()
 {
+    throw_if(get_genes_number() <= 0 || get_individuals_number() <= 0
+             || minimum_inputs_number < 1 || maximum_inputs_number < minimum_inputs_number
+             || maximum_inputs_number > get_genes_number(),
+             "Genetic algorithm population and input bounds must be valid and nonempty.");
     population.resize(get_individuals_number(), get_genes_number());
 
     if (initialization_method == "Random")
@@ -109,16 +115,28 @@ void GeneticAlgorithm::initialize_population_random()
     const Index genes_number = get_genes_number();
 
     VectorB individual_genes(genes_number);
+    const float probability = (float(minimum_inputs_number) + float(maximum_inputs_number))
+                              / (2.0f * float(genes_number));
 
     for (Index i = 0; i < individuals_number; ++i)
     {
-        individual_genes.setConstant(false);
-
-        const Index true_count = random_integer(minimum_inputs_number, maximum_inputs_number);
-
-        individual_genes.head(true_count).setConstant(true);
-
-        shuffle(individual_genes);
+        for (Index gene = 0; gene < genes_number; ++gene)
+            individual_genes(gene) = random_bool(probability);
+        Index active = individual_genes.count();
+        while (active < minimum_inputs_number || active > maximum_inputs_number)
+        {
+            const Index gene = random_integer(0, genes_number - 1);
+            if (active < minimum_inputs_number && !individual_genes(gene))
+            {
+                individual_genes(gene) = true;
+                ++active;
+            }
+            else if (active > maximum_inputs_number && individual_genes(gene))
+            {
+                individual_genes(gene) = false;
+                --active;
+            }
+        }
 
         population.row(i) = individual_genes;
     }
@@ -126,7 +144,7 @@ void GeneticAlgorithm::initialize_population_random()
 
 void GeneticAlgorithm::initialize_population_correlations()
 {
-    const Dataset* dataset = training_strategy->get_dataset();
+    const Dataset* dataset = training->get_dataset();
 
     const Index individuals_number = get_individuals_number();
     const Index genes_number = get_genes_number();
@@ -184,23 +202,23 @@ vector<Index> GeneticAlgorithm::genes_to_variable_indices(const VectorB& genes) 
 
 void GeneticAlgorithm::evaluate_population()
 {
-    Loss* loss = training_strategy->get_loss();
-    Dataset* dataset = training_strategy->get_dataset();
-    NeuralNetwork* neural_network = loss->get_neural_network();
+    Loss* loss = training->get_loss();
+    Dataset* dataset = training->get_dataset();
+    Network* network = loss->get_network();
     const Index individuals_number = get_individuals_number();
 
-    Optimizer* optimizer = training_strategy->get_optimization_algorithm();
+    Optimizer* optimizer = training->get_optimization_algorithm();
     const bool optimizer_display = optimizer->get_display();
     optimizer->set_display(false);
     const ScopeExit restore_optimizer_display([optimizer, optimizer_display]
                                               { optimizer->set_display(optimizer_display); });
 
     const vector<vector<Index>> fold_partition =
-        folds_number > 1 ? build_fold_partition(training_strategy, folds_number) : vector<vector<Index>>{};
+        folds_number > 1 ? build_fold_partition(training, folds_number) : vector<vector<Index>>{};
 
     for (Index i = 0; i < individuals_number; ++i)
     {
-        if (display) cout << "\nIndividual " << i + 1 << "\n";
+        if (display) logging::info() << "\nIndividual " << i + 1 << "\n";
 
         const vector<Index> individual_variables_indices = genes_to_variable_indices(population.row(i));
 
@@ -208,13 +226,13 @@ void GeneticAlgorithm::evaluate_population()
 
         const Index input_features_number = dataset->get_features_number(VariableRole::Input);
 
-        configure_neural_network_inputs(neural_network, dataset, input_features_number);
+        configure_network_inputs(network, dataset, input_features_number);
 
         const CandidateEvaluation candidate_evaluation = evaluate_candidate(
-            training_strategy, neural_network, folds_number, fold_partition, 1, false,
+            training, network, folds_number, fold_partition, 1, false,
             [&](Index, float training_error, float validation_error, bool)
             {
-                individual_parameters(i) = neural_network->get_parameters_map();
+                individual_parameters(i) = network->get_parameters_map();
 
                 training_errors(i) = training_error;
                 validation_errors(i) = validation_error;
@@ -231,7 +249,7 @@ void GeneticAlgorithm::evaluate_population()
         if (!isfinite(validation_errors(i))) validation_errors(i) = MAX;
 
         if (display)
-            cout << "Training error: " << training_errors(i) << "\n"
+            logging::info() << "Training error: " << training_errors(i) << "\n"
                  << "Validation error: " << validation_errors(i) << "\n"
                  << "Variables number: " << input_features_number << "\n"
                  << "Inputs number: " << dataset->get_variables_number(VariableRole::Input) << "\n";
@@ -460,9 +478,10 @@ void GeneticAlgorithm::perform_mutation()
     }
 }
 
-InputsSelectionResult GeneticAlgorithm::perform_input_selection()
+InputSelectionResult GeneticAlgorithm::perform_input_selection()
 {
-    Loss* loss = training_strategy->get_loss();
+    validate_selection_training(training, folds_number, "GeneticAlgorithm");
+    Loss* loss = training->get_loss();
 
     Dataset* dataset = loss->get_dataset();
 
@@ -470,20 +489,16 @@ InputsSelectionResult GeneticAlgorithm::perform_input_selection()
     original_target_indices = dataset->get_variable_indices(VariableRole::Target);
     const vector<Index> time_variable_indices = dataset->get_variable_indices(VariableRole::Time);
 
-    throw_if(folds_number <= 1 && !dataset->has_validation(),
-             "dataset has no validation samples. "
-             "The genetic algorithm uses validation error to rank individuals.");
+    InputSelectionResult input_selection_results(maximum_epochs);
 
-    InputsSelectionResult input_selection_results(maximum_epochs);
-
-    if (display) cout << "Performing genetic input selection...\n" << "\n";
+    if (display) logging::info() << "Performing genetic input selection...\n" << "\n";
 
     initialize_population();
 
     if (dataset->has_nan())
         dataset->scrub_missing_values();
 
-    NeuralNetwork* neural_network = loss->get_neural_network();
+    Network* network = loss->get_network();
 
     time_t beginning_time;
     float elapsed_time = 0.0f;
@@ -493,7 +508,7 @@ InputsSelectionResult GeneticAlgorithm::perform_input_selection()
 
     for (Index epoch = 0; epoch < maximum_epochs; ++epoch)
     {
-        if (display) cout << "Generation: " << epoch + 1 << "\n";
+        if (display) logging::info() << "Generation: " << epoch + 1 << "\n";
 
         input_selection_results.resize_history(input_selection_results.mean_training_error_history.size() + 1);
 
@@ -534,7 +549,7 @@ InputsSelectionResult GeneticAlgorithm::perform_input_selection()
         elapsed_time = get_elapsed_time(beginning_time);
 
         if (display)
-            cout << "\n"
+            logging::info() << "\n"
                  << "Epoch number: " << epoch << "\n"
                  << "Generation mean training error: " << input_selection_results.mean_training_error_history(epoch) << "\n"
                  << "Generation mean validation error: " << input_selection_results.mean_validation_error_history(epoch) << "\n"
@@ -571,17 +586,20 @@ InputsSelectionResult GeneticAlgorithm::perform_input_selection()
         perform_mutation();
     }
 
-    install_optimal_inputs(neural_network, dataset,
+    throw_if(input_selection_results.optimum_validation_error == MAX,
+             "GeneticAlgorithm found no candidate with a finite validation error.");
+
+    install_optimal_inputs(network, dataset,
                            genes_to_variable_indices(input_selection_results.optimal_inputs),
                            original_target_indices, time_variable_indices);
 
-    finalize_selected_model(training_strategy, neural_network,
+    finalize_selected_model(training, network,
                             input_selection_results.optimal_parameters, folds_number, display, "inputs");
 
     if (display)
     {
         input_selection_results.print();
-        cout << "Selected generation: " << best_generation << "\n";
+        logging::info() << "Selected generation: " << best_generation << "\n";
     }
 
     return input_selection_results;
@@ -593,6 +611,7 @@ void GeneticAlgorithm::to_JSON(JsonWriter& printer) const
 
     write_json(printer, {
         {"PopulationSize", get_individuals_number()},
+        {"InitializationMethod", initialization_method},
         {"ElitismSize", elitism_size},
         {"MutationRate", mutation_rate},
         {"ValidationErrorGoal", validation_error_goal},
@@ -608,6 +627,8 @@ void GeneticAlgorithm::to_JSON(JsonWriter& printer) const
 void GeneticAlgorithm::from_JSON(const JsonDocument& document)
 {
     const Json* root = get_json_root(document, "GeneticAlgorithm");
+    // Older development snapshots used correlation initialization implicitly.
+    set_initialization_method(read_json_string(root, "InitializationMethod", "Correlations"));
     set_individuals_number(read_json_index(root, "PopulationSize"));
     set_mutation_rate(read_json_float(root, "MutationRate"));
     set_elitism_size(read_json_index(root, "ElitismSize"));
@@ -621,7 +642,3 @@ void GeneticAlgorithm::from_JSON(const JsonDocument& document)
 }
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

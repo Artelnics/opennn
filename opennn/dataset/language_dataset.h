@@ -1,16 +1,11 @@
-﻿//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   L A N G U A G E   D A T A S E T   C L A S S   H E A D E R
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #pragma once
 
 #include "opennn/dataset/dataset.h"
 #include "opennn/core/io_utilities.h"
-#include "opennn/neural_network/operators/tokenizer_operator.h"
+#include "opennn/network/operators/tokenizer_operator.h"
 
 namespace opennn
 {
@@ -136,7 +131,3 @@ private:
 };
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

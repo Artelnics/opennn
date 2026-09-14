@@ -1,14 +1,9 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   E X P R E S S I O N   E V A L U A T O R   C L A S S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/pch.h"
 #include "opennn/response_optimization/expression_evaluator.h"
-#include "opennn/neural_network/neural_network.h"
+#include "opennn/network/network.h"
 #include "opennn/core/string_utilities.h"
 #include "opennn/core/variable.h"
 
@@ -354,23 +349,25 @@ struct Parser
     {
     }
 
-    ExpressionNodePtr parse_expression()
+    ExpressionNodePtr parse_binary(ExpressionNodePtr (Parser::*parse_operand)(),
+                                   string_view operators,
+                                   ExpressionNode::Kind first_kind,
+                                   ExpressionNode::Kind second_kind)
     {
-        ExpressionNodePtr left_node = parse_term();
+        ExpressionNodePtr left_node = (this->*parse_operand)();
 
         while (true)
         {
             const Token& next_token = lexer.peek();
 
             if (next_token.kind != Token::Kind::Operator) break;
-            if (next_token.text != "+" && next_token.text != "-") break;
+            const size_t operation = operators.find(next_token.text);
+            if (operation == string_view::npos) break;
 
-            const string operator_text = lexer.consume().text;
+            lexer.consume();
+            ExpressionNodePtr right_node = (this->*parse_operand)();
 
-            ExpressionNodePtr right_node = parse_term();
-
-            left_node = make_binary(operator_text == "+" ? ExpressionNode::Kind::Add
-                                                         : ExpressionNode::Kind::Sub,
+            left_node = make_binary((operation == 0) ? first_kind : second_kind,
                                     move(left_node),
                                     move(right_node));
         }
@@ -378,28 +375,16 @@ struct Parser
         return left_node;
     }
 
+    ExpressionNodePtr parse_expression()
+    {
+        return parse_binary(&Parser::parse_term, "+-",
+                            ExpressionNode::Kind::Add, ExpressionNode::Kind::Sub);
+    }
+
     ExpressionNodePtr parse_term()
     {
-        ExpressionNodePtr left_node = parse_factor();
-
-        while (true)
-        {
-            const Token& next_token = lexer.peek();
-
-            if (next_token.kind != Token::Kind::Operator) break;
-            if (next_token.text != "*" && next_token.text != "/") break;
-
-            const string operator_text = lexer.consume().text;
-
-            ExpressionNodePtr right_node = parse_factor();
-
-            left_node = make_binary(operator_text == "*" ? ExpressionNode::Kind::Mul
-                                                         : ExpressionNode::Kind::Div,
-                                    move(left_node),
-                                    move(right_node));
-        }
-
-        return left_node;
+        return parse_binary(&Parser::parse_factor, "*/",
+                            ExpressionNode::Kind::Mul, ExpressionNode::Kind::Div);
     }
 
     ExpressionNodePtr parse_factor()
@@ -558,6 +543,14 @@ void scale_terms_in_place(unordered_map<Index, float>& terms, const float scalin
         coefficient *= scaling;
 }
 
+static LinearForm scaled_linear_form(LinearForm form, float scaling)
+{
+    form.constant *= scaling;
+    scale_terms_in_place(form.input_terms, scaling);
+    scale_terms_in_place(form.output_terms, scaling);
+    return form;
+}
+
 
 LinearForm analyze_linear(const ExpressionNode& node)
 {
@@ -582,13 +575,7 @@ LinearForm analyze_linear(const ExpressionNode& node)
     {
         LinearForm child_form = analyze_linear(*node.children[0]);
         if (!child_form.is_linear) { result.is_linear = false; return result; }
-
-        result.constant = -child_form.constant;
-        scale_terms_in_place(child_form.input_terms, -1.0f);
-        scale_terms_in_place(child_form.output_terms, -1.0f);
-        result.input_terms = move(child_form.input_terms);
-        result.output_terms = move(child_form.output_terms);
-        return result;
+        return scaled_linear_form(move(child_form), -1.0f);
     }
 
     case Add:
@@ -614,24 +601,10 @@ LinearForm analyze_linear(const ExpressionNode& node)
         if (!left_form.is_linear || !right_form.is_linear) { result.is_linear = false; return result; }
 
         if (left_form.is_constant())
-        {
-            result.constant = left_form.constant * right_form.constant;
-            scale_terms_in_place(right_form.input_terms, left_form.constant);
-            scale_terms_in_place(right_form.output_terms, left_form.constant);
-            result.input_terms = move(right_form.input_terms);
-            result.output_terms = move(right_form.output_terms);
-            return result;
-        }
+            return scaled_linear_form(move(right_form), left_form.constant);
 
         if (right_form.is_constant())
-        {
-            result.constant = left_form.constant * right_form.constant;
-            scale_terms_in_place(left_form.input_terms, right_form.constant);
-            scale_terms_in_place(left_form.output_terms, right_form.constant);
-            result.input_terms = move(left_form.input_terms);
-            result.output_terms = move(left_form.output_terms);
-            return result;
-        }
+            return scaled_linear_form(move(left_form), right_form.constant);
 
         result.is_linear = false;
         return result;
@@ -649,13 +622,7 @@ LinearForm analyze_linear(const ExpressionNode& node)
             return result;
         }
 
-        const float inverse = 1.0f / right_form.constant;
-        result.constant = left_form.constant * inverse;
-        scale_terms_in_place(left_form.input_terms, inverse);
-        scale_terms_in_place(left_form.output_terms, inverse);
-        result.input_terms = move(left_form.input_terms);
-        result.output_terms = move(left_form.output_terms);
-        return result;
+        return scaled_linear_form(move(left_form), 1.0f / right_form.constant);
     }
 
     case Pow:
@@ -1156,13 +1123,13 @@ CompiledExpression compile_binarity(const Index variable)
 namespace
 {
 
-ExpressionNodePtr parse_for_network(const string& expression, const NeuralNetwork* neural_network)
+ExpressionNodePtr parse_for_network(const string& expression, const Network* network)
 {
-    throw_if(!neural_network, "The neural network has not been set.");
+    throw_if(!network, "The neural network has not been set.");
 
     return parse_expression_tree(expression,
-                                 get_variable_columns(neural_network->get_input_variables()),
-                                 get_variable_columns(neural_network->get_output_variables()));
+                                 get_variable_columns(network->get_input_variables()),
+                                 get_variable_columns(network->get_output_variables()));
 }
 
 }
@@ -1170,13 +1137,13 @@ ExpressionNodePtr parse_for_network(const string& expression, const NeuralNetwor
 
 // sin(pi*e)/pi: zero exactly where the expression takes a whole number, with unit slope there.
 
-CompiledExpression compile_integrality(const string& expression, const NeuralNetwork* neural_network)
+CompiledExpression compile_integrality(const string& expression, const Network* network)
 {
     const float pi = numbers::pi_v<float>;
 
     return compile_ast(*make_div(make_call(ExpressionOp::Kind::Sin,
                                            make_mul(make_const(pi),
-                                                    parse_for_network(expression, neural_network))),
+                                                    parse_for_network(expression, network))),
                                  make_const(pi)));
 }
 
@@ -1184,14 +1151,14 @@ CompiledExpression compile_integrality(const string& expression, const NeuralNet
 // prod(e - a)/span^(n-1): zero exactly where the expression takes one of the allowed values.
 
 CompiledExpression compile_membership(const string& expression,
-                                      const NeuralNetwork* neural_network,
+                                      const Network* network,
                                       const vector<float>& allowed)
 {
     const auto [smallest, largest] = ranges::minmax(allowed);
 
     const float span = max(largest - smallest, EPSILON);
 
-    const ExpressionNodePtr value = parse_for_network(expression, neural_network);
+    const ExpressionNodePtr value = parse_for_network(expression, network);
 
     ExpressionNodePtr product = make_const(span);
 
@@ -1217,10 +1184,10 @@ CompiledExpression compile_expression(const string& expression,
 
 
 CompiledExpression compile_expression(const string& expression,
-                                      const NeuralNetwork* neural_network,
+                                      const Network* network,
                                       const string& role)
 {
-    throw_if(!neural_network, "The neural network has not been set.");
+    throw_if(!network, "The neural network has not been set.");
 
     throw_if(expression.find_first_of("<>=") != string::npos,
              role + " '" + expression + "' cannot contain comparison symbols. Use a condition instead.");
@@ -1228,8 +1195,8 @@ CompiledExpression compile_expression(const string& expression,
     try
     {
         return compile_expression(expression,
-                                  get_variable_columns(neural_network->get_input_variables()),
-                                  get_variable_columns(neural_network->get_output_variables()));
+                                  get_variable_columns(network->get_input_variables()),
+                                  get_variable_columns(network->get_output_variables()));
     }
     catch (const exception& e)
     {
@@ -1306,7 +1273,3 @@ VectorR evaluate_input_gradient(const CompiledExpression& expression, const Vect
 }
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

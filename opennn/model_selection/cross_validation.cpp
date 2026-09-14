@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   C R O S S   V A L I D A T I O N
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/model_selection/cross_validation.h"
 
@@ -14,21 +9,27 @@
 #include <set>
 
 #include "opennn/dataset/dataset.h"
-#include "opennn/neural_network/neural_network.h"
-#include "opennn/training_strategy/optimizer.h"
-#include "opennn/training_strategy/training_strategy.h"
+#include "opennn/network/network.h"
+#include "opennn/training/optimizer.h"
+#include "opennn/training/training.h"
 
 namespace opennn
 {
 
-vector<vector<Index>> build_fold_partition(TrainingStrategy* training_strategy, Index folds_number, Index folds_seed)
+vector<vector<Index>> build_fold_partition(Training* training, Index folds_number, Index folds_seed)
 {
-    Dataset* dataset = training_strategy->get_dataset();
-    const Index k = max<Index>(folds_number, Index(1));
+    throw_if(!training || !training->get_dataset(),
+             "Cross-validation requires a training configuration with a dataset.");
+    Dataset* dataset = training->get_dataset();
+    const Index k = folds_number;
 
     vector<Index> development = dataset->get_sample_indices(SampleRole::Training);
     const vector<Index> validation = dataset->get_sample_indices(SampleRole::Validation);
     development.insert(development.end(), validation.begin(), validation.end());
+
+    throw_if(k < 2 || k > ssize(development),
+             "Cross-validation requires between 2 and {} nonempty folds; requested {}.",
+             development.size(), k);
 
     vector<vector<Index>> folds(static_cast<size_t>(k));
 
@@ -40,10 +41,14 @@ vector<vector<Index>> build_fold_partition(TrainingStrategy* training_strategy, 
                 folds[size_t(f)].push_back(items[j]);
     };
 
-    auto deal_round_robin = [&folds, k](const vector<Index>& items)
+    size_t next_fold = 0;
+    auto deal_round_robin = [&folds, k, &next_fold](const vector<Index>& items)
     {
-        for (size_t i = 0; i < items.size(); ++i)
-            folds[i % size_t(k)].push_back(items[i]);
+        for (const Index sample : items)
+        {
+            folds[next_fold].push_back(sample);
+            next_fold = (next_fold + 1) % size_t(k);
+        }
     };
 
     if (dataset->sample_order_matters())
@@ -83,18 +88,42 @@ vector<vector<Index>> build_fold_partition(TrainingStrategy* training_strategy, 
     return folds;
 }
 
-FoldEvaluation evaluate_folds(TrainingStrategy* training_strategy, const vector<vector<Index>>& fold_partition)
+FoldEvaluation evaluate_folds(Training* training, const vector<vector<Index>>& fold_partition)
 {
-    Dataset* dataset = training_strategy->get_dataset();
-    NeuralNetwork* neural_network = training_strategy->get_loss()->get_neural_network();
+    throw_if(!training || !training->get_dataset() || !training->get_network()
+             || !training->get_optimization_algorithm(),
+             "Cross-validation requires a dataset, network and optimizer.");
+    Dataset* dataset = training->get_dataset();
+    Network* network = training->get_network();
     const Index k = ssize(fold_partition);
+    throw_if(k < 2, "Cross-validation requires at least two nonempty folds.");
+
+    vector<Index> eligible = dataset->get_sample_indices(SampleRole::Training);
+    const vector<Index> validation = dataset->get_sample_indices(SampleRole::Validation);
+    eligible.insert(eligible.end(), validation.begin(), validation.end());
+    const std::set<Index> eligible_set(eligible.begin(), eligible.end());
+    std::set<Index> seen;
 
     vector<Index> development;
     for (const vector<Index>& fold : fold_partition)
-        development.insert(development.end(), fold.begin(), fold.end());
+    {
+        throw_if(fold.empty(), "Cross-validation folds cannot be empty.");
+        for (const Index sample : fold)
+        {
+            throw_if(!eligible_set.contains(sample),
+                     "Cross-validation sample {} is not a training or validation sample.", sample);
+            throw_if(!seen.insert(sample).second,
+                     "Cross-validation sample {} appears more than once.", sample);
+            development.push_back(sample);
+        }
+    }
+    throw_if(seen.size() != eligible_set.size(),
+             "Cross-validation folds must cover every training and validation sample.");
 
-    float validation_error_sum = 0.0f;
-    float training_error_sum = 0.0f;
+    double validation_error_sum = 0.0;
+    double training_error_sum = 0.0;
+    bool valid_validation_errors = true;
+    bool valid_training_errors = true;
     Index epochs_sum = 0;
 
     for (Index f = 0; f < k; ++f)
@@ -109,39 +138,37 @@ FoldEvaluation evaluate_folds(TrainingStrategy* training_strategy, const vector<
 
         FoldScope scope(*dataset, training_indices, validation_indices);
 
-        neural_network->set_parameters_random();
-        const TrainingResult training_results = training_strategy->train();
+        network->set_parameters_random();
+        const TrainingResult training_results = training->train();
 
-        float validation_error = training_results.get_validation_error();
-        float training_error = training_results.get_training_error();
-        if (!isfinite(validation_error)) validation_error = MAX;
-        if (!isfinite(training_error))   training_error   = MAX;
+        const float validation_error = training_results.get_validation_error();
+        const float training_error = training_results.get_training_error();
+        valid_validation_errors = valid_validation_errors && isfinite(validation_error);
+        valid_training_errors = valid_training_errors && isfinite(training_error);
 
         const Index fold_epochs = training_results.restored_epoch
             ? *training_results.restored_epoch + 1
             : training_results.get_epochs_number();
 
-        validation_error_sum += validation_error;
-        training_error_sum += training_error;
+        if (isfinite(validation_error)) validation_error_sum += double(validation_error);
+        if (isfinite(training_error)) training_error_sum += double(training_error);
         epochs_sum += max<Index>(fold_epochs, Index(1));
     }
 
-    const Index divisor = k > 0 ? k : 1;
-
     FoldEvaluation evaluation;
-    evaluation.validation_error = validation_error_sum / float(divisor);
-    evaluation.training_error = training_error_sum / float(divisor);
-    evaluation.epochs = max<Index>(epochs_sum / divisor, Index(1));
+    evaluation.validation_error = valid_validation_errors ? float(validation_error_sum / double(k)) : MAX;
+    evaluation.training_error = valid_training_errors ? float(training_error_sum / double(k)) : MAX;
+    evaluation.epochs = max<Index>(epochs_sum / k, Index(1));
     return evaluation;
 }
 
-void refit_final_model_on_development(TrainingStrategy* training_strategy, Index folds_number, Index folds_seed)
+void refit_final_model_on_development(Training* training, Index folds_number, Index folds_seed)
 {
-    Dataset* dataset = training_strategy->get_dataset();
-    NeuralNetwork* neural_network = training_strategy->get_loss()->get_neural_network();
-    Optimizer* optimizer = training_strategy->get_optimization_algorithm();
+    Dataset* dataset = training->get_dataset();
+    Network* network = training->get_loss()->get_network();
+    Optimizer* optimizer = training->get_optimization_algorithm();
 
-    const Index final_epochs = evaluate_folds(training_strategy, build_fold_partition(training_strategy, folds_number, folds_seed)).epochs;
+    const Index final_epochs = evaluate_folds(training, build_fold_partition(training, folds_number, folds_seed)).epochs;
 
     vector<Index> development = dataset->get_sample_indices(SampleRole::Training);
     const vector<Index> validation = dataset->get_sample_indices(SampleRole::Validation);
@@ -153,12 +180,8 @@ void refit_final_model_on_development(TrainingStrategy* training_strategy, Index
     ScopeExit epochs_cleanup([optimizer, saved_epochs] { optimizer->set_maximum_epochs(saved_epochs); });
 
     FoldScope scope(*dataset, development, {});
-    neural_network->set_parameters_random();
-    training_strategy->train();
+    network->set_parameters_random();
+    training->train();
 }
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

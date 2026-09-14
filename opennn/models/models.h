@@ -1,23 +1,16 @@
-﻿//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   M O D E L S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #pragma once
 
-#include "opennn/neural_network/neural_network.h"
-#include "opennn/neural_network/layers/pooling_layer.h"
-#include "opennn/neural_network/detection_head.h"
+#include "opennn/network/network.h"
+#include "opennn/network/layers/pooling_layer.h"
+#include "opennn/network/detection_head.h"
 
 namespace opennn
 {
 
-class TokenizerOperator;
-
-class ApproximationNetwork : public NeuralNetwork
+class ApproximationNetwork : public Network
 {
 
 public:
@@ -28,7 +21,7 @@ public:
                          const string& hidden_activation = "Tanh");
 };
 
-class ClassificationNetwork : public NeuralNetwork
+class ClassificationNetwork : public Network
 {
 
 public:
@@ -39,7 +32,7 @@ public:
                           const string& hidden_activation = "Tanh");
 };
 
-class ForecastingNetwork : public NeuralNetwork
+class ForecastingNetwork : public Network
 {
 
 public:
@@ -49,7 +42,7 @@ public:
                        const Shape&);
 };
 
-class ForecastingLstmNetwork : public NeuralNetwork
+class ForecastingLstmNetwork : public Network
 {
 
 public:
@@ -59,16 +52,12 @@ public:
                            const Shape&);
 };
 
-class AutoAssociationNetwork : public NeuralNetwork
+class Autoencoder : public Network
 {
 
 public:
 
-    AutoAssociationNetwork(const Shape&,
-                           const Shape&,
-                           const Shape&);
-
-    AutoAssociationNetwork(const Shape&,
+    Autoencoder(const Shape&,
                            const Shape&,
                            const string&,
                            const string&);
@@ -76,7 +65,7 @@ public:
 
 #ifndef OPENNN_NO_VISION
 
-class ImageClassificationNetwork : public NeuralNetwork
+class ImageClassificationNetwork : public Network
 {
 
 public:
@@ -86,7 +75,7 @@ public:
                                const Shape&);
 };
 
-class ResNet : public NeuralNetwork
+class ResNet : public Network
 {
 
 public:
@@ -100,7 +89,7 @@ public:
            bool use_bottleneck = false);
 };
 
-class YoloNetwork : public NeuralNetwork
+class Yolo : public Network
 {
 public:
 
@@ -114,7 +103,7 @@ public:
 
     enum class ModelSize { n, s, m, l, x };
 
-    YoloNetwork(const Shape&,
+    Yolo(const Shape&,
                 Index,
                 const vector<array<float, 2>>&,
                 Index grid_size = 13,
@@ -133,7 +122,7 @@ private:
     Backbone backbone;
 };
 
-class TextClassificationNetwork : public NeuralNetwork
+class TextClassificationNetwork : public Network
 {
 
 public:
@@ -156,7 +145,7 @@ public:
     const TokenizerOperator* get_tokenizer() const;
 };
 
-class Transformer final : public NeuralNetwork
+class Transformer final : public Network
 {
 public:
 
@@ -188,7 +177,7 @@ public:
 
 };
 
-class TextGenerationNetwork final : public NeuralNetwork
+class TextGenerationNetwork final : public Network
 {
 public:
 
@@ -220,7 +209,7 @@ public:
 
 };
 
-class Qwen3 final : public NeuralNetwork
+class Qwen3 final : public Network
 {
 public:
 
@@ -230,6 +219,21 @@ public:
         Variant,
         const filesystem::path&,
         Index sequence_length = 32768);
+
+    // Builds the network and loads a BF16 inference binary without ever
+    // allocating or initialising the fp32 parameter master.
+    static unique_ptr<Qwen3> from_binary(
+        const filesystem::path& weights_path,
+        Index sequence_length,
+        Index vocabulary_size,
+        Index hidden_size,
+        Index layers_number,
+        Index query_heads,
+        Index key_value_heads,
+        Index head_dimension,
+        Index intermediate_size,
+        float rope_theta = 1000000.0f,
+        float rms_epsilon = 1.0e-6f);
 
     Qwen3();
 
@@ -243,9 +247,22 @@ public:
           Index intermediate_size,
           float rope_theta = 1000000.0f,
           float rms_epsilon = 1.0e-6f);
+
+private:
+
+    void build(Index sequence_length,
+               Index vocabulary_size,
+               Index hidden_size,
+               Index layers_number,
+               Index query_heads,
+               Index key_value_heads,
+               Index head_dimension,
+               Index intermediate_size,
+               float rope_theta,
+               float rms_epsilon);
 };
 
-class Bert final : public NeuralNetwork
+class Bert final : public Network
 {
 public:
 
@@ -260,7 +277,7 @@ public:
          Index type_vocabulary_size = 2);
 };
 
-class BertForSequenceClassification final : public NeuralNetwork
+class BertForSequenceClassification final : public Network
 {
 public:
 
@@ -289,11 +306,9 @@ public:
 
 #endif
 
-Index load_darknet_backbone(NeuralNetwork&, const filesystem::path&, Index);
-Index load_darknet_backbone_v11(NeuralNetwork&, const filesystem::path&);
+#ifndef OPENNN_NO_VISION
+Index load_darknet_backbone(Network&, const filesystem::path&, Index);
+Index load_darknet_backbone_v11(Network&, const filesystem::path&);
+#endif
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

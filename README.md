@@ -1,205 +1,137 @@
-<div align="center">
-  <img src="http://www.opennn.net/images/opennn_git_logo.svg" alt="OpenNN logo" width="280">
-</div>
-
 # OpenNN
 
-OpenNN is a high-performance C++ library for neural networks, deep learning, and advanced analytics.
+OpenNN is a C++20 library for building, training and running neural networks.
+It supports tabular data, images, time series and text, with CPU and optional
+CUDA execution. Models can be embedded in C++ applications or exported as
+standalone source code for supported architectures.
 
-> Fast, portable, and production-ready C++ neural network code with CPU and optional CUDA support.
+**This is the `dev` branch for the unreleased 9.0 candidate.** The published
+8.x line is on `master`. See [migration](CHANGELOG.md#migrating-from-8x-to-90)
+before updating an existing application or saved model.
 
-## Why OpenNN?
-
-- Written in modern **C++20** with a focus on predictable behavior and explicit control.
-- Supports **CPU** and **CUDA** backends with cuDNN integration.
-- Uses **CMake** for cross-platform builds and easy integration.
-- Automatically fetches dependencies like **Eigen** and **googletest** during configure.
-- Designed for numerical stability, memory efficiency, and real-world analytics.
-- Easier to embed directly into native C++ applications than Python-first frameworks.
-- Avoids a separate interpreter layer, so deployment and tooling stay closer to the system.
-- Gives developers direct control over compilation, hardware targets, and runtime configuration.
-- OpenNN is a good fit for projects where the neural network code must behave like any other C++ component.
-
-## Features
-
-- Feed-forward neural networks
-- Convolutional and recurrent layers
-- Transformers and attention mechanisms
-- Runtime precision selection with FP32 and BF16 support on compatible CUDA GPUs
-- Loss functions and optimization algorithms
-- Model selection, data preprocessing, and training strategies
-- Model export to standalone C, embedded C, Python, JavaScript, and PHP
-- TinyML-oriented export checks for AVR and ARM Cortex-M targets
-- Optional benchmark suite comparing OpenNN with PyTorch and TensorFlow
-- Example applications for CPU and GPU
-
-## Repository layout
-
-- `opennn/` - core library sources, public headers, and CMake package export rules
-- `examples/` - example applications and bundled small example datasets
-- `tests/` - GoogleTest-based unit and validation tests, in folders mirroring
-  the library so each test sits beside what it exercises
-- `benchmarks/` - reproducible benchmark suite and benchmark methodology
-
-The library itself is split by responsibility, and every include spells out the
-folder it comes from — `#include "opennn/neural_network/layers/dense_layer.h"`:
-
-- `opennn/core/` - tensor types and operations, device backend, memory, generic
-  utilities; `core/cuda/` holds the CUDA kernels
-- `opennn/neural_network/` - the network, its `layers/` and `operators/`,
-  forward and back propagation, expression export
-- `opennn/dataset/` - tabular, image, language, time series and YOLO datasets
-- `opennn/training_strategy/` - losses and optimization algorithms
-- `opennn/model_selection/` - inputs and neurons selection, genetic algorithm
-- `opennn/testing_analysis/` - testing analysis
-
-They depend on each other in that order, top to bottom: `core` knows nothing
-about the rest, and `testing_analysis` may use everything above it. Datasets
-sit above the network because the language datasets tokenize and the YOLO
-dataset builds detection targets, while nothing in `neural_network/` includes
-a dataset.
+| I want to… | Start here |
+| --- | --- |
+| Build and run my first network | [Quick start](#quick-start) |
+| Use OpenNN in my C++ application | [Install and link](#use-opennn-in-your-application) |
+| Train, evaluate or export a model | [Examples](examples/README.md) |
+| Understand the source folders | [Repository contents](#repository-contents) |
+| Run or review performance comparisons | [Benchmarks](benchmarks/README.md) |
+| Contribute, test or prepare a release | [Development](DEVELOPMENT.md) |
 
 ## Quick start
 
-### Requirements
+You need Git, CMake 3.24+, and a C++20 compiler with `std::format` and OpenMP:
+GCC 13+, Clang 17+, or Visual Studio 2022 C++ tools. On macOS, install the
+OpenMP runtime (`libomp`). CMake retrieves missing dependencies during the
+first configuration, so that step needs internet access.
 
-- C++20 compiler with `std::format` support
-  - GCC 13+
-  - Clang 17+
-  - MSVC 2022+
-- CMake 3.18+
-- Optional: CUDA Toolkit and **cuDNN 9.0+** for GPU builds
+Clone the development branch and configure a CPU build:
 
-### Build CPU-only
-
-Create a separate build directory outside the repository folder:
-
-```bash
-cmake -S . -B ../opennn-build -DCMAKE_BUILD_TYPE=Release -DOpenNN_DISABLE_CUDA=ON
-cmake --build ../opennn-build --config Release
+```sh
+git clone --branch dev https://github.com/Artelnics/opennn.git
+cd opennn
+cmake -S . -B ../opennn-build -DCMAKE_BUILD_TYPE=Release -DOpenNN_DISABLE_CUDA=ON -DOpenNN_BUILD_TESTS=OFF -DOpenNN_BUILD_EXAMPLES=ON
+cmake --build ../opennn-build --config Release --target blank --parallel
 ```
 
-### Build with CUDA
+Run the minimal example on Linux/macOS or with a single-configuration generator:
 
-```bash
-cmake -S . -B ../opennn-build -DCMAKE_BUILD_TYPE=Release
-cmake --build ../opennn-build --config Release
+```sh
+../opennn-build/bin/blank
 ```
 
-### Build examples and tests
-
-```bash
-cmake -S . -B ../opennn-build -DCMAKE_BUILD_TYPE=Release -DOpenNN_BUILD_EXAMPLES=ON -DOpenNN_BUILD_TESTS=ON
-cmake --build ../opennn-build --config Release
-```
-
-### Run tests
-
-```bash
-../opennn-build/bin/opennn_tests
-```
-
-When using a multi-config generator such as Visual Studio, the test binary may be under `../opennn-build/bin/Release/`.
-
-### Fast developer verification
-
-The repository includes CPU/CUDA verification wrappers that keep incremental
-builds outside the checkout and run focused tests during editing:
+With Visual Studio on Windows:
 
 ```powershell
-.\tools\verify.ps1 quick -Filter 'Dense.*:DenseNoBiasTest.*'
-.\tools\verify.ps1 full
+../opennn-build/bin/Release/blank.exe
 ```
 
-```bash
-./tools/verify.sh quick --filter 'Dense.*:DenseNoBiasTest.*'
-./tools/verify.sh full
+It prints `Prediction: 2`. The [complete C++ example](examples/blank/main.cpp)
+creates a two-input, one-output dense network, assigns fixed demonstration
+weights and performs inference. It needs no dataset or model download.
+The existing target name `blank` is retained for compatibility.
+
+Next, follow the [Iris example](examples/README.md#train-your-first-model) to train
+a classifier, evaluate it and export predictions as C or Python code.
+
+### CUDA builds
+
+Install a C++20-compatible CUDA toolkit and cuDNN 9+. Use a separate build
+directory so the CPU and CUDA configurations do not overwrite each other:
+
+```sh
+cmake -S . -B ../opennn-build/cuda -DCMAKE_BUILD_TYPE=Release -DOpenNN_REQUIRE_CUDA=ON -DOpenNN_BUILD_TESTS=OFF -DOpenNN_BUILD_EXAMPLES=OFF
+cmake --build ../opennn-build/cuda --config Release --target opennn --parallel
 ```
 
-Use `quick` after edits and `full` once before completing a batch. See
-[Fast local verification](docs/fast-verification.md) for CUDA selection, cache
-locations, and compiler-cache support.
+Require CUDA explicitly to make missing GPU build dependencies an error.
+See [build configuration](DEVELOPMENT.md#build-configuration) for CPU backends,
+portable binaries, shared libraries and custom dependency paths.
 
-## CMake options
+## Use OpenNN in your application
 
-| Option | Default | Description |
-|---|---:|---|
-| `OpenNN_DISABLE_CUDA` | `OFF` | Force a CPU-only build even when CUDA is available. |
-| `OpenNN_BUILD_TESTS` | `ON` | Build the GoogleTest test suite. |
-| `OpenNN_BUILD_EXAMPLES` | `ON` | Build example applications. |
-| `OpenNN_BUILD_BENCHMARKS` | `OFF` | Build benchmark drivers from `benchmarks/`. |
-| `OpenNN_BUILD_VISION` | `ON` | Build vision, sequence, transformer, and detection components. |
-| `OpenNN_BUILD_SHARED` | `OFF` | Build OpenNN as a shared library instead of a static library. |
-| `OpenNN_ENABLE_MKL` | `OFF` | Use Intel MKL as Eigen's BLAS/LAPACK backend. |
-| `OpenNN_ENABLE_LTO` | platform-dependent | Enable interprocedural optimization for release builds. |
+Install a completed build to a separate prefix:
 
-## CPU threads
+```sh
+cmake --install ../opennn-build --config Release --prefix ../opennn-install
+```
 
-OpenNN sizes one thread per CPU the process may run on (`sched_getaffinity`,
-so `taskset` is honoured) and gives that count to Eigen, OpenMP and MKL alike.
-`OPENNN_THREADS=n` overrides it. Every parallel region asks for the same team
-on purpose: libgomp keeps a single pool sized to the last region, and a region
-that wants fewer threads makes the surplus exit and the next full one recreate
-them, which cost an LSTM forward pass 10% of its throughput before MKL was
-pinned to the team. `OPENNN_OMP_DYNAMIC=1` re-enables dynamic teams.
+In your application's `CMakeLists.txt`, consume the installed target:
 
-One setting stays outside the library. GCC 14's libgomp detects hybrid Intel
-CPUs (P- and E-cores) and stops spinning at barriers, so every fork/join
-sleeps in the kernel; on such a machine set `GOMP_SPINCOUNT=300000` (libgomp's
-own default elsewhere) or `OMP_WAIT_POLICY=active` before running anything
-latency-sensitive. It is an environment variable the runtime reads before
-`main`, which is why OpenNN cannot set it for you.
+```cmake
+cmake_minimum_required(VERSION 3.24)
+project(MyApplication LANGUAGES CXX)
+find_package(OpenNN 9.0 CONFIG REQUIRED)
+add_executable(my_application main.cpp)
+target_link_libraries(my_application PRIVATE OpenNN::opennn)
+target_compile_features(my_application PRIVATE cxx_std_20)
+```
 
-## Examples
+Configure the application with `-DCMAKE_PREFIX_PATH=/absolute/path/to/opennn-install`.
+The exported target supplies OpenNN's include paths and dependency linkage.
+[The package consumer](tools/package_smoke/) is a complete working example.
+See [packaging](DEVELOPMENT.md#installation-packages) for external runtime
+dependencies and compiler compatibility.
 
-The repository includes example apps for quick validation and experimentation.
+## Repository contents
 
-- `examples/blank` - empty starter example for user experiments
-- `examples/airfoil_self_noise` - approximation (regression) on tabular data
-- `examples/iris_plant` - classification on tabular data and model export
-- `examples/breast_cancer` - classification on tabular data
-- `examples/amazon_reviews` - text classification
-- `examples/emotion_analysis` - text classification
-- `examples/bert` - BERT-style text classification
-- `examples/translation` - sequence-to-sequence transformer
-- `examples/gpt2` - character-level text generation
-- `examples/forecasting_tinyml` - RNN/LSTM forecasting export for TinyML parity checks
-- `examples/mnist` - image classification
-- `examples/melanoma_cancer` - image classification
-- `examples/yolo` - object detection
+| Folder | What it contains |
+| --- | --- |
+| [`opennn/`](opennn/) | The library: public headers, implementations, models and CPU/CUDA backends. See the [module map](DEVELOPMENT.md#source-map). |
+| [`examples/`](examples/README.md) | Runnable applications, export checks and bundled data. Unsupported 8.x material is isolated in `legacy_8/reference.zip`. |
+| [`tests/`](tests/) | C++ unit tests, response-optimization scenarios and Python checks for benchmarks and example assets. |
+| [`benchmarks/`](benchmarks/README.md) | Comparison drivers, input manifests, measurement procedures and reviewed results. |
+| [`tools/`](DEVELOPMENT.md#maintenance-tools) | Verification, packaging, asset reproduction and release checks. |
+| [`.github/workflows/`](.github/workflows/) | Hosted CI and Linux CUDA verification. |
 
-## Model export
-
-OpenNN can export trained models as standalone source code through `ModelExpression`.
-Supported targets include C, embedded C, Python, JavaScript, and PHP. The `iris_plant`
-and `forecasting_tinyml` examples include parity checks for exported models, including
-microcontroller-oriented AVR and ARM Cortex-M flows.
-
-## Benchmarks
-
-Reproducible benchmark recipes live in `benchmarks/`. They compare OpenNN with
-PyTorch and TensorFlow across quality, throughput, capacity, energy, and footprint
-metrics. Large benchmark datasets and generated result artifacts are kept outside
-the repository; see `benchmarks/DATA_POLICY.md`.
+Build directories, dependency downloads, logs and raw benchmark results are
+generated locally outside the checkout. Image datasets are bundled as ZIP files;
+CMake expands them into the build directory when their example is built.
+The [data guide](DATASETS.md) explains sources, attribution and reproduction.
 
 ## Documentation
 
-Full documentation and tutorials are available on the official website:
+The guides linked above cover examples, development, data and benchmarks.
+[CHANGELOG.md](CHANGELOG.md) records release changes, renamed APIs and saved-model
+migration. Tutorials are available on [opennn.net](https://www.opennn.net/).
+The [benchmark protocol](benchmarks/PROTOCOL.md) defines measurement rules;
+[reviewed results](benchmarks/reports/README.md) identify their models, computers
+and the measurements still required before website publication.
 
-- http://opennn.net
+## Contributing and support
 
-Repository-local benchmark documentation is available in `benchmarks/`.
+Base contributions on `dev` and follow [the development workflow](DEVELOPMENT.md)
+and [engineering rules](AGENTS.md). For a bug report, include the OpenNN commit,
+operating system, compiler, CPU/CUDA configuration, reproduction command and error.
+Report issues in [GitHub Issues](https://github.com/Artelnics/opennn/issues).
 
-## Contributing
-
-Contributions are welcome. If you want to help improve OpenNN, please follow these general steps:
-
-1. Fork the repository.
-2. Create a feature branch.
-3. Make your changes and add tests.
-4. Submit a pull request with a clear description.
+Release promotion to `master` follows the owner's decision and the
+[release checklist](DEVELOPMENT.md#release-checklist).
+[RELEASE_SCOPE.json](RELEASE_SCOPE.json) records the current artifact scope.
 
 ## License
 
-OpenNN is distributed under the terms of the GNU Lesser General Public License. See [LICENSE.txt](LICENSE.txt) and the per-file license notices for details.
-
+OpenNN is distributed under the GNU Lesser General Public License; see
+[LICENSE.txt](LICENSE.txt) and the per-file notices. Dependencies and example
+assets retain the separate terms recorded in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)
+and [DATASETS.md](DATASETS.md).

@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   G R O W I N G   I N P U T S   C L A S S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/model_selection/growing_inputs.h"
 
@@ -14,8 +9,8 @@
 #include "opennn/dataset/dataset.h"
 #include "opennn/model_selection/cross_validation.h"
 #include "opennn/model_selection/selection_utilities.h"
-#include "opennn/training_strategy/optimizer.h"
-#include "opennn/training_strategy/training_strategy.h"
+#include "opennn/training/optimizer.h"
+#include "opennn/training/training.h"
 
 namespace opennn
 {
@@ -48,8 +43,8 @@ static vector<Index> map_feature_rows(const vector<pair<Index, Index>>& old_ids,
     return row_map;
 }
 
-GrowingInputs::GrowingInputs(TrainingStrategy* new_training_strategy)
-    : InputsSelection(new_training_strategy)
+GrowingInputs::GrowingInputs(Training* new_training)
+    : InputSelection(new_training)
 {
     set_default();
 }
@@ -64,14 +59,14 @@ void GrowingInputs::set_default()
     maximum_epochs = 1000;
     maximum_time = 3600.0f;
 
-    maximum_inputs_number = (training_strategy && training_strategy->get_neural_network() && training_strategy->get_dataset())
-        ? training_strategy->get_dataset()->get_variables_number(VariableRole::Input)
+    maximum_inputs_number = (training && training->get_network() && training->get_dataset())
+        ? training->get_dataset()->get_variables_number(VariableRole::Input)
         : 50;
 }
 
 void GrowingInputs::set_maximum_inputs_number(const Index new_maximum_inputs_number)
 {
-    const Dataset* dataset = training_strategy ? training_strategy->get_dataset() : nullptr;
+    const Dataset* dataset = training ? training->get_dataset() : nullptr;
     const Index inputs_number = dataset ? dataset->get_variables_number(VariableRole::Input) : 0;
 
     maximum_inputs_number = (inputs_number == 0)
@@ -79,20 +74,24 @@ void GrowingInputs::set_maximum_inputs_number(const Index new_maximum_inputs_num
                                 : clamp(new_maximum_inputs_number, Index(1), inputs_number);
 }
 
-InputsSelectionResult GrowingInputs::perform_input_selection()
+InputSelectionResult GrowingInputs::perform_input_selection()
 {
 
-    Dataset* dataset = training_strategy->get_dataset();
+    validate_selection_training(training, folds_number, "GrowingInputs");
+    Dataset* dataset = training->get_dataset();
     const Index original_input_variables_number = dataset->get_variables_number(VariableRole::Input);
 
     if (dataset->has_nan())
         dataset->scrub_missing_values();
 
-    if (display) cout << "Performing growing input selection...\n";
+    const vector<vector<Index>> fold_partition =
+        folds_number > 1 ? build_fold_partition(training, folds_number) : vector<vector<Index>>{};
 
-    InputsSelectionResult input_selection_results(original_input_variables_number);
+    if (display) logging::info() << "Performing growing input selection...\n";
 
-    Optimizer* optimizer = training_strategy->get_optimization_algorithm();
+    InputSelectionResult input_selection_results(original_input_variables_number);
+
+    Optimizer* optimizer = training->get_optimization_algorithm();
     const bool optimizer_display = optimizer->get_display();
     optimizer->set_display(false);
     const ScopeExit restore_optimizer_display([optimizer, optimizer_display]
@@ -104,7 +103,7 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
     const vector<Index> time_variable_indices = dataset->get_variable_indices(VariableRole::Time);
     const vector<string> variable_names = dataset->get_variable_names();
 
-    if (display) cout << "Calculating correlations...\n";
+    if (display) logging::info() << "Calculating correlations...\n";
 
     const VectorR total_correlations =
         dataset->calculate_input_target_correlation_values().array().abs().rowwise().mean();
@@ -127,7 +126,7 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
 
     Index variable_index = 0;
 
-    NeuralNetwork* neural_network = training_strategy->get_neural_network();
+    Network* network = training->get_network();
 
     Index validation_failures = 0;
 
@@ -137,9 +136,6 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
 
     Index epoch = 0;
 
-    const vector<vector<Index>> fold_partition =
-        folds_number > 1 ? build_fold_partition(training_strategy, folds_number) : vector<vector<Index>>{};
-
     ParameterSnapshot warm_snapshot;
     ParameterSnapshot candidate_snapshot;
     vector<pair<Index, Index>> warm_feature_ids;
@@ -148,8 +144,8 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
     {
         if (variable_index >= correlations_rank_descending.size())
         {
-            if (display) cout << "\nAll the variables has been used.\n";
-            input_selection_results.stopping_condition = InputsSelection::StoppingCondition::MaximumInputs;
+            if (display) logging::info() << "\nAll the variables has been used.\n";
+            input_selection_results.stopping_condition = InputSelection::StoppingCondition::MaximumInputs;
             continue;
         }
 
@@ -168,12 +164,12 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
             continue;
         }
 
-        configure_neural_network_inputs(neural_network, dataset, input_features_number);
+        configure_network_inputs(network, dataset, input_features_number);
 
         const string& candidate_name = variable_names[current_variable_index];
 
         if (display)
-            cout << "\nTrying to add \"" << candidate_name << "\"  ->  "
+            logging::info() << "\nTrying to add \"" << candidate_name << "\"  ->  "
                  << input_variables_number << " inputs\n";
 
         const vector<Index> warm_row_map = warm_start && !warm_snapshot.empty() && folds_number == 1
@@ -181,33 +177,33 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
             : vector<Index>{};
 
         const CandidateEvaluation candidate_evaluation = evaluate_candidate(
-            training_strategy, neural_network, folds_number, fold_partition, trials_number, false,
+            training, network, folds_number, fold_partition, trials_number, false,
             [&](Index trial, float training_error, float validation_error, bool improved)
             {
                 if (improved && warm_start)
-                    candidate_snapshot = capture_parameter_snapshot(neural_network);
+                    candidate_snapshot = capture_parameter_snapshot(network);
 
                 if (improved && validation_error < input_selection_results.optimum_validation_error)
                 {
                     input_selection_results.optimal_input_variables_indices = dataset->get_variable_indices(VariableRole::Input);
                     input_selection_results.optimal_input_variable_names = dataset->get_variable_names(VariableRole::Input);
-                    neural_network->copy_parameters_host();
-                    input_selection_results.optimal_parameters = neural_network->get_parameters_map();
+                    network->copy_parameters_host();
+                    input_selection_results.optimal_parameters = network->get_parameters_map();
                     input_selection_results.optimum_training_error = training_error;
                     input_selection_results.optimum_validation_error = validation_error;
                 }
 
                 if (display)
-                    cout << (trials_number > 1 ? "   Trial " + to_string(trial + 1) + ": " : "   ")
+                    logging::info() << (trials_number > 1 ? "   Trial " + to_string(trial + 1) + ": " : "   ")
                          << "training error " << training_error
                          << ", validation error " << validation_error << "\n";
             },
             [&](Index trial)
             {
-                neural_network->set_parameters_random();
+                network->set_parameters_random();
 
                 if (trial == 0 && !warm_row_map.empty())
-                    seed_parameters_from_snapshot(neural_network, warm_snapshot, warm_row_map);
+                    seed_parameters_from_snapshot(network, warm_snapshot, warm_row_map);
             });
 
         const float minimum_training_error = candidate_evaluation.training_error;
@@ -225,7 +221,7 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
             }
 
             if (display)
-                cout << "   " << folds_number << "-fold CV validation error " << minimum_validation_error << "\n";
+                logging::info() << "   " << folds_number << "-fold CV validation error " << minimum_validation_error << "\n";
         }
 
         if (previous_validation_error < minimum_validation_error)
@@ -233,7 +229,7 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
             ++validation_failures;
 
             if (display)
-                cout << "   Rejected: validation error " << minimum_validation_error
+                logging::info() << "   Rejected: validation error " << minimum_validation_error
                      << " did not beat the best so far (" << previous_validation_error
                      << "). Removing \"" << candidate_name << "\". Validation failures: "
                      << validation_failures << "/" << maximum_validation_failures << "\n";
@@ -261,7 +257,7 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
             ++epoch;
 
             if (display)
-                cout << "   Accepted. Epoch " << epoch << ": " << input_variables_number
+                logging::info() << "   Accepted. Epoch " << epoch << ": " << input_variables_number
                      << " inputs kept, best validation error " << minimum_validation_error << "\n"
                      << "   Inputs: " << dataset->get_variable_names(VariableRole::Input);
         }
@@ -289,13 +285,16 @@ InputsSelectionResult GrowingInputs::perform_input_selection()
     input_selection_results.elapsed_time = get_time(elapsed_time);
     input_selection_results.resize_history(epoch);
 
-    install_optimal_inputs(neural_network, dataset,
+    throw_if(input_selection_results.optimum_validation_error == MAX,
+             "GrowingInputs found no candidate with a finite validation error.");
+
+    install_optimal_inputs(network, dataset,
                            input_selection_results.optimal_input_variables_indices,
                            target_variable_indices, time_variable_indices);
 
     set_maximum_inputs_number(dataset->get_variables_number(VariableRole::Input));
 
-    finalize_selected_model(training_strategy, neural_network,
+    finalize_selected_model(training, network,
                             input_selection_results.optimal_parameters, folds_number, display, "inputs");
 
     if (display) input_selection_results.print();
@@ -340,7 +339,3 @@ void GrowingInputs::from_JSON(const JsonDocument& document)
 }
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

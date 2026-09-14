@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   T E N S O R   T Y P E S   H E A D E R
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #pragma once
 
@@ -20,8 +15,8 @@ template<Type T> struct TypeInfo;
 template<> struct TypeInfo<Type::FP32>
 {
     using type = float;
-    static constexpr cudnnDataType_t cudnn = CUDNN_DATA_FLOAT;
-    static constexpr cudaDataType_t  cuda  = CUDA_R_32F;
+    static constexpr DnnDataType cudnn = CUDNN_DATA_FLOAT;
+    static constexpr DeviceDataType cuda = CUDA_R_32F;
     static constexpr Index           bytes = Index(sizeof(float));
     static constexpr const char*     name  = "FP32";
 };
@@ -29,8 +24,8 @@ template<> struct TypeInfo<Type::FP32>
 template<> struct TypeInfo<Type::BF16>
 {
     using type = bfloat16;
-    static constexpr cudnnDataType_t cudnn = CUDNN_DATA_BFLOAT16;
-    static constexpr cudaDataType_t  cuda  = CUDA_R_16BF;
+    static constexpr DnnDataType cudnn = CUDNN_DATA_BFLOAT16;
+    static constexpr DeviceDataType cuda = CUDA_R_16BF;
     static constexpr Index           bytes = Index(sizeof(bfloat16));
     static constexpr const char*     name  = "BF16";
 };
@@ -38,8 +33,8 @@ template<> struct TypeInfo<Type::BF16>
 template<> struct TypeInfo<Type::INT8>
 {
     using type = int8_t;
-    static constexpr cudnnDataType_t cudnn = CUDNN_DATA_INT8;
-    static constexpr cudaDataType_t  cuda  = CUDA_R_8I;
+    static constexpr DnnDataType cudnn = CUDNN_DATA_INT8;
+    static constexpr DeviceDataType cuda = CUDA_R_8I;
     static constexpr Index           bytes = Index(sizeof(int8_t));
     static constexpr const char*     name  = "INT8";
 };
@@ -85,12 +80,12 @@ inline auto with_type_info(Type type, const char* caller, F&& f)
     throw runtime_error(string(caller) + ": Type::Auto must be resolved before tensor use.");
 }
 
-inline cudnnDataType_t to_cudnn(Type type)
+inline DnnDataType to_cudnn(Type type)
 {
     return with_type_info(type, "to_cudnn", [](auto info) { return info.cudnn; });
 }
 
-inline cudaDataType_t to_cuda(Type type)
+inline DeviceDataType to_cuda(Type type)
 {
     return with_type_info(type, "to_cuda", [](auto info) { return info.cuda; });
 }
@@ -170,7 +165,7 @@ inline bool is_aligned(const void* ptr)
     return reinterpret_cast<uintptr_t>(ptr) % ALIGN_BYTES == 0;
 }
 
-constexpr cublasComputeType_t CUBLAS_COMPUTE_DTYPE   = CUBLAS_COMPUTE_32F_FAST_TF32;
+constexpr BlasComputeType CUBLAS_COMPUTE_DTYPE = CUBLAS_COMPUTE_32F_FAST_TF32;
 
 struct Shape
 {
@@ -476,7 +471,7 @@ struct Buffer
         device::set_zero(pointer, allocated_bytes, allocation_device);
     }
 
-    void migrate_to(Device target_device, cudaStream_t stream = nullptr)
+    void migrate_to(Device target_device, DeviceStream stream = nullptr)
     {
         validate_state("Buffer::migrate_to");
         validate_device(target_device, "Buffer::migrate_to");
@@ -590,7 +585,7 @@ struct TensorView
         return reinterpret_cast<float*>(data);
     }
 
-    cudaDataType_t cuda_dtype() const { return to_cuda(type); }
+    DeviceDataType cuda_dtype() const { return to_cuda(type); }
 
     template<typename F>
     void dispatch(F&& fn) const
@@ -697,7 +692,7 @@ struct TensorView
     void setZero() const { fill(0.0f); }
     void set_zero_async() const;
 
-    CudnnDescriptor<cudnnTensorDescriptor_t> get_descriptor() const;
+    CudnnDescriptor<DnnTensorDescriptor> get_descriptor() const;
 
 private:
     void require_host_fp32(string_view accessor) const
@@ -781,14 +776,10 @@ inline const float zero = 0.0f;
 
 void copy_device_to_host_float(const void*, Type,
                                Index, float*,
-                               cudaStream_t stream);
+                               DeviceStream stream);
 void copy_device_to_host_float(const void*, Type,
                                Index, float*,
-                               cudaStream_t stream,
+                               DeviceStream stream,
                                vector<uint16_t>& bf16_staging);
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

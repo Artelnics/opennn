@@ -2,6 +2,7 @@
 
 #include "opennn/dataset/time_series_dataset.h"
 #include "opennn/core/tensor_types.h"
+#include "opennn/core/json.h"
 
 using namespace opennn;
 
@@ -27,6 +28,7 @@ TEST(TimeSeriesDataset, GeneralConstructor)
 TEST(TimeSeriesDataset, Autocorrelations)
 {
     TimeSeriesDataset dataset;
+    dataset.set_display(false);
 
     MatrixR autocorrelations;
 
@@ -55,7 +57,8 @@ TEST(TimeSeriesDataset, CrossCorrelations)
     Shape target_shape = { 1 };
 
     TimeSeriesDataset dataset(6, input_shape, target_shape);
-    
+    dataset.set_display(false);
+
     Index lags_number;
 
     Tensor3 cross_correlations;
@@ -188,16 +191,114 @@ TEST(TimeSeriesDataset, ModelInputVariablesReflectForecastingWindow)
     const vector<Variable> model_variables = dataset.get_model_input_variables();
 
     ASSERT_EQ(model_variables.size(), 6);
-    EXPECT_EQ(model_variables[0].name, "temperature_lag0");
-    EXPECT_EQ(model_variables[2].name, "temperature_lag2");
-    EXPECT_EQ(model_variables[3].name, "pressure_lag0");
-    EXPECT_EQ(model_variables[5].name, "pressure_lag2");
     EXPECT_TRUE(ranges::all_of(model_variables, [](const Variable& variable)
     {
         return variable.role == VariableRole::Input;
     }));
     EXPECT_EQ(dataset.get_input_shape(), Shape({3, 2}));
     EXPECT_TRUE(dataset.sample_order_matters());
+
+    MatrixR raw(4, 3);
+    raw << 1.0f, 101.0f, 1001.0f,
+           2.0f, 102.0f, 1002.0f,
+           3.0f, 103.0f, 1003.0f,
+           4.0f, 104.0f, 1004.0f;
+    dataset.set_data(raw);
+    std::array<float, 6> inputs{};
+    dataset.fill_inputs({0}, {0, 1}, inputs.data(), FillMode::Inference);
+    const vector<pair<string, float>> expected{
+        {"temperature_lag0", 1.0f}, {"pressure_lag0", 101.0f},
+        {"temperature_lag1", 2.0f}, {"pressure_lag1", 102.0f},
+        {"temperature_lag2", 3.0f}, {"pressure_lag2", 103.0f}};
+    for (size_t i = 0; i < expected.size(); ++i)
+    {
+        EXPECT_EQ(model_variables[i].name, expected[i].first);
+        EXPECT_FLOAT_EQ(inputs[i], expected[i].second);
+    }
+}
+
+TEST(TimeSeriesDataset, MultiTargetJsonRoundTripPreservesTargetLayout)
+{
+    TimeSeriesDataset original(12, {1}, {2});
+    original.set_past_time_steps(2);
+    original.set_future_time_steps(2);
+    original.set_multi_target(true);
+    JsonWriter writer;
+    original.to_JSON(writer);
+    JsonDocument document;
+    document.set_root(Json::parse(writer.c_str()));
+
+    MatrixR raw(12, 3);
+    for (Index row = 0; row < raw.rows(); ++row)
+        raw.row(row) << float(row), float(100 + row), float(1000 + row);
+
+    const auto check = [&](TimeSeriesDataset& dataset)
+    {
+        dataset.from_JSON(document);
+        ASSERT_TRUE(dataset.get_multi_target());
+        ASSERT_EQ(dataset.get_target_shape(), Shape({4}));
+        EXPECT_EQ(dataset.get_sample_roles(), original.get_sample_roles());
+        dataset.set_data(raw);
+        std::array<float, 10> targets;
+        targets.fill(-777.0f);
+        dataset.fill_targets({0, 1}, {1, 2}, targets.data(), FillMode::Inference);
+        const std::array<float, 10> expected{
+            102.0f, 103.0f, 1002.0f, 1003.0f,
+            103.0f, 104.0f, 1003.0f, 1004.0f, -777.0f, -777.0f};
+        EXPECT_EQ(targets, expected);
+    };
+
+    TimeSeriesDataset fresh;
+    check(fresh);
+    check(original);
+}
+
+TEST(TimeSeriesDataset, LegacyJsonDefaultsToSingleTargetOnReusedDataset)
+{
+    TimeSeriesDataset dataset(12, {1}, {1});
+    dataset.set_future_time_steps(2);
+    dataset.set_multi_target(true);
+    JsonWriter writer;
+    dataset.to_JSON(writer);
+    JsonDocument legacy;
+    legacy.set_root(Json::parse(writer.c_str()));
+    auto& source = legacy.get_root()["Dataset"]["DataSource"].as_object();
+    std::erase_if(source, [](const auto& field) { return field.first == "MultiTarget"; });
+
+    dataset.from_JSON(legacy);
+
+    EXPECT_FALSE(dataset.get_multi_target());
+    EXPECT_EQ(dataset.get_future_time_steps(), 2);
+    EXPECT_EQ(dataset.get_target_shape(), Shape({1}));
+}
+
+TEST(TimeSeriesDataset, RejectsInvalidWindowAndStaleBatchShape)
+{
+    TimeSeriesDataset dataset(12, {1}, {1});
+    EXPECT_THROW(dataset.set_past_time_steps(0), runtime_error);
+    EXPECT_THROW(dataset.set_future_time_steps(-1), runtime_error);
+    dataset.set_past_time_steps(2);
+    dataset.set_data_constant(1.0f);
+    Batch batch(2, &dataset, {Device::CPU, Type::FP32, 0});
+    dataset.set_future_time_steps(2);
+    dataset.set_multi_target(true);
+    EXPECT_THROW(batch.fill({0, 1}, dataset.get_feature_selection()), runtime_error);
+    dataset.set_shape(VariableRole::Target, {1});
+    std::array<float, 4> targets{};
+    EXPECT_THROW(dataset.fill_targets({0, 1}, {1}, targets.data(), FillMode::Inference),
+                 runtime_error);
+}
+
+TEST(TimeSeriesDataset, RejectsOverflowingForecastingWindowWithoutChangingShape)
+{
+    TimeSeriesDataset dataset(12, {1}, {2});
+    dataset.set_multi_target(true);
+    EXPECT_THROW(dataset.set_future_time_steps(numeric_limits<Index>::max() / 2 + 1),
+                 runtime_error);
+    EXPECT_EQ(dataset.get_future_time_steps(), 1);
+    EXPECT_EQ(dataset.get_target_shape(), Shape({2}));
+    EXPECT_THROW(dataset.set_past_time_steps(numeric_limits<Index>::max()), runtime_error);
+    EXPECT_EQ(dataset.get_past_time_steps(), 2);
 }
 
 TEST(TimeSeriesDataset, TrainingScalingExpandsMultiStepTargetsWithoutMutatingData)

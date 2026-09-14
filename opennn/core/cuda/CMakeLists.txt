@@ -75,6 +75,13 @@ endforeach()
 
 add_library(opennn_flash_attention STATIC ${_sources})
 
+if(OpenNN_INSTALL)
+    install(FILES "${_source_dir}/LICENSE"
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/OpenNN/FlashAttention)
+    install(FILES "${_source_dir}/csrc/cutlass/LICENSE.txt"
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/OpenNN/FlashAttention/CUTLASS)
+endif()
+
 set_target_properties(opennn_flash_attention PROPERTIES
     CUDA_ARCHITECTURES "${_architectures}"
     CUDA_SEPARABLE_COMPILATION OFF

@@ -2,11 +2,11 @@
 
 #include "opennn/core/random_utilities.h"
 #include "opennn/model_selection/growing_inputs.h"
-#include "opennn/training_strategy/training_strategy.h"
+#include "opennn/training/training.h"
 #include "opennn/dataset/dataset.h"
 #include "opennn/dataset/tabular_dataset.h"
-#include "opennn/neural_network/layers/dense_layer.h"
-#include "opennn/neural_network/neural_network.h"
+#include "opennn/network/layers/dense_layer.h"
+#include "opennn/network/network.h"
 
 using namespace opennn;
 
@@ -17,9 +17,9 @@ TEST(GrowingInputsTest, DefaultConstructor)
 
 TEST(GrowingInputsTest, GeneralConstructor)
 {
-    TrainingStrategy training_strategy;
+    Training training;
 
-    GrowingInputs growing_inputs(&training_strategy);
+    GrowingInputs growing_inputs(&training);
 }
 
 TEST(GrowingInputsTest, InputSelection)
@@ -28,15 +28,15 @@ TEST(GrowingInputsTest, InputSelection)
     dataset.set_data_random();
     dataset.split_samples_random();
 
-    NeuralNetwork neural_network;
-    neural_network.add_layer(make_unique<opennn::Dense>(Shape{2}, Shape{1}));
+    Network network;
+    network.add_layer(make_unique<opennn::Dense>(Shape{2}, Shape{1}));
 
-    TrainingStrategy training_strategy(&neural_network, &dataset);
+    Training training(&network, &dataset);
 
-    GrowingInputs growing_inputs(&training_strategy);
+    GrowingInputs growing_inputs(&training);
     growing_inputs.set_display(false);
 
-    InputsSelectionResult input_selection_results = growing_inputs.perform_input_selection();
+    InputSelectionResult input_selection_results = growing_inputs.perform_input_selection();
     EXPECT_GE(input_selection_results.optimal_input_variables_indices[0], 0);
 }
 
@@ -56,16 +56,16 @@ TEST(GrowingInputsTest, InputSelectionKnownResult)
     dataset.set_data(data);
     dataset.split_samples_random();
 
-    NeuralNetwork neural_network;
-    neural_network.add_layer(make_unique<opennn::Dense>(Shape{1}, Shape{1}));
+    Network network;
+    network.add_layer(make_unique<opennn::Dense>(Shape{1}, Shape{1}));
 
-    TrainingStrategy training_strategy(&neural_network, &dataset);
+    Training training(&network, &dataset);
 
-    GrowingInputs growing_inputs(&training_strategy);
+    GrowingInputs growing_inputs(&training);
     growing_inputs.set_display(false);
 
     growing_inputs.set_maximum_inputs_number(1);
-    InputsSelectionResult results = growing_inputs.perform_input_selection();
+    InputSelectionResult results = growing_inputs.perform_input_selection();
 
     EXPECT_EQ(results.optimal_input_variables_indices.size(), 1);
     EXPECT_EQ(results.optimal_input_variables_indices[0], 0);
@@ -88,16 +88,16 @@ TEST(GrowingInputsTest, CrossValidationKeepsPersistentRoles)
 
     const vector<SampleRole> roles_before = dataset.get_sample_roles();
 
-    NeuralNetwork neural_network;
-    neural_network.add_layer(make_unique<opennn::Dense>(Shape{1}, Shape{1}));
-    TrainingStrategy training_strategy(&neural_network, &dataset);
+    Network network;
+    network.add_layer(make_unique<opennn::Dense>(Shape{1}, Shape{1}));
+    Training training(&network, &dataset);
 
-    GrowingInputs growing_inputs(&training_strategy);
+    GrowingInputs growing_inputs(&training);
     growing_inputs.set_display(false);
     growing_inputs.set_maximum_inputs_number(1);
     growing_inputs.set_folds_number(3);
 
-    InputsSelectionResult results = growing_inputs.perform_input_selection();
+    InputSelectionResult results = growing_inputs.perform_input_selection();
 
     EXPECT_EQ(results.optimal_input_variables_indices.size(), 1);
     EXPECT_EQ(results.optimal_input_variables_indices[0], 0);

@@ -1,10 +1,10 @@
 // What OpenNN costs before it does any work.
 //
-// PLAN.md. The one part of the suite that cannot ride along on a training run:
+// The one part of the suite that cannot ride along on a training run:
 // speed, peak memory and energy are all readings of a run in progress, whereas
 // these three ask what the framework costs merely by existing.
 //
-//   footprint memory    resident set and GPU-ready VRAM after empty objects
+//   footprint memory    CPU process resident set after empty objects
 //   footprint startup   time to first prediction
 //   footprint export    train a small model, write it as dependency-free source
 //
@@ -23,7 +23,16 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <optional>
 #include <string>
+
+#ifdef _WIN32
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#include <psapi.h>
+#endif
 
 #ifdef __linux__
 #include <unistd.h>
@@ -33,11 +42,11 @@
 #include "opennn/core/tensor_operations.h"
 #include "opennn/core/random_utilities.h"
 #include "opennn/dataset/tabular_dataset.h"
-#include "opennn/neural_network/model_expression.h"
-#include "opennn/neural_network/neural_network.h"
+#include "opennn/network/model_expression.h"
+#include "opennn/network/network.h"
 #include "opennn/models/models.h"
-#include "opennn/training_strategy/adaptive_moment_estimation.h"
-#include "opennn/training_strategy/training_strategy.h"
+#include "opennn/training/adam.h"
+#include "opennn/training/training.h"
 
 using namespace opennn;
 using clock_type = chrono::steady_clock;
@@ -45,16 +54,21 @@ using clock_type = chrono::steady_clock;
 namespace
 {
 
-double resident_mb()
+optional<double> resident_mb()
 {
-#ifdef __linux__
+#ifdef _WIN32
+    PROCESS_MEMORY_COUNTERS counters{};
+    if (GetProcessMemoryInfo(GetCurrentProcess(), &counters, sizeof(counters)))
+        return double(counters.WorkingSetSize) / (1024.0 * 1024.0);
+#elif defined(__linux__)
     // statm reports pages; the second field is resident.
     ifstream statm("/proc/self/statm");
     long total = 0, resident = 0;
-    if (statm >> total >> resident)
-        return double(resident) * double(sysconf(_SC_PAGESIZE)) / (1024.0 * 1024.0);
+    const long page_size = sysconf(_SC_PAGESIZE);
+    if ((statm >> total >> resident) && page_size > 0)
+        return double(resident) * double(page_size) / (1024.0 * 1024.0);
 #endif
-    return 0.0;
+    return nullopt;
 }
 
 int usage()
@@ -67,6 +81,7 @@ int usage()
 
 int main(int argc, char* argv[])
 {
+    const auto entered = clock_type::now();
     // Each engine at its best, as PROTOCOL.md requires. The library defaults to
     // Eigen so a plain build behaves like a plain build; a build that has the
     // MKL kernels is told to use them here rather than inheriting them.
@@ -74,27 +89,31 @@ int main(int argc, char* argv[])
     cout << "blas=" << (blas_mkl_available() ? "mkl" : "eigen") << "\n";
 
     const string mode = argc > 1 ? argv[1] : "";
-    const auto entered = clock_type::now();
 
     cout << "engine=opennn\nmode=" << mode << "\n";
 
     if (mode == "memory")
     {
         // Empty objects only: a network with no layers, a dataset with no
-        // data, a training strategy over both. This is the floor -- what an
+        // data, a training coordinator over both. This is the floor -- what an
         // application pays for linking the library and declaring intent,
         // before a single sample is loaded.
-        Configuration::instance().set(Device::Auto, Type::FP32);
+        Configuration::instance().set(Device::CPU, Type::FP32);
 
-        NeuralNetwork network;
+        Network network;
         TabularDataset dataset;
-        TrainingStrategy strategy(&network, &dataset);
+        Training training(&network, &dataset);
 
-        cout << "baseline_ram_mb=" << resident_mb() << "\n";
+        const auto memory = resident_mb();
+        cout << "device=cpu\nbaseline_ram_mb=";
+        if (memory) cout << *memory;
+        else cout << "null";
+        cout << "\nbaseline_ram_metric=process_resident_set_mib\n"
+             << "baseline_ram_note=" << (memory ? "available" : "resident_memory_query_unavailable") << "\n";
     }
     else if (mode == "startup")
     {
-        Configuration::instance().set(Device::Auto, Type::FP32);
+        Configuration::instance().set(Device::CPU, Type::FP32);
 
         ApproximationNetwork network({10}, {64}, {1});
 
@@ -107,7 +126,9 @@ int main(int argc, char* argv[])
             chrono::duration<double>(clock_type::now() - entered).count();
 
         cout << "prediction=" << output(0, 0) << "\n"
-             << "first_prediction_s=" << seconds << "\n";
+             << "first_prediction_s=" << seconds << "\n"
+             << "first_prediction_scope=main_entry_to_completed_prediction_excludes_dynamic_loader\n"
+             << "device=cpu\n";
     }
     else if (mode == "export")
     {
@@ -143,17 +164,17 @@ int main(int argc, char* argv[])
         ApproximationNetwork network(dataset.get_input_shape(), {64},
                                      dataset.get_target_shape());
 
-        TrainingStrategy strategy(&network, &dataset);
-        strategy.set_loss("MeanSquaredError");
-        strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
+        Training training(&network, &dataset);
+        training.set_loss("MeanSquaredError");
+        training.set_optimization_algorithm("Adam");
 
-        auto* adam = dynamic_cast<AdaptiveMomentEstimation*>(
-            strategy.get_optimization_algorithm());
+        auto* adam = dynamic_cast<Adam*>(
+            training.get_optimization_algorithm());
         adam->set_maximum_epochs(50);
         adam->set_batch_size(32);
         adam->set_display(false);
 
-        strategy.train();
+        training.train();
 
         ModelExpression expression(&network);
         expression.save(c_path, ModelExpression::ProgrammingLanguage::C);

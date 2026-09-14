@@ -44,7 +44,7 @@
 #include <unsupported/Eigen/LevenbergMarquardt>
 #include <unsupported/Eigen/NumericalDiff>
 
-#include "opennn/neural_network/neural_network.h"
+#include "opennn/network/network.h"
 
 using namespace std;
 using namespace opennn;
@@ -199,7 +199,7 @@ bool solve_analytical_system()
 
 struct MixSystem : Eigen::DenseFunctor<double>
 {
-    MixSystem(NeuralNetwork& new_network,
+    MixSystem(Network& new_network,
               const Eigen::VectorXd& new_mix,
               const double new_total,
               const double new_ratio,
@@ -250,7 +250,7 @@ struct MixSystem : Eigen::DenseFunctor<double>
         return 0;
     }
 
-    NeuralNetwork& network;
+    Network& network;
 
     Eigen::VectorXd mix;
 
@@ -260,7 +260,7 @@ struct MixSystem : Eigen::DenseFunctor<double>
 };
 
 
-bool solve_coupled_system(NeuralNetwork& network)
+bool solve_coupled_system(Network& network)
 {
     title("2. Three mix equations, one of them through the network");
 
@@ -358,7 +358,7 @@ int main()
     {
         const bool analytical_solved = solve_analytical_system();
 
-        NeuralNetwork network(filesystem::path(CONCRETE_NETWORK_DIR) / "nn" / "concrete_uci.json");
+        Network network(filesystem::path(CONCRETE_NETWORK_DIR) / "nn" / "concrete_uci.json");
 
         const bool coupled_solved = solve_coupled_system(network);
 

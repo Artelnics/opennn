@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   R E S P O N S E   O P T I M I Z A T I O N   C L A S S   H E A D E R
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #pragma once
 
@@ -14,13 +9,13 @@
 namespace opennn
 {
 
-class NeuralNetwork;
+class Network;
 
 class ResponseOptimization
 {
 public:
 
-    void set(NeuralNetwork* = nullptr);
+    void set(Network* = nullptr);
 
     struct Objective
     {
@@ -52,7 +47,7 @@ public:
 
         vector<pair<Index, Index>> involved_variables;
 
-        void compile_equations(const NeuralNetwork*, const VectorR& spans, Index first_switch, float tolerance);
+        void compile_equations(const Network*, const VectorR& spans, Index first_switch, float tolerance);
     };
 
     struct FeasibilitySystem
@@ -76,7 +71,7 @@ public:
         pair<VectorR, VectorR> borders;
     };
 
-    explicit ResponseOptimization(NeuralNetwork* = nullptr);
+    explicit ResponseOptimization(Network* = nullptr);
 
     virtual ~ResponseOptimization();
 
@@ -92,7 +87,7 @@ public:
 
 protected:
 
-    NeuralNetwork* neural_network = nullptr;
+    Network* network = nullptr;
 
     vector<Objective> objectives;
     vector<Constraint> constraints;
@@ -134,7 +129,3 @@ private:
 };
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

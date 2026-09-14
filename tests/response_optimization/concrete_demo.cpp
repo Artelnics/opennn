@@ -31,7 +31,7 @@
 #include <iomanip>
 #include <iostream>
 
-#include "opennn/neural_network/neural_network.h"
+#include "opennn/network/network.h"
 #include "opennn/response_optimization/response_optimization.h"
 #include "opennn/response_optimization/domain_contraction.h"
 #include "opennn/response_optimization/genetic_response.h"
@@ -97,7 +97,7 @@ int main()
 {
     try
     {
-        NeuralNetwork network(filesystem::path(CONCRETE_NETWORK_DIR) / "nn" / "concrete_uci.json");
+        Network network(filesystem::path(CONCRETE_NETWORK_DIR) / "nn" / "concrete_uci.json");
 
         // Fixing the seed makes every run below repeat exactly. Drop it to see the spread.
 

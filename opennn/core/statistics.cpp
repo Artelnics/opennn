@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   S T A T I S T I C S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/core/statistics.h"
 #include "opennn/core/parallel_algorithms.h"
@@ -63,7 +58,13 @@ MaskedMoments<Sum> masked_moments(Index size,
 
 Index clamped_bin(float value, float origin, float inv_length, Index bins_number)
 {
-    return clamp(Index((value - origin) * inv_length), Index(0), bins_number - 1);
+    const float estimate = (value - origin) * inv_length;
+    // Clamp before converting: degenerate or subnormal bin widths can produce
+    // NaN/infinity, whose conversion to Index is undefined. refined_bin still
+    // checks the actual boundaries after choosing this initial estimate.
+    if (!(estimate > 0)) return 0;
+    if (estimate >= float(bins_number - 1)) return bins_number - 1;
+    return Index(estimate);
 }
 
 Index refined_bin(float value, float origin, float inv_length,
@@ -372,6 +373,15 @@ Histogram histogram(const VectorR& new_vector, Index bins_number)
     }
 
     const Index unique_values_number = ssize(unique_values);
+    if (unique_values_number == 0)
+    {
+        Histogram result(bins_number);
+        result.minimums = VectorR::Constant(bins_number, QUIET_NAN);
+        result.maximums = VectorR::Constant(bins_number, QUIET_NAN);
+        result.centers = VectorR::Constant(bins_number, QUIET_NAN);
+        result.frequencies = VectorR::Zero(bins_number);
+        return result;
+    }
     if (unique_values_number <= bins_number)
     {
         ranges::sort(unique_values);
@@ -867,7 +877,3 @@ vector<Index> extreme_indices(const MatrixR& values)
 }
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

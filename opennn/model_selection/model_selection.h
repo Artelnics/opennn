@@ -1,37 +1,32 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   M O D E L   S E L E C T I O N   C L A S S   H E A D E R
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #pragma once
 
-#include "opennn/model_selection/inputs_selection.h"
+#include "opennn/model_selection/input_selection.h"
 #include "opennn/model_selection/growing_neurons.h"
 
 namespace opennn
 {
 
-class TrainingStrategy;
+class Training;
 
 class ModelSelection
 {
 
 public:
 
-    explicit ModelSelection(TrainingStrategy* = nullptr);
-    const TrainingStrategy* get_training_strategy() const noexcept { return training_strategy; }
-    void set(TrainingStrategy*);
+    explicit ModelSelection(Training* = nullptr);
+    const Training* get_training() const noexcept { return training; }
+    void set(Training*);
 
     void set_default();
 
     NeuronsSelectionResult perform_neurons_selection() { return neurons_selection.perform_neurons_selection(); }
 
-    InputsSelectionResult perform_input_selection() { return inputs_selection->perform_input_selection(); }
+    InputSelectionResult perform_input_selection() { return input_selection->perform_input_selection(); }
 
-    string get_inputs_selection_name() const { return inputs_selection ? inputs_selection->get_name() : string(); }
+    string get_input_selection_name() const { return input_selection ? input_selection->get_name() : string(); }
 
     void from_JSON(const JsonDocument&);
 
@@ -42,13 +37,13 @@ public:
 
 private:
 
-    void set_inputs_selection(const string&);
+    void set_input_selection(const string&);
 
-    TrainingStrategy* training_strategy = nullptr;
+    Training* training = nullptr;
 
     GrowingNeurons neurons_selection;
 
-    unique_ptr<InputsSelection> inputs_selection;
+    unique_ptr<InputSelection> input_selection;
 };
 
 }

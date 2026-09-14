@@ -1,4 +1,7 @@
-﻿#pragma once
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
+
+#pragma once
 
 #include <atomic>
 #include <cstdlib>
@@ -13,6 +16,7 @@
 #include <vector>
 
 #include "opennn/core/device_backend.h"
+#include "opennn/core/log.h"
 
 namespace opennn::profiler
 {
@@ -79,6 +83,15 @@ public:
         const std::lock_guard lock(entries_mutex);
         const auto found = entries.find(key);
         return found == entries.end() ? 0 : found->second.calls;
+    }
+
+    void log(const string& title, double total_ms = 0.0,
+             string_view category = "PROFILE") const
+    {
+        if (!logging::enabled(logging::Level::Info)) return;
+        ostringstream output;
+        print(output, title, total_ms, category);
+        logging::write(logging::Level::Info, output.str());
     }
 
     void print(ostream& os,
@@ -258,7 +271,7 @@ namespace detail
 inline ExitDump::~ExitDump()
 {
     if (is_enabled() && stats().total_ms() > 0.0)
-        stats().print(cerr, "profile (OPENNN_PROFILE)");
+        stats().log("profile (OPENNN_PROFILE)");
 }
 
 }

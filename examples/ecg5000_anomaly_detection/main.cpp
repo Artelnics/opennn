@@ -14,8 +14,8 @@
 #include "opennn/core/random_utilities.h"
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/models/models.h"
-#include "opennn/testing_analysis/testing_analysis.h"
-#include "opennn/training_strategy/training_strategy.h"
+#include "opennn/evaluation/evaluation.h"
+#include "opennn/training/training.h"
 
 using namespace opennn;
 
@@ -28,13 +28,10 @@ int main()
         set_seed(21);
         Configuration::instance().set(Device::Auto, Type::FP32);
 
-        TabularDataset dataset("../data/ecg5000_anomaly_detection/ecg.csv",
-                               ",", false, false);
+        TabularDataset dataset("../data/ecg5000_anomaly_detection/ecg.csv", ",", false, false);
 
         const Index signal_size = dataset.get_variables_number() - 1;
         const Index label_index = signal_size;
-
-        dataset.split_samples_random(0.8f, 0.0f, 0.2f);
 
         for(const Index sample : dataset.get_sample_indices(SampleRole::Training))
             if(dataset.get_data()(sample, label_index) < 0.5f)
@@ -42,37 +39,33 @@ int main()
 
         vector<Index> signal_indices(signal_size);
         iota(signal_indices.begin(), signal_indices.end(), Index(0));
+
         dataset.set_variable_indices(signal_indices, signal_indices);
 
-        AutoAssociationNetwork autoencoder(dataset.get_input_shape(),
-                                            {32, 16, 8},
-                                            "ReLU",
-                                            "Identity");
+        Autoencoder autoencoder(dataset.get_input_shape(),
+                                           {32, 16, 8},
+                                           "ReLU",
+                                           "Identity");
 
-        TrainingStrategy training_strategy(&autoencoder, &dataset);
-        training_strategy.set_loss("MeanAbsoluteError");
-        training_strategy.get_optimization_algorithm()->set_batch_size(512);
-        training_strategy.get_optimization_algorithm()->set_maximum_epochs(20);
+        Training training(&autoencoder, &dataset);
+        training.train();
 
-        training_strategy.train();
-
-        TestingAnalysis testing_analysis(&autoencoder, &dataset);
+        Evaluation evaluation(&autoencoder, &dataset);
 
         const VectorR training_errors =
-            testing_analysis.calculate_reconstruction_errors("Training");
+            evaluation.calculate_reconstruction_errors("Training");
         const auto error_statistics =
-            testing_analysis.calculate_reconstruction_error_statistics(training_errors);
+            evaluation.calculate_reconstruction_error_statistics(training_errors);
         const float anomaly_threshold =
-            testing_analysis.calculate_anomaly_threshold(error_statistics);
+            evaluation.calculate_anomaly_threshold(error_statistics);
         const VectorR testing_errors =
-            testing_analysis.calculate_reconstruction_errors("Testing");
+            evaluation.calculate_reconstruction_errors("Testing");
         const auto testing_error_statistics =
-            testing_analysis.calculate_reconstruction_error_statistics(testing_errors);
-        const VectorI anomalies = testing_analysis.calculate_anomaly_predictions(
+            evaluation.calculate_reconstruction_error_statistics(testing_errors);
+        const VectorI anomalies = evaluation.calculate_anomaly_predictions(
             testing_errors, anomaly_threshold);
 
-        const vector<Index> testing_indices =
-            dataset.get_sample_indices(SampleRole::Testing);
+        const vector<Index> testing_indices = dataset.get_sample_indices(SampleRole::Testing);
         MatrixR anomaly_targets(testing_errors.size(), 1);
         MatrixR anomaly_outputs(testing_errors.size(), 1);
 
@@ -87,9 +80,9 @@ int main()
         }
 
         const VectorR anomaly_tests =
-            testing_analysis.calculate_binary_classification_tests(
+            evaluation.calculate_binary_classification_tests(
                 anomaly_targets, anomaly_outputs);
-        const MatrixI confusion = testing_analysis.calculate_confusion(
+        const MatrixI confusion = evaluation.calculate_confusion(
             anomaly_targets, anomaly_outputs);
 
         cout << "Training reconstruction MAE: " << error_statistics.mean

@@ -1,29 +1,26 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   G E N E T I C   A L G O R I T H M   C L A S S   H E A D E R
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #pragma once
 
-#include "opennn/model_selection/inputs_selection.h"
+#include "opennn/model_selection/input_selection.h"
 
 namespace opennn
 {
 
-class GeneticAlgorithm final : public InputsSelection
+class GeneticAlgorithm final : public InputSelection
 {
 
 public:
 
-    explicit GeneticAlgorithm(TrainingStrategy* = nullptr);
+    explicit GeneticAlgorithm(Training* = nullptr);
     Index get_individuals_number() const { return population.rows(); }
 
     Index get_genes_number() const { return original_input_indices.size(); }
 
     void set_default();
+    const string& get_initialization_method() const noexcept { return initialization_method; }
+    void set_initialization_method(const string&);
 
     Index get_minimum_inputs_number() const override { return minimum_inputs_number; }
     Index get_maximum_inputs_number() const override { return maximum_inputs_number; }
@@ -37,7 +34,7 @@ public:
 
     void set_elitism_size(const Index size) { elitism_size = clamp<Index>(size, 0, get_individuals_number()); }
 
-    InputsSelectionResult perform_input_selection() override;
+    InputSelectionResult perform_input_selection() override;
 
     void from_JSON(const JsonDocument&) override;
 
@@ -80,7 +77,7 @@ private:
 
     Index elitism_size = 10;
 
-    string initialization_method = "Correlations";
+    string initialization_method = "Random";
 };
 
 }

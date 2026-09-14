@@ -1,53 +1,42 @@
 # OpenNN — instructions for coding agents
 
-See [README.md](README.md) for what this project is and generic build instructions.
-This file is the single entry point for agent-facing documentation; everything else
-is linked from here.
+See [README.md](README.md) for the project overview and first build, and
+[DEVELOPMENT.md](DEVELOPMENT.md) for CMake options. Keep this file focused on repository-wide
+engineering rules that are not tied to one workstation.
 
-| Topic | Where |
-| --- | --- |
-| Code organization, header layout, class member order, `std::` caveats | [docs/architecture.md](docs/architecture.md) |
-| Current engineering status, audit findings, YOLO roadmap | [docs/status/engineering-audit.md](docs/status/engineering-audit.md) |
-| YOLO implementation notes, session by session | [docs/status/yolo-session-log.md](docs/status/yolo-session-log.md) |
-| CUDA-graph topology dumps (training) | [docs/uml/cuda-graph/](docs/uml/cuda-graph/) |
-| Fast CPU/CUDA edit and final-verification workflow | [docs/fast-verification.md](docs/fast-verification.md) |
-| Project-local skills | [.agents/skills/](.agents/skills/) |
-| Making the code conceptual and self-explanatory (standing task prompt) | [docs/making-the-code-conceptual.md](docs/making-the-code-conceptual.md) |
+## Working branches
 
-Before deleting anything that looks unused, read
-[Before deleting anything: Neural Designer](docs/status/engineering-audit.md#before-deleting-anything-neural-designer).
-Neural Designer links against this library and uses many symbols that look orphaned
-from inside this repo, so dead-code analysis run only here produces false positives.
+- Use the existing OpenNN checkout on `dev` for normal development. Do not create
+  additional clones or worktrees unless the user explicitly requests them.
+- Keep development and release preparation on `dev`. Merge into `master` only
+  when the user explicitly decides the work is ready for release.
+- Preserve uncommitted work and saved stashes when switching or consolidating
+  branches. A folder cleanup does not authorize publishing a release.
 
-## Build environment on this machine (Windows)
+## Compatibility and scope
 
-`cl.exe` and `ninja.exe` are not on PATH in a plain shell. Both ship inside the Visual
-Studio install, so locate it rather than hard-coding a version — this repo is used from
-more than one machine and the VS version differs between them:
+- Preserve the public API and serialized model compatibility unless the task
+  explicitly authorizes a breaking change.
+- Neural Designer links against OpenNN and uses symbols that may appear unused
+  inside this repository. Do not remove public or exported code based only on
+  repository-local call sites.
+- Preserve unrelated working-tree changes. Build products, downloaded models,
+  generated data and raw benchmark results must remain outside Git.
 
-```bat
-for /f "usebackq tokens=*" %i in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath`) do set VSROOT=%i
-call "%VSROOT%\VC\Auxiliary\Build\vcvars64.bat"
-set "PATH=%VSROOT%\Common7\IDE\CommonExtensions\Microsoft\CMake\Ninja;%PATH%"
-```
+## Code organization
 
-`vcvars64.bat` needs `vswhere.exe` on PATH to resolve the toolset; if it prints
-`'vswhere.exe' is not recognized`, prepend
-`%ProgramFiles(x86)%\Microsoft Visual Studio\Installer` first.
+- Follow neighboring files for naming, include order and class layout.
+- Keep reusable tensor and device primitives in `opennn/core/`; datasets,
+  network code, training, model selection and evaluation must retain their
+  existing dependency direction.
+- Validate structural changes on both CPU and CUDA when they touch shared code.
+  Some qualifications, includes and data-member ordering are intentionally
+  significant even when a local edit suggests otherwise.
 
-`VsDevCmd.bat` (in `%VSROOT%\Common7\Tools\`) is the equivalent for a non-x64 default.
+## Verification
 
-**Known gap on the Windows box as of 2026-08-24:** VS 2022 Community 17.14 is installed
-with the MSVC toolset (14.44.35207), but the Windows SDK resource tools are missing —
-`rc.exe` is not found and CMake reports `CMAKE_MT-NOTFOUND`. `cl` compiles, but linking
-fails, so CMake cannot get past its own compiler probe. Install the Windows SDK
-component before expecting a local build here.
-
-### Fast verification (preferred)
-
-Use the cross-platform wrappers while editing. They keep persistent CPU and CUDA
-builds outside the OneDrive checkout, build only `opennn_tests`, and accept a
-GoogleTest filter for fast feedback:
+Use the repository wrappers for routine verification. They create persistent
+build trees outside the checkout and support focused GoogleTest filters:
 
 ```powershell
 .\tools\verify.ps1 quick -Filter 'Dense.*:DenseNoBiasTest.*'
@@ -61,92 +50,49 @@ GoogleTest filter for fast feedback:
 ./tools/verify.sh full
 ```
 
-Focused checks are the edit loop; `full` remains the final gate and runs both
-complete suites once. See [docs/fast-verification.md](docs/fast-verification.md)
-for cache locations, options, and `sccache` integration.
+Use focused checks while editing and `full` as the final gate for a completed
+batch. A library change is not complete until the relevant CPU and CUDA suites
+pass, or an unavailable backend is reported clearly.
 
-### Creating the two build directories manually
+For non-standard CUDA installations, configure the wrappers through
+`OPENNN_CUDA_ARCHITECTURES`, `OPENNN_CUDNN_INCLUDE_DIR` and
+`OPENNN_CUDNN_LIBRARY`. Do not add workstation-specific paths to repository
+files.
 
-No build directory is checked in, and they are all gitignored — expect to create
-these yourself. Two configurations cover the work; both are Ninja + Release +
-single-config, so `cmake --build <dir>` needs no `--config` flag, and both produce
-`bin/opennn_tests.exe`.
+## Examples and benchmarks
 
-The fast CPU check:
+- To run every example across the supported device/precision matrix, follow
+  [tools/run-opennn-examples/SKILL.md](tools/run-opennn-examples/SKILL.md).
+- Benchmark usage and the measurement contract live in
+  [benchmarks/README.md](benchmarks/README.md) and
+  [benchmarks/PROTOCOL.md](benchmarks/PROTOCOL.md).
+- Raw benchmark output belongs outside the checkout, in
+  `../opennn-benchmark-results/` by default; `OPENNN_BENCH_RESULTS` overrides it.
+  Only reviewed reports belong in `benchmarks/reports/`.
 
-```sh
-cmake -S . -B build-consolidated -G Ninja \
-      -DCMAKE_BUILD_TYPE=Release -DOpenNN_DISABLE_CUDA=ON
-cmake --build build-consolidated
-```
+## Pending repository hygiene
 
-Anything touching GPU paths, plus the benchmark targets:
+The bundled datasets under `examples/` are intentionally retained for now.
+Their provenance and unresolved licensing records are documented in
+`DATASETS.md`, with indexed content inventories in `datasets.manifest.json`.
+Do not remove them until each affected example has a reproducible replacement.
+Stage reviewed asset changes before running `python tools/check_dataset_manifest.py`.
+Bundled ZIPs preserve logical asset paths and bytes; the checker expands their
+contents in memory. Update archives and loose files together, retaining source
+notices. CMake unpacks active image datasets into the external build directory.
+The `--release` check additionally requires every bundle's redistribution
+clearance; do not mark an unknown source as cleared merely to pass that gate.
 
-```sh
-cmake -S . -B build-resnet-capacity -G Ninja \
-      -DCMAKE_BUILD_TYPE=Release -DOpenNN_BUILD_BENCHMARKS=ON
-cmake --build build-resnet-capacity
-```
+## Documentation
 
-On Windows, cuDNN is installed outside the CUDA toolkit and `FindCUDNN.cmake`
-only hints at `CUDAToolkit_INCLUDE_DIRS` and the Linux paths, so the CUDA
-configure above fails with `Could NOT find CUDNN` until it is told where to
-look:
+- Update the existing topic guides listed in `README.md`; consolidate overlapping
+  explanations instead of adding a Markdown file for each task or audit.
+- Keep release and verification procedures in `DEVELOPMENT.md`, migration in
+  `CHANGELOG.md`, and current benchmark findings in `benchmarks/reports/README.md`.
+- Link to an immutable Git revision for superseded reports. Keep raw evidence
+  outside Git, and preserve dataset attribution notices and skill entry points.
 
-```sh
-      -DCUDNN_INCLUDE_DIR="C:/Program Files/NVIDIA/CUDNN/v9.19/include/13.1"       -DCUDNN_LIBRARY="C:/Program Files/NVIDIA/CUDNN/v9.19/lib/13.1/x64/cudnn.lib"
-```
-
-The trailing directory is the CUDA major version cuDNN was built for, not the
-cuDNN version: a v9.19 install for CUDA 13 puts its headers under `include/13.1`.
-Running the tests needs `bin/13.1/x64` ahead of `bin/12.9/x64` on PATH for the
-same reason — with the 12.9 directory first the binary loads a cuBLASLt built
-for CUDA 12 and dies part-way through the suite.
-
-`OpenNN_BUILD_TESTS` and `OpenNN_BUILD_EXAMPLES` default to `ON`, so neither needs a
-flag; `OpenNN_BUILD_BENCHMARKS` defaults to `OFF`. `CMAKE_CUDA_ARCHITECTURES` defaults
-to `native`, which is right whenever the GPU is visible at configure time — if it is
-not, CMake falls back to a value that cannot compile the packed-bf16 kernels, so pass
-it explicitly (`-DCMAKE_CUDA_ARCHITECTURES=89` for Ada, `86` for Ampere).
-
-`OpenNN_ENABLE_ONEDNN` is `AUTO`: oneDNN is used when found, skipped with a status
-line when not, and `ON` turns a missing one into a configure error. It matters more
-than most flags — without it the CPU recurrent layers fall back to the built-in path,
-which measured **2.9x slower** on the benchmark's LSTM training cell and 1.9x on
-inference, against a PyTorch whose wheel bundles oneDNN regardless. `AUTO` finds an
-*installed* oneDNN; a prefix outside the standard paths and outside `$ONEDNN_ROOT`
-still needs `-DOpenNN_ONEDNN_ROOT=...`:
-
-```sh
-      -DOpenNN_ONEDNN_ROOT=/home/artelnics/onednn-omp
-```
-
-Prefer an **OpenMP** build of oneDNN. A TBB-threaded one works but gives oneDNN its
-own thread pool beside OpenNN's OpenMP one over the same cores; the configure warns
-when it detects that. Downstream code must branch on `OpenNN_ONEDNN_FOUND`, never on
-`OpenNN_ENABLE_ONEDNN` — the latter is a tri-state whose default is the string `AUTO`,
-and `if("AUTO")` is true in CMake.
-
-`OPENNN_HAS_CUDA` is set from a non-FORCE cache entry, so **a reconfigure keeps
-whichever CUDA decision the directory made first**. To flip a tree between CPU and
-CUDA, delete it and configure again rather than re-running `cmake` over it.
-
-A library change should be built and run in **both** before you call it done.
-That requirement applies to the completed batch, not to every intermediate edit.
-
-Directory names referred to in older notes (`build-ninja`, `build-fresh`,
-`build-cpu-audit`, `build-std-cleanup`, `build_cmake`, `build-benchmarks`,
-`build-mkl`, `build-cpu-verification`, ...) do not exist; do not go looking for them.
-
-## Project-local skills
-
-`.agents/skills/` in this repo holds project-specific skills:
-- `run-examples` — run the example matrix across CPU/GPU FP32/GPU BF16.
-
-## Code organization
-
-Moved to [docs/architecture.md](docs/architecture.md) — folder layout and the
-dependency order between folders, header layout, class member order, the two
-deliberate upward includes, and the places where `std::` qualification is
-load-bearing. Read it before moving a file, hoisting an enum, or reordering data
-members.
+- Keep the README focused on building, running the first example and locating
+  the main guides. Put source maps and tool inventories in `DEVELOPMENT.md`.
+- When changing example targets or dependencies, update the catalog in
+  `examples/README.md`. Run data-dependent examples from the executable directory.

@@ -1,6 +1,6 @@
 // The CNN family, defined once, driven four ways.
 //
-// PLAN.md. ResNet-50 v1.5: bottleneck blocks [3,4,6,3], widths
+// ResNet-50 v1.5: bottleneck blocks [3,4,6,3], widths
 // [64,128,256,512], on the pinned ImageNet subset -- 1000 classes at 50
 // images each, 224x224. All 1000 classes are kept so the head is the real
 // 2048x1000; a ten-class subset would be a different network.
@@ -42,10 +42,10 @@
 #include "opennn/core/memory_debug.h"
 #include "opennn/core/tensor_types.h"
 #include "opennn/dataset/image_dataset.h"
-#include "opennn/neural_network/forward_propagation.h"
+#include "opennn/network/forward_propagation.h"
 #include "opennn/models/models.h"
-#include "opennn/training_strategy/adaptive_moment_estimation.h"
-#include "opennn/training_strategy/training_strategy.h"
+#include "opennn/training/adam.h"
+#include "opennn/training/training.h"
 
 using namespace opennn;
 using clock_type = chrono::steady_clock;
@@ -115,13 +115,13 @@ Options parse_options(int argc, char* argv[], int first)
     return options;
 }
 
-AdaptiveMomentEstimation* configure(TrainingStrategy& strategy, Index batch)
+Adam* configure(Training& training, Index batch)
 {
-    strategy.set_loss("CrossEntropy");
-    strategy.get_loss()->set_regularization("NoRegularization");
-    strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
+    training.set_loss("CrossEntropy");
+    training.get_loss()->set_regularization("NoRegularization");
+    training.set_optimization_algorithm("Adam");
 
-    auto* adam = dynamic_cast<AdaptiveMomentEstimation*>(strategy.get_optimization_algorithm());
+    auto* adam = dynamic_cast<Adam*>(training.get_optimization_algorithm());
     adam->set_batch_size(batch);
     adam->set_display_period(1000000);
     adam->set_gradient_clip_norm(0.0f);
@@ -159,26 +159,6 @@ int main(int argc, char* argv[])
 
         Configuration::instance().set(options.device, options.precision);
 
-        // Inference autotunes its convolution plans a few lines below; training
-        // never did, so the 69% of the training step that is convolution ran on
-        // whatever cuDNN's heuristic picked first. The cold-start cost amortizes
-        // here for the same reason it does there: a training cell reuses the
-        // plan across every batch of the corpus.
-        //
-        // No workspace cap is set, and now for a measured reason rather than
-        // an absent one. The sweep below is indicative, not evidence: it was
-        // taken under WSL on floating clocks, which PROTOCOL 1 and 7 both
-        // exclude, so it is recorded to show the shape of the trade and wants
-        // repeating on the reference machine before anything is claimed from
-        // it. Swept at batch 128 on the 5070 Ti, samples/s against
-        // steady device MiB: uncapped 1660/7578, 256 MiB 1660/7569, 128 MiB
-        // 1658/7569, 64 MiB 1610/7474, 16 MiB 1610/7934. Memory only falls
-        // once throughput does -- every cap that keeps full speed also keeps
-        // the same footprint, because training memory is activations, not
-        // workspace: the arena is 5,335 MiB against a lifetime lower bound of
-        // 5,335 MiB, so there is nothing for a cap to reclaim. The 16 MiB rung
-        // is the warning: it costs 3% throughput and raises the peak, cuDNN
-        // having fallen back to plans that want more scratch elsewhere.
         if (options.device == Device::CUDA)
         {
             const char* const autotune = getenv("OPENNN_CONV_AUTOTUNE");
@@ -214,8 +194,8 @@ int main(int argc, char* argv[])
             const bool graph = options.device == Device::CUDA
                                && getenv("OPENNN_NO_CUDA_GRAPH") == nullptr;
 
-            TrainingStrategy strategy(network.get(), dataset.get());
-            auto* adam = configure(strategy, batch);
+            Training training(network.get(), dataset.get());
+            auto* adam = configure(training, batch);
             adam->set_cuda_graph(graph);
             adam->set_maximum_epochs(warmup + epochs);
 
@@ -228,7 +208,7 @@ int main(int argc, char* argv[])
             vector<double> epoch_seconds;
             auto previous_mark = clock_type::now();
 
-            adam->post_epoch_callback = [&](Index epoch, float, float, NeuralNetwork*)
+            adam->post_epoch_callback = [&](Index epoch, float, float, Network*)
             {
                 const auto now = clock_type::now();
                 const double elapsed = chrono::duration<double>(now - previous_mark).count();
@@ -245,7 +225,7 @@ int main(int argc, char* argv[])
                          << unix_now() << "\n" << defaultfloat;
             };
 
-            strategy.train();
+            training.train();
 
             if (Index(epoch_seconds.size()) != epochs)
             {
@@ -284,9 +264,6 @@ int main(int argc, char* argv[])
             // measurable rather than baked in.
             const char* const autotune = getenv("OPENNN_CONV_AUTOTUNE");
             device::set_conv_autotune(!autotune || string(autotune) != "0");
-            // The winning ResNet-50 plans fit below 16 MiB on the benchmark
-            // GPUs. Excluding larger candidates before autotuning keeps the
-            // same measured throughput while removing their cold-start peak.
             const char* workspace_mb = getenv("OPENNN_CONV_WORKSPACE_MB");
             device::set_conv_workspace_cap(stoll(workspace_mb ? workspace_mb : "16")
                                            * 1024 * 1024);
@@ -350,6 +327,11 @@ int main(int argc, char* argv[])
                     device::synchronize(device::get_compute_stream());
             };
 
+            // Deploy the parameters for inference before the warm-up: the
+            // forward pass reads the bf16 mirror, so the fp32 master is
+            // released rather than kept resident beside it -- the footprint
+            // the PyTorch driver reaches with model.to(torch.bfloat16).
+            network->upload_parameters_bf16_inference();
             network->calculate_outputs_resident(inputs, forward_propagation, true);
             run_pass();
 
@@ -409,13 +391,13 @@ int main(int argc, char* argv[])
             auto network = build(*dataset);
             cout << "parameters=" << network->get_parameters_number() << "\n" << flush;
 
-            TrainingStrategy strategy(network.get(), dataset.get());
-            configure(strategy, batch)->set_maximum_epochs(1);
-            strategy.train();
+            Training training(network.get(), dataset.get());
+            configure(training, batch)->set_maximum_epochs(1);
+            training.train();
         }
         catch (const exception& error)
         {
-            cout << "fits=0\nreason=" << error.what() << "\nRESULT=OOM\n" << flush;
+            cout << "fits=0\nreason=" << error.what() << "\nRESULT=ERROR\n" << flush;
             return 1;
         }
 

@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   F I E L D   P A R S I N G   S O U R C E
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/dataset/field_parsing.h"
 #include "opennn/core/string_utilities.h"
@@ -119,8 +114,12 @@ static bool has_digit_groups(const string_view integer_part, const char group_se
 }
 
 template <typename T>
-static bool parse_real_value(const string_view text, T& value, const NumberFormat& format)
+static bool parse_real_value(string_view text, T& value, const NumberFormat& format)
 {
+    // Data file fields can be padded (" 4.00 "). Trim as parse_date_time does:
+    // otherwise a padded number is not numeric here and ends up typed as a date.
+    text = trim_view(text);
+
     if (text.empty()) return false;
 
     const bool has_groups = format.group_separator != '\0'
@@ -183,11 +182,13 @@ bool parse_real(const string_view text, double& value, const NumberFormat& forma
 
 bool is_numeric_string(const string_view text, const NumberFormat& format)
 {
-    if (text.empty()) return false;
+    const string_view field = trim_view(text);
 
-    const string_view number = text.back() == '%'
-                             ? text.substr(0, text.size() - 1)
-                             : text;
+    if (field.empty()) return false;
+
+    const string_view number = field.back() == '%'
+                             ? field.substr(0, field.size() - 1)
+                             : field;
 
     double value;
 
@@ -362,7 +363,14 @@ static optional<ParsedDateTime> parse_date_time(string_view text)
 bool is_date_time_string(string_view text)
 {
     if (is_numeric_string(text)) return false;
-    return parse_date_time(text).has_value();
+
+    const optional<ParsedDateTime> parsed = parse_date_time(text);
+    if (!parsed) return false;
+
+    // date_to_timestamp only resolves two-field dates when the year comes first
+    // (2024-05). Reporting "1-2" as a date types the column as DateTime and the
+    // import then aborts on the first row instead of falling back to categorical.
+    return parsed->date_count != 2 || parsed->year_index == 0;
 }
 
 DateFormat detect_date_format(string_view text)
@@ -419,7 +427,3 @@ time_t date_to_timestamp(string_view text, Index gmt, DateFormat format)
 }
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

@@ -1,0 +1,77 @@
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
+
+#pragma once
+
+#include "opennn/network/detection_head.h"
+#include "opennn/network/layers/layer.h"
+#include "opennn/network/operators/operator.h"
+
+namespace opennn
+{
+
+struct DetectionOperator : Operator
+{
+    using ClassActivation = DetectionClassActivation;
+
+    Index grid_size = 0;
+    Index grid_width = 0;
+    Index boxes_per_cell = 0;
+    Index classes_number = 0;
+    ClassActivation class_activation = ClassActivation::Softmax;
+
+    vector<array<float, 2>> anchors;
+    Buffer device_anchors{Device::CUDA};
+
+    void set(const Shape&, const vector<array<float, 2>>&);
+
+    void forward_propagate(ForwardPropagation&, size_t, ForwardPropagationMode) override;
+    void back_propagate(ForwardPropagation&, BackPropagation&, size_t) const override;
+};
+
+class Detection final : public Layer, public DetectionHeadEndpoint
+{
+public:
+
+    using ClassActivation = DetectionOperator::ClassActivation;
+
+    Detection(const Shape& = {},
+              const vector<array<float, 2>>& = {},
+              const string& = "detection_layer");
+
+    Shape get_output_shape() const override { return input_shape; }
+    const vector<array<float, 2>>& get_anchors() const { return detection.anchors; }
+    ClassActivation get_class_activation() const { return detection.class_activation; }
+    DetectionHeadMetadata get_detection_head_metadata() const noexcept override
+    {
+        return {DetectionHeadKind::AnchorBased,
+                detection.boxes_per_cell,
+                detection.classes_number,
+                1,
+                detection.class_activation};
+    }
+
+    void set(const Shape&, const vector<array<float, 2>>&, const string&);
+    bool accepts_input_rank(Index rank) const override { return is_one_of(rank, 3); }
+
+    void on_compute_dtype_changed() override
+    {
+        throw_if(get_compute_dtype() != Type::FP32,
+                 "{} layer supports FP32 activations only; compile the network with Type::FP32.",
+                 get_name());
+    }
+
+    void apply_input_shape(const Shape& new_input_shape) override { set(new_input_shape, detection.anchors, label); }
+    void set_class_activation(ClassActivation new_class_activation) { detection.class_activation = new_class_activation; }
+
+    void read_JSON_body(const Json*) override;
+    void write_JSON_body(JsonWriter&) const override;
+
+private:
+
+    DetectionOperator detection;
+
+    void configure_operator();
+};
+
+}

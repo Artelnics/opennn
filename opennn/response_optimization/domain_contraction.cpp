@@ -1,13 +1,8 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   D O M A I N   C O N T R A C T I O N   C L A S S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/response_optimization/domain_contraction.h"
-#include "opennn/neural_network/neural_network.h"
+#include "opennn/network/network.h"
 #include "opennn/core/tensor_operations.h"
 
 namespace opennn
@@ -77,8 +72,8 @@ vector<pair<VectorR, VectorR>> local_domains_around(const MatrixR& centers,
 }
 
 
-DomainContraction::DomainContraction(NeuralNetwork* new_neural_network)
-    : ResponseOptimization(new_neural_network)
+DomainContraction::DomainContraction(Network* new_network)
+    : ResponseOptimization(new_network)
 {
 }
 
@@ -93,7 +88,7 @@ pair<VectorR, VectorR> DomainContraction::contract_categories(pair<VectorR, Vect
                                                               const VectorR& category_scores,
                                                               const Index iteration) const
 {
-    for (const pair<Index, Index>& block : get_categorical_blocks(neural_network->get_input_variables()))
+    for (const pair<Index, Index>& block : get_categorical_blocks(network->get_input_variables()))
     {
         vector<Index> live_columns;
 
@@ -137,7 +132,7 @@ pair<MatrixR, MatrixR> DomainContraction::sample_local_domains(
             const Index batch = sample_size - sampled;
 
             MatrixR inputs(batch, domain.first.size());
-            MatrixR outputs(batch, neural_network->get_outputs_number());
+            MatrixR outputs(batch, network->get_outputs_number());
 
             Index feasible_number = 0;
 
@@ -167,7 +162,7 @@ pair<MatrixR, MatrixR> DomainContraction::sample_local_domains(
              + " attempts. The constraints may be impossible to satisfy.");
 
     if (starved_domains > 0)
-        cerr << "Warning: " << starved_domains << " of " << local_domains.size()
+        logging::warning() << "Warning: " << starved_domains << " of " << local_domains.size()
              << " local domains yielded fewer than " << sample_size << " feasible points.\n";
 
     return points;
@@ -176,9 +171,10 @@ pair<MatrixR, MatrixR> DomainContraction::sample_local_domains(
 
 MatrixR DomainContraction::single_optimization()
 {
-    pair<VectorR, VectorR> allowed_domain = calculate_domain();
+    const vector<pair<Index, Index>> blocks =
+        get_categorical_blocks(network->get_input_variables());
 
-    const vector<pair<Index, Index>> blocks = get_categorical_blocks(neural_network->get_input_variables());
+    pair<VectorR, VectorR> allowed_domain = calculate_domain();
 
     VectorR half_interval = initial_half_interval(allowed_domain, blocks);
 
@@ -227,9 +223,10 @@ MatrixR DomainContraction::single_optimization()
 
 MatrixR DomainContraction::multi_optimization()
 {
-    pair<VectorR, VectorR> allowed_domain = calculate_domain();
+    const vector<pair<Index, Index>> blocks =
+        get_categorical_blocks(network->get_input_variables());
 
-    const vector<pair<Index, Index>> blocks = get_categorical_blocks(neural_network->get_input_variables());
+    pair<VectorR, VectorR> allowed_domain = calculate_domain();
 
     const VectorR initial_superior = allowed_domain.second;
 
@@ -278,14 +275,10 @@ MatrixR DomainContraction::multi_optimization()
     }
 
     if (Index(front.size()) < requested_front_size)
-        cerr << "Warning: the front holds " << front.size() << " of the " << requested_front_size
+        logging::warning() << "Warning: the front holds " << front.size() << " of the " << requested_front_size
              << " points requested. The feasible set may be too small to spread them over.\n";
 
     return append_columns(slice_rows(candidates, front));
 }
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

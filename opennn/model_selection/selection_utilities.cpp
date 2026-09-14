@@ -1,29 +1,34 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   S E L E C T I O N   U T I L I T I E S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/model_selection/selection_utilities.h"
 
 #include "opennn/core/json.h"
 #include "opennn/dataset/dataset.h"
 #include "opennn/model_selection/cross_validation.h"
-#include "opennn/neural_network/neural_network.h"
-#include "opennn/training_strategy/training_result.h"
-#include "opennn/training_strategy/training_strategy.h"
+#include "opennn/network/network.h"
+#include "opennn/training/training_result.h"
+#include "opennn/training/training.h"
 
 namespace opennn
 {
 
-CandidateEvaluation evaluate_candidate(TrainingStrategy* training_strategy,
-                                       NeuralNetwork* neural_network,
+void validate_selection_training(const Training* training,
+                                 const Index folds_number,
+                                 const string_view algorithm)
+{
+    throw_if(!training || !training->get_dataset() || !training->get_network(),
+             "{} requires a training configuration with a dataset and network.", algorithm);
+    throw_if(folds_number <= 1 && !training->get_dataset()->has_validation(),
+             "{} requires validation samples or cross-validation to rank candidates.", algorithm);
+}
+
+CandidateEvaluation evaluate_candidate(Training* training,
+                                       Network* network,
                                        const Index folds_number,
                                        const vector<vector<Index>>& fold_partition,
                                        const Index trials_number,
-                                       const bool use_validation_history_minimum,
+                                       [[maybe_unused]] const bool use_validation_history_minimum,
                                        const function<void(Index, float, float, bool)>& on_trial,
                                        const function<void(Index)>& initialize_trial)
 {
@@ -31,7 +36,7 @@ CandidateEvaluation evaluate_candidate(TrainingStrategy* training_strategy,
 
     if (folds_number > 1)
     {
-        const FoldEvaluation fold_evaluation = evaluate_folds(training_strategy, fold_partition);
+        const FoldEvaluation fold_evaluation = evaluate_folds(training, fold_partition);
         evaluation.training_error = fold_evaluation.training_error;
         evaluation.validation_error = fold_evaluation.validation_error;
 
@@ -40,18 +45,18 @@ CandidateEvaluation evaluate_candidate(TrainingStrategy* training_strategy,
 
     for (Index trial = 0; trial < trials_number; ++trial)
     {
-        initialize_trial ? initialize_trial(trial) : neural_network->set_parameters_random();
+        initialize_trial ? initialize_trial(trial) : network->set_parameters_random();
 
-        const TrainingResult training_results = training_strategy->train();
+        const TrainingResult training_results = training->train();
 
         const float training_error = training_results.get_training_error();
 
-        const float validation_error =
-            use_validation_history_minimum && training_results.validation_error_history.size() > 0
-                ? training_results.validation_error_history.minCoeff<PropagateNumbers>()
-                : training_results.get_validation_error();
+        // Keep the legacy argument for callers, but score the model that train()
+        // actually returned, including its optional best-epoch restoration.
+        const float validation_error = training_results.get_validation_error();
 
-        const bool improved = validation_error < evaluation.validation_error;
+        const bool improved = isfinite(training_error) && isfinite(validation_error)
+                           && validation_error < evaluation.validation_error;
 
         if (improved)
         {
@@ -65,11 +70,11 @@ CandidateEvaluation evaluate_candidate(TrainingStrategy* training_strategy,
     return evaluation;
 }
 
-ParameterSnapshot capture_parameter_snapshot(NeuralNetwork* neural_network)
+ParameterSnapshot capture_parameter_snapshot(Network* network)
 {
-    neural_network->copy_parameters_host();
+    network->copy_parameters_host();
 
-    const auto& layers = neural_network->get_layers();
+    const auto& layers = network->get_layers();
 
     ParameterSnapshot snapshot;
     snapshot.layers.resize(layers.size());
@@ -94,17 +99,17 @@ ParameterSnapshot capture_parameter_snapshot(NeuralNetwork* neural_network)
     return snapshot;
 }
 
-void seed_parameters_from_snapshot(NeuralNetwork* neural_network,
+void seed_parameters_from_snapshot(Network* network,
                                    const ParameterSnapshot& snapshot,
                                    const vector<Index>& input_row_map)
 {
     if (snapshot.empty()) return;
 
-    const bool was_on_device = neural_network->get_parameters_device() == Device::CUDA;
-    if (was_on_device) neural_network->copy_parameters_host();
+    const bool was_on_device = network->get_parameters_device() == Device::CUDA;
+    if (was_on_device) network->copy_parameters_host();
 
-    const auto& layers = neural_network->get_layers();
-    const Index first_trainable = neural_network->get_first_trainable_layer_index();
+    const auto& layers = network->get_layers();
+    const Index first_trainable = network->get_first_trainable_layer_index();
     const size_t common_layers = min(layers.size(), snapshot.layers.size());
 
     for (size_t i = 0; i < common_layers; ++i)
@@ -157,30 +162,30 @@ void seed_parameters_from_snapshot(NeuralNetwork* neural_network,
         }
     }
 
-    if (was_on_device) neural_network->copy_parameters_device();
+    if (was_on_device) network->copy_parameters_device();
 }
 
-void finalize_selected_model(TrainingStrategy* training_strategy,
-                             NeuralNetwork* neural_network,
+void finalize_selected_model(Training* training,
+                             Network* network,
                              const VectorR& optimal_parameters,
                              const Index folds_number,
                              const bool display,
                              const char* selected_label)
 {
-    if (optimal_parameters.size() == neural_network->get_parameters_buffer_size())
+    if (optimal_parameters.size() == network->get_parameters_buffer_size())
     {
-        neural_network->set_parameters(optimal_parameters);
+        network->set_parameters(optimal_parameters);
     }
     else if (folds_number > 1)
     {
-        if (display) cout << "Refitting the final model on all development samples.\n";
-        refit_final_model_on_development(training_strategy, folds_number);
+        if (display) logging::info() << "Refitting the final model on all development samples.\n";
+        refit_final_model_on_development(training, folds_number);
     }
     else
     {
-        if (display) cout << "Refitting the final model on the selected " << selected_label << ".\n";
-        neural_network->set_parameters_random();
-        training_strategy->train();
+        if (display) logging::info() << "Refitting the final model on the selected " << selected_label << ".\n";
+        network->set_parameters_random();
+        training->train();
     }
 }
 
@@ -199,9 +204,9 @@ FeatureScaling capture_input_scaling(Dataset* dataset)
     return dataset->calculate_used_feature_scaling(VariableRole::Input);
 }
 
-void apply_input_scaling(NeuralNetwork* neural_network, FeatureScaling input_scaling)
+void apply_input_scaling(Network* network, FeatureScaling input_scaling)
 {
-    for (const unique_ptr<Layer>& layer : neural_network->get_layers())
+    for (const unique_ptr<Layer>& layer : network->get_layers())
     {
         auto* const endpoint = dynamic_cast<FeatureScalingEndpoint*>(layer.get());
         if (!endpoint || endpoint->get_scaling_role() != VariableRole::Input)
@@ -215,7 +220,3 @@ void apply_input_scaling(NeuralNetwork* neural_network, FeatureScaling input_sca
 }
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

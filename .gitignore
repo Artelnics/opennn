@@ -127,7 +127,7 @@ build-wrapper-dump.json
 *.weights
 *.conv.*
 *.bin
-# The concrete example ships a trained network; NeuralNetwork::load needs this
+# The concrete example ships a trained network; Network::load needs this
 # sibling of concrete_uci.json, so it is not a regenerable cache.
 !examples/concrete/nn/concrete_uci.bin
 **/.cache/
@@ -135,33 +135,20 @@ build-wrapper-dump.json
 # Generated test data
 /tests/data/*.xml
 
-# Benchmark generated outputs.
-#
-# The per-binary lines that used to be here named one executable at a time in
-# /benchmarks/inference-speed, /accuracy, /export, /memory, /startup and
-# /training-speed. Those six directories no longer exist -- the suite is one
-# entry point and one definition per engine per family -- so the lines ignored
-# nothing and read as though that layout were still current. Benchmark binaries
-# now build into the build directory, which is already ignored.
+# Bundled archives are unpacked into external build or reference directories.
+/examples/mnist/data/*/
+/examples/melanoma_cancer/data/*/
+/examples/legacy_8/*/
+
+# Benchmark exports and measurements; binaries belong in external build trees.
 /benchmarks/**/*.onnx
 /benchmarks/**/*.onnx.data
 /benchmarks/**/*.csv
 /benchmarks/**/pred_*.txt
 
-# Result artifacts are never committed; a claim cites a run_id, and the JSON
-# stays on disk. Only the README explaining the store is tracked.
-/benchmarks/results/*
-!/benchmarks/results/README.md
-
-# Session-generated benchmark reports. The suite's own documents are allowed
-# back by name, so a new one is invisible until it is listed here -- DESIGN.md
-# was ignored on the day it was written for exactly that reason. If you add a
-# document to benchmarks/, add it below or it will never be committed.
-/benchmarks/*.md
-!/benchmarks/README.md
-!/benchmarks/DATA_POLICY.md
-!/benchmarks/DESIGN.md
-!/benchmarks/PROTOCOL.md
+# Keep the former in-tree result location ignored for existing configurations.
+# Current benchmark results default to ../opennn-benchmark-results/.
+/benchmarks/results/
 
 # OneDrive leaves these when it syncs the repo between machines.
 *-DESKTOP-*.cpp

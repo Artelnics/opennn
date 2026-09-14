@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   E X P R E S S I O N   E V A L U A T O R   C L A S S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #pragma once
 
@@ -13,7 +8,7 @@
 namespace opennn
 {
 
-class NeuralNetwork;
+class Network;
 
 enum class ExpressionLinearity { Linear, Nonlinear };
 
@@ -68,7 +63,7 @@ CompiledExpression compile_expression(const string&,
                                       const vector<pair<string, Index>>&,
                                       const vector<pair<string, Index>>&);
 
-CompiledExpression compile_expression(const string&, const NeuralNetwork*, const string& role = "Expression");
+CompiledExpression compile_expression(const string&, const Network*, const string& role = "Expression");
 
 CompiledExpression compile_sum(const vector<Index>&);
 
@@ -76,9 +71,9 @@ CompiledExpression compile_coupling(Index variable, Index switch_variable, float
 
 CompiledExpression compile_binarity(Index variable);
 
-CompiledExpression compile_integrality(const string&, const NeuralNetwork*);
+CompiledExpression compile_integrality(const string&, const Network*);
 
-CompiledExpression compile_membership(const string&, const NeuralNetwork*, const vector<float>& allowed);
+CompiledExpression compile_membership(const string&, const Network*, const vector<float>& allowed);
 
 bool is_output_coupled(const CompiledExpression&);
 
@@ -96,7 +91,3 @@ void evaluate_input_gradient(const CompiledExpression&,
 VectorR evaluate_input_gradient(const CompiledExpression&, const VectorR& point, const VectorR& output);
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

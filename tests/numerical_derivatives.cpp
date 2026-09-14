@@ -6,9 +6,9 @@
 #include "tests/numerical_derivatives.h"
 
 #include "opennn/dataset/dataset.h"
-#include "opennn/neural_network/neural_network.h"
-#include "opennn/neural_network/forward_propagation.h"
-#include "opennn/neural_network/back_propagation.h"
+#include "opennn/network/network.h"
+#include "opennn/network/forward_propagation.h"
+#include "opennn/network/back_propagation.h"
 #include "opennn/dataset/batch.h"
 #include "opennn/core/device_backend.h"
 
@@ -20,11 +20,11 @@ namespace opennn
 namespace
 {
 
-NeuralNetwork* checked_neural_network(Loss& loss, const char* caller)
+Network* checked_network(Loss& loss, const char* caller)
 {
-    NeuralNetwork* neural_network = loss.get_neural_network();
-    throw_if(!neural_network, "{}: neural network is not set.", caller);
-    return neural_network;
+    Network* network = loss.get_network();
+    throw_if(!network, "{}: neural network is not set.", caller);
+    return network;
 }
 
 
@@ -41,17 +41,17 @@ Dataset* checked_dataset(Loss& loss, const char* caller)
 struct TrainingSetup
 {
     TrainingSetup(Loss& loss, const char* caller)
-        : neural_network(checked_neural_network(loss, caller)),
+        : network(checked_network(loss, caller)),
           dataset(checked_dataset(loss, caller)),
           samples_number(dataset->get_samples_number("Training")),
-          batch(samples_number, dataset, neural_network->get_config()),
-          forward_propagation(samples_number, neural_network),
+          batch(samples_number, dataset, network->get_config()),
+          forward_propagation(samples_number, network),
           back_propagation(samples_number, loss)
     {
         batch.fill(dataset->get_sample_indices("Training"), dataset->get_feature_selection());
 
 #ifdef OPENNN_HAS_CUDA
-        if (neural_network->is_gpu())
+        if (network->is_gpu())
         {
             batch.upload_to_device_batch_async(batch, device::get_transfer_stream());
             batch.wait_h2d_complete();
@@ -59,7 +59,7 @@ struct TrainingSetup
 #endif
     }
 
-    NeuralNetwork*     neural_network;
+    Network*     network;
     Dataset*           dataset;
     Index              samples_number;
     Batch              batch;
@@ -81,13 +81,13 @@ float calculate_numerical_error(Loss& loss)
 {
     TrainingSetup setup(loss, "calculate_numerical_error");
 
-    setup.neural_network->forward_propagate(setup.batch.get_inputs(), setup.forward_propagation);
+    setup.network->forward_propagate(setup.batch.get_inputs(), setup.forward_propagation);
 
     return loss.calculate_error(setup.batch, setup.forward_propagation).error;
 }
 
 
-// NeuralNetwork::compile() zeroes the parameters, and only the StandardNetworks
+// Network::compile() zeroes the parameters, and only the StandardNetworks
 // builders randomise them afterwards -- a network assembled by hand from
 // add_layer() reaches here with every weight at zero unless the test says
 // otherwise. That is not a harmless starting point for a gradient check: with
@@ -96,7 +96,7 @@ float calculate_numerical_error(Loss& loss)
 // check passes whatever the backward pass does. Twenty tests were in that state
 // -- one had 1 live gradient component out of 432 -- so this is a hard failure
 // rather than a warning, to keep them from drifting back.
-static void require_live_parameters(NeuralNetwork& network)
+static void require_live_parameters(Network& network)
 {
     network.copy_parameters_host();
     const VectorMap parameters = network.get_parameters_map();
@@ -112,9 +112,9 @@ VectorR calculate_gradient(Loss& loss)
 {
     TrainingSetup setup(loss, "calculate_gradient");
 
-    require_live_parameters(*setup.neural_network);
+    require_live_parameters(*setup.network);
 
-    setup.neural_network->forward_propagate(setup.batch.get_inputs(), setup.forward_propagation, ForwardPropagationMode::Training);
+    setup.network->forward_propagate(setup.batch.get_inputs(), setup.forward_propagation, ForwardPropagationMode::Training);
 
     loss.back_propagate(setup.batch, setup.forward_propagation, setup.back_propagation);
 
@@ -128,9 +128,9 @@ VectorR calculate_numerical_gradient(Loss& loss)
 {
     TrainingSetup setup(loss, "calculate_numerical_gradient");
 
-    setup.neural_network->copy_parameters_host();
+    setup.network->copy_parameters_host();
 
-    const VectorMap parameters = setup.neural_network->get_parameters_map();
+    const VectorMap parameters = setup.network->get_parameters_map();
     const Index parameters_number = parameters.size();
 
     VectorR perturbed = parameters;
@@ -138,7 +138,7 @@ VectorR calculate_numerical_gradient(Loss& loss)
 
     const auto error_at = [&]() -> float
     {
-        setup.neural_network->forward_propagate(setup.batch.get_inputs(),
+        setup.network->forward_propagate(setup.batch.get_inputs(),
                                                 perturbed,
                                                 setup.forward_propagation);
         return loss.calculate_error(setup.batch, setup.forward_propagation).error;

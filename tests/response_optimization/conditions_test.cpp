@@ -33,7 +33,7 @@ namespace
 
 enum class Driver { Contraction, Genetic };
 
-unique_ptr<ResponseOptimization> make_driver(const Driver driver, NeuralNetwork* network)
+unique_ptr<ResponseOptimization> make_driver(const Driver driver, Network* network)
 {
     if (driver == Driver::Genetic) return make_unique<GeneticResponse>(network);
 
@@ -812,6 +812,49 @@ TEST_P(ResponseDriver, CategoricalSearchMatchesAScanOverCategories)
     EXPECT_GE(-results(0, 5), best_scan_value - 1e-2f)
         << "kept category " << category << " worth " << -results(0, 5)
         << " against a scan best of " << best_scan_value;
+}
+
+
+// An expression that is undefined over the whole box, or that overflows on it, leaves no
+// feasible point to repair towards, and the run has to say so rather than return a number.
+
+TEST_P(ResponseDriver, RejectsUndefinedAndOverflowedConstraints)
+{
+    for (const bool overflow : {false, true})
+    {
+        MinimalApproximation setup({"x1", "x2"}, {"y"},
+                                   overflow ? 100.0f : -2.0f,
+                                   overflow ? 101.0f : -1.0f);
+
+        const unique_ptr<ResponseOptimization> optimization = make_driver(GetParam(), setup.network.get());
+
+        optimization->set_points_number(4);
+        optimization->set_iterations_number(2);
+
+        optimization->add_objective("x1", Sense::Minimize);
+        optimization->add_constraint(overflow ? "exp(x1)" : "sqrt(x1)", Condition::GreaterEqual, {1.0f});
+
+        EXPECT_THROW(optimization->perform_response_optimization(), runtime_error);
+    }
+}
+
+
+TEST_P(ResponseDriver, FiniteNonlinearConstraintsStillProduceFeasiblePoints)
+{
+    MinimalApproximation setup({"x1", "x2"}, {"y"}, 1.0f, 4.0f);
+
+    const unique_ptr<ResponseOptimization> optimization = make_driver(GetParam(), setup.network.get());
+
+    optimization->add_objective("x1", Sense::Minimize);
+    optimization->add_constraint("sqrt(x1)", Condition::GreaterEqual, {1.0f});
+
+    const MatrixR results = optimization->perform_response_optimization();
+
+    ASSERT_EQ(results.rows(), 1);
+
+    EXPECT_TRUE(results.allFinite());
+
+    EXPECT_GE(sqrt(results(0, 0)), 1.0f - EPSILON);
 }
 
 

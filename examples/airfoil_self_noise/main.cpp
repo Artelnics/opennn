@@ -11,8 +11,8 @@
 #include "opennn/core/random_utilities.h"
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/models/models.h"
-#include "opennn/testing_analysis/testing_analysis.h"
-#include "opennn/training_strategy/training_strategy.h"
+#include "opennn/evaluation/evaluation.h"
+#include "opennn/training/training.h"
 
 using namespace opennn;
 
@@ -30,13 +30,13 @@ int main()
                                      {12},
                                      dataset.get_target_shape());
 
-        TrainingStrategy training_strategy(&network, &dataset);
+        Training training(&network, &dataset);
 
-        training_strategy.train();
+        training.train();
 
-        TestingAnalysis testing_analysis(&network, &dataset);
+        Evaluation evaluation(&network, &dataset);
 
-        testing_analysis.print_goodness_of_fit_analysis();
+        evaluation.print_goodness_of_fit_analysis();
 
         cout << "Good bye!" << endl;
 

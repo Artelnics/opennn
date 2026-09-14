@@ -1,0 +1,193 @@
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
+
+#include "opennn/network/operators/multihead_projection_operator.h"
+#include "opennn/core/profiler.h"
+#include "opennn/core/tensor_operations.h"
+#include "opennn/network/forward_propagation.h"
+#include "opennn/network/back_propagation.h"
+#ifdef OPENNN_HAS_CUDA
+#include "opennn/core/cuda/kernel_attention.cuh"
+#endif
+
+namespace opennn
+{
+
+#ifdef OPENNN_HAS_CUDA
+
+static void split_heads_gpu(const TensorView& source, TensorView& destination)
+{
+    const Shape& shape = source.get_shape();
+    const Index sequence_length = shape[1];
+    const Index heads_number = shape[2];
+    const Index head_dimension = shape[3];
+
+    destination.dispatch([&]<typename T>() {
+        split_heads_cuda<T>(source.size(), source.as<T>(), destination.as<T>(),
+                            to_int(sequence_length),
+                            to_int(heads_number),
+                            to_int(head_dimension));
+    });
+}
+
+#else
+
+OPENNN_CUDA_TEMPLATE_STUB(split_heads_gpu)
+OPENNN_CUDA_TEMPLATE_STUB(concatenate_heads_gpu)
+
+#endif
+
+static void transpose_middle_axes(const float* src, float* dst,
+                                  Index batch_size, Index src_m1, Index src_m2, Index D)
+{
+    const Index blocks_count = batch_size * src_m2 * src_m1;
+
+    #pragma omp parallel for schedule(static)
+    for (Index block = 0; block < blocks_count; ++block)
+    {
+        const Index j = block % src_m1;
+        const Index batch_i = block / src_m1;
+        const Index i = batch_i % src_m2;
+        const Index batch_index = batch_i / src_m2;
+
+        memcpy(dst + block * D,
+               src + ((batch_index * src_m1 + j) * src_m2 + i) * D,
+               D * sizeof(float));
+    }
+}
+
+void split_heads(const TensorView& source, TensorView& destination)
+{
+    if (source.is_cuda()) { split_heads_gpu(source, destination); return; }
+
+    const Shape& shape = source.get_shape();
+    transpose_middle_axes(source.as<float>(), destination.as<float>(),
+                          shape[0], shape[1], shape[2], shape[3]);
+}
+
+void concatenate_heads(const TensorView& source, TensorView& destination)
+{
+#ifndef OPENNN_HAS_CUDA
+    if (source.is_cuda()) return concatenate_heads_gpu(source, destination);
+#endif
+    // Both directions swap the source tensor's two middle axes.
+    split_heads(source, destination);
+}
+
+void MultiHeadProjectionOperator::set(Index new_input_features, Index new_heads_number,
+                              Index new_head_dimension, Type new_compute_dtype)
+{
+    CombinationOperator::set(new_input_features,
+                             new_heads_number * new_head_dimension,
+                             new_compute_dtype);
+}
+
+void MultiHeadProjectionOperator::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, ForwardPropagationMode)
+{
+    PROFILE_SCOPE_NAMED(projection_timer, "op:projection_fwd");
+
+    throw_if(tied_transposed || transposed_inference_active
+             || fused_activation != ActivationFunction::Identity,
+             "MultiHeadProjectionOperator: tied, transposed and fused-activation "
+             "projections are not supported.");
+
+    auto& forward_slots = forward_propagation.slots[layer];
+    const auto& input_views = get_inputs(forward_propagation, layer);
+    const TensorView& input = input_views[min(input_view_index, input_views.size() - 1)];
+    TensorView& head_output = get_output(forward_propagation, layer);
+
+    const Index batch_size     = input.get_shape()[0];
+    const Index seq_len        = input.get_shape()[1];
+    const Index rows           = batch_size * seq_len;
+    const Index heads_number   = head_output.get_shape()[1];
+    const Index head_dimension = head_output.get_shape()[3];
+
+    const TensorView  input_2d    = input.reshape({rows, input_features});
+
+    // The GEMM reads the input and the weights and writes the projected heads.
+    // Whether that write is the last pass over the result is the difference
+    // between the two branches below, and it is the only thing worth measuring
+    // here: the arithmetic is the same either way. Without interleaved heads the
+    // GEMM lands in scratch and split_heads reads it back and writes it out
+    // permuted, so the result crosses memory twice more than it has to.
+    //
+    // This is the most-called operator in a transformer forward pass, so the
+    // count stays behind the profiler check rather than being computed and
+    // thrown away on every call.
+    const auto record_bytes = [&](const double extra_passes)
+    {
+        if (!profiler::is_enabled()) return;
+
+        const double projected = double(rows) * double(heads_number) * double(head_dimension);
+
+        projection_timer.set_bytes(
+            double(type_bytes(input.get_type()))
+            * (double(rows) * double(input_features)
+               + double(input_features) * double(heads_number) * double(head_dimension)
+               + projected * (1.0 + extra_passes)));
+    };
+
+    const bool interleaved = interleaved_heads && input.is_cuda();
+    record_bytes(interleaved ? 0.0 : 2.0);
+    TensorView projected = interleaved
+        ? head_output.reshape({rows, heads_number * head_dimension})
+        : forward_slots[scratch_slot].reshape_prefix({rows, heads_number * head_dimension});
+    const TensorView scratch_4d = interleaved ? TensorView{} : projected.reshape(
+        {batch_size, seq_len, heads_number, head_dimension});
+
+    linear_forward(input_2d, weights, bias, projected,
+                   LinearEpilogue::Bias, nullptr, weight_scale);
+    if (!interleaved) split_heads(scratch_4d, head_output);
+}
+
+void MultiHeadProjectionOperator::back_propagate(ForwardPropagation& forward_propagation, BackPropagation& back_propagation, size_t layer) const
+{
+    PROFILE_SCOPE("op:projection_bwd");
+    auto& forward_slots = forward_propagation.slots[layer];
+    auto& backward_slots = back_propagation.slots[layer];
+
+    const auto& input_views = get_inputs(forward_propagation, layer);
+    const TensorView& input = input_views[min(input_view_index, input_views.size() - 1)];
+    const bool self_attention = (input_views.size() == 1);
+
+    const TensorView& head_delta = get_output_delta(back_propagation, layer);
+
+    const Index batch_size     = input.get_shape()[0];
+    const Index seq_len        = input.get_shape()[1];
+    const Index rows           = batch_size * seq_len;
+    const Index heads_number   = head_delta.get_shape()[1];
+    const Index head_dimension = head_delta.get_shape()[3];
+
+    const TensorView  input_2d    = input.reshape({rows, input_features});
+    const bool interleaved = interleaved_heads && input.is_cuda();
+
+    TensorView&       scratch     = forward_slots[scratch_slot];
+    TensorView        scratch_4d  = scratch.reshape_prefix(
+        {batch_size, seq_len, heads_number, head_dimension});
+    const TensorView  output_delta_2d = interleaved
+        ? head_delta.reshape({rows, heads_number * head_dimension})
+        : scratch.reshape_prefix({rows, heads_number * head_dimension});
+
+    if (!interleaved) concatenate_heads(head_delta, scratch_4d);
+
+    TensorView& input_delta    = backward_slots[self_attention ? input_delta_slot_self : input_delta_slot_cross];
+
+    TensorView  input_delta_2d = input_delta.empty()
+        ? TensorView{}
+        : input_delta.reshape({rows, input_features});
+
+    const bool accumulate = self_attention
+        ? accumulate_input_delta_self
+        : accumulate_input_delta_cross;
+
+    const size_t input_ordinal = min(input_view_index, input_views.size() - 1);
+    const TensorView& planned_addend = back_propagation.input_delta_addend(layer, input_ordinal);
+    const TensorView addend = accumulate || planned_addend.empty()
+        ? TensorView{}
+        : planned_addend.reshape({rows, input_features});
+
+    linear_backward(output_delta_2d, input_2d, weights, weight_gradient, bias_gradient, input_delta_2d, accumulate,
+                    {.addend = addend.empty() ? nullptr : &addend});
+}
+
+}

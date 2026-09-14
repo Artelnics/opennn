@@ -12,7 +12,7 @@
 #include <iostream>
 #include <string>
 
-#include "opennn/neural_network/chat.h"
+#include "opennn/network/chat.h"
 #include "opennn/models/models.h"
 #include "opennn/core/configuration.h"
 

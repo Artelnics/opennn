@@ -1,18 +1,13 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   R E S P O N S E   O P T I M I Z A T I O N   C L A S S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/response_optimization/response_optimization.h"
 
 #include <unsupported/Eigen/LevenbergMarquardt>
 
 #include "opennn/registry.h"
-#include "opennn/neural_network/neural_network.h"
-#include "opennn/neural_network/layers/scaling_layer.h"
+#include "opennn/network/network.h"
+#include "opennn/network/layers/scaling_layer.h"
 #include "opennn/response_optimization/expression_evaluator.h"
 #include "opennn/core/random_utilities.h"
 #include "opennn/core/statistics.h"
@@ -127,7 +122,7 @@ float membership_scale(const vector<float>& values)
 }
 
 
-vector<Index> get_group_members(const string& expression, const NeuralNetwork* neural_network)
+vector<Index> get_group_members(const string& expression, const Network* network)
 {
     vector<Index> members;
 
@@ -137,7 +132,7 @@ vector<Index> get_group_members(const string& expression, const NeuralNetwork* n
 
         throw_if(name.empty(), "Constraint on '" + expression + "' leaves an empty entry in its list of variables.");
 
-        const CompiledExpression member = compile_expression(name, neural_network, "Constraint");
+        const CompiledExpression member = compile_expression(name, network, "Constraint");
 
         throw_if(is_output_coupled(member) || !is_bare_variable(member),
                  "Constraint on '" + expression + "' lists '" + name + "', which is not a single input variable. "
@@ -240,18 +235,18 @@ void check_domain(const pair<VectorR, VectorR>& domain, const vector<Constraint>
 }
 
 
-ResponseOptimization::ResponseOptimization(NeuralNetwork* new_neural_network)
+ResponseOptimization::ResponseOptimization(Network* new_network)
 {
     feasibility_system.problem = this;
 
-    set(new_neural_network);
+    set(new_network);
 }
 
 
 ResponseOptimization::~ResponseOptimization() = default;
 
 
-void ResponseOptimization::Constraint::compile_equations(const NeuralNetwork* neural_network,
+void ResponseOptimization::Constraint::compile_equations(const Network* network,
                                                          const VectorR& spans,
                                                          const Index first_switch,
                                                          const float tolerance)
@@ -261,7 +256,7 @@ void ResponseOptimization::Constraint::compile_equations(const NeuralNetwork* ne
 
     if (condition == Condition::Cardinality)
     {
-        const vector<Index> members = get_group_members(string_expression, neural_network);
+        const vector<Index> members = get_group_members(string_expression, network);
 
         throw_if(values.empty() || values[0] < 0.0f || values[0] > float(members.size())
               || values[0] != round(values[0]),
@@ -269,8 +264,9 @@ void ResponseOptimization::Constraint::compile_equations(const NeuralNetwork* ne
                  + to_string(members.size()) + " variables it counts.");
 
         if (values[0] == float(members.size()))
-            cerr << "Warning: constraint on '" << string_expression << "' allows all "
-                 << members.size() << " of the variables it counts, so it restricts nothing.\n";
+            logging::warning() << "Warning: constraint on '" << string_expression << "' allows all "
+                               << members.size()
+                               << " of the variables it counts, so it restricts nothing.\n";
 
         vector<Index> switch_columns;
 
@@ -294,7 +290,7 @@ void ResponseOptimization::Constraint::compile_equations(const NeuralNetwork* ne
         return;
     }
 
-    equations.push_back(compile_expression(string_expression, neural_network, "Constraint"));
+    equations.push_back(compile_expression(string_expression, network, "Constraint"));
 
     if (condition == Condition::Integer)
     {
@@ -306,7 +302,7 @@ void ResponseOptimization::Constraint::compile_equations(const NeuralNetwork* ne
 
         equation_limits.emplace_back(-unbounded, unbounded);
 
-        equations.push_back(compile_integrality(string_expression, neural_network));
+        equations.push_back(compile_integrality(string_expression, network));
         equation_limits.emplace_back(-tolerance, tolerance);
     }
     else if (condition == Condition::AllowedSet)
@@ -317,20 +313,21 @@ void ResponseOptimization::Constraint::compile_equations(const NeuralNetwork* ne
         ranges::sort(values);
 
         if (ranges::adjacent_find(values) != values.end())
-            cerr << "Warning: constraint on '" << string_expression << "' repeats allowed values.\n";
+            logging::warning() << "Warning: constraint on '" << string_expression << "' repeats allowed values.\n";
 
         values.erase(ranges::unique(values).begin(), values.end());
 
         if (values.size() > discrete_values_warning)
-            cerr << "Warning: constraint on '" << string_expression << "' lists " << values.size()
-                 << " allowed values. The repair drives a polynomial of that degree, which loses "
-                    "precision as the degree grows.\n";
+            logging::warning() << "Warning: constraint on '" << string_expression << "' lists "
+                               << values.size()
+                               << " allowed values. The repair drives a polynomial of that degree, "
+                                  "which loses precision as the degree grows.\n";
 
         equation_limits.emplace_back(values.front(), values.back());
 
         const float band = tolerance*membership_scale(values);
 
-        equations.push_back(compile_membership(string_expression, neural_network, values));
+        equations.push_back(compile_membership(string_expression, network, values));
         equation_limits.emplace_back(-band, band);
     }
     else
@@ -342,8 +339,9 @@ void ResponseOptimization::Constraint::compile_equations(const NeuralNetwork* ne
                  + to_string(values_number) + " value(s).");
 
         if (values.size() > values_number)
-            cerr << "Warning: constraint on '" << string_expression << "' only uses "
-                 << values_number << " of the " << values.size() << " values given.\n";
+            logging::warning() << "Warning: constraint on '" << string_expression << "' only uses "
+                               << values_number << " of the " << values.size()
+                               << " values given.\n";
 
         if (condition == Condition::Between)
         {
@@ -352,8 +350,9 @@ void ResponseOptimization::Constraint::compile_equations(const NeuralNetwork* ne
                      + " and " + to_string(values[1]) + ", an empty interval.");
 
             if (values[0] == values[1])
-                cerr << "Warning: constraint on '" << string_expression << "' is between two equal values. "
-                     << "Use the Equal condition instead.\n";
+                logging::warning() << "Warning: constraint on '" << string_expression
+                                   << "' is between two equal values. "
+                                      "Use the Equal condition instead.\n";
         }
 
         equation_limits.push_back(interval_band(condition, values));
@@ -424,7 +423,7 @@ VectorR ResponseOptimization::FeasibilitySystem::force_into_borders(const Vector
     forced = forced.cwiseMax(borders.first).cwiseMin(borders.second);
 
     for (const auto& [first_column, categories_number] :
-         get_categorical_blocks(problem->neural_network->get_input_variables()))
+         get_categorical_blocks(problem->network->get_input_variables()))
     {
         Index category = 0;
 
@@ -448,7 +447,7 @@ VectorR ResponseOptimization::FeasibilitySystem::evaluate(const VectorR& point,
                                                           VectorR& residuals,
                                                           const VectorR& output) const
 {
-    NeuralNetwork* network = problem->neural_network;
+    Network* network = problem->network;
 
     const VectorR response =
         output.size() > 0
@@ -479,7 +478,7 @@ MatrixR ResponseOptimization::FeasibilitySystem::calculate_jacobian(const Vector
                                                                     const VectorR& output,
                                                                     const VectorR& residuals) const
 {
-    const NeuralNetwork& network = *problem->neural_network;
+    const Network& network = *problem->network;
 
     const Index inputs_number = network.get_inputs_number();
 
@@ -707,7 +706,7 @@ struct FeasibilityFunctor : Eigen::DenseFunctor<float>
 
 pair<VectorR, VectorR> ResponseOptimization::FeasibilitySystem::solve(VectorR point) const
 {
-    const Index inputs_number = problem->neural_network->get_inputs_number();
+    const Index inputs_number = problem->network->get_inputs_number();
 
     point = force_into_borders(point);
 
@@ -742,9 +741,9 @@ pair<VectorR, VectorR> ResponseOptimization::FeasibilitySystem::solve(VectorR po
 }
 
 
-void ResponseOptimization::set(NeuralNetwork* new_neural_network)
+void ResponseOptimization::set(Network* new_network)
 {
-    neural_network = new_neural_network;
+    network = new_network;
 }
 
 
@@ -768,9 +767,9 @@ void ResponseOptimization::set_feasibility_margin_factor(const float new_feasibi
 
 pair<VectorR, VectorR> ResponseOptimization::get_unconstrained_domain() const
 {
-    throw_if(!neural_network, "The neural network has not been set.");
+    throw_if(!network, "The neural network has not been set.");
 
-    const Scaling* scaling_layer = static_cast<const Scaling*>(neural_network->get_first(LayerType::Scaling));
+    const Scaling* scaling_layer = static_cast<const Scaling*>(network->get_first(LayerType::Scaling));
 
     throw_if(!scaling_layer, "The neural network has no scaling layer to take the input domain from.");
 
@@ -780,7 +779,7 @@ pair<VectorR, VectorR> ResponseOptimization::get_unconstrained_domain() const
 
 void ResponseOptimization::add_objective(const string& expression, const Objective::Sense sense, const float value)
 {
-    objectives.push_back(Objective{compile_expression(expression, neural_network, "Objective"), sense, value});
+    objectives.push_back(Objective{compile_expression(expression, network, "Objective"), sense, value});
 }
 
 
@@ -806,7 +805,7 @@ void ResponseOptimization::add_constraint(const string& expression,
             first_switch += Index(other.involved_variables.size());
     }
 
-    constraint.compile_equations(neural_network, spans, first_switch, constraint_tolerance);
+    constraint.compile_equations(network, spans, first_switch, constraint_tolerance);
 
     constraints.push_back(move(constraint));
 }
@@ -824,7 +823,7 @@ pair<VectorR, VectorR> ResponseOptimization::calculate_domain()
 {
     feasibility_system.initialize();
 
-    const Index inputs_number = neural_network->get_inputs_number();
+    const Index inputs_number = network->get_inputs_number();
 
     return {feasibility_system.borders.first.head(inputs_number),
             feasibility_system.borders.second.head(inputs_number)};
@@ -850,7 +849,7 @@ void ResponseOptimization::assign_random_categories(VectorR& point, const float 
     vector<float> block;
 
     for (const auto& [first_column, categories_number] :
-         get_categorical_blocks(neural_network->get_input_variables()))
+         get_categorical_blocks(network->get_input_variables()))
     {
         if (probability < 1.0f && random_uniform(0.0f, 1.0f) >= probability) continue;
 
@@ -977,7 +976,3 @@ vector<Index> ResponseOptimization::clean_front(const MatrixR& inputs, const Mat
 
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

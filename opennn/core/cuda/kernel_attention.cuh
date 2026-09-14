@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-2.1-or-later
 #ifndef KERNEL_ATTENTION_CUH
 #define KERNEL_ATTENTION_CUH
 

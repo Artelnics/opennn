@@ -1,6 +1,6 @@
 // The transformer family, defined once, driven four ways.
 //
-// PLAN.md. The "Attention Is All You Need" base model -- d_model 512, 8
+// The "Attention Is All You Need" base model -- d_model 512, 8
 // heads, feed-forward 2048, 6 layers -- on WMT14 English-German, which is the
 // corpus that paper trained and reported on and therefore the citable one.
 // Heads and feed-forward width follow d_model by the paper's own ratios
@@ -31,15 +31,16 @@
 #endif
 
 #include "opennn/core/configuration.h"
+#include "opennn/core/memory_debug.h"
 #include "opennn/core/tensor_operations.h"
 #include "opennn/core/random_utilities.h"
 #include "opennn/core/device_backend.h"
 #include "opennn/core/tensor_types.h"
 #include "opennn/dataset/language_dataset.h"
-#include "opennn/neural_network/forward_propagation.h"
+#include "opennn/network/forward_propagation.h"
 #include "opennn/models/models.h"
-#include "opennn/training_strategy/adaptive_moment_estimation.h"
-#include "opennn/training_strategy/training_strategy.h"
+#include "opennn/training/adam.h"
+#include "opennn/training/training.h"
 
 using namespace opennn;
 using clock_type = chrono::steady_clock;
@@ -100,48 +101,6 @@ unique_ptr<Transformer> build(LanguageDataset& dataset, const Options& options)
         options.feed_forward(),
         options.layers);
 
-    // WMT14 rows are 130 tokens after START/END are added, so the library-wide
-    // 192-token crossover puts them on the materialized path, which keeps a
-    // full attention matrix per encoder/decoder attention layer. PyTorch uses
-    // fused scaled-dot-product attention at this length, so leaving OpenNN
-    // materialized compares one engine's guarded path against the other's fast
-    // one. Both measured cells here run many iterations over the corpus, which
-    // is the regime the fused path is for.
-    //
-    // Measured on this suite, sweeping sequence length with everything else
-    // fixed, fused throughput beat materialized at every length tried, by
-    // roughly 6% at 32 tokens rising to about 30% by 192 and 256. Those sweep
-    // points are one launch each and the fused path varies by about 6% between
-    // launches while the materialized one holds to 0.5%, so read them as a
-    // trend rather than as figures. Five launches each way at 128 tokens give
-    // medians of 4674 against 3643 samples/s, a 28% gain whose distributions do
-    // not overlap at all -- 4231 slowest fused against 3653 fastest
-    // materialized. The library default
-    // stays at 192 regardless, and deliberately: the same sweep run as a single
-    // pass reverses the result, because cuDNN plan construction costs 0.3-2.0 s
-    // with nothing to amortize it against, leaving fused 1.6x slower at 256 and
-    // 5x slower at 32. Sequence length is only a proxy for the thing that
-    // actually decides this, which is how often the plan gets reused; a
-    // benchmark cell reusing it across every batch of 4,096 samples sits firmly
-    // on the fused side of that, and a caller doing one forward pass does not.
-    //
-    // The reference cuDNN 9.25 supports this graph; older runtimes stay on the
-    // materialized path because some reject the 130-token plan outright.
-    //
-    // Saying that was not enough to make it happen. This only ever lowered the
-    // threshold, so on a runtime below 9.25 the library default of 192 still
-    // put a 256-token corpus on the fused path -- the one this comment says to
-    // avoid there. Measured on cuDNN 9.10 with an RTX 3060, three interleaved
-    // pairs to cancel the thermal drift a laptop shows across a sequential
-    // sweep: 44,523 tokens/s fused against 47,064 materialized, fused losing
-    // every pair. In the attention scope alone fused was 6.2x slower forward
-    // and 5.5x slower backward, at 4.1 GB/s against 126.3, while Adam in the
-    // same run held 303.7 GB/s of a ~336 GB/s card. So the fused kernel is
-    // picking a poor engine for this shape on this architecture, not competing
-    // for bandwidth.
-    //
-    // Both branches are stated now, so the runtime decides the path rather than
-    // the library default deciding it by omission.
     transformer->set_attention_sdpa_min_sequence_length(
         use_bf16_sdpa(options) ? BF16_SDPA_MIN_SEQUENCE : SDPA_MATERIALIZED_ONLY);
 
@@ -172,12 +131,12 @@ Options parse_options(int argc, char* argv[], int first)
     return options;
 }
 
-AdaptiveMomentEstimation* configure(TrainingStrategy& strategy, Index batch)
+Adam* configure(Training& training, Index batch)
 {
-    strategy.set_loss("CrossEntropyError3d");
-    strategy.set_optimization_algorithm("AdaptiveMomentEstimation");
+    training.set_loss("CrossEntropyError3d");
+    training.set_optimization_algorithm("Adam");
 
-    auto* adam = dynamic_cast<AdaptiveMomentEstimation*>(strategy.get_optimization_algorithm());
+    auto* adam = dynamic_cast<Adam*>(training.get_optimization_algorithm());
     adam->set_batch_size(batch);
     adam->set_display(false);
     adam->set_display_period(1000000);
@@ -268,8 +227,8 @@ int main(int argc, char* argv[])
             const bool graph = options.device == Device::CUDA
                                && getenv("OPENNN_NO_CUDA_GRAPH") == nullptr;
 
-            TrainingStrategy strategy(network.get(), &dataset);
-            auto* adam = configure(strategy, batch);
+            Training training(network.get(), &dataset);
+            auto* adam = configure(training, batch);
             adam->set_cuda_graph(graph);
             adam->set_maximum_epochs(warmup + epochs);
 
@@ -282,7 +241,7 @@ int main(int argc, char* argv[])
             vector<double> epoch_seconds;
             auto previous_mark = clock_type::now();
 
-            adam->post_epoch_callback = [&](Index epoch, float, float, NeuralNetwork*)
+            adam->post_epoch_callback = [&](Index epoch, float, float, Network*)
             {
                 const auto now = clock_type::now();
                 const double elapsed = chrono::duration<double>(now - previous_mark).count();
@@ -299,7 +258,7 @@ int main(int argc, char* argv[])
                          << unix_now() << "\n" << defaultfloat;
             };
 
-            strategy.train();
+            training.train();
 
             if (Index(epoch_seconds.size()) != epochs)
             {
@@ -372,13 +331,7 @@ int main(int argc, char* argv[])
                 for (Index i = 0; i + batch <= samples; i += batch)
                     network->calculate_outputs_resident(inputs, forward_propagation, false);
 
-                // The clock stops when the work is done, not when it is
-                // queued, matching torch.cuda.synchronize() in the PyTorch
-                // driver. At this pass length the queue saturates and the
-                // host blocks anyway, so this is worth about one graph
-                // launch -- but a pass short enough to fit the async queue
-                // would otherwise report launch throughput, which is how the
-                // dense inference cell read 72.5M samples/s.
+                // Measure completed GPU work, matching the PyTorch barrier.
                 if (options.device == Device::CUDA)
                     device::synchronize(device::get_compute_stream());
             };
@@ -388,6 +341,16 @@ int main(int argc, char* argv[])
             // which aborted every CPU inference cell in this family. The
             // warm-up pass still has to happen, so it is the upload that is
             // conditional, not the pass.
+            // Deploy the parameters for inference before the warm-up: the
+            // forward pass reads the bf16 mirror (and compact fp32 for the
+            // slots that stay fp32), so the fp32 master is released rather
+            // than kept resident beside it -- the footprint the PyTorch driver
+            // reaches with model.to(torch.bfloat16). The library does not do
+            // this inside calculate_outputs_resident because training after
+            // it needs the master back; here it is an explicit deployment step.
+            if (options.device == Device::CUDA)
+                network->upload_parameters_bf16_inference();
+
             network->calculate_outputs_resident(inputs, forward_propagation,
                                                 options.device == Device::CUDA);
             run_pass();
@@ -441,13 +404,13 @@ int main(int argc, char* argv[])
             auto network = build(dataset, options);
             cout << "parameters=" << network->get_parameters_number() << "\n" << flush;
 
-            TrainingStrategy strategy(network.get(), &dataset);
-            configure(strategy, batch)->set_maximum_epochs(1);
-            strategy.train();
+            Training training(network.get(), &dataset);
+            configure(training, batch)->set_maximum_epochs(1);
+            training.train();
         }
         catch (const exception& error)
         {
-            cout << "fits=0\nreason=" << error.what() << "\nRESULT=OOM\n" << flush;
+            cout << "fits=0\nreason=" << error.what() << "\nRESULT=ERROR\n" << flush;
             return 1;
         }
 
@@ -458,6 +421,9 @@ int main(int argc, char* argv[])
     {
         return usage();
     }
+
+    // OPENNN_MEMORY_DEBUG=1 attributes the resident set member by member.
+    if (memory_debug::enabled()) memory_debug::print(cout);
 
     cout << "RESULT=OK\n";
 

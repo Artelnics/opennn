@@ -46,6 +46,29 @@ TEST(LanguageDataset, DefaultConstructorIsEmpty)
     EXPECT_EQ(dataset.get_maximum_target_sequence_length(), 0);
 }
 
+TEST(LanguageDataset, ClassificationLabelsRemainAtomicAndInputLengthIsCapped)
+{
+    const string file_path = temp_language_file("opennn_atomic_labels.txt",
+        "one two three four five\tSci_Tech\n"
+        "six seven eight nine ten\tWorld News\n");
+    LanguageDataset dataset;
+    dataset.set_storage_mode(Dataset::StorageMode::Matrix);
+    dataset.set_separator(Dataset::Separator::Tab);
+    dataset.set_has_header(false);
+    dataset.set_display(false);
+    dataset.set_classification_target(true);
+    dataset.set_input_sequence_length_limit(3);
+    dataset.set_data_path(file_path);
+    ASSERT_NO_THROW(dataset.read_txt());
+    EXPECT_EQ(dataset.get_target_vocabulary_size(), 2 + Index(LanguageDataset::reserved_tokens.size()));
+    const auto& vocabulary = dataset.get_target_vocabulary();
+    EXPECT_NE(find(vocabulary.begin(), vocabulary.end(), "sci_tech"), vocabulary.end());
+    EXPECT_NE(find(vocabulary.begin(), vocabulary.end(), "world news"), vocabulary.end());
+    EXPECT_EQ(dataset.get_maximum_target_sequence_length(), 1);
+    EXPECT_LE(dataset.get_maximum_input_sequence_length(), 3);
+    remove_language_file(file_path);
+}
+
 TEST(LanguageDataset, ReservedTokenConstants)
 {
     EXPECT_EQ(LanguageDataset::PAD_TOKEN, "[PAD]");

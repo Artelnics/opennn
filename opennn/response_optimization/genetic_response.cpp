@@ -1,13 +1,8 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   G E N E T I C   R E S P O N S E   C L A S S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/response_optimization/genetic_response.h"
-#include "opennn/neural_network/neural_network.h"
+#include "opennn/network/network.h"
 #include "opennn/core/random_utilities.h"
 #include "opennn/core/statistics.h"
 #include "opennn/core/tensor_operations.h"
@@ -83,18 +78,18 @@ VectorR calculate_crowding_distances(const MatrixR& front_values)
 }
 
 
-GeneticResponse::GeneticResponse(NeuralNetwork* new_neural_network)
-    : ResponseOptimization(new_neural_network)
+GeneticResponse::GeneticResponse(Network* new_network)
+    : ResponseOptimization(new_network)
 {
 }
 
 
-pair<MatrixR, MatrixR> GeneticResponse::initialize_population(const pair<VectorR, VectorR>& domain)
+pair<MatrixR, MatrixR> GeneticResponse::initialize_population(const pair<VectorR, VectorR>& domain) const
 {
     const Index attempts_number = iterations_number*points_number;
 
     MatrixR inputs(points_number, domain.first.size());
-    MatrixR outputs(points_number, neural_network->get_outputs_number());
+    MatrixR outputs(points_number, network->get_outputs_number());
 
     Index feasible_number = 0;
 
@@ -118,27 +113,31 @@ pair<MatrixR, MatrixR> GeneticResponse::initialize_population(const pair<VectorR
     return {inputs, outputs};
 }
 
-
-MatrixR GeneticResponse::multi_optimization()
+pair<MatrixR, MatrixR> GeneticResponse::evolve_population(const pair<VectorR, VectorR>& domain) const
 {
-    const pair<VectorR, VectorR> domain = calculate_domain();
-
     pair<MatrixR, MatrixR> population = initialize_population(domain);
 
     for (Index generation = 0; generation < iterations_number; generation++)
     {
         const vector<Index> ranking = calculate_fitness(population.first, population.second);
-
-        const pair<MatrixR, MatrixR> children = recombinate_population(population.first, ranking, domain);
+        const auto children = recombinate_population(population.first, ranking, domain);
 
         population = append_rows(population, mutate_population(children.first, domain));
 
         const vector<Index> survivors = calculate_fitness(population.first, population.second);
-
         population = slice_rows(population,
                                 vector<Index>(survivors.begin(),
                                               survivors.begin() + min(points_number, Index(survivors.size()))));
     }
+
+    return population;
+}
+
+
+MatrixR GeneticResponse::multi_optimization()
+{
+    const pair<VectorR, VectorR> domain = calculate_domain();
+    pair<MatrixR, MatrixR> population = evolve_population(domain);
 
     vector<Index> front = clean_front(population.first, population.second);
 
@@ -159,7 +158,7 @@ MatrixR GeneticResponse::multi_optimization()
     }
 
     if (Index(front.size()) < requested_front_size)
-        cerr << "Warning: the front holds " << front.size() << " of the " << requested_front_size
+        logging::warning() << "Warning: the front holds " << front.size() << " of the " << requested_front_size
              << " points requested. The feasible set may be too small to spread them over.\n";
 
     return append_columns(slice_rows(population, front));
@@ -169,23 +168,7 @@ MatrixR GeneticResponse::multi_optimization()
 MatrixR GeneticResponse::single_optimization()
 {
     const pair<VectorR, VectorR> domain = calculate_domain();
-
-    pair<MatrixR, MatrixR> population = initialize_population(domain);
-
-    for (Index generation = 0; generation < iterations_number; generation++)
-    {
-        const vector<Index> ranking = calculate_fitness(population.first, population.second);
-
-        const pair<MatrixR, MatrixR> children = recombinate_population(population.first, ranking, domain);
-
-        population = append_rows(population, mutate_population(children.first, domain));
-
-        const vector<Index> survivors = calculate_fitness(population.first, population.second);
-
-        population = slice_rows(population,
-                                vector<Index>(survivors.begin(),
-                                              survivors.begin() + min(points_number, Index(survivors.size()))));
-    }
+    const pair<MatrixR, MatrixR> population = evolve_population(domain);
 
     const MatrixR objective_values = evaluate_objectives(population.first, population.second);
 
@@ -230,12 +213,12 @@ vector<Index> GeneticResponse::calculate_fitness(const MatrixR& inputs, const Ma
 
 pair<MatrixR, MatrixR> GeneticResponse::recombinate_population(const MatrixR& parent_inputs,
                                                                const vector<Index>& ranking,
-                                                               const pair<VectorR, VectorR>& domain)
+                                                               const pair<VectorR, VectorR>& domain) const
 {
     const Index attempts_number = iterations_number*points_number;
 
     MatrixR inputs(points_number, parent_inputs.cols());
-    MatrixR outputs(points_number, neural_network->get_outputs_number());
+    MatrixR outputs(points_number, network->get_outputs_number());
 
     Index feasible_number = 0;
 
@@ -280,14 +263,14 @@ pair<MatrixR, MatrixR> GeneticResponse::recombinate_population(const MatrixR& pa
 
 
 pair<MatrixR, MatrixR> GeneticResponse::mutate_population(const MatrixR& offspring_inputs,
-                                                          const pair<VectorR, VectorR>& domain)
+                                                          const pair<VectorR, VectorR>& domain) const
 {
     if (offspring_inputs.rows() == 0) return {};
 
     const Index attempts_number = iterations_number*points_number;
 
     MatrixR inputs(points_number, offspring_inputs.cols());
-    MatrixR outputs(points_number, neural_network->get_outputs_number());
+    MatrixR outputs(points_number, network->get_outputs_number());
 
     Index feasible_number = 0;
 
@@ -343,12 +326,13 @@ void GeneticResponse::crossover(VectorR& first_child,
 
 void GeneticResponse::mutate_individual(VectorR& candidate, const pair<VectorR, VectorR>& domain) const
 {
+    const vector<pair<Index, Index>> categorical_blocks = get_categorical_blocks(network->get_input_variables());
+
     vector<char> categorical_columns(size_t(candidate.size()), 0);
 
     Index variables_number = candidate.size();
 
-    for (const auto& [first_column, categories_number] :
-         get_categorical_blocks(neural_network->get_input_variables()))
+    for (const auto& [first_column, categories_number] : categorical_blocks)
     {
         fill_n(categorical_columns.begin() + first_column, categories_number, 1);
 
@@ -374,7 +358,3 @@ void GeneticResponse::mutate_individual(VectorR& candidate, const pair<VectorR, 
 }
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.
