@@ -112,11 +112,11 @@ __global__ void adam_update_kernel(
     }
 }
 
-template<typename Moment>
 static void launch_adam_update(cudaStream_t stream,
                                const Index n,
                                float* parameters,
-                               Moment* m,
+                               void* m,
+                               const bool m_is_bf16,
                                float* v,
                                const float* gradients,
                                __nv_bfloat16* parameters_bf16_mirror,
@@ -127,19 +127,22 @@ static void launch_adam_update(cudaStream_t stream,
                                const float* effective_lr_device,
                                const float* effective_eps_device)
 {
-    // A four-wide moment access is 16 B in FP32 but only 8 B in BF16. Every slot
-    // starts ALIGN_BYTES-aligned, so a slice offset that clears the 16 B check on
-    // the FP32 pointers is already a multiple of four elements and clears the 8 B
-    // one on m too: narrowing m never pushes a slice onto the scalar tail.
-    const bool aligned = are_aligned<16>(parameters, v, gradients)
-                      && is_aligned<int(sizeof(Moment)) * 4>(m)
-                      && is_aligned<4>(parameters_bf16_mirror);
+    dispatch_float_bf16(m_is_bf16, [&]<typename Moment>()
+    {
+        // A four-wide moment access is 16 B in FP32 but only 8 B in BF16. Every slot
+        // starts ALIGN_BYTES-aligned, so a slice offset that clears the 16 B check on
+        // the FP32 pointers is already a multiple of four elements and clears the 8 B
+        // one on m too: narrowing m never pushes a slice onto the scalar tail.
+        const bool aligned = are_aligned<16>(parameters, v, gradients)
+                          && is_aligned<int(sizeof(Moment)) * 4>(m)
+                          && is_aligned<4>(parameters_bf16_mirror);
 
-    launch_vec_on<4>(stream, n, aligned, adam_update_kernel<Moment>,
-                   parameters, m, v, gradients, parameters_bf16_mirror,
-                   beta_1, 1.0f - beta_1, beta_2, 1.0f - beta_2,
-                   effective_lr, effective_eps,
-                   effective_lr_device, effective_eps_device);
+        launch_vec_on<4>(stream, n, aligned, adam_update_kernel<Moment>,
+                       parameters, static_cast<Moment*>(m), v, gradients, parameters_bf16_mirror,
+                       beta_1, 1.0f - beta_1, beta_2, 1.0f - beta_2,
+                       effective_lr, effective_eps,
+                       effective_lr_device, effective_eps_device);
+    });
 }
 
 void adam_update_cuda(
@@ -162,14 +165,9 @@ void adam_update_cuda(
     const float effective_lr = learning_rate * sqrt_bias_correction_2 / bias_correction_1;
     const float effective_eps = epsilon * sqrt_bias_correction_2;
 
-    dispatch_float_bf16(m_is_bf16, [&]<typename Moment>()
-    {
-        launch_adam_update<Moment>(opennn::device::get_compute_stream(), n,
-                                   parameters, static_cast<Moment*>(m), v, gradients,
-                                   parameters_bf16_mirror,
-                                   beta_1, beta_2, effective_lr, effective_eps,
-                                   nullptr, nullptr);
-    });
+    launch_adam_update(opennn::device::get_compute_stream(), n,
+                       parameters, m, m_is_bf16, v, gradients, parameters_bf16_mirror,
+                       beta_1, beta_2, effective_lr, effective_eps, nullptr, nullptr);
 }
 
 __global__ void adam_prepare_kernel(int* __restrict__ step,
@@ -224,14 +222,9 @@ void adam_update_prepared_cuda(
     if (n == 0) return;
     if (stream == nullptr) stream = opennn::device::get_compute_stream();
 
-    dispatch_float_bf16(m_is_bf16, [&]<typename Moment>()
-    {
-        launch_adam_update<Moment>(stream, n,
-                                   parameters, static_cast<Moment*>(m), v, gradients,
-                                   parameters_bf16_mirror,
-                                   beta_1, beta_2, 0.0f, 0.0f,
-                                   effective_lr_device, effective_eps_device);
-    });
+    launch_adam_update(stream, n,
+                       parameters, m, m_is_bf16, v, gradients, parameters_bf16_mirror,
+                       beta_1, beta_2, 0.0f, 0.0f, effective_lr_device, effective_eps_device);
 }
 
 __device__ __forceinline__ void sgd_update_one(

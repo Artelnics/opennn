@@ -98,43 +98,32 @@ void QuasiNewton::update_full_batch_parameters(const Batch& batch,
 
     line_search.slope = gradient.dot(training_direction);
 
-    bool is_gradient_direction = false;
-
-    if (line_search.slope >= 0.0f)
+    const bool is_gradient_direction = line_search.slope >= 0.0f;
+    const auto search_direction = [&](bool use_gradient_direction)
     {
-        training_direction = -gradient;
-        line_search.slope = gradient.dot(training_direction);
-        is_gradient_direction = true;
-    }
-
-    line_search.initial = is_gradient_direction
-        ? ((line_search.old_learning_rate > 0.0f)
-            ? line_search.old_learning_rate : first_learning_rate)
-        : 1.0f;
-
-    tie(line_search.learning_rate, back_propagation.metrics.loss_value) = calculate_directional_point(
-        batch,
-        forward_propagation,
-        back_propagation,
-        back_propagation.metrics.loss_value);
-
-    if (line_search.learning_rate == 0.0f && !is_gradient_direction)
-    {
-        inverse_hessian.setIdentity();
-        optimization_data.views[OldInverseHessian].as_matrix().setIdentity();
-
-        training_direction = -gradient;
-        line_search.slope = gradient.dot(training_direction);
-
-        line_search.initial = (line_search.old_learning_rate > 0.0f)
-            ? line_search.old_learning_rate
-            : first_learning_rate;
+        if (use_gradient_direction)
+        {
+            training_direction = -gradient;
+            line_search.slope = gradient.dot(training_direction);
+            line_search.initial = line_search.old_learning_rate > 0.0f
+                ? line_search.old_learning_rate : first_learning_rate;
+        }
+        else
+            line_search.initial = 1.0f;
 
         tie(line_search.learning_rate, back_propagation.metrics.loss_value) = calculate_directional_point(
             batch,
             forward_propagation,
             back_propagation,
             back_propagation.metrics.loss_value);
+    };
+    search_direction(is_gradient_direction);
+
+    if (line_search.learning_rate == 0.0f && !is_gradient_direction)
+    {
+        inverse_hessian.setIdentity();
+        optimization_data.views[OldInverseHessian].as_matrix().setIdentity();
+        search_direction(true);
     }
 
     if (abs(line_search.learning_rate) > 0.0f)
@@ -179,17 +168,10 @@ TrainingResult QuasiNewton::train()
 
     hooks.setup_state = [&]
     {
-        optimization_data.set({
-            Shape{parameters_number},
-            Shape{parameters_number},
-            Shape{parameters_number},
-            Shape{parameters_number},
-            Shape{parameters_number},
-            Shape{parameters_number},
-            Shape{parameters_number},
-            Shape{parameters_number, parameters_number},
-            Shape{parameters_number, parameters_number}
-        });
+        vector<Shape> slot_shapes(OldInverseHessian + 1, Shape{parameters_number});
+        for (DataSlot slot : {InverseHessian, OldInverseHessian})
+            slot_shapes[slot] = Shape{parameters_number, parameters_number};
+        optimization_data.set(slot_shapes);
 
         line_search.reset(parameters_number);
 

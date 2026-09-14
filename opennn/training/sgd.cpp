@@ -5,10 +5,7 @@
 
 #include "opennn/core/device_backend.h"
 #include "opennn/core/profiler.h"
-#include "opennn/dataset/batch.h"
-#include "opennn/dataset/dataset.h"
 #include "opennn/network/back_propagation.h"
-#include "opennn/network/forward_propagation.h"
 #include "opennn/network/network.h"
 #include "opennn/training/kernel_optimizers.cuh"
 #include "opennn/training/loss.h"
@@ -33,33 +30,41 @@ void SGD::update_parameters(BackPropagation& back_propagation,
     const vector<BackPropagation::GradientSlice>& gradient_slices =
         back_propagation.get_gradient_slices();
 
-    if (mode == UpdateMode::Capturable)
-    {
 #ifdef OPENNN_HAS_CUDA
-        clip_gradient_norm(back_propagation, gradient_clip_norm);
-
+    const auto update_gpu = [&](bool capturable)
+    {
         float* const velocity_ptr = momentum > 0.0f
             ? optimizer_data.views[Velocity].as<float>()
             : nullptr;
         float* const parameters = network->get_parameters_data();
-        bfloat16* const mirror =
-            network->get_parameters_bf16_mirror_data();
-        DeviceStream stream = device::get_compute_stream();
+        bfloat16* const mirror = network->get_parameters_bf16_mirror_data();
+        const DeviceStream stream = capturable ? device::get_compute_stream() : nullptr;
 
-        for(const BackPropagation::GradientSlice& slice : gradient_slices)
+        PROFILE_SCOPE(capturable ? "" : "optim:sgd_update_cuda");
+
+        for (const BackPropagation::GradientSlice& slice : gradient_slices)
         {
             const Index offset = slice.parameter_offset;
-            sgd_update_capturable_cuda(
-                slice.values.size(),
-                parameters + offset,
-                velocity_ptr ? velocity_ptr + offset : nullptr,
-                slice.values.as<float>(),
-                optimizer_data.views[GraphLearningRate].as<float>(),
-                momentum,
-                nesterov,
-                mirror ? mirror + offset : nullptr,
-                stream);
+            float* const velocity = velocity_ptr ? velocity_ptr + offset : nullptr;
+            bfloat16* const slice_mirror = mirror ? mirror + offset : nullptr;
+            if (capturable)
+                sgd_update_capturable_cuda(
+                    slice.values.size(), parameters + offset, velocity, slice.values.as<float>(),
+                    optimizer_data.views[GraphLearningRate].as<float>(),
+                    momentum, nesterov, slice_mirror, stream);
+            else
+                sgd_update_cuda(
+                    slice.values.size(), parameters + offset, velocity, slice.values.as<float>(),
+                    current_learning_rate, momentum, nesterov, slice_mirror);
         }
+    };
+#endif
+
+    if (mode == UpdateMode::Capturable)
+    {
+#ifdef OPENNN_HAS_CUDA
+        clip_gradient_norm(back_propagation, gradient_clip_norm);
+        update_gpu(true);
         return;
 #else
         throw runtime_error("Capturable SGD parameter updates require CUDA support.");
@@ -77,26 +82,7 @@ void SGD::update_parameters(BackPropagation& back_propagation,
     if (network->is_gpu())
     {
 #ifdef OPENNN_HAS_CUDA
-        float* const velocity_ptr = momentum > 0.0f
-            ? optimizer_data.views[Velocity].as<float>()
-            : nullptr;
-        float* const parameters = network->get_parameters_data();
-        bfloat16* const mirror =
-            network->get_parameters_bf16_mirror_data();
-
-        PROFILE_SCOPE("optim:sgd_update_cuda");
-
-        for(const BackPropagation::GradientSlice& slice : gradient_slices)
-        {
-            const Index offset = slice.parameter_offset;
-            sgd_update_cuda(
-                slice.values.size(),
-                parameters + offset,
-                velocity_ptr ? velocity_ptr + offset : nullptr,
-                slice.values.as<float>(),
-                current_learning_rate, momentum, nesterov,
-                mirror ? mirror + offset : nullptr);
-        }
+        update_gpu(false);
         return;
 #else
         throw runtime_error("SGD parameter updates on GPU require CUDA support.");
@@ -109,9 +95,10 @@ void SGD::update_parameters(BackPropagation& back_propagation,
         ? optimizer_data.views[Velocity].as<float>()
         : nullptr;
 
-    const auto update_range = [&](const Index offset,
-                                  const VectorMap& gradient)
+    for (const BackPropagation::GradientSlice& slice : gradient_slices)
     {
+        const Index offset = slice.parameter_offset;
+        const VectorMap gradient = slice.values.as_vector();
         const Index range_size = gradient.size();
 
         if (momentum <= 0.0f)
@@ -136,12 +123,6 @@ void SGD::update_parameters(BackPropagation& back_propagation,
                     : new_velocity;
             }
         }
-    };
-
-    for(const BackPropagation::GradientSlice& slice : gradient_slices)
-    {
-        update_range(slice.parameter_offset,
-                     slice.values.as_vector());
     }
 }
 

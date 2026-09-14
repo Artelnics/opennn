@@ -3,7 +3,6 @@
 
 #include "opennn/training/optimizer.h"
 
-#include "opennn/core/device_backend.h"
 #include "opennn/core/memory_debug.h"
 
 namespace opennn
@@ -40,33 +39,20 @@ void OptimizerData::set(const vector<Shape>& slot_shapes,
     memory_debug::record("optimizer", "OptimizerData::data", total_bytes,
                          format("slots={}", slot_shapes.size()));
 
-    if (total_bytes > 0)
-    {
-        if (device == Device::CUDA)
-            opennn::device::set_zero_async(data.data(), total_bytes, device::get_compute_stream());
-        else
-            data.setZero();
-    }
+    data.setZero();
 
-    views.clear();
-    views.reserve(slot_shapes.size());
+    views.assign(slot_shapes.size(), TensorView{});
 
     uint8_t* cursor = data.as<uint8_t>();
 
     for (size_t slot = 0; slot < slot_shapes.size(); slot++)
     {
         const Shape& shape = slot_shapes[slot];
+        if (shape.size() == 0) continue;
         const Type type = get_slot_type(slot_types, slot);
 
-        if (shape.size() > 0)
-        {
-            views.emplace_back(cursor, shape, type, data.get_device());
-            cursor += get_aligned_bytes(shape.size(), type);
-        }
-        else
-        {
-            views.emplace_back();
-        }
+        views[slot] = TensorView(cursor, shape, type, data.get_device());
+        cursor += get_aligned_bytes(shape.size(), type);
     }
 }
 

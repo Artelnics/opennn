@@ -2082,6 +2082,41 @@ struct Optimizer::TrainingEpochContext
         return result;
     }
 
+    void run_batch(Batch& batch, Loss::EvaluationResult& result,
+                    DeviceEpochMetricSums* device_metrics = nullptr)
+    {
+        {
+            PROFILE_SCOPE("step:fwd_total");
+            network->forward_propagate(batch.get_inputs(), forward_propagation,
+                                      ForwardPropagationMode::Training);
+        }
+        {
+            PROFILE_SCOPE("step:bwd_total");
+            if (device_metrics)
+            {
+                if (!optimizer.loss->back_propagate_device_metrics(
+                        batch, forward_propagation, back_propagation,
+                        device_metrics->error_sum(),
+                        tracks_accuracy ? device_metrics->accuracy_sum() : nullptr))
+                    throw runtime_error("Device epoch metrics unexpectedly unsupported for this loss.");
+            }
+            else
+                optimizer.loss->back_propagate(batch, forward_propagation, back_propagation);
+        }
+        const bool batch_ok = device_metrics || !std::isnan(back_propagation.metrics.error);
+        if (!device_metrics && batch_ok)
+        {
+            result.error += back_propagation.metrics.error;
+            if (tracks_accuracy) result.accuracy += back_propagation.metrics.accuracy;
+        }
+        if (batch_ok)
+        {
+            PROFILE_SCOPE("step:optim_total");
+            optimizer.update_parameters(back_propagation, optimizer_data);
+        }
+        if (optimizer.post_batch_callback) optimizer.post_batch_callback(network);
+    }
+
     Loss::EvaluationResult run_cpu_batches()
     {
         Loss::EvaluationResult result;
@@ -2095,25 +2130,7 @@ struct Optimizer::TrainingEpochContext
                 PROFILE_SCOPE_HOST("step:fill");
                 batch->fill(epoch_batches.batches()[size_t(iteration)], features, FillMode::Training);
             }
-            {
-                PROFILE_SCOPE("step:fwd_total");
-                network->forward_propagate(batch->get_inputs(), forward_propagation,
-                                          ForwardPropagationMode::Training);
-            }
-            {
-                PROFILE_SCOPE("step:bwd_total");
-                optimizer.loss->back_propagate(*batch, forward_propagation, back_propagation);
-            }
-            if (!std::isnan(back_propagation.metrics.error))
-            {
-                result.error += back_propagation.metrics.error;
-                if (tracks_accuracy) result.accuracy += back_propagation.metrics.accuracy;
-                {
-                    PROFILE_SCOPE("step:optim_total");
-                    optimizer.update_parameters(back_propagation, optimizer_data);
-                }
-            }
-            if (optimizer.post_batch_callback) optimizer.post_batch_callback(network);
+            run_batch(*batch, result);
         }
         empty_queue.push(batch);
         return average_epoch_metrics(result, epoch_batches.number(), tracks_accuracy);
@@ -2132,36 +2149,7 @@ struct Optimizer::TrainingEpochContext
         };
         context.step = [&](Batch& batch, Loss::EvaluationResult& result)
         {
-            {
-                PROFILE_SCOPE("step:fwd_total");
-                network->forward_propagate(batch.get_inputs(), forward_propagation,
-                                          ForwardPropagationMode::Training);
-            }
-            {
-                PROFILE_SCOPE("step:bwd_total");
-                if (use_device_metrics)
-                {
-                    if (!optimizer.loss->back_propagate_device_metrics(
-                            batch, forward_propagation, back_propagation,
-                            device_metrics.error_sum(),
-                            tracks_accuracy ? device_metrics.accuracy_sum() : nullptr))
-                        throw runtime_error("Device epoch metrics unexpectedly unsupported for this loss.");
-                }
-                else
-                    optimizer.loss->back_propagate(batch, forward_propagation, back_propagation);
-            }
-            const bool batch_ok = use_device_metrics || !std::isnan(back_propagation.metrics.error);
-            if (!use_device_metrics && batch_ok)
-            {
-                result.error += back_propagation.metrics.error;
-                if (tracks_accuracy) result.accuracy += back_propagation.metrics.accuracy;
-            }
-            if (batch_ok)
-            {
-                PROFILE_SCOPE("step:optim_total");
-                optimizer.update_parameters(back_propagation, optimizer_data);
-            }
-            if (optimizer.post_batch_callback) optimizer.post_batch_callback(network);
+            run_batch(batch, result, use_device_metrics ? &device_metrics : nullptr);
         };
 
         Loss::EvaluationResult result;
@@ -2298,14 +2286,16 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
         return result;
     };
 
-    const auto merge_tail = [&](Loss::EvaluationResult& result)
+    const auto finalize_metrics = [&](Loss::EvaluationResult result)
     {
-        if(!epoch_batches.has_tail()) return;
-
-        const Loss::EvaluationResult tail_result = evaluate_tail();
-        epoch_batches.merge_tail(result, tail_result,
-                                 forward_propagation.batch_size,
-                                 tracks_accuracy);
+        result = average_epoch_metrics(result, batches_number, tracks_accuracy);
+        if (epoch_batches.has_tail())
+        {
+            const Loss::EvaluationResult tail_result = evaluate_tail();
+            epoch_batches.merge_tail(result, tail_result,
+                                     forward_propagation.batch_size, tracks_accuracy);
+        }
+        return result;
     };
 
     if(!on_gpu)
@@ -2333,11 +2323,7 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
 
         empty_queue.push(batch);
 
-        epoch_result = average_epoch_metrics(epoch_result,
-                                             batches_number,
-                                             tracks_accuracy);
-        merge_tail(epoch_result);
-        return epoch_result;
+        return finalize_metrics(epoch_result);
     }
 
     const bool use_device_metrics = loss->supports_device_epoch_metrics();
@@ -2393,11 +2379,7 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
     if(use_device_metrics)
         epoch_result = device_metrics.read();
 
-    epoch_result = average_epoch_metrics(epoch_result,
-                                         batches_number,
-                                         tracks_accuracy);
-    merge_tail(epoch_result);
-    return epoch_result;
+    return finalize_metrics(epoch_result);
 }
 
 }

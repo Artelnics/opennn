@@ -5,10 +5,8 @@
 
 #include "opennn/core/device_backend.h"
 #include "opennn/core/profiler.h"
-#include "opennn/dataset/batch.h"
-#include "opennn/dataset/dataset.h"
 #include "opennn/network/back_propagation.h"
-#include "opennn/network/forward_propagation.h"
+#include "opennn/network/network.h"
 #include "opennn/core/string_utilities.h"
 #include "opennn/training/kernel_optimizers.cuh"
 #include "opennn/training/loss.h"
@@ -157,6 +155,38 @@ void Adam::update_parameters(BackPropagation& back_propagation,
     const vector<BackPropagation::GradientSlice>& gradient_slices =
         back_propagation.get_gradient_slices();
 
+#ifdef OPENNN_HAS_CUDA
+    const auto update_gpu = [&](const float* graph_scalars, DeviceStream stream,
+                                float correction_1 = 0.0f, float correction_2 = 0.0f)
+    {
+        float* const parameters = network->get_parameters_data();
+        const TensorView& first_moment = optimization_data.views[GradientMoment];
+        const bool first_moment_bf16 = first_moment.is_bf16();
+        float* const second_moment = optimization_data.views[SquareGradientMoment].as<float>();
+        bfloat16* const mirror = network->get_parameters_bf16_mirror_data();
+
+        PROFILE_SCOPE_BYTES(graph_scalars ? "optim:adam_update_capturable_cuda" : "optim:adam_update_cuda",
+                            adam_bytes(gradient_slices, mirror != nullptr, first_moment_bf16));
+
+        for (const BackPropagation::GradientSlice& slice : gradient_slices)
+        {
+            const Index offset = slice.parameter_offset;
+            void* const moment = get_moment_slice(first_moment, offset);
+            bfloat16* const slice_mirror = mirror ? mirror + offset : nullptr;
+            if (graph_scalars)
+                adam_update_prepared_cuda(
+                    slice.values.size(), parameters + offset, moment, first_moment_bf16,
+                    second_moment + offset, slice.values.as<float>(), beta_1, beta_2,
+                    graph_scalars + 1, graph_scalars + 2, slice_mirror, stream);
+            else
+                adam_update_cuda(
+                    slice.values.size(), parameters + offset, moment, first_moment_bf16,
+                    second_moment + offset, slice.values.as<float>(), beta_1, beta_2,
+                    learning_rate, EPSILON, correction_1, correction_2, slice_mirror);
+        }
+    };
+#endif
+
     if (mode == UpdateMode::Capturable
         || (has_graph_scalars && network->is_gpu() && can_use_cuda_graph()))
     {
@@ -174,32 +204,7 @@ void Adam::update_parameters(BackPropagation& back_propagation,
             beta_1, beta_2, graph_base_learning_rate, EPSILON,
             graph_step, graph_learning_rate, graph_epsilon, stream);
 
-        float* const parameters = network->get_parameters_data();
-        const TensorView& first_moment = optimization_data.views[GradientMoment];
-        const bool first_moment_bf16 = first_moment.is_bf16();
-        float* const second_moment =
-            optimization_data.views[SquareGradientMoment].as<float>();
-        bfloat16* const mirror =
-            network->get_parameters_bf16_mirror_data();
-
-        PROFILE_SCOPE_BYTES("optim:adam_update_capturable_cuda",
-                            adam_bytes(gradient_slices, mirror != nullptr, first_moment_bf16));
-
-        for(const BackPropagation::GradientSlice& slice : gradient_slices)
-        {
-            const Index offset = slice.parameter_offset;
-            adam_update_prepared_cuda(
-                slice.values.size(),
-                parameters + offset,
-                get_moment_slice(first_moment, offset),
-                first_moment_bf16,
-                second_moment + offset,
-                slice.values.as<float>(),
-                beta_1, beta_2,
-                graph_learning_rate, graph_epsilon,
-                mirror ? mirror + offset : nullptr,
-                stream);
-        }
+        update_gpu(graph_scalars, stream);
         return;
 #else
         throw runtime_error("Capturable Adam parameter updates require CUDA support.");
@@ -221,31 +226,7 @@ void Adam::update_parameters(BackPropagation& back_propagation,
     if (network->is_gpu())
     {
 #ifdef OPENNN_HAS_CUDA
-        float* const parameters = network->get_parameters_data();
-        const TensorView& first_moment = optimization_data.views[GradientMoment];
-        const bool first_moment_bf16 = first_moment.is_bf16();
-        float* const second_moment =
-            optimization_data.views[SquareGradientMoment].as<float>();
-        bfloat16* const mirror =
-            network->get_parameters_bf16_mirror_data();
-
-        PROFILE_SCOPE_BYTES("optim:adam_update_cuda",
-                            adam_bytes(gradient_slices, mirror != nullptr, first_moment_bf16));
-
-        for(const BackPropagation::GradientSlice& slice : gradient_slices)
-        {
-            const Index offset = slice.parameter_offset;
-            adam_update_cuda(
-                slice.values.size(),
-                parameters + offset,
-                get_moment_slice(first_moment, offset),
-                first_moment_bf16,
-                second_moment + offset,
-                slice.values.as<float>(),
-                beta_1, beta_2, learning_rate, EPSILON,
-                bias_correction_1, bias_correction_2,
-                mirror ? mirror + offset : nullptr);
-        }
+        update_gpu(nullptr, nullptr, bias_correction_1, bias_correction_2);
         return;
 #else
         throw runtime_error("Adam parameter updates on GPU require CUDA support.");
@@ -264,9 +245,10 @@ void Adam::update_parameters(BackPropagation& back_propagation,
     const float effective_learning_rate = learning_rate * sqrt_bias_correction_2 / bias_correction_1;
     const float effective_epsilon = EPSILON * sqrt_bias_correction_2;
 
-    const auto update_range = [&](const Index offset,
-                                  const VectorMap& gradient)
+    for (const BackPropagation::GradientSlice& slice : gradient_slices)
     {
+        const Index offset = slice.parameter_offset;
+        const VectorMap gradient = slice.values.as_vector();
         PROFILE_SCOPE_HOST("optim:adam_update_cpu");
 
         const Index range_size = gradient.size();
@@ -284,12 +266,6 @@ void Adam::update_parameters(BackPropagation& back_propagation,
             parameters(offset + i) -= effective_learning_rate * first_moment
                                     / (sqrt(second_moment) + effective_epsilon);
         }
-    };
-
-    for(const BackPropagation::GradientSlice& slice : gradient_slices)
-    {
-        update_range(slice.parameter_offset,
-                     slice.values.as_vector());
     }
 }
 

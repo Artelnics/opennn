@@ -17,9 +17,97 @@
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/models/models.h"
 #include "opennn/training/loss.h"
+#include "opennn/training/optimizer.h"
 #include "opennn/training/training_context.h"
 
 using namespace opennn;
+
+namespace
+{
+
+void expect_optimizer_slot_layout_and_reset(Device allocation_device)
+{
+    const DeviceStream stream = allocation_device == Device::CUDA
+        ? device::get_compute_stream() : nullptr;
+    const vector<Shape> shapes = {
+        {ALIGN_BYTES / Index(sizeof(float)) + 1}, {},
+        {ALIGN_BYTES / Index(sizeof(opennn::bfloat16)) + 1}, {0},
+        {ALIGN_BYTES + 1}, {1}
+    };
+    // The final slot deliberately has no explicit dtype and must stay FP32.
+    const vector<Type> types = {Type::FP32, Type::BF16, Type::BF16, Type::INT8, Type::INT8};
+    OptimizerData state;
+    state.set(shapes, types, allocation_device);
+    ASSERT_EQ(state.data.byte_size(), 7 * ALIGN_BYTES);
+    ASSERT_EQ(state.views.size(), shapes.size());
+    const auto* base = state.data.as<uint8_t>();
+    for (size_t slot : {size_t(0), size_t(2), size_t(4), size_t(5)})
+    {
+        SCOPED_TRACE(slot);
+        EXPECT_EQ(state.views[slot].get_shape(), shapes[slot]);
+        EXPECT_EQ(state.views[slot].get_device(), allocation_device);
+        EXPECT_TRUE(is_aligned(state.views[slot].get_data()));
+    }
+    EXPECT_EQ(state.views[0].get_data(), base);
+    EXPECT_EQ(state.views[2].get_data(), base + 2 * ALIGN_BYTES);
+    EXPECT_EQ(state.views[4].get_data(), base + 4 * ALIGN_BYTES);
+    EXPECT_EQ(state.views[5].get_data(), base + 6 * ALIGN_BYTES);
+    EXPECT_EQ(state.views[0].get_type(), Type::FP32);
+    EXPECT_EQ(state.views[2].get_type(), Type::BF16);
+    EXPECT_EQ(state.views[4].get_type(), Type::INT8);
+    EXPECT_EQ(state.views[5].get_type(), Type::FP32);
+    for (size_t slot : {size_t(1), size_t(3)})
+    {
+        EXPECT_TRUE(state.views[slot].empty());
+        EXPECT_EQ(state.views[slot].get_data(), nullptr);
+        EXPECT_EQ(state.views[slot].get_type(), Type::FP32);
+        EXPECT_EQ(state.views[slot].get_device(), Device::CPU);
+    }
+
+    const auto expect_zero_bytes = [&]
+    {
+        vector<uint8_t> bytes(size_t(state.data.byte_size()), 0xff);
+        device::copy_async(bytes.data(), state.data.data(), state.data.byte_size(),
+                           allocation_device, Device::CPU, stream);
+        if (allocation_device == Device::CUDA) device::synchronize(stream);
+        EXPECT_TRUE(ranges::all_of(bytes, [](uint8_t value) { return value == 0; }));
+    };
+    expect_zero_bytes();
+    const vector<uint8_t> dirty_bytes(size_t(state.data.byte_size()), 0xa5);
+    device::copy_async(state.data.data(), dirty_bytes.data(), state.data.byte_size(),
+                       Device::CPU, allocation_device, stream);
+    // Reuse the allocation: reset must clear payload and alignment padding,
+    // ordered after the preceding upload on the CUDA compute stream.
+    state.set(shapes, types, allocation_device);
+    expect_zero_bytes();
+
+    state.set({Shape{}, Shape{1}}, allocation_device);
+    ASSERT_EQ(state.views.size(), 2);
+    EXPECT_TRUE(state.views[0].empty());
+    EXPECT_EQ(state.views[0].get_data(), nullptr);
+    EXPECT_EQ(state.views[1].get_data(), state.data.data());
+    EXPECT_EQ(state.views[1].get_type(), Type::FP32);
+    EXPECT_EQ(state.views[1].get_device(), allocation_device);
+    expect_zero_bytes();
+    state.set({}, allocation_device);
+    EXPECT_TRUE(state.data.empty());
+    EXPECT_TRUE(state.views.empty());
+}
+
+}
+
+TEST(OptimizerDataTest, MixedPrecisionSlotsDefaultToFp32AndReset)
+{
+    expect_optimizer_slot_layout_and_reset(Device::CPU);
+}
+
+#ifdef OPENNN_HAS_CUDA
+TEST(OptimizerDataTest, MixedPrecisionSlotsDefaultToFp32AndResetCuda)
+{
+    if (!device::has_cuda_device()) GTEST_SKIP() << "No CUDA device.";
+    expect_optimizer_slot_layout_and_reset(Device::CUDA);
+}
+#endif
 
 class TrainingContextTest : public ::testing::Test
 {

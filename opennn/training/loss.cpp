@@ -37,43 +37,65 @@ struct GIoUResult
 
 constexpr float INV_PI2 = 4.0f / (numbers::pi_v<float> * numbers::pi_v<float>);
 
-GIoUResult yolo_loss_giou_forward(const float* pred, const float* gt)
+struct GIoUTerms
 {
-    const float predicted_left = pred[0] - 0.5f * pred[2];
-    const float predicted_right = pred[0] + 0.5f * pred[2];
-    const float predicted_top = pred[1] - 0.5f * pred[3];
-    const float predicted_bottom = pred[1] + 0.5f * pred[3];
-    const float ground_left = gt[0] - 0.5f * gt[2];
-    const float ground_right = gt[0] + 0.5f * gt[2];
-    const float ground_top = gt[1] - 0.5f * gt[3];
-    const float ground_bottom = gt[1] + 0.5f * gt[3];
+    float predicted_left, predicted_right, predicted_top, predicted_bottom;
+    float ground_left, ground_right, ground_top, ground_bottom;
+    float intersection_width_raw, intersection_height_raw;
+    float intersection_width, intersection_height, intersection_area;
+    float union_area, enclosing_width, enclosing_height, enclosing_area;
+    float iou, giou;
+    float dx, dy, rho2, c2;
+    float v_diff, v, alpha;
+};
 
-    const float intersection_width = max(0.0f, min(predicted_right, ground_right) - max(predicted_left, ground_left));
-    const float intersection_height = max(0.0f, min(predicted_bottom, ground_bottom) - max(predicted_top, ground_top));
-    const float intersection_area = intersection_width * intersection_height;
+GIoUTerms yolo_loss_giou_terms(const float* pred, const float* gt)
+{
+    GIoUTerms t;
+    t.predicted_left = pred[0] - 0.5f * pred[2];
+    t.predicted_right = pred[0] + 0.5f * pred[2];
+    t.predicted_top = pred[1] - 0.5f * pred[3];
+    t.predicted_bottom = pred[1] + 0.5f * pred[3];
+    t.ground_left = gt[0] - 0.5f * gt[2];
+    t.ground_right = gt[0] + 0.5f * gt[2];
+    t.ground_top = gt[1] - 0.5f * gt[3];
+    t.ground_bottom = gt[1] + 0.5f * gt[3];
+
+    t.intersection_width_raw = min(t.predicted_right, t.ground_right) - max(t.predicted_left, t.ground_left);
+    t.intersection_height_raw = min(t.predicted_bottom, t.ground_bottom) - max(t.predicted_top, t.ground_top);
+    t.intersection_width = max(0.0f, t.intersection_width_raw);
+    t.intersection_height = max(0.0f, t.intersection_height_raw);
+    t.intersection_area = t.intersection_width * t.intersection_height;
 
     const float predicted_area = pred[2] * pred[3];
     const float ground_area = gt[2] * gt[3];
-    const float union_area = predicted_area + ground_area - intersection_area;
+    t.union_area = predicted_area + ground_area - t.intersection_area;
 
-    const float enclosing_width = max(predicted_right, ground_right) - min(predicted_left, ground_left);
-    const float enclosing_height = max(predicted_bottom, ground_bottom) - min(predicted_top, ground_top);
-    const float enclosing_area = enclosing_width * enclosing_height;
+    t.enclosing_width = max(t.predicted_right, t.ground_right) - min(t.predicted_left, t.ground_left);
+    t.enclosing_height = max(t.predicted_bottom, t.ground_bottom) - min(t.predicted_top, t.ground_top);
+    t.enclosing_area = t.enclosing_width * t.enclosing_height;
 
+    t.iou  = (t.union_area > 0.0f) ? (t.intersection_area / t.union_area) : 0.0f;
+    t.giou = (t.enclosing_area > 0.0f) ? (t.iou - (t.enclosing_area - t.union_area) / t.enclosing_area) : t.iou;
+
+    t.dx   = pred[0] - gt[0];
+    t.dy   = pred[1] - gt[1];
+    t.rho2 = t.dx*t.dx + t.dy*t.dy;
+    t.c2   = t.enclosing_width*t.enclosing_width + t.enclosing_height*t.enclosing_height + EPSILON;
+
+    t.v_diff = atan2f(gt[2], gt[3]) - atan2f(pred[2], pred[3]);
+    t.v     = INV_PI2 * t.v_diff * t.v_diff;
+    t.alpha = (t.union_area > 0.0f) ? t.v / (1.0f - t.iou + t.v + EPSILON) : 0.0f;
+
+    return t;
+}
+
+GIoUResult yolo_loss_giou_forward(const float* pred, const float* gt)
+{
+    const GIoUTerms t = yolo_loss_giou_terms(pred, gt);
     GIoUResult r;
-    r.iou  = (union_area > 0.0f) ? (intersection_area / union_area) : 0.0f;
-    r.giou = (enclosing_area > 0.0f) ? (r.iou - (enclosing_area - union_area) / enclosing_area) : r.iou;
-
-    const float dx   = pred[0] - gt[0];
-    const float dy   = pred[1] - gt[1];
-    const float rho2 = dx*dx + dy*dy;
-    const float c2   = enclosing_width*enclosing_width + enclosing_height*enclosing_height + EPSILON;
-
-    const float v_diff = atan2f(gt[2], gt[3]) - atan2f(pred[2], pred[3]);
-    const float v     = INV_PI2 * v_diff * v_diff;
-    const float alpha = (union_area > 0.0f) ? v / (1.0f - r.iou + v + EPSILON) : 0.0f;
-
-    r.giou -= rho2/c2 + alpha*v;
+    r.iou = t.iou;
+    r.giou = t.giou - (t.rho2/t.c2 + t.alpha*t.v);
     return r;
 }
 
@@ -81,33 +103,11 @@ GIoUResult yolo_loss_giou_grad(const float* pred, const float* gt)
 {
     const float predicted_width = pred[2];
     const float predicted_height = pred[3];
-
-    const float predicted_left = pred[0] - 0.5f * predicted_width;
-    const float predicted_right = pred[0] + 0.5f * predicted_width;
-    const float predicted_top = pred[1] - 0.5f * predicted_height;
-    const float predicted_bottom = pred[1] + 0.5f * predicted_height;
-    const float ground_left = gt[0] - 0.5f * gt[2];
-    const float ground_right = gt[0] + 0.5f * gt[2];
-    const float ground_top = gt[1] - 0.5f * gt[3];
-    const float ground_bottom = gt[1] + 0.5f * gt[3];
-
-    const float intersection_width_raw = min(predicted_right, ground_right) - max(predicted_left, ground_left);
-    const float intersection_height_raw = min(predicted_bottom, ground_bottom) - max(predicted_top, ground_top);
-    const float intersection_width = max(0.0f, intersection_width_raw);
-    const float intersection_height = max(0.0f, intersection_height_raw);
-    const float intersection_area = intersection_width * intersection_height;
-
-    const float predicted_area = predicted_width * predicted_height;
-    const float ground_area = gt[2] * gt[3];
-    const float union_area = predicted_area + ground_area - intersection_area;
-
-    const float enclosing_width = max(predicted_right, ground_right) - min(predicted_left, ground_left);
-    const float enclosing_height = max(predicted_bottom, ground_bottom) - min(predicted_top, ground_top);
-    const float enclosing_area = enclosing_width * enclosing_height;
+    const GIoUTerms t = yolo_loss_giou_terms(pred, gt);
 
     GIoUResult r;
-    r.iou  = (union_area > 0.0f) ? (intersection_area / union_area) : 0.0f;
-    r.giou = (enclosing_area > 0.0f) ? (r.iou - (enclosing_area - union_area) / enclosing_area) : r.iou;
+    r.iou = t.iou;
+    r.giou = t.giou;
 
     constexpr float corner_eps = 1e-6f;
     auto max_grad = [&](float a, float b) -> float {
@@ -121,16 +121,16 @@ GIoUResult yolo_loss_giou_grad(const float* pred, const float* gt)
         return 0.5f;
     };
 
-    const float intersection_alive = (intersection_width_raw > 0.0f && intersection_height_raw > 0.0f) ? 1.0f : 0.0f;
-    const float d_intersection_left = intersection_alive * -max_grad(predicted_left, ground_left) * intersection_height;
-    const float d_intersection_right = intersection_alive *  min_grad(predicted_right, ground_right) * intersection_height;
-    const float d_intersection_top = intersection_alive * -max_grad(predicted_top, ground_top) * intersection_width;
-    const float d_intersection_bottom = intersection_alive *  min_grad(predicted_bottom, ground_bottom) * intersection_width;
+    const float intersection_alive = (t.intersection_width_raw > 0.0f && t.intersection_height_raw > 0.0f) ? 1.0f : 0.0f;
+    const float d_intersection_left = intersection_alive * -max_grad(t.predicted_left, t.ground_left) * t.intersection_height;
+    const float d_intersection_right = intersection_alive *  min_grad(t.predicted_right, t.ground_right) * t.intersection_height;
+    const float d_intersection_top = intersection_alive * -max_grad(t.predicted_top, t.ground_top) * t.intersection_width;
+    const float d_intersection_bottom = intersection_alive *  min_grad(t.predicted_bottom, t.ground_bottom) * t.intersection_width;
 
-    const float d_enclosing_left = -min_grad(predicted_left, ground_left) * enclosing_height;
-    const float d_enclosing_right =  max_grad(predicted_right, ground_right) * enclosing_height;
-    const float d_enclosing_top = -min_grad(predicted_top, ground_top) * enclosing_width;
-    const float d_enclosing_bottom =  max_grad(predicted_bottom, ground_bottom) * enclosing_width;
+    const float d_enclosing_left = -min_grad(t.predicted_left, t.ground_left) * t.enclosing_height;
+    const float d_enclosing_right =  max_grad(t.predicted_right, t.ground_right) * t.enclosing_height;
+    const float d_enclosing_top = -min_grad(t.predicted_top, t.ground_top) * t.enclosing_width;
+    const float d_enclosing_bottom =  max_grad(t.predicted_bottom, t.ground_bottom) * t.enclosing_width;
 
     const float d_area_left = -predicted_height;
     const float d_area_right =  predicted_height;
@@ -140,8 +140,8 @@ GIoUResult yolo_loss_giou_grad(const float* pred, const float* gt)
     auto loss_grad_corner = [&](float d_intersection, float d_area, float d_enclosing) -> float
     {
         const float d_union = d_area - d_intersection;
-        const float d_iou = (union_area > 0.0f) ? ((d_intersection * union_area - intersection_area * d_union) / (union_area * union_area)) : 0.0f;
-        const float d_penalty = (enclosing_area > 0.0f) ? ((union_area * d_enclosing - enclosing_area * d_union) / (enclosing_area * enclosing_area)) : 0.0f;
+        const float d_iou = (t.union_area > 0.0f) ? ((d_intersection * t.union_area - t.intersection_area * d_union) / (t.union_area * t.union_area)) : 0.0f;
+        const float d_penalty = (t.enclosing_area > 0.0f) ? ((t.union_area * d_enclosing - t.enclosing_area * d_union) / (t.enclosing_area * t.enclosing_area)) : 0.0f;
         return -d_iou + d_penalty;
     };
 
@@ -155,26 +155,19 @@ GIoUResult yolo_loss_giou_grad(const float* pred, const float* gt)
     r.w_gradient  = 0.5f * (d_loss_right - d_loss_left);
     r.h_gradient  = 0.5f * (d_loss_bottom - d_loss_top);
 
-    const float dx   = pred[0] - gt[0];
-    const float dy   = pred[1] - gt[1];
-    const float rho2 = dx*dx + dy*dy;
-    const float c2   = enclosing_width*enclosing_width + enclosing_height*enclosing_height + EPSILON;
-    const float ic4  = 1.0f / (c2 * c2);
+    const float ic4 = 1.0f / (t.c2 * t.c2);
 
-    const float dew_dcx = max_grad(predicted_right, ground_right) - min_grad(predicted_left, ground_left);
-    const float deh_dcy = max_grad(predicted_bottom, ground_bottom) - min_grad(predicted_top, ground_top);
-    const float dew_dw  = 0.5f * (max_grad(predicted_right, ground_right) + min_grad(predicted_left, ground_left));
-    const float deh_dh  = 0.5f * (max_grad(predicted_bottom, ground_bottom) + min_grad(predicted_top, ground_top));
-    r.cx_gradient += (2.0f*dx*c2 - rho2*2.0f*enclosing_width*dew_dcx) * ic4;
-    r.cy_gradient += (2.0f*dy*c2 - rho2*2.0f*enclosing_height*deh_dcy) * ic4;
-    r.w_gradient  += -rho2 * 2.0f*enclosing_width*dew_dw * ic4;
-    r.h_gradient  += -rho2 * 2.0f*enclosing_height*deh_dh * ic4;
+    const float dew_dcx = max_grad(t.predicted_right, t.ground_right) - min_grad(t.predicted_left, t.ground_left);
+    const float deh_dcy = max_grad(t.predicted_bottom, t.ground_bottom) - min_grad(t.predicted_top, t.ground_top);
+    const float dew_dw  = 0.5f * (max_grad(t.predicted_right, t.ground_right) + min_grad(t.predicted_left, t.ground_left));
+    const float deh_dh  = 0.5f * (max_grad(t.predicted_bottom, t.ground_bottom) + min_grad(t.predicted_top, t.ground_top));
+    r.cx_gradient += (2.0f*t.dx*t.c2 - t.rho2*2.0f*t.enclosing_width*dew_dcx) * ic4;
+    r.cy_gradient += (2.0f*t.dy*t.c2 - t.rho2*2.0f*t.enclosing_height*deh_dcy) * ic4;
+    r.w_gradient  += -t.rho2 * 2.0f*t.enclosing_width*dew_dw * ic4;
+    r.h_gradient  += -t.rho2 * 2.0f*t.enclosing_height*deh_dh * ic4;
 
-    const float v_diff = atan2f(gt[2], gt[3]) - atan2f(pred[2], pred[3]);
-    const float v     = INV_PI2 * v_diff * v_diff;
-    const float alpha = (union_area > 0.0f) ? v / (1.0f - r.iou + v + EPSILON) : 0.0f;
     const float wh2   = predicted_width*predicted_width + predicted_height*predicted_height + EPSILON;
-    const float coeff = alpha * INV_PI2 * 2.0f * v_diff;
+    const float coeff = t.alpha * INV_PI2 * 2.0f * t.v_diff;
     r.w_gradient  += coeff * (-predicted_height / wh2);
     r.h_gradient  += coeff * (predicted_width  / wh2);
 
@@ -307,11 +300,6 @@ float yolo_error_kernel(const TensorView& output,
 
     return lambda_giou * coordinate_loss + object_loss
          + lambda_noobject * noobject_loss + lambda_class * class_loss;
-}
-
-namespace
-{
-
 }
 
 #ifdef _MSC_VER
@@ -1515,20 +1503,15 @@ bool Loss::calculate_error_device_metrics(const Batch& batch,
     float* const results_device = workspace + workspace_floats;
     cublasHandle_t handle = device::get_cublas_handle();
 
-    auto reduce_abs_and_accumulate = [&](Index n, float scale)
+    enum class Reduction { Absolute, Squared };
+    auto reduce_and_accumulate = [&](float scale, Reduction reduction = Reduction::Absolute)
     {
         {
             device::CublasPointerModeGuard pointer_mode(handle, CUBLAS_POINTER_MODE_DEVICE);
-            CHECK_CUBLAS(cublasSasum(handle, to_int(n), workspace, 1, results_device));
-        }
-        accumulate_scaled_metric_cuda(results_device, scale, error_sum_device);
-    };
-
-    auto reduce_dot_and_accumulate = [&](Index n, float scale)
-    {
-        {
-            device::CublasPointerModeGuard pointer_mode(handle, CUBLAS_POINTER_MODE_DEVICE);
-            CHECK_CUBLAS(cublasSdot(handle, to_int(n), workspace, 1, workspace, 1, results_device));
+            if (reduction == Reduction::Squared)
+                CHECK_CUBLAS(cublasSdot(handle, to_int(input.size()), workspace, 1, workspace, 1, results_device));
+            else
+                CHECK_CUBLAS(cublasSasum(handle, to_int(input.size()), workspace, 1, results_device));
         }
         accumulate_scaled_metric_cuda(results_device, scale, error_sum_device);
     };
@@ -1537,14 +1520,6 @@ bool Loss::calculate_error_device_metrics(const Batch& batch,
     switch (error)
     {
     case MeanAbsoluteError:
-        input.dispatch([&]<typename TIn>()
-        {
-            scaled_diff_cuda_typed<TIn, float>(input.size(), input.as<TIn>(), target.as_float(),
-                                               1.0f, workspace);
-        });
-        reduce_abs_and_accumulate(input.size(), 1.0f / static_cast<float>(input.size()));
-        return true;
-
     case MeanSquaredError:
     case NormalizedSquaredError:
         input.dispatch([&]<typename TIn>()
@@ -1552,10 +1527,12 @@ bool Loss::calculate_error_device_metrics(const Batch& batch,
             scaled_diff_cuda_typed<TIn, float>(input.size(), input.as<TIn>(), target.as_float(),
                                                1.0f, workspace);
         });
-        reduce_dot_and_accumulate(input.size(),
-                                  error == MeanSquaredError
+        if (error == MeanAbsoluteError)
+            reduce_and_accumulate(1.0f / static_cast<float>(input.size()));
+        else
+            reduce_and_accumulate(error == MeanSquaredError
                                       ? 1.0f / static_cast<float>(2 * input.get_shape()[0])
-                                      : get_weighted_coefficient(batch));
+                                      : get_weighted_coefficient(batch), Reduction::Squared);
         return true;
 
     case WeightedSquaredError:
@@ -1564,7 +1541,7 @@ bool Loss::calculate_error_device_metrics(const Batch& batch,
             weighted_squared_error_cuda<T>(input.size(), workspace, target.as<float>(), input.as<T>(),
                                            positives_weight, negatives_weight);
         });
-        reduce_abs_and_accumulate(input.size(), 0.5f * get_weighted_coefficient(batch));
+        reduce_and_accumulate(0.5f * get_weighted_coefficient(batch));
         return true;
 
     case CrossEntropy:
@@ -1575,8 +1552,7 @@ bool Loss::calculate_error_device_metrics(const Batch& batch,
             else
                 categorical_cross_entropy_cuda<T>(input.size(), workspace, target.as<float>(), input.as<T>(), EPSILON);
         });
-        reduce_abs_and_accumulate(input.size(),
-                                  1.0f / static_cast<float>(input.get_shape()[0]));
+        reduce_and_accumulate(1.0f / static_cast<float>(input.get_shape()[0]));
         return true;
 
     case CrossEntropy3d:

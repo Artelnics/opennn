@@ -48,6 +48,10 @@ remaining limitations.
 
 ### Reliability and portability
 
+- Share training batch execution, Adam/SGD launch setup, optimizer-buffer resets
+  and loss metric reductions. Consolidate Quasi-Newton line-search setup and
+  YOLO box geometry while preserving update formulas, callbacks and tail metrics.
+  Add CPU/CUDA checks for mixed-precision optimizer layouts and device metrics.
 - Share model finalization, named-tokenizer access, text inference and attention
   configuration through `Network`. Preserve model-specific dropout policies and
   retain learned parameters, layer states and device settings when configuration

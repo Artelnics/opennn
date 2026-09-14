@@ -69,13 +69,13 @@ TEST(MeanSquaredErrorTest, GpuWorkspaceIsForwardPropagationOwned)
     // whatever the allocator handed over, which is harmless only while that
     // happens to be zero.
     network.copy_parameters_device();
-    network.copy_parameters_device();
 
     Loss loss(&network, &dataset);
     loss.set_error(Loss::Error::MeanSquaredError);
 
     Batch batch(samples_number, &dataset, network.get_config());
     batch.fill({0, 1}, FeatureSelection{{0}, {}, {1}});
+    batch.upload_to_device_batch_async(batch, device::get_transfer_stream());
     batch.wait_h2d_on_compute_stream();
 
     ForwardPropagation first(samples_number, &network);
@@ -90,6 +90,99 @@ TEST(MeanSquaredErrorTest, GpuWorkspaceIsForwardPropagationOwned)
     ASSERT_FALSE(second.loss_workspace.empty());
     EXPECT_NE(first.loss_workspace.data(), second.loss_workspace.data());
     EXPECT_FLOAT_EQ(first_result.error, second_result.error);
+}
+
+TEST(LossDeviceMetricsTest, MatchesHostMetricsAndAccumulatesAcrossBatches)
+{
+    if (!device::has_cuda_device())
+        GTEST_SKIP() << "No CUDA device.";
+
+    const ScopeExit reset_configuration([] { Configuration::instance().set(Device::CPU, Type::FP32); });
+    const vector<Loss::Error> errors{
+        Loss::Error::MeanAbsoluteError, Loss::Error::MeanSquaredError,
+        Loss::Error::NormalizedSquaredError, Loss::Error::WeightedSquaredError,
+        Loss::Error::CrossEntropy};
+    const vector<vector<Index>> sample_batches{{0, 3, 1}, {2, 4}};
+
+    for (const Type precision : {Type::FP32, Type::BF16})
+    {
+        if (precision == Type::BF16 && device::cuda_compute_capability() < 80) continue;
+        SCOPED_TRACE(precision == Type::FP32 ? "FP32" : "BF16");
+        Configuration::instance().set(Device::CUDA, precision);
+
+        for (const Index targets_number : {Index(1), Index(3)})
+        {
+            SCOPED_TRACE(targets_number);
+            TabularDataset dataset(5, {2}, {targets_number});
+            MatrixR data = MatrixR::Zero(5, 2 + targets_number);
+            data.col(0) << -0.8f, 0.3f, 1.2f, -0.2f, 0.7f;
+            data.col(1) << 0.4f, -0.9f, 0.1f, 0.6f, -0.5f;
+            for (Index row = 0; row < 5; ++row)
+            {
+                if (targets_number == 1)
+                    data(row, 2) = row == 3 ? 1.0f : 0.0f;
+                else
+                    data(row, 2 + row % targets_number) = 1.0f;
+            }
+            dataset.set_data(data);
+            dataset.set_sample_roles("Training");
+
+            Network network;
+            network.add_layer(make_unique<opennn::Dense>(
+                Shape{2}, Shape{targets_number}, targets_number == 1 ? "Sigmoid" : "Softmax"));
+            network.compile(Device::CUDA);
+            network.get_parameters_map().setLinSpaced(-0.4f, 0.6f);
+            network.copy_parameters_device();
+
+            Loss loss(&network, &dataset);
+            Buffer accumulated_error(Device::CUDA);
+            float* const error_sum_device = accumulated_error.ensure<float>(1);
+            const DeviceStream stream = device::get_compute_stream();
+
+            for (const Loss::Error error : errors)
+            {
+                loss.set_error(error);
+                SCOPED_TRACE(loss.get_name());
+                // Five training rows versus batches of three and two exercise
+                // normalization; the 4:1 binary imbalance gives unequal weights.
+                loss.set_normalization_coefficient();
+                device::set_zero_async(error_sum_device, sizeof(float), stream);
+                float expected_sum = 0.0f;
+
+                for (const vector<Index>& samples : sample_batches)
+                {
+                    SCOPED_TRACE(samples.size());
+                    Batch batch(Index(samples.size()), &dataset, network.get_config());
+                    batch.fill(samples, dataset.get_feature_selection());
+                    batch.upload_to_device_batch_async(batch, device::get_transfer_stream());
+                    batch.wait_h2d_on_compute_stream();
+
+                    MatrixR uploaded_targets(Index(samples.size()), targets_number);
+                    const TensorView& targets = batch.get_targets();
+                    copy_device_to_host_float(targets.get_data(), targets.get_type(), targets.size(),
+                                              uploaded_targets.data(), stream);
+                    device::synchronize(stream);
+                    for (Index row = 0; row < Index(samples.size()); ++row)
+                        for (Index column = 0; column < targets_number; ++column)
+                            EXPECT_FLOAT_EQ(uploaded_targets(row, column), data(samples[size_t(row)], 2 + column));
+
+                    ForwardPropagation forward(Index(samples.size()), &network);
+                    network.forward_propagate(batch.get_inputs(), forward, ForwardPropagationMode::Inference);
+
+                    const float expected = loss.calculate_error(batch, forward).error;
+                    ASSERT_TRUE(std::isfinite(expected));
+                    ASSERT_GT(expected, 0.0f);
+                    expected_sum += expected;
+                    ASSERT_TRUE(loss.calculate_error_device_metrics(batch, forward, error_sum_device, nullptr));
+
+                    float actual_sum = 0.0f;
+                    copy_device_to_host_float(error_sum_device, Type::FP32, 1, &actual_sum, stream);
+                    device::synchronize(stream);
+                    EXPECT_NEAR(actual_sum, expected_sum, 2.0e-6f * max(1.0f, expected_sum));
+                }
+            }
+        }
+    }
 }
 
 TEST(MeanSquaredErrorTest, BackPropagateDense2d)
