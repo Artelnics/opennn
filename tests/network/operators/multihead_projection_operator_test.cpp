@@ -124,5 +124,5 @@ TEST(MultiHeadProjectionOperatorTest, SingleHeadIsAPlainCopy)
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence, SL.
+// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: LGPL-2.1-or-later
-// Copyright (C) 2005-2026 Artificial Intelligence, SL.
+// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
 
 #include "opennn/dataset/dataset.h"
 #include "opennn/core/memory_debug.h"

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: LGPL-2.1-or-later
-// Copyright (C) 2005-2026 Artificial Intelligence, SL.
+// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
 
 #include "opennn/network/back_propagation.h"
 #include "opennn/registry.h"

@@ -72,5 +72,5 @@ void upsampling_backward_cuda(const int batch, const int in_h, const int in_w, c
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence, SL.
+// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.

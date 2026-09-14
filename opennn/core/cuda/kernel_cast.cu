@@ -46,5 +46,5 @@ void cast_bf16_to_fp32(const Index n, const __nv_bfloat16* src, float* dst)
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence, SL.
+// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
 // Licensed under the GNU Lesser General Public License v2.1 or later.
