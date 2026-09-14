@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-2.1-or-later
 #ifndef CUTLASS_NARROW_GEMM_CUH
 #define CUTLASS_NARROW_GEMM_CUH
 

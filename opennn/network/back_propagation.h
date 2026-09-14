@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   B A C K   P R O P A G A T I O N   H E A D E R
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #pragma once
 
@@ -18,6 +13,7 @@ namespace opennn
 
 class Loss;
 class Network;
+class TrainingArenaPlan;
 
 struct BackPropagation
 {
@@ -123,6 +119,10 @@ private:
     BackPropagation() = default;
 
     friend struct TrainingContext;
+    friend class TrainingArenaPlan;
+
+    void set(Index, Loss&, Buffer* external_arena,
+             Buffer* external_gradient, const TrainingArenaPlan&);
 
     DeltaLayout build_delta_layout(const vector<vector<TensorSpec>>&) const;
     DeltaPlan build_delta_plan();
@@ -160,7 +160,3 @@ private:
 };
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

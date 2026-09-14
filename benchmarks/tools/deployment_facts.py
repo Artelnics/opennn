@@ -20,7 +20,7 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from common import git_metadata  # noqa: E402
+from common import git_metadata, result_destination  # noqa: E402
 
 BENCHMARKS = Path(__file__).resolve().parent.parent
 ROOT = BENCHMARKS.parent
@@ -390,8 +390,8 @@ def main() -> int:
                         help="what to resolve for the package count; pinned by "
                              "default package requirement")
     parser.add_argument("--label", default=None, help="artifact label")
-    parser.add_argument("--out", type=Path, default=BENCHMARKS / "results",
-                        help="where the artifact lands")
+    parser.add_argument("--out", type=Path,
+                        help="output directory; default follows shared result and scratch routing")
     args = parser.parse_args()
 
     run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
@@ -410,7 +410,7 @@ def main() -> int:
             "examples": measure_examples(ROOT / "examples"),
             "application_lines": measure_application_lines(
                 ROOT / "examples" / "breast_cancer" / "main.cpp",
-                BENCHMARKS / "application" / "breast_cancer_pytorch.py"),
+                BENCHMARKS / "families" / "breast_cancer_pytorch.py"),
         },
         "machine": {
             "linked_libraries": read_needed_libraries(args.binary),
@@ -419,9 +419,10 @@ def main() -> int:
         },
     }
 
-    args.out.mkdir(parents=True, exist_ok=True)
+    destination = args.out or result_destination(artifact["git"].get("dirty"), "cpu")
+    destination.mkdir(parents=True, exist_ok=True)
     name = f"deployment-facts{'-' + args.label if args.label else ''}-{run_id}.json"
-    path = args.out / name
+    path = destination / name
     path.write_text(json.dumps(artifact, indent=2, default=str))
 
     source = artifact["source"]

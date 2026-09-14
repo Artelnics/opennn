@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   G E N E T I C   R E S P O N S E   C L A S S   H E A D E R
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #pragma once
 
@@ -25,6 +20,7 @@ private:
     MatrixR multi_optimization() override;
 
     pair<MatrixR, MatrixR> initialize_population(const pair<VectorR, VectorR>&) const;
+    pair<MatrixR, MatrixR> evolve_population(const pair<VectorR, VectorR>&) const;
 
     vector<Index> calculate_fitness(const MatrixR&, const MatrixR&) const;
 
@@ -44,7 +40,3 @@ private:
 };
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

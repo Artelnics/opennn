@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   V I S I O N   M O D E L S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/models/models.h"
 #include "opennn/core/log.h"
@@ -1248,7 +1243,3 @@ Index load_darknet_backbone_v11(Network& network,
 #endif
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

@@ -3,6 +3,17 @@
 #include <array>
 #include <future>
 
+#ifdef _WIN32
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <winsock2.h>
+#else
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <unistd.h>
+#endif
+
 #include "opennn/core/io_utilities.h"
 #include "opennn/core/json.h"
 
@@ -36,6 +47,136 @@ concept HasPublicJsonKind = requires(T value) { value.kind; };
 template<typename T>
 concept HasPublicJsonDocumentRoot = requires(T value) { value.root; };
 
+class DownloadFixture
+{
+public:
+#ifdef _WIN32
+    using Socket = SOCKET;
+    static constexpr Socket invalid_socket = INVALID_SOCKET;
+    static void close_socket(Socket socket) { closesocket(socket); }
+#else
+    using Socket = int;
+    static constexpr Socket invalid_socket = -1;
+    static void close_socket(Socket socket) { close(socket); }
+#endif
+
+    DownloadFixture()
+    {
+#ifdef _WIN32
+        WSADATA data{};
+        if (WSAStartup(MAKEWORD(2, 2), &data) != 0)
+            throw runtime_error("Cannot initialize the local download fixture.");
+#endif
+        ScopeExit rollback([this] { close_all(); });
+        listener = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+        if (listener == invalid_socket)
+            throw runtime_error("Cannot create the local download fixture socket.");
+
+        sockaddr_in address{};
+        address.sin_family = AF_INET;
+        address.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+        if (::bind(listener, reinterpret_cast<sockaddr*>(&address), sizeof(address)) != 0
+            || ::listen(listener, 2) != 0)
+            throw runtime_error("Cannot bind the local download fixture.");
+#ifdef _WIN32
+        int size = sizeof(address);
+#else
+        socklen_t size = sizeof(address);
+#endif
+        if (::getsockname(listener, reinterpret_cast<sockaddr*>(&address), &size) != 0)
+            throw runtime_error("Cannot read the local download fixture port.");
+        url = "http://127.0.0.1:" + to_string(ntohs(address.sin_port)) + "/model";
+
+        worker = async(launch::async, [this]
+        {
+            const ScopeExit stop_listening([this]
+            {
+                close_socket(listener);
+                listener = invalid_socket;
+            });
+            for (int attempt = 0; attempt < 2; ++attempt)
+            {
+                fd_set ready;
+                FD_ZERO(&ready);
+                FD_SET(listener, &ready);
+                timeval timeout{5, 0};
+                if (::select(int(listener + 1), &ready, nullptr, nullptr, &timeout) <= 0)
+                    throw runtime_error("Timed out waiting for the download request.");
+                const Socket client = ::accept(listener, nullptr, nullptr);
+                if (client == invalid_socket)
+                    throw runtime_error("Cannot accept the download request.");
+                const ScopeExit cleanup([&] { close_socket(client); });
+                FD_ZERO(&ready);
+                FD_SET(client, &ready);
+                timeout = {5, 0};
+                if (::select(int(client + 1), &ready, nullptr, nullptr, &timeout) <= 0)
+                    throw runtime_error("Timed out reading the download request.");
+                std::array<char, 2048> request{};
+                if (::recv(client, request.data(), int(request.size()), 0) <= 0)
+                    throw runtime_error("Cannot read the download request.");
+                const string response = "HTTP/1.1 200 OK\r\nContent-Length: "
+                    + to_string(attempt == 0 ? 32 : 7)
+                    + "\r\nConnection: close\r\n\r\npayload";
+                if (::send(client, response.data(), int(response.size()), 0) != int(response.size()))
+                    throw runtime_error("Cannot send the download fixture response.");
+            }
+        });
+        rollback.release();
+    }
+
+    ~DownloadFixture()
+    {
+        if (worker.valid()) worker.wait();
+        close_all();
+    }
+
+    string url;
+    future<void> worker;
+
+private:
+    void close_all()
+    {
+        if (listener != invalid_socket) close_socket(listener);
+#ifdef _WIN32
+        WSACleanup();
+#endif
+    }
+
+    Socket listener = invalid_socket;
+};
+
+}
+
+TEST(IoUtilitiesTest, InterruptedDownloadRetriesAndPublishesOnlyCompleteFiles)
+{
+#ifdef _WIN32
+    if (system("curl.exe --version >NUL 2>&1") != 0) GTEST_SKIP() << "curl is unavailable.";
+#else
+    if (system("curl --version >/dev/null 2>&1") != 0) GTEST_SKIP() << "curl is unavailable.";
+#endif
+    const filesystem::path folder = make_temp_path("download with spaces");
+    filesystem::create_directory(folder);
+    const filesystem::path path = folder / "model.bin";
+    const ScopeExit cleanup([&]
+    {
+        remove_quietly(path);
+        remove_quietly(folder);
+    });
+    ASSERT_TRUE(filesystem::is_empty(folder));
+
+    DownloadFixture server;
+    EXPECT_THROW(download_if_missing(path, server.url), runtime_error);
+    EXPECT_FALSE(filesystem::exists(path));
+    EXPECT_TRUE(filesystem::is_empty(folder));
+
+    ASSERT_NO_THROW(download_if_missing(path, server.url));
+    EXPECT_EQ(read_text_file(path), "payload");
+    EXPECT_EQ(distance(filesystem::directory_iterator(folder), filesystem::directory_iterator{}), 1);
+    ASSERT_NO_THROW(server.worker.get());
+
+    // A completed local file is reusable even without an available remote.
+    EXPECT_NO_THROW(download_if_missing(path, "http://127.0.0.1:0/unavailable"));
+    EXPECT_EQ(read_text_file(path), "payload");
 }
 
 TEST(JsonTest, PayloadDeterminesKind)

@@ -3,6 +3,8 @@
 #include <future>
 
 #include "opennn/network/operators/tokenizer_operator.h"
+#include "opennn/network/layers/tokenizer_layer.h"
+#include "opennn/core/json.h"
 
 using namespace opennn;
 
@@ -144,6 +146,81 @@ TEST(WordLevelTokenizer, EncodeSequenceAddsConfiguredFraming)
     EXPECT_EQ(tokenizer.encode_sequence("hello", 4), (vector<Index>{2, 4, 3}));
     EXPECT_EQ(tokenizer.encode_sequence(vector<string>{"hello", "hello"}, 2),
               (vector<Index>{2, 4}));
+}
+
+TEST(WordLevelTokenizer, LayerJsonRoundTripPreservesCustomFramingAndVocabularyBuilding)
+{
+    const vector<vector<string>> configurations = {
+        {"[PAD]", "[UNK]", "[START]", "[END]"},
+        {"[PAD]", "[UNK]"},
+        {"[PAD]", "[UNK]", "reserved", "[END]", "[START]"}
+    };
+    for (const auto& reserved : configurations)
+    {
+        SCOPED_TRACE(reserved.size());
+        auto tokenizer = make_unique<WordLevelTokenizer>(reserved);
+        tokenizer->build_vocabulary({{"hello"}}, 20, 1);
+        const auto expected = tokenizer->encode_sequence("hello", 4);
+        const auto fingerprint = tokenizer->fingerprint();
+
+        Tokenizer original(Shape{4});
+        original.set_tokenizer(std::move(tokenizer));
+        JsonWriter writer;
+        original.to_JSON(writer);
+        JsonDocument document;
+        document.set_root(Json::parse(writer.c_str()));
+        Tokenizer restored;
+        restored.from_JSON(document);
+
+        ASSERT_NE(restored.get_tokenizer(), nullptr);
+        EXPECT_EQ(restored.get_tokenizer()->encode_sequence("hello", 4), expected);
+        EXPECT_EQ(restored.get_tokenizer()->fingerprint(), fingerprint);
+        EXPECT_EQ(restored.get_vocabulary(), original.get_vocabulary());
+
+        auto rebuilt = restored.get_tokenizer()->clone();
+        rebuilt->build_vocabulary({{"world"}}, 20, 1);
+        vector<string> expected_vocabulary = reserved;
+        expected_vocabulary.push_back("world");
+        EXPECT_EQ(rebuilt->get_vocabulary(), expected_vocabulary);
+    }
+}
+
+TEST(WordLevelTokenizer, LegacyJsonKeepsDefaultFraming)
+{
+    const Json legacy = Json::parse(
+        R"({"Vocabulary":["[PAD]","[UNK]","[START]","[END]","hello"]})");
+    // Loading a legacy document restores the same defaults even on an object
+    // previously configured without sequence framing.
+    WordLevelTokenizer restored({"[PAD]", "[UNK]"});
+    restored.from_JSON(&legacy);
+    EXPECT_EQ(restored.encode_sequence("hello", 4), (vector<Index>{2, 4, 3}));
+}
+
+TEST(WordLevelTokenizer, FingerprintIncludesFramingAndUnknownFallback)
+{
+    const vector<string> vocabulary = {"[PAD]", "[UNK]", "[START]", "[END]", "hello"};
+    WordLevelTokenizer framed;
+    WordLevelTokenizer unframed({"[PAD]", "[UNK]"});
+    framed.set_vocabulary(vocabulary);
+    unframed.set_vocabulary(vocabulary);
+    EXPECT_NE(framed.fingerprint(), unframed.fingerprint());
+
+    WordLevelTokenizer different_unknown({"[PAD]", "[UNK]"});
+    different_unknown.set_vocabulary({"[PAD]", "reserved", "[UNK]"});
+    const vector<string> no_unknown = {"[PAD]", "alpha", "beta"};
+    unframed.set_vocabulary(no_unknown);
+    different_unknown.set_vocabulary(no_unknown);
+    EXPECT_NE(unframed.fingerprint(), different_unknown.fingerprint());
+
+    JsonWriter writer;
+    writer.open_element("WordLevel");
+    different_unknown.to_JSON(writer);
+    writer.close_element();
+    const Json saved = Json::parse(writer.c_str());
+    WordLevelTokenizer restored;
+    restored.from_JSON(saved.find("WordLevel"));
+    EXPECT_EQ(restored.token_to_id("missing"), different_unknown.token_to_id("missing"));
+    EXPECT_EQ(restored.fingerprint(), different_unknown.fingerprint());
 }
 
 TEST(WordPieceTokenizer, GreedyLongestMatchSubwords)

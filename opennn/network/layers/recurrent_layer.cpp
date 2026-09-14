@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   R E C U R R E N T   L A Y E R   C L A S S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/network/layers/recurrent_layer.h"
 
@@ -992,7 +987,3 @@ string Recurrent::write_expression(const vector<string>& feature_names,
 }
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

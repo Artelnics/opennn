@@ -1,10 +1,5 @@
-﻿//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   M U L T I H E A D   P R O J E C T I O N   O P E R A T O R   H E A D E R
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #pragma once
 
@@ -37,7 +32,3 @@ struct MultiHeadProjectionOperator : CombinationOperator
 };
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

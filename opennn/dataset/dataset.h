@@ -1,10 +1,5 @@
-﻿//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   D A T A   S E T   C L A S S   H E A D E R
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #pragma once
 
@@ -156,10 +151,14 @@ public:
     const MatrixR& get_data() const noexcept { return data; }
     void set_data(const MatrixR&);
     void set_data(MatrixR&&);
-    void set_data_constant(float new_value) { data.setConstant(new_value); }
+    void set_data_constant(float new_value) { invalidate_data(); data.setConstant(new_value); }
 
     virtual void enable_device_residency();
-    void disable_device_residency() { data_device.resize_bytes(0, Device::CUDA); }
+    void disable_device_residency()
+    {
+        data_device.resize_bytes(0, Device::CUDA);
+        device_data_columns = 0;
+    }
     bool is_device_resident() const noexcept { return data_device.data() != nullptr; }
     bool requests_device_residency() const noexcept
     {
@@ -345,6 +344,13 @@ protected:
 
     void upload_device_matrix(const MatrixR&);
 
+    // Call before replacing or editing host data, including reloads and preprocessing.
+    void invalidate_data()
+    {
+        clear_training_scaling();
+        disable_device_residency();
+    }
+
     MatrixR data;
 
     Buffer data_device{Device::CUDA};
@@ -406,7 +412,3 @@ struct FoldScope
 };
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   T O K E N I Z E R   O P E R A T O R   C L A S S   H E A D E R
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #pragma once
 
@@ -104,6 +99,10 @@ public:
 
     unique_ptr<TokenizerOperator> clone() const override { return make_unique<WordLevelTokenizer>(*this); }
     string_view get_kind() const override { return "WordLevel"; }
+    uint64_t fingerprint() const override;
+
+    void to_JSON(JsonWriter&) const override;
+    void from_JSON(const Json*) override;
 };
 
 class WordPieceTokenizer : public TokenizerOperator
@@ -218,7 +217,3 @@ protected:
 };
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

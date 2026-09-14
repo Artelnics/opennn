@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   T E X T   G E N E R A T I O N   D A T A S E T   C L A S S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/dataset/text_generation_dataset.h"
 #include "opennn/core/log.h"
@@ -76,6 +71,7 @@ void TextGenerationDataset::create_vocabulary(const vector<string_view>& corpus_
 
 void TextGenerationDataset::read_txt()
 {
+    invalidate_data();
     logging::info() << "Reading .txt file..." << "\n";
 
     throw_if(sequence_length <= 0,
@@ -393,7 +389,3 @@ void TextGenerationDataset::from_JSON(const JsonDocument& data_set_document)
 }
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-2.1-or-later
 #ifndef KERNEL_OPTIMIZERS_CUH
 #define KERNEL_OPTIMIZERS_CUH
 
@@ -38,6 +39,7 @@ void adam_update_prepared_cuda(
     cudaStream_t stream = nullptr);
 
 void clip_gradient_norm_cuda(const Index n, float* gradient, const float* squared_norm, const float max_norm, const float eps);
+void sum_squared_norms_cuda(const Index n, const float* values, float* total);
 
 #endif
 

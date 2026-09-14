@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   B A T C H   S T R U C T   H E A D E R
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #pragma once
 
@@ -109,9 +104,9 @@ struct Batch
     BatchSlot decoder;
     BatchSlot target;
 
-    void upload_to_device_batch_async(Batch&, cudaStream_t);
+    void upload_to_device_batch_async(Batch&, DeviceStream);
 
-    void record_h2d_done(cudaStream_t);
+    void record_h2d_done(DeviceStream);
 
     device::PinnedBuffer input_host_bf16;
     Buffer fp32_staging{Device::CUDA};
@@ -185,7 +180,3 @@ private:
 };
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

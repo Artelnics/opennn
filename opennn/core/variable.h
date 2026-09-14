@@ -1,10 +1,5 @@
-﻿//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   V A R I A B L E    S T R U C T U R E  H E A D E R
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #pragma once
 

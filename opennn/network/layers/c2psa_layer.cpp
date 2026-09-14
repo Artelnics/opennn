@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   C 2 P S A   L A Y E R   C L A S S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/network/layers/c2psa_layer.h"
 #include "opennn/registry.h"
@@ -73,7 +68,3 @@ vector<TensorSpec> C2PSA::get_backward_specs(Index batch_size) const
 }
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

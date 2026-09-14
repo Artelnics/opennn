@@ -143,5 +143,6 @@
       "redistribution_cleared": false,
       "review": "See DATASETS.md for source, attribution, transformations and unresolved records."
     }
-  ]
+  ],
+  "storage_contract": "ZIP members are expanded under the archive parent directory before applying hash_contract; inventory paths and redistribution records are unchanged."
 }

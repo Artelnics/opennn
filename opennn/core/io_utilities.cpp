@@ -1,9 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/core/io_utilities.h"
 #include "opennn/core/string_utilities.h"
@@ -36,6 +32,21 @@ void download_if_missing(const filesystem::path& path, const string& url)
     if (path.has_parent_path())
         filesystem::create_directories(path.parent_path());
 
+    filesystem::path staging_directory;
+    do
+    {
+        staging_directory = path.parent_path() / (".opennn-download-" + to_string(random_device{}()));
+    }
+    while (!filesystem::create_directory(staging_directory));
+
+    const filesystem::path temporary = staging_directory / "payload";
+    const ScopeExit cleanup([&]
+    {
+        error_code error;
+        filesystem::remove(temporary, error);
+        filesystem::remove(staging_directory, error);
+    });
+
     logging::info() << "Downloading " << url << " -> " << path.string() << " ..." << endl;
 
 #if defined(_WIN32)
@@ -45,10 +56,13 @@ void download_if_missing(const filesystem::path& path, const string& url)
 #endif
 
     const string command =
-        curl + " -L --fail -o \"" + path.string() + "\" \"" + url + "\"";
+        curl + " -L --fail -o \"" + temporary.string() + "\" \"" + url + "\"";
 
-    if (system(command.c_str()) != 0 || !filesystem::exists(path))
+    if (system(command.c_str()) != 0 || !filesystem::is_regular_file(temporary))
         throw runtime_error("Download failed. Get it manually from:\n  " + url);
+
+    if (!filesystem::exists(path))
+        filesystem::rename(temporary, path);
 }
 
 void download_files_if_missing(const filesystem::path& directory,
@@ -484,7 +498,3 @@ void FileWriter::finish_with_rename(const filesystem::path& final_path)
 }
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

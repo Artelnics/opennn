@@ -50,8 +50,8 @@ Set the configuration before constructing a dataset, network, model or session.
 For an example that already calls `Configuration::set`, temporarily replace
 that complete call. For an example without a call, temporarily add the direct
 `opennn/core/configuration.h` include and one call at the start of its `try`
-block. The `blank` target does not use OpenNN; build and run it once and report
-the four matrix cells as not applicable.
+block. The `blank` target now performs real dense-network inference with fixed
+parameters. Include it in the requested matrix; its default is CPU FP32.
 
 Before editing, save the exact original contents outside the repository. Restore
 them in a `finally`-style cleanup path after every example, including build
@@ -60,7 +60,7 @@ the saved original; do not use `git checkout`, `git restore` or another command
 that could discard the user's changes.
 
 Build only the target being exercised. Run it from the build's runtime-output
-directory so paths such as `../data/<example>` resolve to the data copied by
+directory so paths such as `../data/<example>` resolve to the data copied or unpacked by
 CMake. Supply deterministic, minimal input to interactive programs; for Qwen,
 pipe a prompt followed by `exit` and use a user-provided/prepared model
 directory. Apply a finite timeout suited to the workload.
@@ -75,7 +75,8 @@ Every target must have a result for every matrix column:
 - `UNSUPPORTED`: the code explicitly rejects that device/type combination.
 - `BLOCKED`: required hardware, data, model assets or external tooling is
   unavailable.
-- `N/A`: the target does not instantiate OpenNN, as with `blank`.
+- `N/A`: the target does not instantiate OpenNN. All current example targets,
+  including `blank`, use OpenNN and require a result for each requested cell.
 
 Do not silently convert failures to unsupported results. Record the command,
 exit code, elapsed time and a short diagnostic for every non-pass cell. Capture

@@ -9,7 +9,10 @@
 #include "opennn/core/tensor_types.h"
 #include "opennn/models/models.h"
 #include "opennn/network/network.h"
+#include "opennn/network/layers/dense_layer.h"
+#include "opennn/network/operators/layer_normalization_operator.h"
 #include "opennn/core/configuration.h"
+#include "opennn/registry.h"
 #include "opennn/training/loss.h"
 #include "opennn/network/back_propagation.h"
 #ifdef OPENNN_HAS_CUDA
@@ -89,6 +92,79 @@ TEST(Int8InferenceTest, Int8CpuConfigurationThrows)
 }
 
 #ifdef OPENNN_HAS_CUDA
+
+TEST(PrecisionStorageTest, Bf16MasterReleasePreservesSharedFp32SlotsGpu)
+{
+    if (!device::has_cuda_device() || device::cuda_compute_capability() < 80)
+        GTEST_SKIP() << "An Ampere or newer CUDA device is required.";
+    const ScopeExit reset_configuration([] { Configuration::instance().set(Device::CPU, Type::FP32); });
+    Configuration::instance().set(Device::CUDA, Type::BF16);
+
+    // Custom layers can share FP32 normalization parameters even while their
+    // activations and the following projection use BF16.
+    class SharedNormalization final : public Layer
+    {
+    public:
+        explicit SharedNormalization(const Layer* new_source = nullptr)
+            : Layer(LayerType::Normalization3d), source(new_source)
+        {
+            input_shape = {1, 4};
+            normalization.set(1, 4);
+            normalization.output_slots = {1, 2, 3, 4};
+            operators = {&normalization};
+        }
+        Shape get_output_shape() const override { return {1, 4}; }
+        TiedWeight get_tied_weight() const override { return {source, 0, 0}; }
+        vector<TensorSpec> get_forward_specs(Index batch) const override
+        {
+            return {{{batch, 1}, Type::FP32}, {{batch, 1}, Type::FP32},
+                    {{}, compute_dtype}, {{batch, 1, 4}, compute_dtype}};
+        }
+    private:
+        const Layer* source;
+        LayerNormalizationOperator normalization;
+    };
+    const auto build = [](Network& network)
+    {
+        network.add_layer(make_unique<SharedNormalization>());
+        network.add_layer(make_unique<SharedNormalization>(network.get_layer(0).get()));
+        network.add_layer(make_unique<opennn::Dense>(Shape{1, 4}, Shape{4}, "Identity"));
+        network.compile();
+    };
+    Network released, uploaded;
+    build(released);
+    build(uploaded);
+    released.get_layer(0)->get_parameter_views()[0].as_vector().setOnes();
+    auto& beta = released.get_layer(1)->get_parameter_views()[1];
+    beta.as_vector() << 0.25f, 0.5f, 0.75f, 1.0f;
+    released.get_layer(2)->get_parameter_views()[1].as_matrix().setIdentity();
+    const VectorR parameters = released.get_parameters_map();
+    const VectorR expected_beta = beta.as_vector();
+    uploaded.set_parameters(parameters);
+
+    Tensor3 inputs(2, 1, 4);
+    for (Index i = 0; i < inputs.size(); ++i) inputs.data()[i] = float(i + 1);
+    const MatrixR expected = released.calculate_outputs(inputs);
+    EXPECT_EQ(released.get_parameter_storage(), Network::ParameterStorage::DeviceMasterWithMirror);
+    released.release_bf16_fp32_parameter_master_for_inference();
+    released.release_bf16_fp32_parameter_master_for_inference(); // Releasing twice is harmless.
+    uploaded.upload_parameters_bf16_inference();
+    for (Network* network : {&released, &uploaded})
+    {
+        EXPECT_TRUE(network->fp32_master_released());
+        const auto& source = network->get_layer(0)->get_parameter_views()[0];
+        const auto& consumer = network->get_layer(1)->get_parameter_views();
+        EXPECT_EQ(consumer[0].get_data(), source.get_data());
+        EXPECT_EQ(consumer[1].get_type(), Type::FP32);
+        VectorR actual_beta(expected_beta.size());
+        copy_device_to_host_float(consumer[1].get_data(), Type::FP32, actual_beta.size(),
+                                  actual_beta.data(), device::get_compute_stream());
+        EXPECT_TRUE(actual_beta.isApprox(expected_beta, 0.0f));
+        EXPECT_TRUE(network->calculate_outputs(inputs).isApprox(expected, 1.0e-6f));
+        EXPECT_THROW(network->copy_parameters_host(), exception);
+        EXPECT_THROW(network->set_parameters(parameters), exception);
+    }
+}
 
 TEST(Int8InferenceTest, Int8TrainingThrowsGpu)
 {

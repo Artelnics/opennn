@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-2.1-or-later
 #ifndef KERNEL_C2PSA_CUH
 #define KERNEL_C2PSA_CUH
 

@@ -1,10 +1,5 @@
-﻿//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   N O N   M A X   S U P P R E S S I O N   L A Y E R   H E A D E R
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #pragma once
 
@@ -54,6 +49,13 @@ public:
 
     bool accepts_input_rank(Index rank) const override { return is_one_of(rank, 3); }
 
+    void on_compute_dtype_changed() override
+    {
+        throw_if(get_compute_dtype() != Type::FP32,
+                 "{} layer supports FP32 activations only; compile the network with Type::FP32.",
+                 get_name());
+    }
+
     void apply_input_shape(const Shape&) override;
 
     float get_confidence_threshold() const { return nms.confidence_threshold; }
@@ -70,7 +72,3 @@ private:
 };
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   M U L T I H E A D   P R O J E C T I O N   O P E R A T O R   S O U R C E
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/network/operators/multihead_projection_operator.h"
 #include "opennn/core/profiler.h"
@@ -29,21 +24,6 @@ static void split_heads_gpu(const TensorView& source, TensorView& destination)
 
     destination.dispatch([&]<typename T>() {
         split_heads_cuda<T>(source.size(), source.as<T>(), destination.as<T>(),
-                            to_int(sequence_length),
-                            to_int(heads_number),
-                            to_int(head_dimension));
-    });
-}
-
-static void concatenate_heads_gpu(const TensorView& source, TensorView& destination)
-{
-    const Shape& shape = source.get_shape();
-    const Index heads_number = shape[1];
-    const Index sequence_length = shape[2];
-    const Index head_dimension = shape[3];
-
-    destination.dispatch([&]<typename T>() {
-        concatenate_heads_cuda<T>(source.size(), source.as<T>(), destination.as<T>(),
                             to_int(sequence_length),
                             to_int(heads_number),
                             to_int(head_dimension));
@@ -87,11 +67,11 @@ void split_heads(const TensorView& source, TensorView& destination)
 
 void concatenate_heads(const TensorView& source, TensorView& destination)
 {
-    if (source.is_cuda()) { concatenate_heads_gpu(source, destination); return; }
-
-    const Shape& shape = source.get_shape();
-    transpose_middle_axes(source.as<float>(), destination.as<float>(),
-                          shape[0], shape[1], shape[2], shape[3]);
+#ifndef OPENNN_HAS_CUDA
+    if (source.is_cuda()) return concatenate_heads_gpu(source, destination);
+#endif
+    // Both directions swap the source tensor's two middle axes.
+    split_heads(source, destination);
 }
 
 void MultiHeadProjectionOperator::set(Index new_input_features, Index new_heads_number,
@@ -147,25 +127,17 @@ void MultiHeadProjectionOperator::forward_propagate(ForwardPropagation& forward_
                + projected * (1.0 + extra_passes)));
     };
 
-    if (interleaved_heads && input.is_cuda())
-    {
-        record_bytes(0.0);
-
-        TensorView head_output_2d = head_output.reshape({rows, heads_number * head_dimension});
-        return linear_forward(input_2d, weights, bias, head_output_2d,
-                              CUBLASLT_EPILOGUE_BIAS, nullptr, weight_scale);
-    }
-
-    record_bytes(2.0);
-
-    TensorView&       scratch     = forward_slots[scratch_slot];
-    TensorView        scratch_2d  = scratch.reshape_prefix({rows, heads_number * head_dimension});
-    const TensorView  scratch_4d  = scratch.reshape_prefix(
+    const bool interleaved = interleaved_heads && input.is_cuda();
+    record_bytes(interleaved ? 0.0 : 2.0);
+    TensorView projected = interleaved
+        ? head_output.reshape({rows, heads_number * head_dimension})
+        : forward_slots[scratch_slot].reshape_prefix({rows, heads_number * head_dimension});
+    const TensorView scratch_4d = interleaved ? TensorView{} : projected.reshape(
         {batch_size, seq_len, heads_number, head_dimension});
 
-    linear_forward(input_2d, weights, bias, scratch_2d,
-                   CUBLASLT_EPILOGUE_BIAS, nullptr, weight_scale);
-    split_heads(scratch_4d, head_output);
+    linear_forward(input_2d, weights, bias, projected,
+                   LinearEpilogue::Bias, nullptr, weight_scale);
+    if (!interleaved) split_heads(scratch_4d, head_output);
 }
 
 void MultiHeadProjectionOperator::back_propagate(ForwardPropagation& forward_propagation, BackPropagation& back_propagation, size_t layer) const
@@ -219,7 +191,3 @@ void MultiHeadProjectionOperator::back_propagate(ForwardPropagation& forward_pro
 }
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

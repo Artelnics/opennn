@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   G E N E T I C   R E S P O N S E   C L A S S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/response_optimization/genetic_response.h"
 #include "opennn/network/network.h"
@@ -109,27 +104,31 @@ pair<MatrixR, MatrixR> GeneticResponse::initialize_population(const pair<VectorR
     return {inputs, outputs};
 }
 
-
-MatrixR GeneticResponse::multi_optimization()
+pair<MatrixR, MatrixR> GeneticResponse::evolve_population(const pair<VectorR, VectorR>& domain) const
 {
-    const pair<VectorR, VectorR> domain = calculate_domain();
-
     pair<MatrixR, MatrixR> population = initialize_population(domain);
 
     for (Index generation = 0; generation < iterations_number; generation++)
     {
         const vector<Index> ranking = calculate_fitness(population.first, population.second);
-
-        const pair<MatrixR, MatrixR> children = recombinate_population(population.first, ranking, domain);
+        const auto children = recombinate_population(population.first, ranking, domain);
 
         population = append_rows(population, mutate_population(children.first, domain));
 
         const vector<Index> survivors = calculate_fitness(population.first, population.second);
-
         population = slice_rows(population,
                                 vector<Index>(survivors.begin(),
                                               survivors.begin() + min(points_number, Index(survivors.size()))));
     }
+
+    return population;
+}
+
+
+MatrixR GeneticResponse::multi_optimization()
+{
+    const pair<VectorR, VectorR> domain = calculate_domain();
+    pair<MatrixR, MatrixR> population = evolve_population(domain);
 
     vector<Index> front = clean_front(population.first, population.second);
 
@@ -160,23 +159,7 @@ MatrixR GeneticResponse::multi_optimization()
 MatrixR GeneticResponse::single_optimization()
 {
     const pair<VectorR, VectorR> domain = calculate_domain();
-
-    pair<MatrixR, MatrixR> population = initialize_population(domain);
-
-    for (Index generation = 0; generation < iterations_number; generation++)
-    {
-        const vector<Index> ranking = calculate_fitness(population.first, population.second);
-
-        const pair<MatrixR, MatrixR> children = recombinate_population(population.first, ranking, domain);
-
-        population = append_rows(population, mutate_population(children.first, domain));
-
-        const vector<Index> survivors = calculate_fitness(population.first, population.second);
-
-        population = slice_rows(population,
-                                vector<Index>(survivors.begin(),
-                                              survivors.begin() + min(points_number, Index(survivors.size()))));
-    }
+    const pair<MatrixR, MatrixR> population = evolve_population(domain);
 
     const MatrixR objective_values = evaluate_objectives(population.first, population.second);
 
@@ -390,7 +373,3 @@ void GeneticResponse::mutate_individual(VectorR& candidate, const pair<VectorR, 
 }
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

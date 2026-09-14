@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   S E L E C T I O N   U T I L I T I E S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/model_selection/selection_utilities.h"
 
@@ -18,12 +13,22 @@
 namespace opennn
 {
 
+void validate_selection_training(const Training* training,
+                                 const Index folds_number,
+                                 const string_view algorithm)
+{
+    throw_if(!training || !training->get_dataset() || !training->get_network(),
+             "{} requires a training configuration with a dataset and network.", algorithm);
+    throw_if(folds_number <= 1 && !training->get_dataset()->has_validation(),
+             "{} requires validation samples or cross-validation to rank candidates.", algorithm);
+}
+
 CandidateEvaluation evaluate_candidate(Training* training,
                                        Network* network,
                                        const Index folds_number,
                                        const vector<vector<Index>>& fold_partition,
                                        const Index trials_number,
-                                       const bool use_validation_history_minimum,
+                                       [[maybe_unused]] const bool use_validation_history_minimum,
                                        const function<void(Index, float, float, bool)>& on_trial,
                                        const function<void(Index)>& initialize_trial)
 {
@@ -46,12 +51,12 @@ CandidateEvaluation evaluate_candidate(Training* training,
 
         const float training_error = training_results.get_training_error();
 
-        const float validation_error =
-            use_validation_history_minimum && training_results.validation_error_history.size() > 0
-                ? training_results.validation_error_history.minCoeff<PropagateNumbers>()
-                : training_results.get_validation_error();
+        // Keep the legacy argument for callers, but score the model that train()
+        // actually returned, including its optional best-epoch restoration.
+        const float validation_error = training_results.get_validation_error();
 
-        const bool improved = validation_error < evaluation.validation_error;
+        const bool improved = isfinite(training_error) && isfinite(validation_error)
+                           && validation_error < evaluation.validation_error;
 
         if (improved)
         {
@@ -215,7 +220,3 @@ void apply_input_scaling(Network* network, FeatureScaling input_scaling)
 }
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

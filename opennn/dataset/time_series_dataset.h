@@ -1,10 +1,5 @@
-﻿//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   T I M E   S E R I E S   D A T A S E T   C L A S S   H E A D E R
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #pragma once
 
@@ -81,6 +76,7 @@ public:
 private:
 
     void configure_forecasting();
+    Shape forecasting_target_shape(Index, bool) const;
 
     Index past_time_steps = 2;
 
@@ -90,7 +86,3 @@ private:
 };
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

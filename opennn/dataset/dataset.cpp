@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   D A T A   S E T   C L A S S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/dataset/dataset.h"
 #include "opennn/core/memory_debug.h"
@@ -157,6 +152,7 @@ void Dataset::get_batches(const vector<Index>& sample_indices,
 
 void Dataset::set_storage_mode(StorageMode new_storage_mode)
 {
+    disable_device_residency();
     storage_mode = new_storage_mode;
 
     if (new_storage_mode == StorageMode::BinaryFile)
@@ -190,6 +186,7 @@ void Dataset::set_data(const MatrixR& new_data)
     throw_if(new_data.cols() != get_features_number(),
              "Columns number is not equal to variables number");
 
+    invalidate_data();
     data = new_data;
     set_storage_mode(StorageMode::Matrix);
 }
@@ -201,6 +198,7 @@ void Dataset::set_data(MatrixR&& new_data)
     throw_if(new_data.cols() != get_features_number(),
              "Columns number is not equal to variables number");
 
+    invalidate_data();
     data = std::move(new_data);
     set_storage_mode(StorageMode::Matrix);
 }
@@ -238,7 +236,7 @@ void Dataset::upload_device_matrix(const MatrixR& matrix)
     const Index bytes = Index(matrix.size()) * Index(sizeof(float));
     data_device.resize_bytes(bytes, Device::CUDA);
 
-    const cudaStream_t stream = device::get_compute_stream();
+    const DeviceStream stream = device::get_compute_stream();
     device::copy_async(data_device.data(), matrix.data(), bytes,
                        device::CopyKind::HostToDevice, stream);
     device::synchronize(stream);
@@ -893,6 +891,7 @@ void Dataset::write_json_footer(JsonWriter& printer) const
 
 void Dataset::read_json_blocks(const Json* dataset_element)
 {
+    invalidate_data();
     if (const Json* variables_element = dataset_element->find("Variables"))
         variables_from_JSON(variables_element);
     if (const Json* samples_element = dataset_element->find("Samples"))
@@ -1143,7 +1142,3 @@ void Dataset::samples_from_JSON(const Json *samples_element)
 }
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

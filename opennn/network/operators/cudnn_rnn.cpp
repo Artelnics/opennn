@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   C U D N N   R N N   S T A T E   S O U R C E
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/network/operators/cudnn_rnn.h"
 #include "opennn/core/string_utilities.h"
@@ -685,9 +680,13 @@ void CudnnRnnState::drive_cudnn_forward_(const CudnnRnnDims& dims,
     const Index batch_size = input.get_shape()[0];
     const auto backend_lock = lock_backend_state();
 
-    CudnnRnnShapeSlot& shape = ensure_cudnn_setup_(batch_size, is_training);
-    prepare_cudnn_forward_state_(forward_state, is_training, shape);
-    pack_weights_to_cudnn_(forward_state, parameters_version);
+    const auto prepare = [&]() -> CudnnRnnShapeSlot& {
+        CudnnRnnShapeSlot& shape = ensure_cudnn_setup_(batch_size, is_training);
+        prepare_cudnn_forward_state_(forward_state, is_training, shape);
+        pack_weights_to_cudnn_(forward_state, parameters_version);
+        return shape;
+    };
+    CudnnRnnShapeSlot& shape = prepare();
 
     const void* x_data = input.get_data();
     void* y_data = sequence_output.get_data();
@@ -706,16 +705,7 @@ void CudnnRnnState::drive_cudnn_forward_(const CudnnRnnDims& dims,
     }
 
     cudnn_rnn_forward_(shape, is_training, dims.has_cell_state,
-                       x_data, y_data,
-                       forward_state,
-                       [&]() -> CudnnRnnShapeSlot& {
-                           CudnnRnnShapeSlot& retry_shape =
-                               ensure_cudnn_setup_(batch_size, is_training);
-                           prepare_cudnn_forward_state_(forward_state, is_training,
-                                                        retry_shape);
-                           pack_weights_to_cudnn_(forward_state, parameters_version);
-                           return retry_shape;
-                       });
+                       x_data, y_data, forward_state, prepare);
 
     if (dims.return_sequences && shape.time_major)
     {
@@ -823,7 +813,3 @@ void CudnnRnnState::drive_cudnn_backward_(const CudnnRnnDims& dims,
 }
 
 #endif
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

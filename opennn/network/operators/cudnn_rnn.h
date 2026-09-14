@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   C U D N N   R N N   S T A T E   H E A D E R
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #pragma once
 
@@ -28,10 +23,10 @@ struct CudnnRnnShapeSlot
     bool time_major = true;
     Index workspace_bytes = 0;
     Index reserve_space_bytes = 0;
-    CudnnDescriptor<cudnnRNNDataDescriptor_t> x_desc;
-    CudnnDescriptor<cudnnRNNDataDescriptor_t> y_desc;
-    CudnnDescriptor<cudnnTensorDescriptor_t>  h_desc;
-    CudnnDescriptor<cudnnTensorDescriptor_t>  c_desc;
+    CudnnDescriptor<DnnRNNDataDescriptor> x_desc;
+    CudnnDescriptor<DnnRNNDataDescriptor> y_desc;
+    CudnnDescriptor<DnnTensorDescriptor>  h_desc;
+    CudnnDescriptor<DnnTensorDescriptor>  c_desc;
     Buffer seq_host{Device::CPU};
     Buffer seq_dev {Device::CUDA};
 };
@@ -40,7 +35,7 @@ struct CudnnRnnShapeSlot
 
 struct CudnnRnnConfig
 {
-    cudnnRNNMode_t cell_mode;
+    DnnRNNMode cell_mode;
     Type data_type = Type::FP32;
 };
 
@@ -57,8 +52,8 @@ protected:
     struct BackendState
     {
         mutex access_mutex;
-        CudnnDescriptor<cudnnRNNDescriptor_t> rnn_desc;
-        CudnnDescriptor<cudnnDropoutDescriptor_t> dropout_desc;
+        CudnnDescriptor<DnnRNNDescriptor> rnn_desc;
+        CudnnDescriptor<DnnDropoutDescriptor> dropout_desc;
         Buffer dropout_states{Device::CUDA};
         CudnnRnnShapeSlot shape_slots[RNN_SHAPE_SLOTS];
         int shape_stamp = 0;
@@ -188,7 +183,3 @@ protected:
 };
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

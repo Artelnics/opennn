@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   T E N S O R   O P E R A T I O N S   H E A D E R
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #pragma once
 
@@ -134,7 +129,7 @@ void activation_forward(TensorView&, ActivationFunction);
 void activation_backward(const TensorView&, TensorView&, ActivationFunction);
 
 void linear_forward(const TensorView&, const TensorView&, const TensorView&,
-                    TensorView&, cublasLtEpilogue_t epilogue = CUBLASLT_EPILOGUE_BIAS,
+                    TensorView&, LinearEpilogue epilogue = LinearEpilogue::Bias,
                     TensorView* pre_activation = nullptr,
                     const TensorView& weight_scale = {},
                     ActivationFunction fused_activation = ActivationFunction::Identity);
@@ -170,7 +165,3 @@ VectorI get_nearest_points(const MatrixR&, const VectorR&, Index = 1);
 bool row_dominates(const MatrixR&, Index, Index);
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

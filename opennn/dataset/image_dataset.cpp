@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   I M A G E   D A T A S E T   C L A S S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/dataset/image_dataset.h"
 #include "opennn/core/log.h"
@@ -125,6 +120,7 @@ void ImageDataset::set_input_scaling(const vector<Descriptives>& descriptives,
     throw_if(ssize(descriptives) != channels || ssize(scalers) != channels,
              "ImageDataset::set_input_scaling: channel count mismatch.");
 
+    disable_device_residency();
     input_scale.resize(size_t(channels));
     input_offset.resize(size_t(channels));
 
@@ -337,6 +333,7 @@ VectorI ImageDataset::calculate_target_distribution() const
 
 void ImageDataset::read_images()
 {
+    invalidate_data();
     const chrono::high_resolution_clock::time_point start_time = chrono::high_resolution_clock::now();
 
     data.resize(0, 0);
@@ -680,7 +677,3 @@ void ImageDataset::fill_targets(const vector<Index>& sample_indices,
 }
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

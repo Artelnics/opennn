@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   A T T E N T I O N   O P E R A T O R   S O U R C E
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/network/operators/attention_operator.h"
 #include "opennn/core/profiler.h"
@@ -107,17 +102,8 @@ void AttentionOperator::softmax_rows_prefix(float* matrix, Index rows, Index col
 
 vector<TensorSpec> AttentionOperator::forward_scratch_specs(Index batch_size) const
 {
-    if (use_sdpa)
-        return vector<TensorSpec>(2, {Shape{}, compute_dtype});
-
-    const Shape attention_shape = {batch_size, heads_number,
-                                   query_sequence_length, source_sequence_length};
-    const Shape dropout_shape = dropout.active() ? attention_shape : Shape{};
-
-    return {
-        {attention_shape, compute_dtype},
-        {dropout_shape,   compute_dtype},
-    };
+    const TensorSpec attention = backward_scratch_spec(batch_size);
+    return {attention, {dropout.active() ? attention.shape : Shape{}, compute_dtype}};
 }
 
 TensorSpec AttentionOperator::backward_scratch_spec(Index batch_size) const
@@ -910,7 +896,7 @@ void AttentionOperator::apply_sdpa_forward(const TensorView& query,
 
     if (fp32_via_bf16)
     {
-        cudaStream_t cstream = device::get_compute_stream();
+        DeviceStream cstream = device::get_compute_stream();
         const Index q_elems  = query.size();
         const Index kv_elems = key.size();
 
@@ -949,34 +935,31 @@ void AttentionOperator::apply_sdpa_forward(const TensorView& query,
 
         flash_attention::forward(*problem, q_ptr, k_ptr, v_ptr, o_ptr,
                                  softmax_lse, device::get_compute_stream());
-
-        if (fp32_via_bf16)
-            cast_bf16_to_fp32(output.size(), output_bf16, output.as<float>());
-
-        return;
     }
-
-    auto& entry = sdpa_cache->get_or_create_entry(cache_key);
-    if (!entry.fwd)
-        build_sdpa_forward_graph(entry, cache_key);
-
-    cudnn_frontend::VariantPack tensor_map;
-    tensor_map[entry.fwd_Q] = q_ptr;
-    tensor_map[entry.fwd_K] = k_ptr;
-    tensor_map[entry.fwd_V] = v_ptr;
-    tensor_map[entry.fwd_O] = o_ptr;
-    tensor_map[entry.fwd_SeqLenQ]  = query_length_data;
-    tensor_map[entry.fwd_SeqLenKV] = source_length_data;
-    if (is_training && entry.fwd_Stats)
-        tensor_map[entry.fwd_Stats] = statistics.get_data();
-    if (dropout_in_graph)
+    else
     {
-        tensor_map[entry.fwd_Seed]   = dropout_state.as<int64_t>();
-        tensor_map[entry.fwd_Offset] = dropout_state.as<int64_t>() + 1;
-    }
+        auto& entry = sdpa_cache->get_or_create_entry(cache_key);
+        if (!entry.fwd)
+            build_sdpa_forward_graph(entry, cache_key);
 
-    cudnn_frontend::run_slot(entry.fwd, tensor_map, "SDPA forward execute",
-                             cudnn_frontend::timing_label("sdpa_fwd"), false);
+        cudnn_frontend::VariantPack tensor_map;
+        tensor_map[entry.fwd_Q] = q_ptr;
+        tensor_map[entry.fwd_K] = k_ptr;
+        tensor_map[entry.fwd_V] = v_ptr;
+        tensor_map[entry.fwd_O] = o_ptr;
+        tensor_map[entry.fwd_SeqLenQ]  = query_length_data;
+        tensor_map[entry.fwd_SeqLenKV] = source_length_data;
+        if (is_training && entry.fwd_Stats)
+            tensor_map[entry.fwd_Stats] = statistics.get_data();
+        if (dropout_in_graph)
+        {
+            tensor_map[entry.fwd_Seed]   = dropout_state.as<int64_t>();
+            tensor_map[entry.fwd_Offset] = dropout_state.as<int64_t>() + 1;
+        }
+
+        cudnn_frontend::run_slot(entry.fwd, tensor_map, "SDPA forward execute",
+                                 cudnn_frontend::timing_label("sdpa_fwd"), false);
+    }
     if (fp32_via_bf16)
         cast_bf16_to_fp32(output.size(), output_bf16, output.as<float>());
 }
@@ -1179,7 +1162,7 @@ void AttentionOperator::apply_sdpa_backward(const TensorView& query,
                  "SDPA backward: BF16 scratch views were not planned "
                  "(BackPropagation::set ran without the SDPA backward specs).");
 
-        cudaStream_t cstream = device::get_compute_stream();
+        DeviceStream cstream = device::get_compute_stream();
         cast_fp32_to_bf16(query.size(), query.as<float>(), query_bf16.as<bfloat16>(), cstream);
         cast_fp32_to_bf16(key.size(),   key.as<float>(),   key_bf16.as<bfloat16>(), cstream);
         cast_fp32_to_bf16(value.size(), value.as<float>(), value_bf16.as<bfloat16>(), cstream);
@@ -1196,16 +1179,6 @@ void AttentionOperator::apply_sdpa_backward(const TensorView& query,
         bdk = key_gradient_bf16.get_data();
         bdv = value_gradient_bf16.get_data();
     }
-    // Whichever backend runs leaves dQ/dK/dV in the BF16 scratch, so both
-    // exits widen the same three views. They were written out at both.
-    const auto widen_gradients = [&]
-    {
-        if (!fp32_via_bf16) return;
-        cast_bf16_to_fp32(query.size(), query_gradient_bf16.as<bfloat16>(), query_delta.as<float>());
-        cast_bf16_to_fp32(key.size(),   key_gradient_bf16.as<bfloat16>(), key_delta.as<float>());
-        cast_bf16_to_fp32(value.size(), value_gradient_bf16.as<bfloat16>(), value_delta.as<float>());
-    };
-
     if (const auto problem = flash_attention_problem(cache_key, source_lengths.as<int32_t>()))
     {
         const Index accumulator_elements = flash_attention::query_delta_accumulator_elements(*problem);
@@ -1216,43 +1189,42 @@ void AttentionOperator::apply_sdpa_backward(const TensorView& query,
                                   bdq, bdk, bdv,
                                   workspace, workspace + accumulator_elements,
                                   device::get_compute_stream());
-
-        widen_gradients();
-
-        return;
     }
-
-    auto& entry = sdpa_cache->get_or_create_entry(cache_key);
-    if (!entry.bwd)
-        build_sdpa_backward_graph(entry, cache_key);
-
-    cudnn_frontend::VariantPack tensor_map;
-    tensor_map[entry.bwd_Q]     = bq;
-    tensor_map[entry.bwd_K]     = bk;
-    tensor_map[entry.bwd_V]     = bv;
-    tensor_map[entry.bwd_O]     = bo;
-    tensor_map[entry.bwd_dO]    = bdo;
-    tensor_map[entry.bwd_Stats] = statistics.get_data();
-    tensor_map[entry.bwd_dQ]    = bdq;
-    tensor_map[entry.bwd_dK]    = bdk;
-    tensor_map[entry.bwd_dV]    = bdv;
-    tensor_map[entry.bwd_SeqLenQ]  = query_lengths.get_data();
-    tensor_map[entry.bwd_SeqLenKV] = source_lengths.get_data();
-    if (dropout_in_graph)
+    else
     {
-        tensor_map[entry.bwd_Seed]   = dropout_state.as<int64_t>();
-        tensor_map[entry.bwd_Offset] = dropout_state.as<int64_t>() + 1;
-    }
+        auto& entry = sdpa_cache->get_or_create_entry(cache_key);
+        if (!entry.bwd)
+            build_sdpa_backward_graph(entry, cache_key);
 
-    cudnn_frontend::run_slot(entry.bwd, tensor_map, "SDPA backward execute",
-                             cudnn_frontend::timing_label("sdpa_bwd"), false);
-    widen_gradients();
+        cudnn_frontend::VariantPack tensor_map;
+        tensor_map[entry.bwd_Q]     = bq;
+        tensor_map[entry.bwd_K]     = bk;
+        tensor_map[entry.bwd_V]     = bv;
+        tensor_map[entry.bwd_O]     = bo;
+        tensor_map[entry.bwd_dO]    = bdo;
+        tensor_map[entry.bwd_Stats] = statistics.get_data();
+        tensor_map[entry.bwd_dQ]    = bdq;
+        tensor_map[entry.bwd_dK]    = bdk;
+        tensor_map[entry.bwd_dV]    = bdv;
+        tensor_map[entry.bwd_SeqLenQ]  = query_lengths.get_data();
+        tensor_map[entry.bwd_SeqLenKV] = source_lengths.get_data();
+        if (dropout_in_graph)
+        {
+            tensor_map[entry.bwd_Seed]   = dropout_state.as<int64_t>();
+            tensor_map[entry.bwd_Offset] = dropout_state.as<int64_t>() + 1;
+        }
+
+        cudnn_frontend::run_slot(entry.bwd, tensor_map, "SDPA backward execute",
+                                 cudnn_frontend::timing_label("sdpa_bwd"), false);
+    }
+    if (fp32_via_bf16)
+    {
+        cast_bf16_to_fp32(query.size(), query_gradient_bf16.as<bfloat16>(), query_delta.as<float>());
+        cast_bf16_to_fp32(key.size(),   key_gradient_bf16.as<bfloat16>(), key_delta.as<float>());
+        cast_bf16_to_fp32(value.size(), value_gradient_bf16.as<bfloat16>(), value_delta.as<float>());
+    }
 }
 
 #endif
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

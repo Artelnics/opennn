@@ -178,6 +178,7 @@ TEST_F(SGDTest, GpuClipSupportsTailAndCudaGraph)
     optimizer.set_initial_learning_rate(0.01f);
     optimizer.set_batch_size(4);
     optimizer.set_gradient_clip_norm(0.5f);
+    optimizer.set_joint_gradient_arena(true);
     optimizer.set_cuda_graph(true);
     optimizer.set_maximum_epochs(2);
     optimizer.set_display(false);
@@ -945,4 +946,80 @@ TEST(OptimizerKnobsTest, ValidationPeriodSkipsTheEpochsInBetween)
         << "a period of one should validate on every epoch";
     EXPECT_GT(skipped(every_other), 0)
         << "a period of two should leave the epochs in between unvalidated";
+}
+
+namespace
+{
+void expect_sample_weighted_epoch_metrics(Device device, Type dtype,
+                                         bool graph, bool resident, bool callbacks)
+{
+    SCOPED_TRACE(testing::Message() << "dtype=" << int(dtype) << " graph=" << graph
+                                   << " resident=" << resident << " callbacks=" << callbacks);
+    Configuration::instance().set(device, dtype);
+
+    // Seventeen complete batches exercise both graph pipelines and a single
+    // remaining slot. Distinct tail targets expose omitted or misweighted tails.
+    TabularDataset dataset(40, {1}, {1});
+    MatrixR data = MatrixR::Zero(40, 2);
+    for (Index i = 0; i < 40; ++i) data(i, 1) = float(1 + i % 5);
+    data(34, 1) = 9.0f;
+    data(39, 1) = 11.0f;
+    dataset.set_data(data);
+    dataset.set_variable_scalers("None");
+    dataset.set_sample_roles(SampleRole::Training);
+    for (Index i = 35; i < 40; ++i) dataset.set_sample_role(i, SampleRole::Validation);
+    if (resident) dataset.set_storage_mode(Dataset::StorageMode::GPUPersistantData);
+
+    ApproximationNetwork network({1}, {}, {1});
+    network.set_parameters(VectorR::Zero(network.get_parameters_buffer_size()));
+    Loss loss(&network, &dataset);
+    loss.set_error(Loss::Error::MeanSquaredError);
+    SGD optimizer(&loss);
+    optimizer.set_initial_learning_rate(0.0f);
+    optimizer.set_batch_size(2);
+    optimizer.set_maximum_epochs(2);
+    optimizer.set_display(false);
+    optimizer.set_shuffle(false);
+    optimizer.set_restore_best(false);
+    optimizer.set_cuda_graph(graph);
+    optimizer.set_joint_gradient_arena(true);
+    Index batch_callbacks = 0;
+    if (callbacks) optimizer.post_batch_callback = [&](Network*) { ++batch_callbacks; };
+
+    const TrainingResult result = optimizer.train();
+    ASSERT_EQ(result.get_epochs_number(), 2);
+    const float expected_training = 0.5f * data.col(1).head(35).squaredNorm() / 35.0f;
+    const float expected_validation = 0.5f * data.col(1).tail(5).squaredNorm() / 5.0f;
+    for (Index epoch = 0; epoch < result.get_epochs_number(); ++epoch)
+    {
+        EXPECT_NEAR(result.training_error_history(epoch), expected_training, 2.0e-3f);
+        EXPECT_NEAR(result.validation_error_history(epoch), expected_validation, 2.0e-3f);
+    }
+    EXPECT_EQ(batch_callbacks, callbacks ? 36 : 0);
+    EXPECT_FALSE(optimizer.get_cuda_graph_capture_failed());
+    EXPECT_TRUE(dataset.get_data().isApprox(data, 0.0f));
+    EXPECT_FALSE(dataset.is_device_resident());
+}
+}
+
+TEST_F(SGDTest, RemainderMetricsAndCallbacksMatchAllSamplesCPU)
+{
+    for (bool callbacks : {false, true})
+        expect_sample_weighted_epoch_metrics(Device::CPU, Type::FP32, false, false, callbacks);
+}
+
+TEST_F(SGDTest, RemainderMetricsAndCallbacksMatchAllSamplesCUDA)
+{
+    if (!device::has_cuda_device()) GTEST_SKIP() << "No CUDA device.";
+    const ScopedEnvironmentVariable graph_group_size("OPENNN_RNN_GRAPH_GROUP", "8");
+    for (Type dtype : {Type::FP32, Type::BF16})
+    {
+        if (dtype == Type::BF16 && device::cuda_compute_capability() < 80) continue;
+        for (bool resident : {false, true})
+        {
+            expect_sample_weighted_epoch_metrics(Device::CUDA, dtype, false, resident, false);
+            expect_sample_weighted_epoch_metrics(Device::CUDA, dtype, true, resident, false);
+            expect_sample_weighted_epoch_metrics(Device::CUDA, dtype, true, resident, true);
+        }
+    }
 }

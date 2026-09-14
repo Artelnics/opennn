@@ -135,28 +135,20 @@ build-wrapper-dump.json
 # Generated test data
 /tests/data/*.xml
 
-# Benchmark generated outputs.
-#
-# The per-binary lines that used to be here named one executable at a time in
-# /benchmarks/inference-speed, /accuracy, /export, /memory, /startup and
-# /training-speed. Those six directories no longer exist -- the suite is one
-# entry point and one definition per engine per family -- so the lines ignored
-# nothing and read as though that layout were still current. Benchmark binaries
-# now build into the build directory, which is already ignored.
+# Bundled archives are unpacked into external build or reference directories.
+/examples/mnist/data/*/
+/examples/melanoma_cancer/data/*/
+/examples/legacy_8/*/
+
+# Benchmark exports and measurements; binaries belong in external build trees.
 /benchmarks/**/*.onnx
 /benchmarks/**/*.onnx.data
 /benchmarks/**/*.csv
 /benchmarks/**/pred_*.txt
 
-# All benchmark result artifacts are local and must never be committed.
+# Keep the former in-tree result location ignored for existing configurations.
+# Current benchmark results default to ../opennn-benchmark-results/.
 /benchmarks/results/
-
-# Session-generated benchmark reports. The suite's own documents are allowed
-# back by name, so a new one is invisible until it is listed here. If you add a
-# document to benchmarks/, add it below or it will never be committed.
-/benchmarks/*.md
-!/benchmarks/README.md
-!/benchmarks/PROTOCOL.md
 
 # OneDrive leaves these when it syncs the repo between machines.
 *-DESKTOP-*.cpp

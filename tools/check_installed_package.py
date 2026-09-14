@@ -12,7 +12,7 @@ def main():
     parser.add_argument("--expect-cpu-target", choices=("NATIVE", "PORTABLE"))
     args = parser.parse_args()
     docs = args.prefix / args.data_dir / "doc/OpenNN"
-    required = ["LICENSE.txt", "LICENSE-GPL-3.0.txt", "THIRD_PARTY_NOTICES.md", "MIGRATION.md", "CHANGELOG.md", "QUALITY.md", "RELEASE_SCOPE.json",
+    required = ["LICENSE.txt", "LICENSE-GPL-3.0.txt", "THIRD_PARTY_NOTICES.md", "CHANGELOG.md", "DATASETS.md", "DEVELOPMENT.md", "RELEASE_SCOPE.json",
                 "build-info.json", "libjpeg-turbo/LICENSE.md", "libjpeg-turbo/README.ijg", "zlib/LICENSE"]
     metadata = json.loads((docs / "build-info.json").read_text())
     if metadata["version"] != "9.0.0":

@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   L A Y E R   C L A S S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/network/layers/layer.h"
 
@@ -34,34 +29,31 @@ const Json* get_layer_json_root(const JsonDocument& document, const Layer& layer
     return get_json_root(document, layer.get_name());
 }
 
+vector<TensorSpec> collect_operator_specs(const vector<Operator*>& operators,
+                                         vector<TensorSpec> (Operator::*specs_fn)() const)
+{
+    vector<TensorSpec> result;
+    for (Operator* op : operators)
+    {
+        auto specs = (op->*specs_fn)();
+        result.insert(result.end(),
+                      make_move_iterator(specs.begin()),
+                      make_move_iterator(specs.end()));
+    }
+
+    return result;
+}
+
 }
 
 vector<TensorSpec> Layer::get_parameter_specs() const
 {
-    vector<TensorSpec> result;
-    for (Operator* op : get_operators())
-    {
-        auto specs = op->parameter_specs();
-        result.insert(result.end(),
-                      make_move_iterator(specs.begin()),
-                      make_move_iterator(specs.end()));
-    }
-
-    return result;
+    return collect_operator_specs(get_operators(), &Operator::parameter_specs);
 }
 
 vector<TensorSpec> Layer::get_state_specs() const
 {
-    vector<TensorSpec> result;
-    for (Operator* op : get_operators())
-    {
-        auto specs = op->state_specs();
-        result.insert(result.end(),
-                      make_move_iterator(specs.begin()),
-                      make_move_iterator(specs.end()));
-    }
-
-    return result;
+    return collect_operator_specs(get_operators(), &Operator::state_specs);
 }
 
 vector<Operator::SlotQuantization> Layer::get_parameter_quantization() const
@@ -226,7 +218,3 @@ void Layer::to_JSON(JsonWriter& writer) const
 }
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

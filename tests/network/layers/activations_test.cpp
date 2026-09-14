@@ -612,3 +612,82 @@ TEST(ActivationsTest, SiluDenseFusedGradientCheck)
 
     EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(5.0e-3));
 }
+
+#ifdef OPENNN_HAS_CUDA
+TEST(ActivationsTest, CudaVectorAndScalarPathsMatchCpuAcrossPrecisions)
+{
+    if (!device::has_cuda_device()) GTEST_SKIP() << "No CUDA device.";
+
+    for (Type precision : {Type::FP32, Type::BF16})
+    visit_type<Type::FP32, Type::BF16>(precision, [&]<typename T>()
+    {
+        if (precision == Type::BF16 && device::cuda_compute_capability() < 80) return;
+
+        // Offset one forces scalar access; aligned sizes exercise full vectors and tails.
+        for (Index offset : {Index(0), Index(1)})
+        for (Index count : {Index(0), Index(1), Index(16), Index(19), Index(2051)})
+        for (ActivationFunction function : {
+                 ActivationFunction::Sigmoid, ActivationFunction::Tanh,
+                 ActivationFunction::ReLU, ActivationFunction::LeakyReLU,
+                 ActivationFunction::GELU, ActivationFunction::GELUTanh, ActivationFunction::SiLU})
+        {
+            SCOPED_TRACE(format("precision={}, offset={}, count={}, activation={}",
+                                int(precision), offset, count, int(function)));
+            const Index total = count + offset + 1;
+            vector<T> input(size_t(total), T(37.0f));
+            vector<T> delta(size_t(total), T(37.0f));
+            for (Index i = 0; i < count; ++i)
+            {
+                input[size_t(offset + i)] = T(float(i % 17 - 8) * 0.25f);
+                delta[size_t(offset + i)] = T(float(i % 7 + 1) * 0.125f);
+            }
+
+            const auto upload = [&](const vector<T>& host)
+            {
+                Buffer buffer(Device::CUDA);
+                buffer.resize_bytes(total * Index(sizeof(T)), Device::CUDA);
+                device::copy_async(buffer.data(), host.data(), buffer.byte_size(), device::CopyKind::HostToDevice);
+                return buffer;
+            };
+            const auto download = [&](const Buffer& buffer)
+            {
+                vector<T> host(static_cast<size_t>(total));
+                device::copy_async(host.data(), buffer.data(), buffer.byte_size(), device::CopyKind::DeviceToHost);
+                device::synchronize();
+                return host;
+            };
+            Buffer saved = upload(input), values = upload(input), gradients = upload(delta);
+            TensorView gpu_values(values.as<T>() + offset, {count}, precision, Device::CUDA);
+            TensorView gpu_gradients(gradients.as<T>() + offset, {count}, precision, Device::CUDA);
+
+            VectorR expected(total);
+            for (Index i = 0; i < total; ++i) expected(i) = float(input[size_t(i)]);
+            TensorView cpu_values(expected.data() + offset, {count});
+            activation_forward(cpu_values, function);
+            activation_forward(gpu_values, function);
+            const vector<T> actual = download(values);
+            const float tolerance = precision == Type::FP32 ? 2.0e-6f : 8.0e-3f;
+            for (Index i = 0; i < total; ++i)
+                EXPECT_NEAR(float(actual[size_t(i)]), expected(i), tolerance);
+
+            const bool needs_input = activation_needs_input(function);
+            const vector<T>& derivative_values = needs_input ? input : actual;
+            VectorR cpu_saved(total), cpu_delta(total);
+            for (Index i = 0; i < total; ++i)
+            {
+                cpu_saved(i) = float(derivative_values[size_t(i)]);
+                cpu_delta(i) = float(delta[size_t(i)]);
+            }
+            TensorView cpu_saved_view(cpu_saved.data() + offset, {count});
+            TensorView cpu_delta_view(cpu_delta.data() + offset, {count});
+            TensorView gpu_saved((needs_input ? saved : values).as<T>() + offset,
+                                 {count}, precision, Device::CUDA);
+            activation_backward(cpu_saved_view, cpu_delta_view, function);
+            activation_backward(gpu_saved, gpu_gradients, function);
+            const vector<T> actual_delta = download(gradients);
+            for (Index i = 0; i < total; ++i)
+                EXPECT_NEAR(float(actual_delta[size_t(i)]), cpu_delta(i), tolerance);
+        }
+    });
+}
+#endif

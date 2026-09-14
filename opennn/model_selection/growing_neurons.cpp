@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   G R O W I N G   N E U R O N S   C L A S S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/model_selection/growing_neurons.h"
 
@@ -79,6 +74,8 @@ void GrowingNeurons::load(const filesystem::path& file_name)
 
 NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
 {
+    validate_selection_training(training, folds_number, "GrowingNeurons");
+
     NeuronsSelectionResult neuron_selection_results(maximum_epochs);
 
     if (display) logging::info() << "Performing growing neuron selection...\n";
@@ -226,6 +223,9 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
         }
     }
 
+    throw_if(neuron_selection_results.optimum_validation_error == MAX,
+             "GrowingNeurons found no candidate with a finite validation error.");
+
     if (display)
         logging::info() << "Parameters number: " << neuron_selection_results.optimal_parameters.size() << "\n";
 
@@ -312,7 +312,3 @@ void NeuronsSelectionResult::print() const
 }
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

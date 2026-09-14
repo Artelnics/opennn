@@ -1,8 +1,17 @@
 # OpenNN — instructions for coding agents
 
-See [README.md](README.md) for the project overview, requirements, build
-instructions and public CMake options. Keep this file focused on repository-wide
+See [README.md](README.md) for the project overview and first build, and
+[DEVELOPMENT.md](DEVELOPMENT.md) for CMake options. Keep this file focused on repository-wide
 engineering rules that are not tied to one workstation.
+
+## Working branches
+
+- Use the existing OpenNN checkout on `dev` for normal development. Do not create
+  additional clones or worktrees unless the user explicitly requests them.
+- Keep development and release preparation on `dev`. Merge into `master` only
+  when the user explicitly decides the work is ready for release.
+- Preserve uncommitted work and saved stashes when switching or consolidating
+  branches. A folder cleanup does not authorize publishing a release.
 
 ## Compatibility and scope
 
@@ -57,7 +66,8 @@ files.
 - Benchmark usage and the measurement contract live in
   [benchmarks/README.md](benchmarks/README.md) and
   [benchmarks/PROTOCOL.md](benchmarks/PROTOCOL.md).
-- Raw benchmark output belongs in `benchmarks/results/`, which is ignored.
+- Raw benchmark output belongs outside the checkout, in
+  `../opennn-benchmark-results/` by default; `OPENNN_BENCH_RESULTS` overrides it.
   Only reviewed reports belong in `benchmarks/reports/`.
 
 ## Pending repository hygiene
@@ -67,5 +77,22 @@ Their provenance and unresolved licensing records are documented in
 `DATASETS.md`, with indexed content inventories in `datasets.manifest.json`.
 Do not remove them until each affected example has a reproducible replacement.
 Stage reviewed asset changes before running `python tools/check_dataset_manifest.py`.
+Bundled ZIPs preserve logical asset paths and bytes; the checker expands their
+contents in memory. Update archives and loose files together, retaining source
+notices. CMake unpacks active image datasets into the external build directory.
 The `--release` check additionally requires every bundle's redistribution
 clearance; do not mark an unknown source as cleared merely to pass that gate.
+
+## Documentation
+
+- Update the existing topic guides listed in `README.md`; consolidate overlapping
+  explanations instead of adding a Markdown file for each task or audit.
+- Keep release and verification procedures in `DEVELOPMENT.md`, migration in
+  `CHANGELOG.md`, and current benchmark findings in `benchmarks/reports/README.md`.
+- Link to an immutable Git revision for superseded reports. Keep raw evidence
+  outside Git, and preserve dataset attribution notices and skill entry points.
+
+- Keep the README focused on building, running the first example and locating
+  the main guides. Put source maps and tool inventories in `DEVELOPMENT.md`.
+- When changing example targets or dependencies, update the catalog in
+  `examples/README.md`. Run data-dependent examples from the executable directory.

@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   E M B E D D I N G   L O O K U P   O P E R A T O R   S O U R C E
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/network/operators/embedding_lookup_operator.h"
 #include "opennn/core/json.h"
@@ -107,15 +102,9 @@ static void embedding_lookup_forward_cpu(const TensorView& indices, const Tensor
     {
         const Index token_id = static_cast<Index>(input_indices[i]);
 
-        if (token_id == 0)
+        if (token_id <= 0 || token_id >= vocabulary_size)
         {
-            output_mat.row(i).setZero();
-            continue;
-        }
-
-        if (token_id < 0 || token_id >= vocabulary_size)
-        {
-            if (!out_of_range_warned.exchange(true))
+            if (token_id != 0 && !out_of_range_warned.exchange(true))
                 logging::warning() << format("EmbeddingLookup warning: token id {} out of range [0, {}); zeroing row. Further warnings suppressed.\n", token_id, vocabulary_size);
             output_mat.row(i).setZero();
             continue;
@@ -368,7 +357,3 @@ void EmbeddingLookupOperator::load_state_from_JSON(const Json*  )
 }
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

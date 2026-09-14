@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   C H A T
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/network/chat.h"
 
@@ -968,7 +963,7 @@ void read_classic_distribution(ClassicGenerationState& state,
     const TensorView output = state.propagation->get_outputs();
     const Index vocabulary = output.get_shape().back();
     const Index offset = position * vocabulary;
-    const cudaStream_t stream = device::get_compute_stream();
+    const DeviceStream stream = device::get_compute_stream();
 
     if (output.is_bf16())
     {
@@ -1082,7 +1077,7 @@ struct ChatSession::Impl
             decode.share_session_state_from(prefill);
             decode.set_active_sequence_length(1);
             decode.set_cuda_graph(true);
-            const cudaStream_t stream = device::get_compute_stream();
+            const DeviceStream stream = device::get_compute_stream();
             prefill.stage_position(stream);
             decode.stage_position(stream);
             decode_inputs = {
@@ -1346,7 +1341,7 @@ void ChatSession::attach_draft_model(Network& draft_network, Index draft_tokens)
     draft->target_verify_inputs.resize(1);
     Impl::initialize_cuda_input(draft->target_verify);
 
-    const cudaStream_t stream = device::get_compute_stream();
+    const DeviceStream stream = device::get_compute_stream();
     draft->prefill.stage_position(stream);
     draft->decode.stage_position(stream);
     draft->target_verify.stage_position(stream);

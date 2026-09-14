@@ -158,7 +158,7 @@ struct DeviceTensor
 // (its bias is bf16). The kernel reads that bias without the cast launch the
 // cuBLASLt path needs, so both bias dtypes must agree with the host reference.
 void check_direct_forward(Index rows, Index features, Index outputs, Type bias_type,
-                          cublasLtEpilogue_t epilogue, float tolerance)
+                          LinearEpilogue epilogue, float tolerance)
 {
     vector<float> input_host(static_cast<size_t>(rows * features));
     vector<float> weight_host(static_cast<size_t>(features * outputs));
@@ -197,7 +197,7 @@ void check_direct_forward(Index rows, Index features, Index outputs, Type bias_t
                               measured.data(), device::get_compute_stream());
     device::synchronize(device::get_compute_stream());
 
-    const bool relu = epilogue == CUBLASLT_EPILOGUE_RELU_BIAS;
+    const bool relu = epilogue == LinearEpilogue::ReluBias;
 
     Index reported = 0;
     for (Index row = 0; row < rows && reported < 5; ++row)
@@ -288,10 +288,10 @@ TEST(SmallKLinear, Fp32BiasFromDeviceViews)
 #ifdef OPENNN_HAS_CUDA
     if (!device::has_cuda_device()) GTEST_SKIP() << "No CUDA device.";
 
-    check_direct_forward(1000, 28, 1024, Type::FP32, CUBLASLT_EPILOGUE_RELU_BIAS, 1e-2f);
-    check_direct_forward(1000, 28, 1024, Type::FP32, CUBLASLT_EPILOGUE_BIAS, 1e-2f);
-    check_direct_forward(1000, 28, 1024, Type::BF16, CUBLASLT_EPILOGUE_RELU_BIAS, 1e-2f);
-    check_direct_forward(200, 32, 64, Type::BF16, CUBLASLT_EPILOGUE_BIAS, 1e-2f);
+    check_direct_forward(1000, 28, 1024, Type::FP32, LinearEpilogue::ReluBias, 1e-2f);
+    check_direct_forward(1000, 28, 1024, Type::FP32, LinearEpilogue::Bias, 1e-2f);
+    check_direct_forward(1000, 28, 1024, Type::BF16, LinearEpilogue::ReluBias, 1e-2f);
+    check_direct_forward(200, 32, 64, Type::BF16, LinearEpilogue::Bias, 1e-2f);
 #else
     GTEST_SKIP() << "Built without CUDA.";
 #endif

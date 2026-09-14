@@ -10,6 +10,8 @@ import subprocess
 import urllib.request
 import zipfile
 
+from example_assets import indexed_files as example_files
+
 ROOT = Path(__file__).resolve().parents[1]
 SOURCES = {
     "airfoil": ("291.zip", "https://archive.ics.uci.edu/static/public/291/airfoil+self+noise.zip", "5c7767ba53ad827d3f48ba1eb9434117f4892df8f10bc4c99e118a9e8a7ae07c"),
@@ -29,23 +31,8 @@ def sha(data):
 
 
 def indexed_files(bundle):
-    """Read Git blobs once, without hydrating thousands of OneDrive images."""
-    entries = subprocess.check_output(["git", "ls-files", "-s", "-z", f"examples/{bundle}/data"], cwd=ROOT).decode().split("\0")
-    items = []
-    for entry in filter(None, entries):
-        metadata, path = entry.split("\t", 1)
-        mode, oid, stage = metadata.split()
-        if stage != "0":
-            raise ValueError(f"Unresolved index entry: {path}")
-        items.append((path.split("/data/", 1)[1], oid))
-    data = subprocess.check_output(["git", "cat-file", "--batch"], cwd=ROOT, input="".join(oid + "\n" for _, oid in items).encode())
-    result, offset = {}, 0
-    for name, _ in items:
-        end = data.index(b"\n", offset)
-        size = int(data[offset:end].split()[-1])
-        result[name] = data[end + 1:end + 1 + size]
-        offset = end + size + 2
-    return result
+    prefix = f"examples/{bundle}/data/"
+    return {name.removeprefix(prefix): data for name, data in example_files(prefix)}
 
 
 def source(name, cache):

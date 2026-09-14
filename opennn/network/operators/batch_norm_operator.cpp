@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   B A T C H   N O R M   O P E R A T O R   S O U R C E
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/network/operators/batch_norm_operator.h"
 
@@ -646,56 +641,49 @@ void BatchNormalizationOperator::apply_delta_gpu(
 
             const auto rung = device::rung<device::BatchNormBackwardRung>();
 
-            vector<Attempt> attempts;
+            optional<Attempt> attempt;
 
             switch (rung)
             {
             case device::BatchNormBackwardRung::StagedFp32:
-                attempts.push_back({Type::FP32, fuse_relu && !fuse_add, false, false});
+                attempt = Attempt{Type::FP32, fuse_relu && !fuse_add, false, false};
                 break;
 
             case device::BatchNormBackwardRung::PlainNative:
-                attempts.push_back({input.get_type(), false, false, false});
+                attempt = Attempt{input.get_type(), false, false, false};
                 break;
 
             case device::BatchNormBackwardRung::Auto:
-                attempts.push_back({input.get_type(), fuse_relu, fork_capable, false});
+                attempt = Attempt{input.get_type(), fuse_relu, fork_capable, false};
                 break;
 
             case device::BatchNormBackwardRung::OwnKernel:
                 break;
             }
 
-            exception_ptr last_failure;
-
-            for (const auto& attempt : attempts)
+            if (attempt)
             {
                 try
                 {
                     cudnn_frontend::build_bn_backward(
                         entry, batch, features, spatial,
-                        attempt.fuse_relu, attempt.dtype, attempt.fork);
+                        attempt->fuse_relu, attempt->dtype, attempt->fork);
 
                     entry.bwd_choice = attempt;
-                    break;
                 }
                 catch (...)
                 {
                     entry.bwd_Y = nullptr;
                     entry.bwd_DPre = nullptr;
-                    last_failure = current_exception();
+                    if (rung == device::BatchNormBackwardRung::StagedFp32
+                        || rung == device::BatchNormBackwardRung::PlainNative)
+                        throw;
                 }
             }
 
             if (!entry.bwd_choice)
-            {
-                if (rung == device::BatchNormBackwardRung::StagedFp32
-                    || rung == device::BatchNormBackwardRung::PlainNative)
-                    rethrow_exception(last_failure);
-
                 entry.bwd_choice =
                     Attempt{input.get_type(), fuse_relu, has_residual, true};
-            }
 
             const auto& chosen = *entry.bwd_choice;
 
@@ -705,7 +693,7 @@ void BatchNormalizationOperator::apply_delta_gpu(
                 && chosen.fuse_relu == fuse_relu
                 && (chosen.fork || !has_residual);
 
-            if (!fully_fused)
+            if (!fully_fused && cudnn_frontend::frontend_verbose())
                 logging::warning() << "BatchNormalizationOperator backward c" << features
                      << " r" << input.size() / features
                      << " batch " << batch << ": "
@@ -847,7 +835,3 @@ BatchNormalizationOperator::BatchNormalizationOperator()
 BatchNormalizationOperator::~BatchNormalizationOperator() = default;
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

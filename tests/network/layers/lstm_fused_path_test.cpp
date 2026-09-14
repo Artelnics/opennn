@@ -1,5 +1,6 @@
 #include "tests/pch.h"
 #include "tests/numerical_derivatives.h"
+#include "tests/test_helpers.h"
 
 #include <utility>
 
@@ -16,11 +17,11 @@
 #include <chrono>
 #include <cmath>
 #include <cstring>
-#include <cstdlib>
 #include <cstdio>
 #include <string>
 
 using namespace opennn;
+using opennn_test::ScopedEnvironmentVariable;
 
 namespace {
 
@@ -134,42 +135,6 @@ void check_gradient(const Index neurons, const bool return_sequences)
     EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(1.0e-3))
         << "H=" << neurons << " return_sequences=" << return_sequences;
 }
-
-void set_environment_variable(const char* name, const char* value)
-{
-#ifdef _WIN32
-    _putenv_s(name, value ? value : "");
-#else
-    if (value) setenv(name, value, 1);
-    else unsetenv(name);
-#endif
-}
-
-class ScopedEnvironmentVariable
-{
-public:
-    ScopedEnvironmentVariable(const char* new_name, const char* value)
-        : name(new_name)
-    {
-        if (const char* existing = getenv(name.c_str()))
-        {
-            had_original = true;
-            original = existing;
-        }
-        set_environment_variable(name.c_str(), value);
-    }
-
-    ~ScopedEnvironmentVariable()
-    {
-        set_environment_variable(name.c_str(),
-                                 had_original ? original.c_str() : nullptr);
-    }
-
-private:
-    string name;
-    string original;
-    bool had_original = false;
-};
 
 class ScopedProfiler
 {

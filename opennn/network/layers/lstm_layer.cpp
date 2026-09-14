@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   L S T M   L A Y E R
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/network/layers/lstm_layer.h"
 #include "opennn/registry.h"
@@ -60,6 +55,15 @@ namespace opennn
 namespace
 {
 
+template<typename T>
+array<T*, LSTMOperator::GateCount> gate_data(const LSTMOperator::GateViews& gates)
+{
+    array<T*, LSTMOperator::GateCount> data;
+    for (size_t gate = 0; gate < gates.size(); ++gate)
+        data[gate] = gates[gate]->as<T>();
+    return data;
+}
+
 MatrixR concat_gate_columns(span<const TensorView* const> gates)
 {
     const MatrixMap first = gates[0]->as_matrix();
@@ -72,6 +76,13 @@ MatrixR concat_gate_columns(span<const TensorView* const> gates)
         concatenated.middleCols(Index(gate) * columns, columns) = gates[gate]->as_matrix();
 
     return concatenated;
+}
+
+void accumulate_gate_columns(span<const TensorView* const> gates, const MatrixR& gradient)
+{
+    const Index columns = gradient.cols() / Index(gates.size());
+    for (size_t gate = 0; gate < gates.size(); ++gate)
+        gates[gate]->as_matrix() += gradient.middleCols(Index(gate) * columns, columns);
 }
 
 VectorR concat_gate_biases(span<const TensorView* const> gates)
@@ -1014,20 +1025,9 @@ void LSTMOperator::apply(const TensorView& input,
     float* hidden = hidden_state.as<float>();
     float* cell_act = cell_activation.as<float>();
 
-    const float* bf = forget_bias.as<float>();
-    const float* bi = input_bias.as<float>();
-    const float* bg = candidate_bias.as<float>();
-    const float* bo = output_bias.as<float>();
-
-    const float* Wf = forget_weights.as<float>();
-    const float* Wi = input_weights.as<float>();
-    const float* Wg = candidate_weights.as<float>();
-    const float* Wo = output_weights.as<float>();
-
-    const float* Uf = forget_recurrent_weights.as<float>();
-    const float* Ui = input_recurrent_weights.as<float>();
-    const float* Ug = candidate_recurrent_weights.as<float>();
-    const float* Uo = output_recurrent_weights.as<float>();
+    const auto [bf, bi, bg, bo] = gate_data<const float>(gate_biases());
+    const auto [Wf, Wi, Wg, Wo] = gate_data<const float>(gate_weights());
+    const auto [Uf, Ui, Ug, Uo] = gate_data<const float>(gate_recurrent_weights());
 
     if (H >= 96)
     {
@@ -1420,46 +1420,14 @@ void LSTMOperator::apply_delta(const TensorView& input,
     const float* hidden = hidden_state.as<float>();
     const float* cell_act = cell_activation.as<float>();
 
-    const float* Wf = forget_weights.as<float>();
-    const float* Wi = input_weights.as<float>();
-    const float* Wg = candidate_weights.as<float>();
-    const float* Wo = output_weights.as<float>();
-
-    const float* Uf = forget_recurrent_weights.as<float>();
-    const float* Ui = input_recurrent_weights.as<float>();
-    const float* Ug = candidate_recurrent_weights.as<float>();
-    const float* Uo = output_recurrent_weights.as<float>();
-
-    float* gbf = forget_bias_gradient.as<float>();
-    float* gbi = input_bias_gradient.as<float>();
-    float* gbg = candidate_bias_gradient.as<float>();
-    float* gbo = output_bias_gradient.as<float>();
-
-    float* gWf = forget_weight_gradient.as<float>();
-    float* gWi = input_weight_gradient.as<float>();
-    float* gWg = candidate_weight_gradient.as<float>();
-    float* gWo = output_weight_gradient.as<float>();
-
-    float* gUf = forget_recurrent_weight_gradient.as<float>();
-    float* gUi = input_recurrent_weight_gradient.as<float>();
-    float* gUg = candidate_recurrent_weight_gradient.as<float>();
-    float* gUo = output_recurrent_weight_gradient.as<float>();
+    const auto [Wf, Wi, Wg, Wo] = gate_data<const float>(gate_weights());
+    const auto [Uf, Ui, Ug, Uo] = gate_data<const float>(gate_recurrent_weights());
+    const auto [gbf, gbi, gbg, gbo] = gate_data<float>(gate_bias_gradients());
+    const auto [gWf, gWi, gWg, gWo] = gate_data<float>(gate_weight_gradients());
+    const auto [gUf, gUi, gUg, gUo] = gate_data<float>(gate_recurrent_weight_gradients());
 
     if (H >= 96)
     {
-        MatrixMap gWf_m = forget_weight_gradient.as_matrix();
-        MatrixMap gWi_m = input_weight_gradient.as_matrix();
-        MatrixMap gWg_m = candidate_weight_gradient.as_matrix();
-        MatrixMap gWo_m = output_weight_gradient.as_matrix();
-        MatrixMap gUf_m = forget_recurrent_weight_gradient.as_matrix();
-        MatrixMap gUi_m = input_recurrent_weight_gradient.as_matrix();
-        MatrixMap gUg_m = candidate_recurrent_weight_gradient.as_matrix();
-        MatrixMap gUo_m = output_recurrent_weight_gradient.as_matrix();
-        VectorMap gbf_v = forget_bias_gradient.as_vector();
-        VectorMap gbi_v = input_bias_gradient.as_vector();
-        VectorMap gbg_v = candidate_bias_gradient.as_vector();
-        VectorMap gbo_v = output_bias_gradient.as_vector();
-
         const MatrixR Wcat = concat_gate_columns(gate_weights());
         const MatrixR Ucat = concat_gate_columns(gate_recurrent_weights());
 
@@ -1544,12 +1512,10 @@ void LSTMOperator::apply_delta(const TensorView& input,
         if (write_input_delta)
             Eigen::Map<MatrixR>(in_delta, BT, F).noalias() = Dcat_all * Wcat.transpose();
 
-        gWf_m += gWcat.leftCols(H);          gWi_m += gWcat.middleCols(H, H);
-        gWg_m += gWcat.middleCols(2 * H, H); gWo_m += gWcat.rightCols(H);
-        gUf_m += gUcat.leftCols(H);          gUi_m += gUcat.middleCols(H, H);
-        gUg_m += gUcat.middleCols(2 * H, H); gUo_m += gUcat.rightCols(H);
-        gbf_v += gbcat.segment(0, H);        gbi_v += gbcat.segment(H, H);
-        gbg_v += gbcat.segment(2 * H, H);    gbo_v += gbcat.segment(3 * H, H);
+        accumulate_gate_columns(gate_weight_gradients(), gWcat);
+        accumulate_gate_columns(gate_recurrent_weight_gradients(), gUcat);
+        for (Index gate = 0; gate < GateCount; ++gate)
+            gate_bias_gradients()[gate]->as_vector() += gbcat.segment(gate * H, H);
 
         return;
     }
@@ -1755,6 +1721,21 @@ void LSTMOperator::apply_delta(const TensorView& input,
 
 #ifdef OPENNN_HAS_CUDA
 
+static array<const TensorView*, 2 * LSTMOperator::GateCount> cudnn_gate_pairs(
+    const LSTMOperator::GateViews& input, const LSTMOperator::GateViews& recurrent = {})
+{
+    // cuDNN puts input before forget, for both weights and their gradients.
+    constexpr array order{LSTMOperator::Input, LSTMOperator::Forget,
+                          LSTMOperator::Candidate, LSTMOperator::Output};
+    array<const TensorView*, 2 * LSTMOperator::GateCount> views;
+    for (size_t gate = 0; gate < order.size(); ++gate)
+    {
+        views[gate] = input[order[gate]];
+        views[gate + order.size()] = recurrent[order[gate]];
+    }
+    return views;
+}
+
 CudnnRnnShapeSlot& LSTMOperator::ensure_cudnn_setup_(
     Index batch_size, bool for_training) const
 {
@@ -1776,48 +1757,18 @@ CudnnRnnShapeSlot& LSTMOperator::ensure_cudnn_setup_(
 void LSTMOperator::pack_weights_to_cudnn_(Buffer& forward_state,
                                                         uint64_t parameters_version) const
 {
-    const TensorView* weights[8] = {
-        &input_weights,
-        &forget_weights,
-        &candidate_weights,
-        &output_weights,
-        &input_recurrent_weights,
-        &forget_recurrent_weights,
-        &candidate_recurrent_weights,
-        &output_recurrent_weights
-    };
-    const TensorView* biases[8] = {
-        &input_bias,
-        &forget_bias,
-        &candidate_bias,
-        &output_bias,
-        nullptr, nullptr, nullptr, nullptr
-    };
+    const auto weights = cudnn_gate_pairs(gate_weights(), gate_recurrent_weights());
+    const auto biases = cudnn_gate_pairs(gate_biases());
     cudnn_pack_weights_(8, input_features, output_features,
-                        weights, biases, forward_state, parameters_version);
+                        weights.data(), biases.data(), forward_state, parameters_version);
 }
 
 void LSTMOperator::unpack_gradients_from_cudnn_(Buffer& backward_scratch) const
 {
-    const TensorView* weight_gradients[8] = {
-        &input_weight_gradient,
-        &forget_weight_gradient,
-        &candidate_weight_gradient,
-        &output_weight_gradient,
-        &input_recurrent_weight_gradient,
-        &forget_recurrent_weight_gradient,
-        &candidate_recurrent_weight_gradient,
-        &output_recurrent_weight_gradient
-    };
-    const TensorView* bias_gradients[8] = {
-        &input_bias_gradient,
-        &forget_bias_gradient,
-        &candidate_bias_gradient,
-        &output_bias_gradient,
-        nullptr, nullptr, nullptr, nullptr
-    };
+    const auto weight_gradients = cudnn_gate_pairs(gate_weight_gradients(), gate_recurrent_weight_gradients());
+    const auto bias_gradients = cudnn_gate_pairs(gate_bias_gradients());
     cudnn_unpack_gradients_(8, input_features, output_features,
-                            weight_gradients, bias_gradients,
+                            weight_gradients.data(), bias_gradients.data(),
                             backward_scratch);
 }
 void LSTMOperator::apply_gpu(const TensorView& input,
@@ -2140,7 +2091,3 @@ string LSTM::write_expression(const vector<string>& feature_names,
 }
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

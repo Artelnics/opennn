@@ -1,13 +1,7 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   T R A I N I N G   R E S U L T
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/training/training_result.h"
-#include "opennn/core/statistics.h"
 
 namespace opennn
 {
@@ -36,16 +30,22 @@ float TrainingResult::get_training_error() const
 {
     if (training_error_history.size() == 0) return QUIET_NAN;
 
+    if (restored_epoch && *restored_epoch >= 0 && *restored_epoch < training_error_history.size())
+        return training_error_history(*restored_epoch);
+
     return training_error_history(training_error_history.size() - 1);
 }
 
 float TrainingResult::get_validation_error() const
 {
+    if (restored_epoch && *restored_epoch >= 0 && *restored_epoch < validation_error_history.size())
+        return validation_error_history(*restored_epoch);
+
     for (Index i = validation_error_history.size() - 1; i >= 0; --i)
         if (isfinite(validation_error_history(i)))
             return validation_error_history(i);
 
-    return 0.0f;
+    return QUIET_NAN;
 }
 
 void TrainingResult::save(const filesystem::path& file_name) const
@@ -65,31 +65,31 @@ void TrainingResult::print(const string &message) const
     const Index epochs_number = training_error_history.size();
     const Index final_epoch = epochs_number - 1;
 
-    const Index best_epoch = validation_error_history.size() > 0
-        ? minimal_index(validation_error_history)
-        : final_epoch;
+    optional<Index> best_epoch;
+    for (Index epoch = 0; epoch < validation_error_history.size(); ++epoch)
+        if (isfinite(validation_error_history(epoch))
+            && (!best_epoch || validation_error_history(epoch) < validation_error_history(*best_epoch)))
+            best_epoch = epoch;
 
     const bool restored_best_epoch = restored_epoch
         && *restored_epoch >= 0
         && *restored_epoch < epochs_number;
 
-    const Index reported_epoch = restored_best_epoch ? *restored_epoch : final_epoch;
-
     logging::info() << message << "\n"
          << "Training results" << "\n"
          << "Epochs number: " << epochs_number << "\n"
-         << "Training error: " << training_error_history(reported_epoch) << "\n";
+         << "Training error: " << get_training_error() << "\n";
     if (validation_error_history.size() > 0)
     {
-        logging::info() << "Validation error: " << validation_error_history(reported_epoch) << "\n";
+        logging::info() << "Validation error: " << get_validation_error() << "\n";
 
-        if (best_epoch != final_epoch)
+        if (best_epoch && *best_epoch != final_epoch)
         {
             if (restored_best_epoch)
                 logging::info() << "Best epoch: " << *restored_epoch
                      << " (restored parameters and states correspond to this epoch)\n";
             else
-                logging::info() << "Best validation epoch: " << best_epoch
+                logging::info() << "Best validation epoch: " << *best_epoch
                      << " (final parameters correspond to epoch " << final_epoch << ")\n";
         }
     }
@@ -119,17 +119,14 @@ Tensor<string, 2> TrainingResult::write_override_results(const Index precision) 
     override_results(1, 1) = elapsed_time;
     override_results(2, 1) = write_stopping_condition();
 
-    override_results(3, 1) = format("{:.{}g}", training_error_history(size - 1), precision);
+    override_results(3, 1) = format("{:.{}g}", get_training_error(), precision);
 
-    override_results(4, 1) = validation_error_history.size() == 0
+    const float validation_error = get_validation_error();
+    override_results(4, 1) = !isfinite(validation_error)
         ? "NA"
-        : format("{:.{}g}", validation_error_history(validation_error_history.size() - 1), precision);
+        : format("{:.{}g}", validation_error, precision);
 
     return override_results;
 }
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   T E N S O R   O P E R A T I O N S   S O U R C E
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/core/tensor_operations.h"
 #include "opennn/core/device_backend.h"
@@ -799,7 +794,7 @@ ActivationFunction activation_function_from_string(const string& name)
     X(softmax_backward_gpu, (const TensorView&, TensorView&, float)) \
     X(activation_forward_gpu, (TensorView&, ActivationFunction)) \
     X(activation_backward_gpu, (const TensorView&, TensorView&, ActivationFunction)) \
-    X(linear_forward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, cublasLtEpilogue_t, TensorView*, const TensorView&, ActivationFunction)) \
+    X(linear_forward_gpu, (const TensorView&, const TensorView&, const TensorView&, TensorView&, LinearEpilogue, TensorView*, const TensorView&, ActivationFunction)) \
     X(linear_backward_gpu, (const TensorView&, const TensorView&, const TensorView&, const TensorView&, const TensorView&, TensorView&, bool, const LinearBackwardOptions&))
 
 #define OPENNN_DECLARE_GPU_OP(name, sig) static void name sig;
@@ -1281,12 +1276,12 @@ void activation_backward(const TensorView& outputs, TensorView& delta, Activatio
 }
 
 static void linear_forward_cpu(const TensorView& input, const TensorView& weights, const TensorView& bias,
-                        TensorView& output, cublasLtEpilogue_t epilogue)
+                        TensorView& output, LinearEpilogue epilogue)
 {
     PROFILE_SCOPE_HOST("cpu:linear_fwd");
 
-    const bool fuse_relu = epilogue == CUBLASLT_EPILOGUE_RELU_BIAS
-                        || epilogue == CUBLASLT_EPILOGUE_RELU;
+    const bool fuse_relu = epilogue == LinearEpilogue::ReluBias
+                        || epilogue == LinearEpilogue::Relu;
 
     if (try_linear_forward(input, weights, bias, output, fuse_relu)) return;
 
@@ -1381,7 +1376,7 @@ static void linear_backward_cpu(const TensorView& output_delta, const TensorView
 }
 
 void linear_forward(const TensorView& input, const TensorView& weights, const TensorView& bias,
-                    TensorView& output, cublasLtEpilogue_t epilogue, TensorView* pre_activation,
+                    TensorView& output, LinearEpilogue epilogue, TensorView* pre_activation,
                     const TensorView& weight_scale, ActivationFunction fused_activation)
 {
     constexpr string_view operation = "linear_forward";
@@ -1401,12 +1396,12 @@ void linear_forward(const TensorView& input, const TensorView& weights, const Te
     {
         require_tensor(*pre_activation, operation, "pre-activation output");
         require_same_device(input, *pre_activation, operation);
-        if (epilogue == CUBLASLT_EPILOGUE_GELU_AUX_BIAS)
+        if (epilogue == LinearEpilogue::GeluAuxBias)
         {
             require_same_shape(output, *pre_activation, operation);
             require_same_type(output, *pre_activation, operation);
         }
-        else if (epilogue == CUBLASLT_EPILOGUE_RELU_AUX_BIAS)
+        else if (epilogue == LinearEpilogue::ReluAuxBias)
         {
             const Index rows = output.size() / output.get_shape().back();
             throw_if(!pre_activation->is_int8() || pre_activation->get_shape().get_rank() != 2
@@ -1433,7 +1428,7 @@ void linear_forward(const TensorView& input, const TensorView& weights, const Te
 
     throw_if(weights.is_int8(), "linear_forward: INT8 weights are CUDA-only.");
 
-    throw_if(epilogue == CUBLASLT_EPILOGUE_GELU_AUX_BIAS,
+    throw_if(epilogue == LinearEpilogue::GeluAuxBias,
              "linear_forward: the GELU_AUX_BIAS epilogue is CUDA-only.");
 
     linear_forward_cpu(input, weights, bias, output, epilogue);
@@ -1738,7 +1733,7 @@ static Index gemm_row_chunk()
 }
 
 static void linear_forward_lt_gpu(const TensorView& input, const TensorView& weights, const TensorView& bias,
-                                  TensorView& output, cublasLtEpilogue_t epilogue,
+                                  TensorView& output, LinearEpilogue epilogue,
                                   TensorView* pre_activation)
 {
     const int input_columns  = to_int(input.flat_columns());
@@ -1751,11 +1746,11 @@ static void linear_forward_lt_gpu(const TensorView& input, const TensorView& wei
     // A bf16 contraction of at most 32 is an output write, not a GEMM; the
     // small-K kernel keeps it at the write floor where cuBLASLt's align2
     // kernel for a 28-wide input does not (kernel_small_k_linear.cu).
-    const bool bias_epilogue = epilogue == CUBLASLT_EPILOGUE_BIAS
-                            || epilogue == CUBLASLT_EPILOGUE_RELU_BIAS;
-    const bool relu_epilogue = epilogue == CUBLASLT_EPILOGUE_RELU
-                            || epilogue == CUBLASLT_EPILOGUE_RELU_BIAS;
-    const bool plain_epilogue = epilogue == CUBLASLT_EPILOGUE_DEFAULT
+    const bool bias_epilogue = epilogue == LinearEpilogue::Bias
+                            || epilogue == LinearEpilogue::ReluBias;
+    const bool relu_epilogue = epilogue == LinearEpilogue::Relu
+                            || epilogue == LinearEpilogue::ReluBias;
+    const bool plain_epilogue = epilogue == LinearEpilogue::Default
                              || bias_epilogue || relu_epilogue;
 
     if (!pre_activation && plain_epilogue
@@ -1780,13 +1775,13 @@ static void linear_forward_lt_gpu(const TensorView& input, const TensorView& wei
     // cuBLASLt's answer before it can be selected. Nothing about this function
     // changes -- the operands, the epilogue and the layouts are the same
     // either way, and cuDNN is declined for every shape it was not measured
-    // on. See device_backend.cpp's autotune_lt_plan for the selection rule and
-    // core/cuda/cudnn_matmul.cpp for the graph.
+    // on. See matmul_backend.cpp's autotune_matmul_plan for the selection rule and
+    // core/cuda/matmul_cudnn.cpp for the graph.
     const Index chunk = pre_activation ? Index(0) : gemm_row_chunk();
     const bool chunked = chunk > 0 && Index(total_rows) > chunk;
 
     const bool narrow_k_applies = !pre_activation
-        && (epilogue == CUBLASLT_EPILOGUE_RELU_BIAS || epilogue == CUBLASLT_EPILOGUE_BIAS)
+        && (epilogue == LinearEpilogue::ReluBias || epilogue == LinearEpilogue::Bias)
         && input.is_bf16() && weights.is_bf16() && output.is_bf16()
         && bias.get_data() && bias.is_bf16();
 
@@ -1794,9 +1789,19 @@ static void linear_forward_lt_gpu(const TensorView& input, const TensorView& wei
         && narrow_k_linear_forward_cutlass(total_rows, input_columns, output_columns,
                                            input_for_gemm, weights.get_data(), bias_for_gemm,
                                            output.get_data(),
-                                           epilogue == CUBLASLT_EPILOGUE_RELU_BIAS,
+                                           epilogue == LinearEpilogue::ReluBias,
                                            device::get_compute_stream()))
         return;
+
+    const auto run_rows = [&](int rows, const void* row_input, void* row_output)
+    {
+        run_lt_matmul_cached(
+            output_columns, rows, input_columns,
+            CUBLAS_OP_N, CUBLAS_OP_N, epilogue,
+            weights.get_data(), row_input, row_output, bias_for_gemm,
+            io_type, io_type, io_type,
+            pre_activation ? pre_activation->get_data() : nullptr);
+    };
 
     try
     {
@@ -1817,37 +1822,23 @@ static void linear_forward_lt_gpu(const TensorView& input, const TensorView& wei
                                                        input_base + start * input_row_bytes,
                                                        weights.get_data(), bias_for_gemm,
                                                        output_base + start * output_row_bytes,
-                                                       epilogue == CUBLASLT_EPILOGUE_RELU_BIAS,
+                                                       epilogue == LinearEpilogue::ReluBias,
                                                        device::get_compute_stream()))
                     continue;
 
-                run_lt_matmul_cached(
-                    output_columns, rows, input_columns,
-                    CUBLAS_OP_N, CUBLAS_OP_N,
-                    epilogue,
-                    weights.get_data(),
-                    input_base + start * input_row_bytes,
-                    output_base + start * output_row_bytes,
-                    bias_for_gemm,
-                    io_type, io_type, io_type,
-                    nullptr);
+                run_rows(rows, input_base + start * input_row_bytes,
+                          output_base + start * output_row_bytes);
             }
         }
         else
-        run_lt_matmul_cached(
-            output_columns, total_rows, input_columns,
-            CUBLAS_OP_N, CUBLAS_OP_N,
-            epilogue,
-            weights.get_data(), input_for_gemm, output.get_data(), bias_for_gemm,
-            io_type, io_type, io_type,
-            pre_activation ? pre_activation->get_data() : nullptr);
+            run_rows(total_rows, input_for_gemm, output.get_data());
     }
     catch (const runtime_error& e)
     {
-        if (epilogue == CUBLASLT_EPILOGUE_GELU_AUX_BIAS && pre_activation)
+        if (epilogue == LinearEpilogue::GeluAuxBias && pre_activation)
         {
             linear_forward_lt_gpu(input, weights, bias, *pre_activation,
-                                  CUBLASLT_EPILOGUE_BIAS, nullptr);
+                                  LinearEpilogue::Bias, nullptr);
             copy_gpu(*pre_activation, output);
             return activation_forward_gpu(output, ActivationFunction::GELUTanh);
         }
@@ -1877,12 +1868,12 @@ static bool single_output_layer_shape(const TensorView& input, const TensorView&
 
 static bool single_output_reduction_applies(const TensorView& input, const TensorView& weights,
                                             const TensorView& bias, const TensorView& output,
-                                            cublasLtEpilogue_t epilogue, const TensorView* pre_activation)
+                                            LinearEpilogue epilogue, const TensorView* pre_activation)
 {
     static const bool enabled = env_flag_enabled("OPENNN_LINEAR_SINGLE_OUTPUT", true);
     if (!enabled || pre_activation) return false;
 
-    if (epilogue != CUBLASLT_EPILOGUE_DEFAULT && epilogue != CUBLASLT_EPILOGUE_BIAS) return false;
+    if (epilogue != LinearEpilogue::Default && epilogue != LinearEpilogue::Bias) return false;
     if (input.get_type() != output.get_type()) return false;
     if (bias.get_data() && bias.get_type() != input.get_type()) return false;
 
@@ -1890,7 +1881,7 @@ static bool single_output_reduction_applies(const TensorView& input, const Tenso
 }
 
 static void linear_forward_gpu(const TensorView& input, const TensorView& weights, const TensorView& bias,
-                               TensorView& output, cublasLtEpilogue_t epilogue,
+                               TensorView& output, LinearEpilogue epilogue,
                                TensorView* pre_activation, const TensorView& weight_scale,
                                ActivationFunction fused_activation)
 {
@@ -1901,7 +1892,7 @@ static void linear_forward_gpu(const TensorView& input, const TensorView& weight
     {
         const Index features = input.get_shape().back();
         const Index rows = input.size() / features;
-        const void* bias_data = (epilogue == CUBLASLT_EPILOGUE_BIAS) ? bias.get_data() : nullptr;
+        const void* bias_data = (epilogue == LinearEpilogue::Bias) ? bias.get_data() : nullptr;
 
         input.dispatch([&]<typename T>() {
             linear_forward_single_output_cuda<T>(rows, features,
@@ -1935,14 +1926,14 @@ static void linear_forward_gpu(const TensorView& input, const TensorView& weight
 
     const bool gemv_path = (total_rows <= W8A16_MAX_M
                             || weights.byte_size() > int8_dequant_budget_bytes)
-        && (epilogue == CUBLASLT_EPILOGUE_DEFAULT || epilogue == CUBLASLT_EPILOGUE_BIAS)
+        && (epilogue == LinearEpilogue::Default || epilogue == LinearEpilogue::Bias)
         && (!bias.get_data() || bias.is_bf16());
 
     if (gemv_path)
     {
         w8a16_linear_rows(total_rows, input_columns, output_columns, false,
                           input.as<bfloat16>(), weights.as<int8_t>(), weight_scale.as<float>(),
-                          epilogue == CUBLASLT_EPILOGUE_BIAS && bias.get_data()
+                          epilogue == LinearEpilogue::Bias && bias.get_data()
                               ? bias.as<bfloat16>() : nullptr,
                           output.as<bfloat16>());
         return run_fused_activation();
@@ -1976,31 +1967,9 @@ static bool single_output_backward_applies(const TensorView& output_delta, const
     return single_output_layer_shape(input, weights, 32);
 }
 
-// bias_grad_sum_cuda accumulates with atomicAdd across grid.y, so its output has
-// to arrive zeroed; and no grid.y row can do the zeroing itself, because nothing
-// orders the rows against each other. Doing it with cudaMemsetAsync is what
-// costs: inside a stream capture a memset becomes a memset node, which the
-// driver schedules on an internal stream of its own, so the step forks and
-// joins across engines once per iteration. On cuda-dense-train the resulting
-// splitKreduce -> bias_grad_sum gap is 3.68 us x 3,000 steps = 11.03 ms, 32% of
-// all GPU idle in that cell, for 0.845 us of actual memset. cudnnSetTensor
-// writes the same zeros from a kernel, which captures as an ordinary kernel node
-// on the step's own stream. It only writes, so the uninitialised destination is
-// never read. That lowering is cuDNN's choice and has not been read back off a
-// trace here: if this cuDNN version turns a zero fill into cudaMemsetAsync of
-// its own accord the gap stays and this is a no-op rather than a regression, so
-// confirm it by looking for a memset node beside bias_grad_sum_kernel in the
-// captured dense-train graph before crediting the change with anything.
-// The cheaper form is a store-instead-of-add flag on bias_grad_sum_cuda itself
-// (core/cuda/kernel_tensor.cu), which would drop this launch entirely.
-// Whether cuBLASLt will take a BF16-in/FP32-out weight gradient is a property
-// of the shape, the epilogue and the operand types, not of the process. It
-// used to be one atomic bool: the first product the driver refused sent every
-// other product in the process down the staged BF16 store and cast for the
-// rest of the run, including the 1024x1024 dW that the BGRADA epilogue serves
-// in a single 204.84 us kernel with the bias gradient fused into it. Keyed
-// like the plan it shadows, and thread-local for the same reason that cache is
-// -- one GPU thread creates and declines both -- so it needs no lock.
+// A declined BF16-in/FP32-out weight gradient is specific to its shape,
+// epilogue and operand types. Keep declines thread-local, like the plan cache,
+// so one unsupported product does not disable direct FP32 stores for others.
 struct WgradStoreKey
 {
     int m;
@@ -2027,6 +1996,9 @@ static bool& wgrad_direct_store_declined(const WgradStoreKey& key)
     return declined[key];
 }
 
+// The atomic bias reduction needs a zeroed destination. Use cuDNN's fill to
+// allow a kernel node on the compute stream during graph capture; whether it
+// avoids a memset node depends on the cuDNN version and requires trace checks.
 static void zero_bias_gradient_async(const TensorView& bias_gradient)
 {
     CHECK_CUDNN(cudnnSetTensor(device::get_cudnn_handle(),
@@ -2081,44 +2053,22 @@ static void linear_backward_gpu(const TensorView& output_delta, const TensorView
 
     static const bool force_staged = env_flag_enabled("OPENNN_WGRAD_STAGED", false);
 
-    // Two constants used to stand here -- output_columns * input_columns <=
-    // 64*1024, and total_rows >= 4 * max(output_columns, input_columns) --
-    // diverting the shapes they matched to cublasGemmStridedBatchedEx, which
-    // has no plan cache, no timed candidate, no known-tile injection and no
-    // traffic tie-break, and which leaves the bias gradient to a separate
-    // 5.78 us pass. Nothing about the Lt entry point excluded those shapes:
-    // the call below is the same bf16-operand, fp32-destination weight
-    // gradient every other shape already took through it. The constants chose
-    // the library by arithmetic on the shape, and the plan cache exists to
-    // choose it by measurement instead. OPENNN_WGRAD_STAGED remains the A/B,
-    // and now covers these shapes too.
-    //
-    // The two operand types are named separately because A is the delta and B
-    // is the input cast to the weights' type, not because they can differ:
-    // linear_backward throws unless the weights and the delta share a dtype,
-    // so every existing shape keys exactly as it did with one io_dtype.
+    // The input has been cast to the weights' type; validation requires that
+    // the weights and output delta have the same dtype.
     const cudaDataType_t delta_dtype = output_delta.cuda_dtype();
     const cudaDataType_t input_dtype = weights.cuda_dtype();
-    const cublasLtEpilogue_t wgrad_epilogue =
-        has_bias ? CUBLASLT_EPILOGUE_BGRADA : CUBLASLT_EPILOGUE_DEFAULT;
+    const LinearEpilogue wgrad_epilogue =
+        has_bias ? LinearEpilogue::BiasGradient : LinearEpilogue::Default;
 
     bool& store_declined = wgrad_direct_store_declined(
         {output_columns, input_columns, total_rows,
          int(wgrad_epilogue), int(delta_dtype), int(input_dtype)});
 
-    // ... except that the constants were not arithmetic, they were a
-    // measurement, and deleting them cost 27% of cuda-dense-train: 7.76 M
-    // samples/s against 10.78 M, reproduced across four interleaved arms with
-    // the tile tie-break both on and off, so the cause is this branch and not
-    // the selection rule. For a weight gradient this shape, cuBLASLt's
-    // BGRADA epilogue writing an fp32 destination is far slower than storing
-    // bf16 and casting, whatever it saves on the separate bias reduction.
-    // They are restored with the number attached. Choosing between the two by
-    // measurement rather than by shape needs the store to be a candidate the
-    // tuner can time, which the plan cache cannot express today: it selects
-    // among cuBLASLt algorithms for one call, not between two different call
-    // shapes. That is the candidate abstraction in the consolidation plan,
-    // and until it exists this predicate is the honest form of the choice.
+    // Tall, narrow BF16 weight gradients are faster with a BF16 store and
+    // cast than with the BGRADA FP32 epilogue. The recorded dense-training
+    // comparison was 10.78 versus 7.76 M samples/s across four interleaved runs.
+    // Retain this predicate until the tuner can compare different store paths;
+    // it currently compares algorithms for one matmul descriptor only.
     const bool skinny_wgrad = Index(output_columns) * Index(input_columns) <= Index(64) * 1024
                            && Index(total_rows) >= 4 * Index(max(output_columns, input_columns));
 
@@ -2143,11 +2093,7 @@ static void linear_backward_gpu(const TensorView& output_delta, const TensorView
                 delta_dtype, input_dtype,
                 CUDA_R_32F);
             stored = true;
-            // BGRADA is the only path here that produces the bias gradient, so
-            // it reports having done it and every other path falls through to
-            // the reduction below -- the same "the kernel says what it did"
-            // contract as fused_input_relu, and the reason the epilogue can
-            // stay Lt-only without the caller having to guess.
+            // Only BGRADA produces the bias gradient; other paths reduce it below.
             bias_stored = has_bias;
         }
         catch (const exception&)
@@ -2167,7 +2113,7 @@ static void linear_backward_gpu(const TensorView& output_delta, const TensorView
         run_lt_matmul_cached(
             output_columns, input_columns, total_rows,
             CUBLAS_OP_N, CUBLAS_OP_T,
-            CUBLASLT_EPILOGUE_DEFAULT,
+            LinearEpilogue::Default,
             output_delta.get_data(), input_for_gemm, dw_bf16, nullptr,
             delta_dtype, input_dtype,
             CUDA_R_16BF);
@@ -2187,39 +2133,18 @@ static void linear_backward_gpu(const TensorView& output_delta, const TensorView
     if (!input_delta.get_data() || input_delta.empty()) return;
 
     PROFILE_SCOPE("op:linear_bwd_dx " + to_string(output_columns) + "x" + to_string(input_columns) + "x" + to_string(total_rows));
-    // multiply() reaches cublasGemmStridedBatchedEx with CUBLAS_GEMM_DEFAULT:
-    // no plan cache, no candidate timing, no known-tile injection and no traffic
-    // tie-break. run_lt_matmul_cached has all four, and dX is the same product
-    // the dW call above already sends through it. On cuda-dense-train the
-    // default picks nvjet_sm120_tst_mma_80x192x64_2 at 202.31 us, 25.7% of the
-    // step and on the critical path, where the tie-break's 256x160 does the same
-    // m,n,k in 200.4 us at 172 W against 193.1 us at 271 W.
-    //
-    // The split below is what is left of the seam. The Lt entry point now
-    // takes an alpha, a beta and an operand type each, so an accumulating or
-    // mixed-type product is no longer inexpressible there; what it still
-    // lacks is a batch count. multiply_gpu folds a rank>2 left operand into one
-    // product whenever the right operand is rank 2, so the batched case left
-    // behind is a rank>2 weight tensor, and it stays on the old call until the
-    // key carries a batch count and the sequence-length bucketing that keeps a
-    // decode loop from minting one plan per token. accumulate_input_delta is
-    // held back with it rather than switched over here: beta 1 into the
-    // caller's own destination is the shape the tuner now has to route to
-    // scratch, and that pairing wants measuring in the commit that adds it,
-    // not as a side effect of this one.
+    // Use the tuned Lt plan for nonaccumulating, single-matrix dX products.
+    // Batched and accumulating products retain their existing dispatch until
+    // Lt batch-key support and accumulation performance have been verified.
     const bool single_matrix_product = weights.get_rank() == 2
                                     && !accumulate_input_delta
                                     && weights.get_type() == output_delta.get_type();
 
-    // A is the weight tensor and B the delta, and each is now named with its
-    // own type rather than with the one the caller happened to pass for both.
-    // That cannot split a key: linear_backward throws unless the weights and
-    // the output delta share a dtype, so the two are equal here by validation.
     if (drelu_mask || addend || single_matrix_product)
         return run_lt_matmul_cached(
                    input_columns, total_rows, output_columns,
                    CUBLAS_OP_T, CUBLAS_OP_N,
-                   drelu_mask ? CUBLASLT_EPILOGUE_DRELU : CUBLASLT_EPILOGUE_DEFAULT,
+                   drelu_mask ? LinearEpilogue::DRelu : LinearEpilogue::Default,
                    weights.get_data(), output_delta.get_data(), input_delta.get_data(), nullptr,
                    weights.cuda_dtype(), output_delta.cuda_dtype(), input_delta.cuda_dtype(),
                    drelu_mask ? drelu_mask->get_data() : nullptr,
@@ -2359,7 +2284,3 @@ bool row_dominates(const MatrixR& values, const Index a, const Index b)
 }
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

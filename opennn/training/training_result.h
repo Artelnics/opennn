@@ -1,10 +1,5 @@
-﻿//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   T R A I N I N G   R E S U L T   H E A D E R
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #pragma once
 
@@ -27,8 +22,10 @@ struct TrainingResult
 
     string write_stopping_condition() const;
 
+    // Report the restored model's epoch when available; histories retain every epoch.
     float get_training_error() const;
 
+    // Without restoration, return the latest finite measurement, or NaN if unavailable.
     float get_validation_error() const;
 
     Index get_epochs_number() const { return training_error_history.size(); }
@@ -59,7 +56,3 @@ struct TrainingResult
 };
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

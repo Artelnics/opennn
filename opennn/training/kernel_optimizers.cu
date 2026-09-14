@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-2.1-or-later
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
@@ -401,6 +402,31 @@ void clip_gradient_norm_cuda(const Index n,
                              const float eps)
 {
     launch_elementwise(n, clip_apply_kernel, squared_norm, max_norm, eps, gradient);
+}
+
+__global__ void sum_squared_norms_kernel(const int n,
+                                         const float* __restrict__ values,
+                                         float* __restrict__ total)
+{
+    __shared__ float partial[256];
+    float sum = 0.0f;
+    for(int i = threadIdx.x; i < n; i += blockDim.x) sum += values[i];
+    partial[threadIdx.x] = sum;
+    __syncthreads();
+
+    for(int width = blockDim.x / 2; width > 0; width /= 2)
+    {
+        if(threadIdx.x < width) partial[threadIdx.x] += partial[threadIdx.x + width];
+        __syncthreads();
+    }
+    if(threadIdx.x == 0) *total = partial[0];
+}
+
+void sum_squared_norms_cuda(const Index n, const float* values, float* total)
+{
+    OPENNN_CUDA_LAUNCH(sum_squared_norms_kernel<<<
+        1, block_size, 0, opennn::device::get_compute_stream()>>>(
+            checked_int(n), values, total));
 }
 
 // OpenNN: Open Neural Networks Library.

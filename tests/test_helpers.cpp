@@ -10,6 +10,7 @@
 
 #include "tests/test_helpers.h"
 
+#include <cstdlib>
 #include <fstream>
 #include <stdexcept>
 #include <string>
@@ -21,6 +22,17 @@ namespace opennn_test
 
 namespace
 {
+
+void set_environment_variable(const char* name, const char* value)
+{
+#ifdef _WIN32
+    _putenv_s(name, value ? value : "");
+#else
+    if (value) setenv(name, value, 1);
+    else unsetenv(name);
+#endif
+}
+
 
 void write_u16(std::vector<std::uint8_t>& bytes, std::uint16_t value)
 {
@@ -37,6 +49,24 @@ void write_u32(std::vector<std::uint8_t>& bytes, std::uint32_t value)
     bytes.push_back(std::uint8_t((value >> 24) & 0xFF));
 }
 
+}
+
+
+ScopedEnvironmentVariable::ScopedEnvironmentVariable(const char* new_name, const char* value)
+    : name(new_name)
+{
+    if (const char* existing = std::getenv(name.c_str()))
+    {
+        had_original = true;
+        original = existing;
+    }
+    set_environment_variable(name.c_str(), value);
+}
+
+
+ScopedEnvironmentVariable::~ScopedEnvironmentVariable()
+{
+    set_environment_variable(name.c_str(), had_original ? original.c_str() : nullptr);
 }
 
 

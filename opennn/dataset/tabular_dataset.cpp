@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   T A B U L A R   D A T A S E T   C L A S S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/core/log.h"
@@ -24,6 +19,7 @@ void TabularDataset::set(const Index new_samples_number,
     if (new_samples_number == 0 || new_input_shape.empty() || new_target_shape.empty())
         return;
 
+    invalidate_data();
     input_shape = new_input_shape;
 
     const Index new_inputs_number = new_input_shape.size();
@@ -132,6 +128,7 @@ filesystem::path TabularDataset::cache_file_path() const
 
 void TabularDataset::set_binary_cache_path(const filesystem::path& new_cache_path)
 {
+    invalidate_data();
     cache_path_override = new_cache_path;
     cache_reader.close();
     clear_cache_derived_state();
@@ -987,6 +984,7 @@ void TabularDataset::apply_scaler(Index feature_index, ScalerMethod method,
 
 vector<Descriptives> TabularDataset::scale_data()
 {
+    invalidate_data();
     const Index features_number = get_features_number();
 
     const vector<Descriptives> feature_descriptives = calculate_feature_descriptives();
@@ -1001,6 +999,7 @@ vector<Descriptives> TabularDataset::scale_data()
 
 vector<Descriptives> TabularDataset::scale_features(const string& variable_role)
 {
+    invalidate_data();
     const vector<Index> feature_indices = get_feature_indices(variable_role);
     const vector<ScalerMethod> scalers =
         get_feature_scaler_methods(string_to_variable_role(variable_role));
@@ -1086,8 +1085,8 @@ FeatureScaling TabularDataset::prepare_training_scaling(
     const Index columns_number = storage_mode == StorageMode::BinaryFile
                                ? cache_columns_number
                                : data.cols();
-    if (training_transforms.empty())
-        training_transforms.resize(size_t(columns_number));
+    disable_device_residency();
+    training_transforms.resize(size_t(columns_number));
 
     FeatureScaling effective;
     effective.descriptives.reserve(feature_indices.size());
@@ -1154,6 +1153,7 @@ void TabularDataset::enable_device_residency()
 void TabularDataset::unscale_features(const string& variable_role,
                                             const vector<Descriptives>& feature_descriptives)
 {
+    invalidate_data();
     const vector<Index> feature_indices = get_feature_indices(variable_role);
     const vector<ScalerMethod> scalers =
         get_feature_scaler_methods(string_to_variable_role(variable_role));
@@ -1177,11 +1177,13 @@ void TabularDataset::unscale_features(const string& variable_role,
 
 void TabularDataset::set_data_random()
 {
+    invalidate_data();
     set_random_uniform(data);
 }
 
 void TabularDataset::set_data_integer(const Index vocabulary_size)
 {
+    invalidate_data();
     set_random_integer(data, 0, vocabulary_size - 1);
 }
 
@@ -1298,6 +1300,7 @@ VectorI TabularDataset::calculate_target_distribution() const
 vector<vector<Index>> TabularDataset::calculate_Tukey_outliers(const float cleaning_parameter, bool replace_with_nan)
 {
     require_in_memory_data("TabularDataset::calculate_Tukey_outliers");
+    if (replace_with_nan) invalidate_data();
 
     const Index samples_number = get_used_samples_number();
     const vector<Index> sample_indices = get_used_sample_indices();
@@ -1486,6 +1489,7 @@ void TabularDataset::unuse_samples_with_missing_targets(const vector<Index>& sam
 void TabularDataset::impute_missing_values_statistic(const MissingValuesMethod& method)
 {
     require_in_memory_data("TabularDataset::impute_missing_values_statistic");
+    invalidate_data();
 
     const vector<Index> used_sample_indices = get_used_sample_indices();
     const vector<Index> used_feature_indices = get_used_feature_indices();
@@ -1566,6 +1570,7 @@ void TabularDataset::reuse_input_incomplete_rows_binary()
 void TabularDataset::impute_missing_values_interpolate()
 {
     require_in_memory_data("TabularDataset::impute_missing_values_interpolate");
+    invalidate_data();
 
     const vector<Index> used_sample_indices = get_used_sample_indices();
     const vector<Index> input_feature_indices = get_feature_indices(VariableRole::Input);
@@ -1756,7 +1761,3 @@ void TabularDataset::to_JSON(JsonWriter& printer) const
 }
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

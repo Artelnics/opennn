@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   U N S C A L I N G   L A Y E R    C L A S S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/network/layers/unscaling_layer.h"
 
@@ -117,35 +112,7 @@ void Unscaling::write_JSON_body(JsonWriter& printer) const
 string Unscaling::write_expression(const vector<string>& input_names,
                                    const vector<string>& output_names) const
 {
-    const Index outputs_number = get_outputs_number();
-    throw_if(outputs_number == 0 || ssize(scalers) == 0
-             || outputs_number % ssize(scalers) != 0,
-             "Unscaling::write_expression: layer not configured.");
-
-    ostringstream buffer;
-
-    for (Index i = 0; i < outputs_number; ++i)
-    {
-        const size_t feature = size_t(i % ssize(scalers));
-        const ScalerMethod scaler = scalers[feature];
-
-        if (scaler == ScalerMethod::Logarithm)
-        {
-            buffer << output_names[i] << "=exp(" << input_names[i] << ");\n";
-            continue;
-        }
-
-        buffer << output_names[i] << "="
-               << affine_expression(input_names[i], unscaling_affine(
-                      scaler, descriptives[feature], min_range, max_range))
-               << ";\n";
-    }
-
-    return buffer.str();
+    return write_scaling_expression(input_names, output_names, true);
 }
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

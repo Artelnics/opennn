@@ -1,0 +1,8 @@
+# Install in a quality environment, separate from deployment-size environments.
+# torch/torchvision must be compatible wheels for the selected CPU/CUDA backend.
+numpy>=2,<3
+pandas>=2,<4
+Pillow>=10,<13
+sacrebleu==2.5.1
+torch==2.13.0
+torchvision==0.28.0

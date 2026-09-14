@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   S G D   C L A S S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/training/sgd.h"
 
@@ -49,7 +44,7 @@ void SGD::update_parameters(BackPropagation& back_propagation,
         float* const parameters = network->get_parameters_data();
         bfloat16* const mirror =
             network->get_parameters_bf16_mirror_data();
-        cudaStream_t stream = device::get_compute_stream();
+        DeviceStream stream = device::get_compute_stream();
 
         for(const BackPropagation::GradientSlice& slice : gradient_slices)
         {
@@ -209,7 +204,3 @@ void SGD::from_JSON(const JsonDocument& document)
 }
 
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

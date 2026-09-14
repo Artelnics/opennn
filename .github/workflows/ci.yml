@@ -50,6 +50,13 @@ jobs:
             exit 1
           fi
 
+      - name: Enforce code size and architecture
+        run: |
+          python -m pip install -r tools/code-quality-requirements.txt -r tools/test-requirements.txt
+          python tools/check_code_quality.py
+          python tools/check_architecture.py
+          python -B -m unittest discover -s tests -p '*_test.py'
+
       - name: Reject a toolchain without OpenMP
         run: |
           if cmake -S . -B build-no-openmp -G Ninja \
@@ -130,8 +137,8 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install model export test dependency
-        run: python -m pip install numpy==2.4.4 pandas==2.3.3
+      - name: Install Python test dependencies
+        run: python -m pip install -r tools/test-requirements.txt
 
       - name: Check dataset inventory
         run: python tools/check_dataset_manifest.py
@@ -143,11 +150,14 @@ jobs:
           -DOpenNN_DISABLE_CUDA=ON
           -DOpenNN_ENABLE_MKL=OFF
           -DOpenNN_CPU_TARGET=PORTABLE
-          -DOpenNN_BUILD_EXAMPLES=OFF
+          -DOpenNN_BUILD_EXAMPLES=ON
           -DOpenNN_BUILD_BENCHMARKS=OFF
 
       - name: Build library and tests
-        run: cmake --build build --target opennn opennn_tests opennn_response_tests --parallel
+        run: cmake --build build --target opennn opennn_tests opennn_response_tests blank --parallel
+
+      - name: Run the getting-started example
+        run: ./build/bin/blank
 
       - name: Unit tests
         run: ctest --test-dir build --output-on-failure
@@ -277,8 +287,13 @@ jobs:
               opennn/core/json.cpp \
               opennn/core/device_backend.cpp \
               opennn/core/device_resources.cpp \
+              opennn/network/forward_propagation.cpp \
               opennn/network/network_io.cpp \
-              opennn/dataset/tabular_dataset_io.cpp; do
+              opennn/network/layers/scaling_layer.cpp \
+              opennn/dataset/tabular_dataset_io.cpp \
+              opennn/response_optimization/expression_evaluator.cpp \
+              opennn/response_optimization/genetic_response.cpp \
+              opennn/training/optimizer.cpp; do
             clang-tidy-17 "$source" -p build-analysis \
               --checks='-*,clang-analyzer-core.*,clang-analyzer-cplusplus.NewDelete,clang-analyzer-cplusplus.NewDeleteLeaks,bugprone-use-after-move' \
               --warnings-as-errors='*'
@@ -297,7 +312,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y ninja-build gcc-13 g++-13 gcovr
-          python -m pip install numpy==2.4.4 pandas==2.3.3
+          python -m pip install -r tools/test-requirements.txt
       - name: Configure coverage build
         run: >
           cmake -S . -B build-coverage -G Ninja
@@ -320,7 +335,8 @@ jobs:
             --gcov-ignore-parse-errors=negative_hits.warn_once_per_file \
             --json-summary coverage-summary.json --json-summary-pretty \
             --html-details coverage.html \
-            --fail-under-line 25 --fail-under-branch 15
+            --fail-under-line 70 --fail-under-branch 35
+          python tools/check_coverage.py coverage-summary.json
       - name: Preserve coverage report
         if: always()
         continue-on-error: true
@@ -357,8 +373,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install model export test dependencies
-        run: python -m pip install numpy==2.4.4 pandas==2.3.3
+      - name: Install Python test dependencies
+        run: python -m pip install -r tools/test-requirements.txt
       - name: Configure sanitizers and JSON fuzzer
         run: cmake --preset verify-sanitizers -B build-sanitizers -DOpenNN_BUILD_FUZZERS=ON
       - name: Build both test executables
@@ -370,7 +386,11 @@ jobs:
       - name: Check memory and undefined behavior
         run: ctest --test-dir build-sanitizers --output-on-failure
       - name: Fuzz strict JSON parsing
-        run: ./build-sanitizers/bin/opennn_json_fuzz -runs=20000 -max_len=8192 tools/fuzz/corpus
+        run: |
+          cmake -E make_directory build-sanitizers/fuzz/corpus build-sanitizers/fuzz/artifacts
+          ./build-sanitizers/bin/opennn_json_fuzz -runs=20000 -max_len=8192 \
+            -artifact_prefix=build-sanitizers/fuzz/artifacts/ \
+            build-sanitizers/fuzz/corpus tools/fuzz/corpus
       - name: Preserve test log
         if: always()
         continue-on-error: true
@@ -382,6 +402,7 @@ jobs:
             build-sanitizers/Testing/Temporary/
             build-sanitizers/build-resources.txt
             build-sanitizers/.ninja_log
+            build-sanitizers/fuzz/
 
   cuda-compile:
     name: Linux CUDA 12.9 (compile)
@@ -434,8 +455,8 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install model export test dependency
-        run: python -m pip install numpy==2.4.4 pandas==2.3.3
+      - name: Install Python test dependencies
+        run: python -m pip install -r tools/test-requirements.txt
 
       - name: Check dataset inventory
         run: python tools/check_dataset_manifest.py
@@ -446,11 +467,14 @@ jobs:
           -DOpenNN_DISABLE_CUDA=ON
           -DOpenNN_ENABLE_MKL=OFF
           -DOpenNN_CPU_TARGET=PORTABLE
-          -DOpenNN_BUILD_EXAMPLES=OFF
+          -DOpenNN_BUILD_EXAMPLES=ON
           -DOpenNN_BUILD_BENCHMARKS=OFF
 
       - name: Build library and tests
-        run: cmake --build build --config Release --target opennn opennn_tests opennn_response_tests --parallel
+        run: cmake --build build --config Release --target opennn opennn_tests opennn_response_tests blank --parallel
+
+      - name: Run the getting-started example
+        run: ./build/bin/Release/blank.exe
 
       - name: Unit tests
         run: ctest --test-dir build -C Release --output-on-failure

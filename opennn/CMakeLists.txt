@@ -1,4 +1,3 @@
-
 option(OpenNN_BUILD_VISION "Build vision/seq layers, networks, and datasets" ON)
 option(OpenNN_BUILD_SHARED "Build OpenNN as a shared library (DLL) instead of static" OFF)
 option(OpenNN_INSTALL "Generate install rules for the OpenNN library" ON)
@@ -262,6 +261,13 @@ target_include_directories(opennn PUBLIC
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 target_link_libraries(opennn PUBLIC Eigen3::Eigen)
+
+# Restrict Eigen to its MPL-2.0 subset. OpenNN includes only Core, Dense, LU, QR
+# and Cholesky, which are MPL-2.0, plus unsupported/Eigen/CXX11/Tensor, which is
+# Apache-2.0. It uses no Sparse or OrderingMethods module, which are the parts
+# carrying LGPL-derived code. The define makes that a build-time guarantee, so an
+# LGPL-licensed Eigen module can never be pulled in by accident.
+target_compile_definitions(opennn PUBLIC EIGEN_MPL2_ONLY)
 
 # Parallel std algorithms. MSVC implements them in its own runtime; libstdc++
 # declares them (so __cpp_lib_parallel_algorithm is defined either way) but
@@ -531,13 +537,10 @@ if(OpenNN_INSTALL)
         ${PROJECT_SOURCE_DIR}/LICENSE-GPL-3.0.txt
         ${PROJECT_SOURCE_DIR}/THIRD_PARTY_NOTICES.md
         ${PROJECT_SOURCE_DIR}/CHANGELOG.md
-        ${PROJECT_SOURCE_DIR}/MIGRATION.md
         ${PROJECT_SOURCE_DIR}/DATASETS.md
-        ${PROJECT_SOURCE_DIR}/QUALITY.md
+        ${PROJECT_SOURCE_DIR}/DEVELOPMENT.md
         ${PROJECT_SOURCE_DIR}/RELEASE_SCOPE.json
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/OpenNN)
-    install(FILES ${PROJECT_SOURCE_DIR}/tools/REPRODUCTION.md
-        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/OpenNN/tools)
     ExternalProject_Get_Property(opennn_libjpeg_turbo_ep SOURCE_DIR)
     install(FILES ${SOURCE_DIR}/LICENSE.md ${SOURCE_DIR}/README.ijg
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/OpenNN/libjpeg-turbo)

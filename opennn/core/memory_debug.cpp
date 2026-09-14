@@ -1,7 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   M E M O R Y   D E B U G   U T I L I T I E S
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/core/memory_debug.h"
 #include "opennn/core/memory_pool.h"

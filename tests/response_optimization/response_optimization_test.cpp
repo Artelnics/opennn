@@ -256,6 +256,23 @@ unique_ptr<ResponseOptimization> make_driver(const Driver driver, Network* netwo
     return make_unique<DomainContraction>(network);
 }
 
+template <typename DriverType>
+class SmallResponseDriver final : public DriverType
+{
+public:
+    explicit SmallResponseDriver(Network* network) : DriverType(network)
+    {
+        this->points_number = 4;
+        this->iterations_number = 2;
+    }
+};
+
+unique_ptr<ResponseOptimization> make_small_driver(const Driver driver, Network* network)
+{
+    if (driver == Driver::Genetic) return make_unique<SmallResponseDriver<GeneticResponse>>(network);
+    return make_unique<SmallResponseDriver<DomainContraction>>(network);
+}
+
 
 string driver_name(const testing::TestParamInfo<Driver>& info)
 {
@@ -552,6 +569,21 @@ TEST(ConstraintResidual, EqualityIsSilentOnTargetAndSignedOutside)
     EXPECT_FALSE(isfinite(constraint.calculate_residual(VectorR::Constant(1, 5.0f), output)));
 
     EXPECT_NEAR(constraint.calculate_residual(VectorR::Constant(1, 7.0f), output), 2.0f, 1e-6f);
+}
+
+TEST(ConstraintResidual, UndefinedValuesAreDistinctFromSatisfiedConstraints)
+{
+    ResponseOptimization::Constraint constraint;
+    constraint.expression = compile_expression("sqrt(x1)", make_named_columns({"x1"}), {});
+    constraint.condition = Condition::GreaterEqual;
+    constraint.values = {1.0f};
+    EXPECT_TRUE(isnan(constraint.calculate_residual(VectorR::Constant(1, 4.0f), {})));
+    EXPECT_TRUE(isinf(constraint.calculate_residual(VectorR::Constant(1, -1.0f), {})));
+
+    constraint.expression = compile_expression("exp(x1)", make_named_columns({"x1"}), {});
+    constraint.condition = Condition::LessEqual;
+    constraint.values = {2.0f};
+    EXPECT_TRUE(isinf(constraint.calculate_residual(VectorR::Constant(1, 100.0f), {})));
 }
 
 
@@ -1127,6 +1159,32 @@ TEST_P(ResponseDriver, CategoricalSearchMatchesAScanOverCategories)
         << " against a scan best of " << best_scan_value;
 }
 
+
+TEST_P(ResponseDriver, RejectsUndefinedAndOverflowedConstraints)
+{
+    for (const bool overflow : {false, true})
+    {
+        MinimalApproximation setup({"x1"}, {"y"}, overflow ? 100.0f : -2.0f,
+                                   overflow ? 101.0f : -1.0f);
+        auto optimization = make_small_driver(GetParam(), setup.network.get());
+        optimization->add_objective("x1", Sense::Minimize);
+        optimization->add_constraint(overflow ? "exp(x1)" : "sqrt(x1)",
+                                     Condition::GreaterEqual, {1.0f});
+        EXPECT_THROW(optimization->perform_response_optimization(), runtime_error);
+    }
+}
+
+TEST_P(ResponseDriver, FiniteNonlinearConstraintsStillProduceFeasiblePoints)
+{
+    MinimalApproximation setup({"x1"}, {"y"}, 1.0f, 4.0f);
+    auto optimization = make_small_driver(GetParam(), setup.network.get());
+    optimization->add_objective("x1", Sense::Minimize);
+    optimization->add_constraint("sqrt(x1)", Condition::GreaterEqual, {1.0f});
+    const MatrixR results = optimization->perform_response_optimization();
+    ASSERT_EQ(results.rows(), 1);
+    EXPECT_TRUE(results.allFinite());
+    EXPECT_GE(sqrt(results(0, 0)), 1.0f - EPSILON);
+}
 
 INSTANTIATE_TEST_SUITE_P(Drivers,
                          ResponseDriver,

@@ -826,7 +826,7 @@ int main(int argc, char* argv[])
         // VOC/COCO: YOLOv8 ref clip=10.0 (pretrained backbone keeps gradients bounded).
         // Synthetic: train from scratch → exp(tw) can explode; clip at 1.0 to stabilize.
         adam->set_gradient_clip_norm((use_voc || use_coco || use_raccoon) ? 10.0f : 1.0f);
-        adam->set_maximum_validation_failures(use_coco ? 50 : (use_voc && is_large_backbone) ? 40 : use_voc ? 25 : use_raccoon ? 25 : 15);
+        adam->set_maximum_validation_failures(use_coco ? 50 : (use_voc && is_large_backbone) ? 60 : use_voc ? 25 : use_raccoon ? 25 : 15);
 
         const bool resume_training = true;
 
@@ -943,7 +943,7 @@ int main(int argc, char* argv[])
         const vector<TrainingRound> lr_schedule =
             use_coco                      ? vector<TrainingRound>{{1e-4f, 300}, {3e-5f, 200}}                     :
             (use_voc && is_csp53)         ? vector<TrainingRound>{{1.25e-4f, 200}, {2.5e-5f, 150}, {1e-5f, 100}} :
-            (use_voc && is_csp53v11)      ? vector<TrainingRound>{{2.5e-5f, 5}, {1e-4f, 100}, {2e-5f, 60}, {5e-6f, 40}} :
+            (use_voc && is_csp53v11)      ? vector<TrainingRound>{{2.5e-5f, 5}, {1e-4f, 100}, {2e-5f, 80}, {5e-6f, 60}, {1e-6f, 40}} :
             (use_voc && is_darknet53)     ? vector<TrainingRound>{{1.25e-4f, 150}, {2.5e-5f, 150}, {1e-5f, 100}} :
             use_voc                       ? vector<TrainingRound>{{5e-4f, 150}, {1e-4f, 150}, {3e-5f, 100}}      :
             use_raccoon                   ? vector<TrainingRound>{{5e-4f, 400}, {1e-4f, 300}}                     :
