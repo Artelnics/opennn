@@ -483,6 +483,7 @@ void TabularDataset::read_csv()
         configure_csv_columns(lines, file_separator, has_quotes);
 
     load_csv_data(lines, file_separator, has_quotes, date_format);
+    if (is_forecasting()) configure_forecasting(past_time_steps, future_time_steps, multi_target);
 }
 
 DateFormat TabularDataset::configure_csv_columns(vector<string_view>& lines,

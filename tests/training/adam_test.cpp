@@ -2,8 +2,7 @@
 #include "opennn/core/configuration.h"
 #include "opennn/core/random_utilities.h"
 #include "opennn/dataset/tabular_dataset.h"
-#include "opennn/dataset/time_series_dataset.h"
-#include "opennn/dataset/language_dataset.h"
+#include "opennn/dataset/text_dataset.h"
 #include "opennn/dataset/image_dataset.h"
 #include "opennn/models/models.h"
 #include "opennn/training/loss.h"
@@ -420,12 +419,13 @@ static void expect_transformer_step_captures(Type dtype, Index sdpa_min_sequence
     { ofstream out(file_path); out << content; }
 
     set_seed(3);
-    LanguageDataset dataset(file_path);
+    TextDataset dataset({.task = TextDataset::Task::SequenceToSequence});
+    dataset.read_txt(file_path);
     dataset.set_display(false);
     dataset.split_samples(1.0f, 0.0f, 0.0f);
 
     Transformer transformer(dataset.get_shape("Input")[0], dataset.get_shape("Decoder")[0],
-                            dataset.get_input_vocabulary_size(), dataset.get_target_vocabulary_size(),
+                            dataset.get_vocabulary_size(), dataset.get_vocabulary_size(VariableRole::Target),
                             32, 4, 64, 1);
     transformer.set_attention_sdpa_min_sequence_length(sdpa_min_sequence_length);
 
@@ -637,10 +637,9 @@ TEST_F(AdamTest, TrainClassificationGPU)
 static void expect_forecasting_training_reduces_error()
 {
     set_seed(3);
-    TimeSeriesDataset dataset(24, {1}, {1});
+    TabularDataset dataset(24, {1}, {1});
     dataset.set_data_random();
-    dataset.set_past_time_steps(3);
-    dataset.set_future_time_steps(1);
+    dataset.configure_forecasting(3);
     dataset.set_sample_roles("Training");
     ForecastingNetwork network(dataset.get_input_shape(), {4}, dataset.get_target_shape());
 
@@ -747,18 +746,17 @@ TEST_F(AdamTest, TrainTextClassificationCPU)
     const string file_path = write_text_classification_file();
 
     set_seed(5);
-    LanguageDataset dataset_short;
+    TextDataset dataset_short;
     dataset_short.set_storage_mode(Dataset::StorageMode::Matrix);
     dataset_short.set_separator(Dataset::Separator::Tab);
     dataset_short.set_has_header(false);
     dataset_short.set_display(false);
-    dataset_short.set_data_path(file_path);
-    dataset_short.read_txt();
+    dataset_short.read_txt(file_path);
     dataset_short.set_sample_roles("Training");
     TextClassificationNetwork network_short(
-        {dataset_short.get_input_vocabulary_size(), dataset_short.get_maximum_input_sequence_length(), 16},
+        {dataset_short.get_vocabulary_size(), dataset_short.get_sequence_length(), 16},
         {2},
-        {dataset_short.get_maximum_target_sequence_length()});
+        {dataset_short.get_features_number(VariableRole::Target)});
     Loss loss_short(&network_short, &dataset_short);
     loss_short.set_error(Loss::Error::CrossEntropy);
     Adam adam_short(&loss_short);
@@ -767,18 +765,17 @@ TEST_F(AdamTest, TrainTextClassificationCPU)
     const type error_short = adam_short.train().get_training_error();
 
     set_seed(5);
-    LanguageDataset dataset_long;
+    TextDataset dataset_long;
     dataset_long.set_storage_mode(Dataset::StorageMode::Matrix);
     dataset_long.set_separator(Dataset::Separator::Tab);
     dataset_long.set_has_header(false);
     dataset_long.set_display(false);
-    dataset_long.set_data_path(file_path);
-    dataset_long.read_txt();
+    dataset_long.read_txt(file_path);
     dataset_long.set_sample_roles("Training");
     TextClassificationNetwork network_long(
-        {dataset_long.get_input_vocabulary_size(), dataset_long.get_maximum_input_sequence_length(), 16},
+        {dataset_long.get_vocabulary_size(), dataset_long.get_sequence_length(), 16},
         {2},
-        {dataset_long.get_maximum_target_sequence_length()});
+        {dataset_long.get_features_number(VariableRole::Target)});
     Loss loss_long(&network_long, &dataset_long);
     loss_long.set_error(Loss::Error::CrossEntropy);
     Adam adam_long(&loss_long);
@@ -799,18 +796,17 @@ TEST_F(AdamTest, TrainTextClassificationGPU)
     const string file_path = write_text_classification_file();
 
     set_seed(5);
-    LanguageDataset dataset_short;
+    TextDataset dataset_short;
     dataset_short.set_storage_mode(Dataset::StorageMode::Matrix);
     dataset_short.set_separator(Dataset::Separator::Tab);
     dataset_short.set_has_header(false);
     dataset_short.set_display(false);
-    dataset_short.set_data_path(file_path);
-    dataset_short.read_txt();
+    dataset_short.read_txt(file_path);
     dataset_short.set_sample_roles("Training");
     TextClassificationNetwork network_short(
-        {dataset_short.get_input_vocabulary_size(), dataset_short.get_maximum_input_sequence_length(), 16},
+        {dataset_short.get_vocabulary_size(), dataset_short.get_sequence_length(), 16},
         {2},
-        {dataset_short.get_maximum_target_sequence_length()});
+        {dataset_short.get_features_number(VariableRole::Target)});
     Loss loss_short(&network_short, &dataset_short);
     loss_short.set_error(Loss::Error::CrossEntropy);
     Adam adam_short(&loss_short);
@@ -819,18 +815,17 @@ TEST_F(AdamTest, TrainTextClassificationGPU)
     const type error_short = adam_short.train().get_training_error();
 
     set_seed(5);
-    LanguageDataset dataset_long;
+    TextDataset dataset_long;
     dataset_long.set_storage_mode(Dataset::StorageMode::Matrix);
     dataset_long.set_separator(Dataset::Separator::Tab);
     dataset_long.set_has_header(false);
     dataset_long.set_display(false);
-    dataset_long.set_data_path(file_path);
-    dataset_long.read_txt();
+    dataset_long.read_txt(file_path);
     dataset_long.set_sample_roles("Training");
     TextClassificationNetwork network_long(
-        {dataset_long.get_input_vocabulary_size(), dataset_long.get_maximum_input_sequence_length(), 16},
+        {dataset_long.get_vocabulary_size(), dataset_long.get_sequence_length(), 16},
         {2},
-        {dataset_long.get_maximum_target_sequence_length()});
+        {dataset_long.get_features_number(VariableRole::Target)});
     Loss loss_long(&network_long, &dataset_long);
     loss_long.set_error(Loss::Error::CrossEntropy);
     Adam adam_long(&loss_long);

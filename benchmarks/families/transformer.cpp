@@ -36,7 +36,7 @@
 #include "opennn/core/random_utilities.h"
 #include "opennn/core/device_backend.h"
 #include "opennn/core/tensor_types.h"
-#include "opennn/dataset/language_dataset.h"
+#include "opennn/dataset/text_dataset.h"
 #include "opennn/network/forward_propagation.h"
 #include "opennn/models/models.h"
 #include "opennn/training/adam.h"
@@ -87,15 +87,15 @@ bool use_bf16_sdpa(const Options& options)
 #endif
 }
 
-unique_ptr<Transformer> build(LanguageDataset& dataset, const Options& options)
+unique_ptr<Transformer> build(TextDataset& dataset, const Options& options)
 {
     set_seed(SEED);
 
     auto transformer = make_unique<Transformer>(
         dataset.get_shape("Input")[0],
         dataset.get_shape("Decoder")[0],
-        dataset.get_input_vocabulary_size(),
-        dataset.get_target_vocabulary_size(),
+        dataset.get_vocabulary_size(),
+        dataset.get_vocabulary_size(VariableRole::Target),
         options.d_model,
         options.heads(),
         options.feed_forward(),
@@ -195,7 +195,8 @@ int main(int argc, char* argv[])
              << "\ndevice=" << (options.device == Device::CPU ? "cpu" : "cuda") << "\n";
 
         cout << "dataset_opened=" << filesystem::absolute(argv[2]).string() << "\n" << flush;
-        LanguageDataset dataset(argv[2]);
+        TextDataset dataset({.task = TextDataset::Task::SequenceToSequence});
+        dataset.read_txt(argv[2]);
 
         dataset.set_sample_roles("Training");
 
@@ -203,8 +204,8 @@ int main(int argc, char* argv[])
         const Index sequence = dataset.get_shape("Input")[0];
 
         cout << "samples=" << samples << " sequence=" << sequence
-             << " input_vocab=" << dataset.get_input_vocabulary_size()
-             << " target_vocab=" << dataset.get_target_vocabulary_size()
+             << " input_vocab=" << dataset.get_vocabulary_size()
+             << " target_vocab=" << dataset.get_vocabulary_size(VariableRole::Target)
              << " d_model=" << options.d_model << " heads=" << options.heads()
              << " ff=" << options.feed_forward() << " layers=" << options.layers << "\n";
 
@@ -286,15 +287,16 @@ int main(int argc, char* argv[])
         cout << "engine=opennn\nmode=infer\ndevice="
              << (options.device == Device::CPU ? "cpu" : "cuda") << "\n";
 
-        LanguageDataset dataset(argv[2]);
+        TextDataset dataset({.task = TextDataset::Task::SequenceToSequence});
+        dataset.read_txt(argv[2]);
         dataset.set_sample_roles("Testing");
 
         const Index samples = dataset.get_samples_number();
         const Index sequence = dataset.get_shape("Input")[0];
 
         cout << "samples=" << samples << " sequence=" << sequence
-             << " input_vocab=" << dataset.get_input_vocabulary_size()
-             << " target_vocab=" << dataset.get_target_vocabulary_size() << "\n";
+             << " input_vocab=" << dataset.get_vocabulary_size()
+             << " target_vocab=" << dataset.get_vocabulary_size(VariableRole::Target) << "\n";
 
         for (const Index batch : batches)
         {
@@ -398,7 +400,8 @@ int main(int argc, char* argv[])
 
         try
         {
-            LanguageDataset dataset(argv[2]);
+            TextDataset dataset({.task = TextDataset::Task::SequenceToSequence});
+            dataset.read_txt(argv[2]);
             dataset.set_sample_roles("Training");
 
             auto network = build(dataset, options);

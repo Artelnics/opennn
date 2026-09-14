@@ -48,6 +48,12 @@ remaining limitations.
 
 ### Reliability and portability
 
+- Reduce seven concrete dataset classes to four: `TabularDataset` includes
+  forecasting windows, and `TextDataset` handles classification, translation,
+  next-token prediction and token/attention-mask inputs. Remove the former
+  specialized class names and migrate repository callers to explicit task options.
+- Separate detection from image classification inheritance, share device staging,
+  and preserve YOLO target layout configuration across dataset save/load.
 - Share training batch execution, Adam/SGD launch setup, optimizer-buffer resets
   and loss metric reductions. Consolidate Quasi-Newton line-search setup and
   YOLO box geometry while preserving update formulas, callbacks and tail metrics.
@@ -350,6 +356,54 @@ training, save/reload and exported predictions, rather than 8.x conversion.
 To close production migration validation, provide a complete 8.x topology and
 weights plus representative inputs and predictions from the original environment.
 Neural Designer remains outside this review.
+
+### Dataset API consolidation
+
+This development change removes the former dataset classes and headers without
+compatibility aliases. The four concrete types are `TabularDataset`, `TextDataset`,
+`ImageDataset` and `YoloDataset`, all implementing `Dataset`.
+
+| Removed class | Replacement |
+| --- | --- |
+| `TimeSeriesDataset` | `TabularDataset` with `configure_forecasting(past, future, multi_target)`; use `get_sequence_data()` for a three-dimensional window tensor. |
+| `LanguageDataset` | `TextDataset`, choosing `Classification` or `SequenceToSequence` explicitly. |
+| `TextGenerationDataset` | `TextDataset` with `Task::NextToken` and a positive sequence length. |
+| `BertDataset` | `TextDataset` with `InputLayout::TokensAndMask` and a loaded `WordPieceTokenizer`. |
+
+Include `opennn/dataset/tabular_dataset.h` or `opennn/dataset/text_dataset.h`.
+For example:
+
+```cpp
+TabularDataset series("readings.csv", ",", true);
+series.set_variable_role("target", VariableRole::InputTarget);
+series.configure_forecasting(24, 1);
+
+TextDataset labels;
+labels.read_txt("labelled_text.tsv");
+
+TextDataset translation({.task = TextDataset::Task::SequenceToSequence});
+translation.read_txt("parallel_text.tsv");
+
+TextDataset corpus({.task = TextDataset::Task::NextToken, .sequence_length = 256});
+corpus.read_txt("corpus.txt");
+```
+
+Forecasting preserves the table's variable roles: use `InputTarget` when past
+values of the predicted variable are also inputs. `clear_forecasting()` restores
+ordinary table shapes. Configure windows after loading the table and assigning roles.
+
+Text vocabulary and tokenizer access use an optional `VariableRole`, replacing
+separate input/target accessor names. In `TokensAndMask` mode the model receives
+the attention mask as `Input` and token IDs as `Decoder`; install the tokenizer
+with `set_tokenizer(std::move(tokenizer), VariableRole::Decoder)`. The updated
+[BERT example](examples/bert/main.cpp) shows this setup.
+
+Text dataset JSON stores tokenizer settings and sample splits. Loading it against
+a source corpus with different token IDs or label ordering now reports an error;
+read the changed corpus and save fresh dataset metadata in that case.
+
+`YoloDataset` now derives directly from `Dataset`; image-classification-only
+methods no longer appear on the detection dataset.
 
 ### Time-series indexing
 

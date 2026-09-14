@@ -385,7 +385,7 @@ def prepare_transformer(root: Path, args) -> None:
             if not en or not de or "\t" in en or "\t" in de:
                 continue
 
-            # LanguageDataset reads this file with CSV quote semantics, so an
+            # TextDataset reads this file with CSV quote semantics, so an
             # unterminated double quote swallows the tab and the record then
             # "does not contain exactly two fields". Natural prose has
             # unbalanced quotes routinely -- a sentence opening with one and

@@ -8,7 +8,7 @@
 
 #include <iostream>
 
-#include "opennn/dataset/language_dataset.h"
+#include "opennn/dataset/text_dataset.h"
 #include "opennn/models/models.h"
 #include "opennn/training/training.h"
 #include "opennn/evaluation/evaluation.h"
@@ -26,10 +26,11 @@ int main()
         const Index embedding_dimension = 64;
         const Index heads_number = 4;
 
-        LanguageDataset language_dataset("../data/amazon_reviews/amazon_cells_labelled.txt");
+        TextDataset language_dataset;
+        language_dataset.read_txt("../data/amazon_reviews/amazon_cells_labelled.txt");
 
-        const Index input_vocabulary_size = language_dataset.get_input_vocabulary_size();
-        const Index input_sequence_length = language_dataset.get_maximum_input_sequence_length();
+        const Index input_vocabulary_size = language_dataset.get_vocabulary_size();
+        const Index input_sequence_length = language_dataset.get_sequence_length();
         const Index targets_number = language_dataset.get_features_number("Target");
 
         TextClassificationNetwork text_classification_network(

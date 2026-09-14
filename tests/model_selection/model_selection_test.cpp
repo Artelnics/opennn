@@ -4,7 +4,6 @@
 #include "opennn/core/configuration.h"
 #include "opennn/core/device_backend.h"
 #include "opennn/dataset/dataset.h"
-#include "opennn/dataset/time_series_dataset.h"
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/model_selection/cross_validation.h"
 #include "opennn/model_selection/selection_utilities.h"
@@ -75,7 +74,8 @@ TEST(ModelSelectionTest, InputSelectionConfigurationRoundTrips)
 
 TEST(ModelSelectionTest, OrderedDatasetsProduceContiguousFolds)
 {
-    TimeSeriesDataset dataset(8, {1}, {1});
+    TabularDataset dataset(8, {1}, {1});
+    dataset.configure_forecasting(2);
     dataset.set_sample_roles(SampleRole::Training);
 
     Network network;
@@ -309,9 +309,9 @@ TEST(ModelSelectionTest, SelectorsRejectMissingTrainingConfiguration)
 
 TEST(ModelSelectionTest, ConfiguresForecastingInputsThroughDatasetContract)
 {
-    TimeSeriesDataset dataset(8, {2}, {1});
+    TabularDataset dataset(8, {2}, {1});
     dataset.set_variable_names({"temperature", "pressure", "target"});
-    dataset.set_past_time_steps(3);
+    dataset.configure_forecasting(3);
 
     ForecastingNetwork network({3, 2}, {2}, {1});
     InputSelectionProbe input_selection;

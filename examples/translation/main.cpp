@@ -10,7 +10,7 @@
 #include <string>
 
 #include "opennn/core/configuration.h"
-#include "opennn/dataset/language_dataset.h"
+#include "opennn/dataset/text_dataset.h"
 #include "opennn/models/models.h"
 #include "opennn/network/chat.h"
 #include "opennn/training/training.h"
@@ -26,12 +26,13 @@ int main()
         // Autoregressive generation currently requires CUDA.
         Configuration::instance().set(Device::CUDA, Type::FP32);
 
-        LanguageDataset dataset("../data/translation/ES-EN-small.txt");
+        TextDataset dataset({.task = TextDataset::Task::SequenceToSequence});
+        dataset.read_txt("../data/translation/ES-EN-small.txt");
 
         Transformer transformer(dataset.get_input_shape()[0],
                                 dataset.get_shape(VariableRole::Decoder)[0],
-                                dataset.get_input_vocabulary_size(),
-                                dataset.get_target_vocabulary_size(),
+                                dataset.get_vocabulary_size(),
+                                dataset.get_vocabulary_size(VariableRole::Target),
                                 256, 8, 1024, 1);
 
         Training training(&transformer, &dataset);

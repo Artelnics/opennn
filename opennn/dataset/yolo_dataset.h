@@ -5,7 +5,8 @@
 
 #include <cstdio>
 
-#include "opennn/dataset/image_dataset.h"
+#include "opennn/dataset/dataset.h"
+#include "opennn/core/io_utilities.h"
 
 namespace opennn
 {
@@ -51,7 +52,7 @@ vector<YoloDetection> decode_yolo_v8_fpn_detections(const vector<YoloFpnHead>&,
                                                      float iou_threshold = 0.45f,
                                                      Index reg_max = 1);
 
-class YoloDataset final : public ImageDataset
+class YoloDataset final : public Dataset
 {
 public:
 
@@ -111,6 +112,7 @@ public:
     void from_JSON(const JsonDocument&) override;
     void to_JSON(JsonWriter&) const override;
 
+    // Detection inputs are normalized to [0, 1] in both training and inference.
     void fill_inputs(const vector<Index>&,
                      const vector<Index>&,
                      float*,
@@ -187,6 +189,7 @@ private:
     bool try_rebuild_target_from_boxes(const vector<array<float, 2>>&);
     void build_cache(const vector<array<float, 2>>&);
     void setup_metadata(Index);
+    void update_target_layout();
     void load_cache_to_ram();
 
     vector<uint8_t> images_ram;

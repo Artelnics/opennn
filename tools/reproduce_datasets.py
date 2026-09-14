@@ -99,7 +99,7 @@ def reconstruct(name, raw, indexed, output):
         verify_table(original, full)
         buffer = io.StringIO(newline="")
         if delimiter == "\t":
-            # LanguageDataset consumes literal TSV, including quotation marks.
+            # TextDataset consumes literal TSV, including quotation marks.
             buffer.write("".join("\t".join(row) + "\n" for row in full))
         else:
             csv.writer(buffer, delimiter=delimiter, lineterminator="\n").writerows(full)

@@ -32,12 +32,10 @@ ALLOWED = {
 # These cycles predate the ratchet and require broader API moves to remove.
 # Keep the exceptions path-specific so another file cannot copy the dependency.
 EXCEPTIONS = {
-    ("dataset/bert_dataset.cpp", "network"),
     ("dataset/correlations.cpp", "models"),
     ("dataset/correlations.cpp", "network"),
     ("dataset/correlations.cpp", "training"),
-    ("dataset/language_dataset.h", "network"),
-    ("dataset/text_generation_dataset.h", "network"),
+    ("dataset/text_dataset.h", "network"),
     ("dataset/yolo_dataset.cpp", "network"),
     ("network/back_propagation.cpp", "training"),
     ("network/chat.cpp", "models"),

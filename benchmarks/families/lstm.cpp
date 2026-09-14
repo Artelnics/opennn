@@ -42,7 +42,7 @@
 #include "opennn/core/tensor_operations.h"
 #include "opennn/core/random_utilities.h"
 #include "opennn/core/tensor_types.h"
-#include "opennn/dataset/time_series_dataset.h"
+#include "opennn/dataset/tabular_dataset.h"
 #include "opennn/network/forward_propagation.h"
 #include "opennn/network/layers/dense_layer.h"
 #include "opennn/network/layers/lstm_layer.h"
@@ -92,7 +92,7 @@ struct Options
     Type precision = Type::FP32;
 };
 
-unique_ptr<ForecastingLstmNetwork> build(TimeSeriesDataset& dataset, const Options& options)
+unique_ptr<ForecastingLstmNetwork> build(TabularDataset& dataset, const Options& options)
 {
     set_seed(SEED);
 
@@ -104,7 +104,7 @@ unique_ptr<ForecastingLstmNetwork> build(TimeSeriesDataset& dataset, const Optio
     return network;
 }
 
-unique_ptr<Network> build_inference(const TimeSeriesDataset& dataset,
+unique_ptr<Network> build_inference(const TabularDataset& dataset,
                                           const Options& options)
 {
     set_seed(SEED);
@@ -131,12 +131,36 @@ unique_ptr<Network> build_inference(const TimeSeriesDataset& dataset,
     return network;
 }
 
-unique_ptr<TimeSeriesDataset> open_dataset(const string& path, const Options& options)
+unique_ptr<TabularDataset> open_dataset(const string& path, const Options& options)
 {
     cout << "dataset_opened=" << filesystem::absolute(path).string() << "\n" << flush;
-    auto dataset = make_unique<TimeSeriesDataset>(path, ",", true, false);
-    dataset->set_past_time_steps(options.past);
-    dataset->set_future_time_steps(1);
+    auto dataset = make_unique<TabularDataset>(path, ",", true, false);
+    dataset->set_variable_roles(VariableRole::Input);
+    if (dataset->get_variables_number() == 1)
+        dataset->set_variable_role(0, dataset->get_features_number() == 1
+                                      ? VariableRole::InputTarget : VariableRole::None);
+    else
+    {
+        bool has_time_variable = false;
+        bool has_target = false;
+        for (Index i = dataset->get_variables_number() - 1; i >= 0; --i)
+        {
+            const VariableType type = dataset->get_variable_type(i);
+            if (type == VariableType::DateTime && !has_time_variable)
+            {
+                dataset->set_variable_role(i, VariableRole::Time);
+                has_time_variable = true;
+            }
+            else if (type == VariableType::Constant)
+                dataset->set_variable_role(i, VariableRole::None);
+            else if (!has_target)
+            {
+                dataset->set_variable_role(i, VariableRole::InputTarget);
+                has_target = true;
+            }
+        }
+    }
+    dataset->configure_forecasting(options.past);
 
     if (options.device == Device::CUDA)
         dataset->set_storage_mode(Dataset::StorageMode::GPUPersistantData);
@@ -144,7 +168,7 @@ unique_ptr<TimeSeriesDataset> open_dataset(const string& path, const Options& op
     return dataset;
 }
 
-Index use_all_valid_windows(TimeSeriesDataset& dataset, SampleRole role,
+Index use_all_valid_windows(TabularDataset& dataset, SampleRole role,
                             const Options& options)
 {
     const Index windows = max(Index(0), dataset.get_samples_number()
@@ -196,7 +220,7 @@ Adam* configure(Training& training, Index batch)
     return adam;
 }
 
-void describe(const TimeSeriesDataset& dataset, const Network& network, const Options& options)
+void describe(const TabularDataset& dataset, const Network& network, const Options& options)
 {
     cout << "samples=" << dataset.get_used_samples_number()
          << " inputs=" << dataset.get_shape("Input").back()

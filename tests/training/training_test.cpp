@@ -3,7 +3,7 @@
 #include "opennn/network/layers/dense_layer.h"
 #include "opennn/models/models.h"
 #include "opennn/dataset/dataset.h"
-#include "opennn/dataset/language_dataset.h"
+#include "opennn/dataset/text_dataset.h"
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/training/adam.h"
 #include "opennn/training/levenberg_marquardt.h"
@@ -248,25 +248,24 @@ TEST(Training, TransfersTranslationVocabularies)
              << "good night\tbuenas noches\n";
     }
 
-    LanguageDataset dataset;
+    TextDataset dataset({.task = TextDataset::Task::SequenceToSequence});
     dataset.set_storage_mode(Dataset::StorageMode::Matrix);
     dataset.set_display(false);
-    dataset.set_data_path(path);
-    dataset.read_txt();
+    dataset.read_txt(path);
 
     Transformer transformer(
         dataset.get_shape("Input")[0],
         dataset.get_shape("Decoder")[0],
-        dataset.get_input_vocabulary_size(),
-        dataset.get_target_vocabulary_size(),
+        dataset.get_vocabulary_size(),
+        dataset.get_vocabulary_size(VariableRole::Target),
         8, 2, 16, 1);
 
     Loss loss(&transformer, &dataset);
     TrainingArtifactProbe optimizer(&loss);
     optimizer.prepare();
 
-    EXPECT_EQ(transformer.get_input_vocabulary(), dataset.get_input_vocabulary());
-    EXPECT_EQ(transformer.get_target_vocabulary(), dataset.get_target_vocabulary());
+    EXPECT_EQ(transformer.get_input_vocabulary(), dataset.get_vocabulary());
+    EXPECT_EQ(transformer.get_target_vocabulary(), dataset.get_vocabulary(VariableRole::Target));
 
     error_code error;
     filesystem::remove(path, error);

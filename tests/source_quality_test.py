@@ -61,11 +61,11 @@ class SourceArchitectureTest(SourceFixture):
         self.assertIn("operator.h:2: expose an OpenNN backend type", failures[0])
 
     def test_historical_exceptions_do_not_extend_to_cuda_siblings(self):
-        self.write("dataset/bert_dataset.cpp", '#include "opennn/network/network.h"\n')
-        self.write("dataset/bert_dataset.cu", '#include "opennn/network/network.h"\n')
+        self.write("dataset/text_dataset.h", '#include "opennn/network/network.h"\n')
+        self.write("dataset/text_dataset.cu", '#include "opennn/network/network.h"\n')
         failures = architecture.check(self.source)
         self.assertEqual(len(failures), 1)
-        self.assertIn("bert_dataset.cu:2: dataset must not depend on network", failures[0])
+        self.assertIn("text_dataset.cu:2: dataset must not depend on network", failures[0])
 
     def test_every_metric_requires_a_limit_and_cpp_limits_remain_independent(self):
         metrics = {"functions": 3, "cuda_functions": 1, "combined_duplicate_percent": 2.0}

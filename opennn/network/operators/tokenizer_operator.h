@@ -44,6 +44,7 @@ public:
 
     virtual void set_vocabulary(const vector<string>&);
     const vector<string>& get_vocabulary() const noexcept { return vocabulary; }
+    const vector<string>& get_reserved_tokens() const noexcept { return reserved_tokens; }
     const VocabularyMap& get_vocabulary_map() const noexcept { return vocabulary_map; }
     Index get_vocabulary_size() const noexcept { return Index(vocabulary.size()); }
 

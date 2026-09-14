@@ -5,7 +5,6 @@
 
 #include "opennn/training/loss.h"
 #include "opennn/core/tensor_types.h"
-#include "opennn/dataset/language_dataset.h"
 #include "opennn/network/layers/dense_layer.h"
 #include "opennn/network/layers/convolutional_layer.h"
 #include "opennn/network/network.h"

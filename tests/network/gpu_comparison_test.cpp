@@ -11,8 +11,7 @@
 #include "opennn/core/tensor_types.h"
 #include "opennn/dataset/dataset.h"
 #include "opennn/dataset/tabular_dataset.h"
-#include "opennn/dataset/language_dataset.h"
-#include "opennn/dataset/time_series_dataset.h"
+#include "opennn/dataset/text_dataset.h"
 #include "opennn/network/operators/cudnn_rnn.h"
 #include "opennn/network/layers/convolutional_layer.h"
 #include "opennn/network/layers/dense_layer.h"
@@ -1628,10 +1627,9 @@ TEST_F(GpuComparison, RnnStateSurvivesRepeatedShapeChanges)
 TEST_F(GpuComparison, ForecastingRecurrentGradient)
 {
     set_seed(7);
-    TimeSeriesDataset dataset(30, {2}, {1});
+    TabularDataset dataset(30, {2}, {1});
     dataset.set_data_random();
-    dataset.set_past_time_steps(5);
-    dataset.set_future_time_steps(1);
+    dataset.configure_forecasting(5);
     dataset.set_sample_roles("Training");
 
     ForecastingNetwork cpu_network(dataset.get_input_shape(), {6, 5}, dataset.get_target_shape());
@@ -1657,10 +1655,9 @@ TEST_F(GpuComparison, ForecastingRecurrentGradient)
 TEST_F(GpuComparison, ForecastingLstmGradient)
 {
     set_seed(7);
-    TimeSeriesDataset dataset(30, {2}, {1});
+    TabularDataset dataset(30, {2}, {1});
     dataset.set_data_random();
-    dataset.set_past_time_steps(5);
-    dataset.set_future_time_steps(1);
+    dataset.configure_forecasting(5);
     dataset.set_sample_roles("Training");
 
     ForecastingLstmNetwork cpu_network(dataset.get_input_shape(), {6, 5}, dataset.get_target_shape());
@@ -1693,10 +1690,9 @@ TEST_F(GpuComparison, ForecastingRecurrentAndLstmBf16Gradient)
                      << " has no BFLOAT16 recurrent support";
 
     set_seed(17);
-    TimeSeriesDataset dataset(30, {2}, {1});
+    TabularDataset dataset(30, {2}, {1});
     dataset.set_data_random();
-    dataset.set_past_time_steps(5);
-    dataset.set_future_time_steps(1);
+    dataset.configure_forecasting(5);
     dataset.set_sample_roles("Training");
 
     const auto compare = [&](bool lstm)
@@ -1735,10 +1731,9 @@ TEST_F(GpuComparison, ForecastingRecurrentAndLstmBf16Gradient)
 TEST_F(GpuComparison, ForecastingLstmFusedGradient)
 {
     set_seed(11);
-    TimeSeriesDataset dataset(40, {2}, {1});
+    TabularDataset dataset(40, {2}, {1});
     dataset.set_data_random();
-    dataset.set_past_time_steps(6);
-    dataset.set_future_time_steps(1);
+    dataset.configure_forecasting(6);
     dataset.set_sample_roles("Training");
 
     ForecastingLstmNetwork cpu_network(dataset.get_input_shape(), {64}, dataset.get_target_shape());
@@ -1764,10 +1759,9 @@ TEST_F(GpuComparison, ForecastingLstmFusedGradient)
 TEST_F(GpuComparison, ForecastingRecurrentWideGradient)
 {
     set_seed(11);
-    TimeSeriesDataset dataset(40, {2}, {1});
+    TabularDataset dataset(40, {2}, {1});
     dataset.set_data_random();
-    dataset.set_past_time_steps(6);
-    dataset.set_future_time_steps(1);
+    dataset.configure_forecasting(6);
     dataset.set_sample_roles("Training");
 
     ForecastingNetwork cpu_network(dataset.get_input_shape(), {64}, dataset.get_target_shape());
@@ -1815,12 +1809,13 @@ static VectorR transformer_training_gradient(Device device, const string& corpus
 {
     Configuration::instance().set(device, Type::FP32);
     set_seed(7);
-    LanguageDataset dataset(corpus);
+    TextDataset dataset({.task = TextDataset::Task::SequenceToSequence});
+    dataset.read_txt(corpus);
     dataset.set_display(false);
     dataset.split_samples(1.0f, 0.0f, 0.0f);
 
     Transformer transformer(dataset.get_shape("Input")[0], dataset.get_shape("Decoder")[0],
-                            dataset.get_input_vocabulary_size(), dataset.get_target_vocabulary_size(),
+                            dataset.get_vocabulary_size(), dataset.get_vocabulary_size(VariableRole::Target),
                             8, 2, 16, 1);
     transformer.set_dropout_rate(0.0f);
     transformer.set_attention_sdpa_min_sequence_length(1 << 20);   // unfused attention on both devices
@@ -1883,14 +1878,15 @@ static VectorR fused_transformer_gradient(const string& corpus, device::Attentio
 {
     Configuration::instance().set(Device::CUDA, Type::FP32);
     set_seed(7);
-    LanguageDataset dataset(corpus);
+    TextDataset dataset({.task = TextDataset::Task::SequenceToSequence});
+    dataset.read_txt(corpus);
     dataset.set_display(false);
     dataset.split_samples(1.0f, 0.0f, 0.0f);
 
     // Head dimension 32 is one FA2 ships a kernel for; 64 over two heads is how
     // this transformer gets there.
     Transformer transformer(dataset.get_shape("Input")[0], dataset.get_shape("Decoder")[0],
-                            dataset.get_input_vocabulary_size(), dataset.get_target_vocabulary_size(),
+                            dataset.get_vocabulary_size(), dataset.get_vocabulary_size(VariableRole::Target),
                             64, 2, 16, 1);
     transformer.set_dropout_rate(0.0f);
     transformer.set_attention_sdpa_min_sequence_length(1);   // fused attention on both rungs

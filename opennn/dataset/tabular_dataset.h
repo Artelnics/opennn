@@ -48,6 +48,23 @@ public:
 
     MatrixR get_feature_data(const string&) const;
 
+    // Windows use the current feature roles; sample indices remain raw row starts.
+    // Configuration creates chronological splits with complete windows in each split.
+    void configure_forecasting(Index past, Index future = 1, bool multi_target = false);
+    void clear_forecasting();
+    bool is_forecasting() const noexcept { return past_time_steps > 0; }
+    Index get_past_time_steps() const noexcept { return past_time_steps; }
+    Index get_future_time_steps() const noexcept { return future_time_steps; }
+    bool get_multi_target() const noexcept { return multi_target; }
+    // Returns a copy of the selected input windows in sample/time/feature order.
+    Tensor3 get_sequence_data(const string& sample_role, const string& feature_role) const;
+
+    MatrixR calculate_autocorrelations(Index = 10) const;
+    Tensor3 calculate_cross_correlations(Index = 10) const;
+    vector<Variable> get_model_input_variables() const override;
+    bool sample_order_matters() const noexcept override { return is_forecasting(); }
+    void resize_input_shape(Index) override;
+
     void set(Index = 0, const Shape& = {}, const Shape& = {});
     void set(const filesystem::path&,
              const string&,
@@ -171,7 +188,20 @@ public:
                       FillMode,
                       ColumnContiguity column_contiguity = ColumnContiguity::Unknown) const override;
 
+    void fill_batch(Batch&, const vector<Index>&, const FeatureSelection&, FillMode) const override;
+
 protected:
+
+    Index past_time_steps = 0;
+    Index future_time_steps = 1;
+    bool multi_target = false;
+
+    void set_forecasting_window(Index, Index, bool);
+    void refresh_forecasting_roles();
+    pair<vector<Index>, Index> correlation_lags(Index) const;
+    void fill_window_features(const vector<Index>&, const vector<Index>&, float*,
+                              Index row_offset, Index steps, bool feature_major,
+                              ColumnContiguity) const;
 
     string missing_values_label = "NA";
     NumberFormat number_format;

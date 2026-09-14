@@ -84,31 +84,7 @@ void ImageDataset::enable_device_residency()
         if (is_device_resident()) disable_device_residency();
         return;
     }
-    if (is_device_resident()) return;
-    if (get_samples_number() == 0) return;
-
-    const Index samples_number = get_samples_number();
-    const vector<Index> input_indices = get_feature_indices(VariableRole::Input);
-    const vector<Index> target_indices = get_feature_indices(VariableRole::Target);
-    const Index inputs_number = ssize(input_indices);
-    const Index targets_number = ssize(target_indices);
-
-    vector<Index> all_samples(samples_number);
-    iota(all_samples.begin(), all_samples.end(), 0);
-
-    MatrixR inputs(samples_number, inputs_number);
-    fill_inputs(all_samples, input_indices, inputs.data(), FillMode::Training,
-                ColumnContiguity::Contiguous);
-
-    MatrixR targets(samples_number, targets_number);
-    fill_targets(all_samples, target_indices, targets.data(), FillMode::Training,
-                 ColumnContiguity::Contiguous);
-
-    MatrixR staged(samples_number, inputs_number + targets_number);
-    staged.leftCols(inputs_number) = inputs;
-    staged.rightCols(targets_number) = targets;
-
-    upload_device_matrix(staged);
+    upload_device_samples();
 }
 
 void ImageDataset::set_input_scaling(const vector<Descriptives>& descriptives,

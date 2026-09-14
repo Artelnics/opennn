@@ -121,7 +121,7 @@ header `pch.h` in an application.
 | `opennn/core/` | Configuration, tensor/storage types, backend operations, persistence utilities; CUDA kernels are under `core/cuda/`. Start with `configuration.h` and `opennn_types.h`. |
 | `opennn/network/` | `Network`, propagation, save/load, chat and `ModelExpression` source export; `layers/` contains network layers and `operators/` reusable computation operators. |
 | `opennn/models/` | Ready-made tabular, image, language and forecasting architectures declared in `models.h`; shared execution and tokenizer methods belong to `Network`. |
-| `opennn/dataset/` | `TabularDataset` and specialized image, language and time-series data handling. |
+| `opennn/dataset/` | Four dataset types: `TabularDataset`, `TextDataset`, `ImageDataset` and `YoloDataset`. |
 | `opennn/training/` | `Training`, losses and optimizers such as `Adam` and `SGD`. |
 | `opennn/evaluation/` | `Evaluation` for prediction-quality analysis. |
 | `opennn/model_selection/` | Input and network-size selection. |
@@ -137,6 +137,24 @@ Keep public headers at their existing include paths. The small
 `core/cuda/flash_attention_shim/` include hierarchy is required by the optional
 external backend. Tests mirror library modules and distinguish network layers
 from operators; helpers at the test root are shared.
+
+### Choosing a dataset
+
+`Dataset` is the shared interface for batches, sample roles and variables.
+Choose one of these four concrete classes:
+
+| Class | Data and configuration |
+| --- | --- |
+| `TabularDataset` | Numeric/categorical tables, including time series through `configure_forecasting(past, future, multi_target)`. |
+| `TextDataset` | Labelled text, paired translation sequences or next-token prediction, selected through `TextDataset::Options::task`. Tokenizers and optional attention masks configure the input representation. |
+| `ImageDataset` | Image classification with one label per image. |
+| `YoloDataset` | Object detection with boxes, synchronized image/box augmentation and detection-head target layouts. |
+
+Forecasting uses windows over the stored rows. Text tasks share tokenization,
+cache storage and batch loading. Classification and detection retain separate
+classes because their annotations and augmentation rules differ.
+See [dataset API migration](CHANGELOG.md#dataset-api-consolidation) for the removed
+class names and replacement calls.
 
 ## Maintenance tools
 

@@ -212,6 +212,34 @@ void Dataset::enable_device_residency()
     upload_device_matrix(data);
 }
 
+void Dataset::upload_device_samples()
+{
+    if (!device::is_cuda_build() || is_device_resident() || get_samples_number() == 0) return;
+
+    const Index samples_number = get_samples_number();
+    const vector<Index> input_indices = get_feature_indices(VariableRole::Input);
+    const vector<Index> target_indices = get_feature_indices(VariableRole::Target);
+    const Index inputs_number = ssize(input_indices);
+    const Index targets_number = ssize(target_indices);
+
+    vector<Index> all_samples(samples_number);
+    iota(all_samples.begin(), all_samples.end(), 0);
+
+    MatrixR inputs(samples_number, inputs_number);
+    fill_inputs(all_samples, input_indices, inputs.data(), FillMode::Training,
+                ColumnContiguity::Contiguous);
+
+    MatrixR targets(samples_number, targets_number);
+    fill_targets(all_samples, target_indices, targets.data(), FillMode::Training,
+                 ColumnContiguity::Contiguous);
+
+    MatrixR staged(samples_number, inputs_number + targets_number);
+    staged.leftCols(inputs_number) = inputs;
+    staged.rightCols(targets_number) = targets;
+
+    upload_device_matrix(staged);
+}
+
 FeatureScaling Dataset::prepare_training_scaling(
     VariableRole role,
     const FeatureScaling&,
@@ -398,7 +426,7 @@ void Dataset::split_samples_sequential(const float training_ratio,
     split_samples(training_ratio, validation_ratio, testing_ratio, false);
 }
 
-void Dataset::set_default_variable_roles_implementation(bool forecasting)
+void Dataset::set_default_variable_roles()
 {
     const Index variables_number = variables.size();
 
@@ -413,41 +441,18 @@ void Dataset::set_default_variable_roles_implementation(bool forecasting)
 
     set_variable_roles(VariableRole::Input);
 
-    bool target = false;
-    bool time_variable = false;
-
     for (Index i = variables_number - 1; i >= 0; i--)
     {
-        if (forecasting)
+        Variable& variable = variables[i];
+
+        if (is_one_of(variable.type, VariableType::Constant, VariableType::DateTime))
         {
-            if (variables[i].type == VariableType::DateTime && !time_variable)
-            {
-                variables[i].set_role("Time");
-                time_variable = true;
-            }
-            else if (variables[i].type == VariableType::Constant)
-            {
-                variables[i].set_role("None");
-            }
-            else if (!target)
-            {
-                variables[i].set_role("Target");
-                target = true;
-            }
+            variable.set_role("None");
         }
         else
         {
-            Variable& variable = variables[i];
-
-            if (is_one_of(variable.type, VariableType::Constant, VariableType::DateTime))
-            {
-                variable.set_role("None");
-            }
-            else
-            {
-                variable.set_role("Target");
-                break;
-            }
+            variable.set_role("Target");
+            break;
         }
     }
 }

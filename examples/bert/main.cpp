@@ -17,7 +17,7 @@
 #include <iostream>
 #include <string>
 
-#include "opennn/dataset/bert_dataset.h"
+#include "opennn/dataset/text_dataset.h"
 #include "opennn/models/models.h"
 #include "opennn/training/training.h"
 #include "opennn/training/adam.h"
@@ -42,8 +42,12 @@ int main(int argc, char* argv[])
             BertForSequenceClassification::from_pretrained(model_directory);
         BertForSequenceClassification& model = *pretrained.model;
 
-        BertDataset dataset(text_path, pretrained.vocabulary_path,
-                            pretrained.sequence_length);
+        TextDataset dataset({.input_layout = TextDataset::InputLayout::TokensAndMask,
+                             .sequence_length = pretrained.sequence_length});
+        auto tokenizer = make_unique<WordPieceTokenizer>();
+        tokenizer->load_vocabulary(pretrained.vocabulary_path);
+        dataset.set_tokenizer(move(tokenizer), VariableRole::Decoder);
+        dataset.read_txt(text_path);
 
         model.set_dropout_rate(0.1f);
 

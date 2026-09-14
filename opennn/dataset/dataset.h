@@ -197,7 +197,7 @@ public:
     }
 
     void set_default_variable_names();
-    void set_default_variable_roles() { set_default_variable_roles_implementation(false); }
+    void set_default_variable_roles();
 
     void set_variable_roles(const vector<string>&);
 
@@ -324,9 +324,6 @@ protected:
                                       const vector<Index>& sample_indices,
                                       const FeatureSelection&) const;
 
-    void set_default_variable_roles_forecasting() { set_default_variable_roles_implementation(true); }
-    void set_default_variable_roles_implementation(bool forecasting);
-
     void read_data_file_preview(const vector<string_view>&, char, bool has_quotes = false);
     void check_separators(string_view) const;
     void samples_from_JSON(const Json*);
@@ -343,6 +340,8 @@ protected:
     StorageMode storage_mode = StorageMode::Matrix;
 
     void upload_device_matrix(const MatrixR&);
+    // Stages Input columns followed by Target columns; Decoder inputs are unsupported.
+    void upload_device_samples();
 
     // Call before replacing or editing host data, including reloads and preprocessing.
     void invalidate_data()

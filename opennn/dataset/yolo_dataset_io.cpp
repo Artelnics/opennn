@@ -20,6 +20,27 @@ using namespace yolo_detail;
 namespace
 {
 
+Json anchors_to_json(const vector<array<float, 2>>& anchors)
+{
+    Json result = Json::make_array();
+    for (const auto& anchor : anchors)
+        result.push_back(json_array(anchor));
+    return result;
+}
+
+vector<array<float, 2>> anchors_from_json(const Json* source)
+{
+    vector<array<float, 2>> anchors;
+    if (const Json* field = source->find("Anchors"))
+        for (const Json& entry : field->as_array())
+        {
+            const auto& values = entry.as_array();
+            throw_if(values.size() != 2, "YoloDataset: each JSON anchor must contain width and height.");
+            anchors.push_back({float(values[0].as_double()), float(values[1].as_double())});
+        }
+    return anchors;
+}
+
 vector<string> read_yolo_classes(const filesystem::path& labels_directory)
 {
     vector<filesystem::path> search_dirs = { labels_directory };
@@ -496,6 +517,13 @@ void YoloDataset::set(const filesystem::path& new_images_dir,
     throw_if(new_boxes_per_cell < 0,
              "YoloDataset: boxes_per_cell must be non-negative (0 = v8 anchor-free mode).");
 
+    invalidate_data();
+    // Caches store the base grid; optional target layouts are encoded from boxes.
+    head_grid_sizes.clear();
+    head_anchors.clear();
+    boxes_per_head = 0;
+    v8_mode = false;
+
     images_directory = new_images_dir;
     labels_directory = new_labels_dir;
     data_path = images_directory;
@@ -626,9 +654,7 @@ bool YoloDataset::try_rebuild_target_from_boxes(const vector<array<float, 2>>& r
             return false;
         }
 
-        target_record_floats = v8_mode
-            ? MAX_GT_BOXES * 5
-            : grid_size * grid_size * boxes_per_cell * (5 + classes_number);
+        target_record_floats = grid_size * grid_size * boxes_per_cell * (5 + classes_number);
 
         filesystem::create_directories(target_cache_path.parent_path());
         const filesystem::path target_tmp_path = target_cache_path.string() + ".tmp";
@@ -646,11 +672,8 @@ bool YoloDataset::try_rebuild_target_from_boxes(const vector<array<float, 2>>& r
         for (const auto& sample_boxes : labels)
         {
             fill(target_buf.begin(), target_buf.end(), 0.f);
-            if (v8_mode)
-                make_target_v8_gtlist(sample_boxes, classes_number, target_buf.data());
-            else
-                make_target(sample_boxes, new_anchors, grid_size, boxes_per_cell,
-                            classes_number, target_buf.data());
+            make_target(sample_boxes, new_anchors, grid_size, boxes_per_cell,
+                        classes_number, target_buf.data());
             target_writer.write(span(target_buf));
         }
         target_writer.finish_with_rename(target_cache_path);
@@ -735,6 +758,10 @@ bool YoloDataset::try_open_cache(const vector<array<float, 2>>& requested_anchor
             return false;
 
         if (!class_names.empty() && Index(target_header.classes_number) != ssize(class_names))
+            return false;
+
+        if (target_header.target_floats != uint64_t(grid_size) * uint64_t(grid_size)
+            * uint64_t(boxes_per_cell) * (5 + target_header.classes_number))
             return false;
 
         anchors = std::move(cached_anchors);
@@ -866,9 +893,7 @@ void YoloDataset::build_cache(const vector<array<float, 2>>& requested_anchors)
     throw_if(ssize(anchors) != boxes_per_cell,
              "YoloDataset: anchors size must equal boxes_per_cell.");
 
-    target_record_floats = v8_mode
-        ? MAX_GT_BOXES * 5
-        : grid_size * grid_size * boxes_per_cell * (5 + classes_number);
+    target_record_floats = grid_size * grid_size * boxes_per_cell * (5 + classes_number);
 
     const filesystem::path target_tmp_path = target_cache_path.string() + ".tmp";
     FileWriter target_writer;
@@ -944,8 +969,6 @@ void YoloDataset::setup_metadata(Index new_samples_number)
     cache_image_record_bytes = image_record_bytes;
     cache_target_record_floats = target_record_floats;
 
-    target_shape = {grid_size, grid_size, boxes_per_cell * (5 + classes_number)};
-
     variables.assign(2, Variable());
 
     Variable& image_variable = variables[0];
@@ -960,7 +983,7 @@ void YoloDataset::setup_metadata(Index new_samples_number)
     target_variable.role = VariableRole::Target;
     target_variable.type = VariableType::Numeric;
     target_variable.scaler = ScalerMethod::None;
-    target_variable.features = target_shape.size();
+    update_target_layout();
 
     sample_roles.assign(size_t(samples_number), SampleRole::Training);
     split_samples_random();
@@ -1001,6 +1024,8 @@ void YoloDataset::to_JSON(JsonWriter& printer) const
         {"Channels", input_shape[2]},
         {"GridSize", grid_size},
         {"BoxesPerCell", boxes_per_cell},
+        {"Anchors", anchors_to_json(anchors)},
+        {"V8Mode", v8_mode},
         {"DisplayConfidenceThreshold", display_confidence_threshold},
         {"AugEnabled",    augmentation_policy.enabled    ? 1 : 0},
         {"AugJitter",     augmentation_policy.jitter},
@@ -1010,6 +1035,15 @@ void YoloDataset::to_JSON(JsonWriter& printer) const
         {"AugFlip",       augmentation_policy.flip    ? 1 : 0},
         {"AugMosaic",     augmentation_policy.mosaic  ? 1 : 0}
     });
+    printer.begin_array("MultiScaleHeads");
+    for (size_t head = 0; head < head_grid_sizes.size(); ++head)
+    {
+        printer.begin_array_object();
+        write_json(printer, {{"GridSize", head_grid_sizes[head]},
+                             {"Anchors", anchors_to_json(head_anchors[head])}});
+        printer.end_array_object();
+    }
+    printer.end_array();
     printer.close_element();
     variables_to_JSON(printer);
     samples_to_JSON(printer);
@@ -1027,7 +1061,21 @@ void YoloDataset::from_JSON(const JsonDocument& document)
          read_json_index(source, "Width"),
          read_json_index(source, "Channels")},
         read_json_index(source, "GridSize"),
-        read_json_index(source, "BoxesPerCell"));
+        read_json_index(source, "BoxesPerCell"),
+        anchors_from_json(source));
+
+    if (const Json* heads = source->find("MultiScaleHeads"); heads && !heads->as_array().empty())
+    {
+        vector<Index> grid_sizes;
+        vector<vector<array<float, 2>>> per_head_anchors;
+        for (const Json& head : heads->as_array())
+        {
+            grid_sizes.push_back(read_json_index(&head, "GridSize"));
+            per_head_anchors.push_back(anchors_from_json(&head));
+        }
+        set_multi_scale_heads(grid_sizes, per_head_anchors);
+    }
+    set_v8_mode(read_json_bool(source, "V8Mode", false));
 
     set_storage_mode(source->has("StorageMode")
                    ? read_json_string(source, "StorageMode")

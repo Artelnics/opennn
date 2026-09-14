@@ -11,7 +11,7 @@ projection to the vocabulary, which is what transformer.cpp builds.
   transformer.py capacity <corpus>          [batch]              [d_model] [layers] [dev] [prec]
 
 **On tokenisation.** The two engines do not share a tokeniser: OpenNN's
-LanguageDataset derives its own vocabulary and sequence length, and
+TextDataset derives its own vocabulary and sequence length, and
 reimplementing that here would be a second thing to keep in step. What must
 match is the tensor *shape*, because that is what the arithmetic depends on --
 sequence length, vocabulary size and batch. Both are printed by both engines
@@ -37,7 +37,7 @@ from torch import nn
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 SEED = 42
-VOCAB_CAP = 20_000          # LanguageDataset's own cap, so both sides agree
+VOCAB_CAP = 20_000          # TextDataset's own cap, so both sides agree
 # nn.TransformerEncoderLayer/DecoderLayer default to dropout 0.1, and that is
 # what the published cell runs. OpenNN's Transformer has dropout 0 unless set,
 # so PT_DROPOUT=0 is the controlled variant that measures what the dropout

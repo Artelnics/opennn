@@ -561,7 +561,7 @@ void YoloDataset::enable_device_residency()
         return;
     }
 
-    ImageDataset::enable_device_residency();
+    upload_device_samples();
 }
 
 void YoloDataset::set_augmentation_policy(const AugmentationPolicy& new_policy)
@@ -591,32 +591,31 @@ void YoloDataset::set_multi_scale_heads(const vector<Index>& grid_sizes,
     head_grid_sizes = grid_sizes;
     head_anchors = per_head_anchors;
     boxes_per_head = per_head;
-
-    const Index values_per_box = 5 + classes_number;
-    target_record_floats = transform_reduce(grid_sizes.begin(), grid_sizes.end(), Index(0), plus<>{},
-                                            [&](Index g) { return g * g * boxes_per_head * values_per_box; });
-    target_shape = {target_record_floats};
+    update_target_layout();
 }
 
 void YoloDataset::set_v8_mode(bool enabled)
 {
     v8_mode = enabled;
-    if (!enabled) return;
+    update_target_layout();
+}
 
-    target_record_floats = MAX_GT_BOXES * 5;
-    target_shape = {target_record_floats};
+void YoloDataset::update_target_layout()
+{
+    disable_device_residency();
+    if (v8_mode)
+        target_shape = {MAX_GT_BOXES * 5};
+    else if (is_multi_scale())
+        target_shape = {transform_reduce(head_grid_sizes.begin(), head_grid_sizes.end(), Index(0), plus<>{},
+            [&](Index g) { return g * g * boxes_per_head * (5 + classes_number); })};
+    else
+        target_shape = {grid_size, grid_size, boxes_per_cell * (5 + classes_number)};
+
+    target_record_floats = target_shape.size();
     if (variables.size() >= 2)
         variables[1].features = target_record_floats;
 }
 
-
-void blit_resized_into_canvas(const uint8_t* src, Index src_h, Index src_w,
-                               uint8_t* canvas, Index canvas_w,
-                               Index dst_x, Index dst_y, Index qw, Index qh,
-                               Index channels)
-{
-    resize_bilinear_into(src, src_h, src_w, canvas, canvas_w, dst_x, dst_y, qw, qh, channels);
-}
 
 struct MosaicParams
 {
@@ -745,9 +744,9 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
                             epoch_seed, uint64_t(q.si), color_policy);
                         apply_color_jitter(mosaic_source.data(), H, W, C, transform);
 
-                        blit_resized_into_canvas(mosaic_source.data(), H, W,
-                                                 augmented.data(), W,
-                                                 q.dst_x, q.dst_y, q.qw, q.qh, C);
+                        resize_bilinear_into(mosaic_source.data(), H, W,
+                                             augmented.data(), W,
+                                             q.dst_x, q.dst_y, q.qw, q.qh, C);
                     }
                     image_bytes = augmented.data();
                 }
@@ -839,7 +838,6 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
     #pragma omp parallel num_threads(workers)
     {
         vector<Box> boxes;
-        vector<Box> mosaic_boxes;
         vector<Box> quad_boxes;
         vector<YoloBoxRecord> box_records;
 
@@ -863,7 +861,7 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
                         const array<MosaicQuad, 4> quads =
                             compute_mosaic_layout(epoch_seed, sample_index, samples_number, H, W);
 
-                        mosaic_boxes.clear();
+                        boxes.clear();
                         for (const MosaicQuad& q : quads)
                         {
                             read_sample_boxes(q.si, quad_boxes, box_records);
@@ -892,18 +890,9 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
                                 transformed.y = 0.5f * (y0 + y1);
                                 transformed.w = x1 - x0;
                                 transformed.h = y1 - y0;
-                                mosaic_boxes.push_back(transformed);
+                                boxes.push_back(transformed);
                             }
                         }
-
-                        if (v8_mode)
-                            make_target_v8_gtlist(mosaic_boxes, classes_number, target_ptr);
-                        else if (is_multi_scale())
-                            make_target_multi_scale(mosaic_boxes, head_anchors, head_grid_sizes,
-                                                    boxes_per_head, classes_number, target_ptr);
-                        else
-                            make_target(mosaic_boxes, anchors, grid_size, boxes_per_cell,
-                                        classes_number, target_ptr);
                     }
                     else
                     {
@@ -915,16 +904,16 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
                                 epoch_seed, uint64_t(sample_index), policy);
                             apply_geometric_to_boxes(boxes, transform);
                         }
-
-                        if (v8_mode)
-                            make_target_v8_gtlist(boxes, classes_number, target_ptr);
-                        else if (is_multi_scale())
-                            make_target_multi_scale(boxes, head_anchors, head_grid_sizes,
-                                                    boxes_per_head, classes_number, target_ptr);
-                        else
-                            make_target(boxes, anchors, grid_size, boxes_per_cell,
-                                        classes_number, target_ptr);
                     }
+
+                    if (v8_mode)
+                        make_target_v8_gtlist(boxes, classes_number, target_ptr);
+                    else if (is_multi_scale())
+                        make_target_multi_scale(boxes, head_anchors, head_grid_sizes,
+                                                boxes_per_head, classes_number, target_ptr);
+                    else
+                        make_target(boxes, anchors, grid_size, boxes_per_cell,
+                                    classes_number, target_ptr);
                 }
                 else if (matrix_storage)
                 {

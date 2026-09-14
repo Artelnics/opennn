@@ -1,4 +1,5 @@
 #include "tests/pch.h"
+#include "opennn/core/json.h"
 
 #include "opennn/dataset/yolo_dataset.h"
 #include "opennn/core/device_backend.h"
@@ -47,9 +48,131 @@ TEST(YoloDataset, AugmentationControlsDeviceResidency)
     base_dataset.enable_device_residency();
     ASSERT_TRUE(dataset.is_device_resident());
 
+    const auto expect_staged_samples = [&]
+    {
+        const Index inputs = dataset.get_features_number(VariableRole::Input);
+        const Index targets = dataset.get_features_number(VariableRole::Target);
+        vector<float> expected(size_t(inputs + targets));
+        dataset.fill_inputs({0}, {}, expected.data(), FillMode::Training);
+        dataset.fill_targets({0}, {}, expected.data() + inputs, FillMode::Training);
+        ASSERT_EQ(dataset.get_device_data_columns(), inputs + targets);
+        vector<float> staged(expected.size());
+        const DeviceStream stream = device::get_compute_stream();
+        device::copy_async(staged.data(), dataset.get_device_data(),
+                           Index(staged.size() * sizeof(float)), device::CopyKind::DeviceToHost, stream);
+        device::synchronize(stream);
+        EXPECT_EQ(staged, expected);
+    };
+    expect_staged_samples();
+
+    dataset.set_multi_scale_heads({2, 4}, {{{0.4f, 0.4f}}, {{0.2f, 0.2f}}});
+    EXPECT_FALSE(dataset.is_device_resident());
+    base_dataset.enable_device_residency();
+    ASSERT_TRUE(dataset.is_device_resident());
+    expect_staged_samples();
+
+    for (bool v8 : {true, false})
+    {
+        dataset.set_v8_mode(v8);
+        EXPECT_FALSE(dataset.is_device_resident());
+        base_dataset.enable_device_residency();
+        ASSERT_TRUE(dataset.is_device_resident());
+        expect_staged_samples();
+    }
+
     policy.enabled = true;
     dataset.set_augmentation_policy(policy);
     EXPECT_FALSE(dataset.is_device_resident());
+}
+
+TEST(YoloDataset, SerializationRestoresTargetLayoutsWithoutExistingCaches)
+{
+    enum class Layout { Anchored, MultiHead, V8, V8WithHeads };
+    for (Layout layout : {Layout::Anchored, Layout::MultiHead, Layout::V8, Layout::V8WithHeads})
+    {
+        SCOPED_TRACE(static_cast<int>(layout));
+        TempDir dir("opennn_yolo_json_");
+        const filesystem::path images_dir = dir.path / "images";
+        const filesystem::path labels_dir = dir.path / "labels";
+        filesystem::create_directories(images_dir);
+        filesystem::create_directories(labels_dir);
+        write_bmp_24(images_dir / "sample.bmp", 8, 8, 200, 100, 50);
+        write_label(labels_dir / "sample.txt", 1, 0.25f, 0.75f, 0.4f, 0.6f);
+        write_classes(labels_dir / "classes.names", {"cat", "dog"});
+
+        const bool multi_head = layout == Layout::MultiHead || layout == Layout::V8WithHeads;
+        const bool v8 = layout == Layout::V8 || layout == Layout::V8WithHeads;
+        const vector<array<float, 2>> anchors = layout == Layout::V8
+            ? vector<array<float, 2>>{} : vector<array<float, 2>>{{0.57f, 0.63f}, {0.73f, 0.77f}};
+        const auto read_targets = [](const YoloDataset& dataset)
+        {
+            vector<float> targets(size_t(dataset.get_target_shape().size()));
+            if (!targets.empty()) dataset.fill_targets({0}, {}, targets.data(), FillMode::Inference);
+            return targets;
+        };
+
+        JsonDocument document;
+        Shape expected_shape;
+        Shape anchor_shape;
+        vector<float> expected_targets;
+        vector<float> anchor_targets;
+        {
+            YoloDataset source;
+            source.set_display(false);
+            source.set(images_dir, labels_dir, {8, 8, 3}, 2, ssize(anchors), anchors);
+            if (multi_head)
+                source.set_multi_scale_heads({2, 3}, {anchors, {{0.2f, 0.2f}, {0.4f, 0.6f}}});
+            anchor_shape = source.get_target_shape();
+            anchor_targets = read_targets(source);
+            source.set_v8_mode(v8);
+            source.set_storage_mode(Dataset::StorageMode::Matrix);
+            source.set_sample_roles(SampleRole::Testing);
+            source.set_display_confidence_threshold(0.375f);
+            YoloDataset::AugmentationPolicy policy;
+            policy.enabled = false;
+            source.set_augmentation_policy(policy);
+            expected_shape = source.get_target_shape();
+            expected_targets = read_targets(source);
+            ASSERT_EQ(expected_shape.size(), v8 ? 500 : (multi_head ? 182 : 56));
+            if (v8)
+            {
+                const vector<float> first_box(expected_targets.begin(), expected_targets.begin() + 5);
+                EXPECT_EQ(first_box, (vector<float>{0.25f, 0.75f, 0.4f, 0.6f, 2.0f}));
+            }
+            JsonWriter writer;
+            source.to_JSON(writer);
+            document.set_root(Json::parse(writer.c_str()));
+        }
+
+        // A fresh source cache must obtain custom anchors and head settings from JSON.
+        for (const char* file : {"yolo_images.bin", "yolo_targets.bin", "yolo_boxes.bin"})
+            ASSERT_TRUE(filesystem::remove(images_dir / ".cache" / file));
+
+        YoloDataset restored;
+        restored.set_display(false);
+        restored.set_v8_mode(true);
+        restored.from_JSON(document);
+        EXPECT_EQ(restored.get_anchors(), anchors);
+        EXPECT_EQ(restored.is_multi_scale(), multi_head);
+        EXPECT_EQ(restored.get_target_shape(), expected_shape);
+        EXPECT_EQ(restored.get_features_number(VariableRole::Target), expected_shape.size());
+        EXPECT_EQ(restored.get_storage_mode(), Dataset::StorageMode::Matrix);
+        EXPECT_EQ(restored.get_sample_roles(), vector<SampleRole>{SampleRole::Testing});
+        EXPECT_FALSE(restored.get_augmentation_policy().enabled);
+        EXPECT_FLOAT_EQ(restored.get_display_confidence_threshold(), 0.375f);
+        EXPECT_EQ(read_targets(restored), expected_targets);
+
+        Batch batch(1, &restored, EffectiveConfig{});
+        batch.fill({0}, restored.get_feature_selection(), FillMode::Training);
+        const float* targets = batch.get_targets().as_float();
+        EXPECT_EQ(vector<float>(targets, targets + expected_targets.size()), expected_targets);
+        EXPECT_FLOAT_EQ(batch.get_inputs()[0].as_float()[0], 200.0f / 255.0f);
+
+        restored.set_v8_mode(false);
+        EXPECT_EQ(restored.get_target_shape(), anchor_shape);
+        EXPECT_EQ(restored.get_features_number(VariableRole::Target), anchor_shape.size());
+        EXPECT_EQ(read_targets(restored), anchor_targets);
+    }
 }
 
 TEST(YoloDataset, EncodesTargetsIntoExpectedGridCellAndAnchor)

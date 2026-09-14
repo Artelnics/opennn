@@ -2,6 +2,7 @@
 // Copyright (C) 2005-2026 Artificial Intelligence, SL.
 
 #include "opennn/dataset/tabular_dataset.h"
+#include "opennn/dataset/batch.h"
 #include "opennn/core/log.h"
 #include "opennn/core/io_utilities.h"
 #include "opennn/core/string_utilities.h"
@@ -20,6 +21,9 @@ void TabularDataset::set(const Index new_samples_number,
         return;
 
     invalidate_data();
+    past_time_steps = 0;
+    future_time_steps = 1;
+    multi_target = false;
     input_shape = new_input_shape;
 
     const Index new_inputs_number = new_input_shape.size();
@@ -399,7 +403,11 @@ void TabularDataset::apply_training_scaling(const vector<Index>& feature_indices
 void TabularDataset::fill_inputs(const vector<Index>& sample_indices, const vector<Index>& input_indices,
                                  float* input_data, FillMode, ColumnContiguity column_contiguity) const
 {
-    fill_features(sample_indices, input_indices, input_data, column_contiguity);
+    if (is_forecasting())
+        fill_window_features(sample_indices, input_indices, input_data, 0, past_time_steps,
+                              false, column_contiguity);
+    else
+        fill_features(sample_indices, input_indices, input_data, column_contiguity);
 }
 
 void TabularDataset::fill_decoder(const vector<Index>& sample_indices, const vector<Index>& decoder_indices,
@@ -411,7 +419,16 @@ void TabularDataset::fill_decoder(const vector<Index>& sample_indices, const vec
 void TabularDataset::fill_targets(const vector<Index>& sample_indices, const vector<Index>& target_indices,
                                   float* target_data, FillMode, ColumnContiguity column_contiguity) const
 {
-    fill_features(sample_indices, target_indices, target_data, column_contiguity);
+    if (!is_forecasting())
+        return fill_features(sample_indices, target_indices, target_data, column_contiguity);
+
+    const Index steps = multi_target ? future_time_steps : 1;
+    throw_if(target_shape.size() != detail::checked_index_multiply(
+                 ssize(target_indices), steps, "Forecasting targets"),
+             "TabularDataset target shape does not match the forecasting horizon.");
+    fill_window_features(sample_indices, target_indices, target_data,
+                          past_time_steps + (multi_target ? 0 : future_time_steps - 1),
+                          steps, multi_target, column_contiguity);
 }
 
 void TabularDataset::resize_data_from_JSON(Index samples_number)
@@ -444,6 +461,7 @@ void TabularDataset::set(const filesystem::path& new_data_path,
                               bool new_has_ids,
                               const Codification& new_codification)
 {
+    clear_forecasting();
     set_data_path(new_data_path);
 
     set_separator_string(new_separator);
@@ -1052,9 +1070,13 @@ FeatureScaling TabularDataset::prepare_training_scaling(
         role == VariableRole::Target
         ? get_feature_indices(VariableRole::Input)
         : vector<Index>{};
-    throw_if(expected_features != ssize(feature_indices),
+    const Index target_steps = is_forecasting() && role == VariableRole::Target && multi_target
+                             ? future_time_steps : 1;
+    const Index scaling_features = detail::checked_index_multiply(
+        ssize(feature_indices), target_steps, "Training scaling features");
+    throw_if(expected_features != scaling_features,
              "TabularDataset {} training scaling expects {} features, got {}.",
-             variable_role_to_string(role), feature_indices.size(), expected_features);
+             variable_role_to_string(role), scaling_features, expected_features);
 
     vector<Index> statistic_sample_indices = get_sample_indices(SampleRole::Training);
     if (statistic_sample_indices.empty())
@@ -1089,8 +1111,8 @@ FeatureScaling TabularDataset::prepare_training_scaling(
     training_transforms.resize(size_t(columns_number));
 
     FeatureScaling effective;
-    effective.descriptives.reserve(feature_indices.size());
-    effective.scalers.reserve(feature_indices.size());
+    effective.descriptives.reserve(size_t(scaling_features));
+    effective.scalers.reserve(size_t(scaling_features));
     effective.min_range = requested.min_range;
     effective.max_range = requested.max_range;
 
@@ -1122,8 +1144,11 @@ FeatureScaling TabularDataset::prepare_training_scaling(
                          true};
         }
 
-        effective.descriptives.push_back(transform.descriptives);
-        effective.scalers.push_back(transform.scaler);
+        for (Index step = 0; step < target_steps; ++step)
+        {
+            effective.descriptives.push_back(transform.descriptives);
+            effective.scalers.push_back(transform.scaler);
+        }
 
     }
 
@@ -1203,8 +1228,7 @@ void TabularDataset::from_JSON(const JsonDocument& data_set_document)
     set_has_ids(read_json_bool(src, "HasSamplesId"));
     set_missing_values_label(read_json_string(src, "MissingValuesLabel"));
     set_codification(read_json_string(src, "Codification"));
-    if (src->has("StorageMode"))
-        set_storage_mode(read_json_string(src, "StorageMode"));
+    set_storage_mode(src->has("StorageMode") ? read_json_string(src, "StorageMode") : "Matrix");
 
     const string decimal_separator_name =
         src->has("DecimalSeparator") ? read_json_string(src, "DecimalSeparator") : "Auto";
@@ -1249,8 +1273,14 @@ void TabularDataset::from_JSON(const JsonDocument& data_set_document)
         }
     }
 
-    input_shape = { get_features_number(VariableRole::Input) };
-    target_shape = { get_features_number(VariableRole::Target) };
+    const Index past = src->has("LagsNumber") ? read_json_index(src, "LagsNumber") : 0;
+    throw_if(past < 0, "Past time steps cannot be negative.");
+    if (past > 0)
+        set_forecasting_window(past,
+            src->has("StepsAhead") ? read_json_index(src, "StepsAhead") : 1,
+            src->has("MultiTarget") && read_json_bool(src, "MultiTarget"));
+    else
+        clear_forecasting();
 }
 
 VectorI TabularDataset::calculate_target_distribution() const
@@ -1469,12 +1499,28 @@ void TabularDataset::missing_values_from_JSON(const Json *missing_values_element
 void TabularDataset::impute_missing_values_unuse()
 {
     const Index samples_number = get_samples_number();
-
-#pragma omp parallel for
-
+    const Index window_span = is_forecasting() ? past_time_steps + future_time_steps : 1;
+    vector<Index> missing_prefix(size_t(samples_number + 1), 0);
+    vector<float> row(storage_mode == StorageMode::BinaryFile ? size_t(cache_columns_number) : 0);
     for (Index i = 0; i < samples_number; ++i)
-        if (has_nan_row(i))
-            set_sample_role(i, "None");
+    {
+        bool missing;
+        if (storage_mode == StorageMode::BinaryFile)
+        {
+            cache_reader.read_at(span(row), uint64_t(i) * uint64_t(cache_columns_number) * sizeof(float));
+            missing = ranges::any_of(row, [](float value) { return isnan(value); });
+        }
+        else
+            missing = has_nan_row(i);
+        missing_prefix[size_t(i + 1)] = missing_prefix[size_t(i)] + Index(missing);
+    }
+
+    vector<Index> unused_samples;
+    for (Index i = 0; i < samples_number; ++i)
+        if (window_span > samples_number - i
+            || missing_prefix[size_t(i + window_span)] != missing_prefix[size_t(i)])
+            unused_samples.push_back(i);
+    if (!unused_samples.empty()) set_sample_roles(unused_samples, SampleRole::None);
 }
 
 void TabularDataset::unuse_samples_with_missing_targets(const vector<Index>& sample_indices,
@@ -1571,60 +1617,43 @@ void TabularDataset::impute_missing_values_interpolate()
 {
     require_in_memory_data("TabularDataset::impute_missing_values_interpolate");
     invalidate_data();
-
-    const vector<Index> used_sample_indices = get_used_sample_indices();
-    const vector<Index> input_feature_indices = get_feature_indices(VariableRole::Input);
-    const vector<Index> target_feature_indices = get_feature_indices(VariableRole::Target);
-
-    const Index samples_number = used_sample_indices.size();
-
-    for (const Index current_variable : input_feature_indices)
+    const vector<Index> samples = get_used_sample_indices();
+    vector<Index> features = get_feature_indices(VariableRole::Input);
+    if (is_forecasting())
     {
-        for (Index i = 0; i < samples_number; ++i)
-        {
-            const Index current_sample = used_sample_indices[i];
-
-            if (!isnan(data(current_sample, current_variable))) continue;
-
-            optional<pair<Index, float>> left;
-            optional<pair<Index, float>> right;
-
-            for (Index k = i - 1; k >= 0; k--)
-            {
-                if (isnan(data(used_sample_indices[k], current_variable))) continue;
-
-                left = {used_sample_indices[k], data(used_sample_indices[k], current_variable)};
-                break;
-            }
-
-            for (Index k = i + 1; k < samples_number; ++k)
-            {
-                if (isnan(data(used_sample_indices[k], current_variable))) continue;
-
-                right = {used_sample_indices[k], data(used_sample_indices[k], current_variable)};
-                break;
-            }
-
-            if (!left && !right) continue;
-
-            float interpolated_value = 0.0f;
-
-            if (left && right && right->first != left->first)
-            {
-                const float span = float(right->first - left->first);
-                interpolated_value = left->second
-                    + (float(current_sample) - float(left->first)) * (right->second - left->second) / span;
-            }
-            else
-            {
-                interpolated_value = left ? left->second : right->second;
-            }
-
-            data(current_sample, current_variable) = interpolated_value;
-        }
+        features.resize(size_t(get_features_number()));
+        iota(features.begin(), features.end(), Index(0));
     }
 
-    unuse_samples_with_missing_targets(used_sample_indices, target_feature_indices);
+    for (const Index feature : features)
+        for (Index i = 0; i < ssize(samples);)
+        {
+            if (!isnan(data(samples[size_t(i)], feature)))
+            {
+                ++i;
+                continue;
+            }
+            const Index first = i;
+            while (i < ssize(samples) && isnan(data(samples[size_t(i)], feature))) ++i;
+            const float left = first > 0 ? data(samples[size_t(first - 1)], feature) : QUIET_NAN;
+            const float right = i < ssize(samples) ? data(samples[size_t(i)], feature) : QUIET_NAN;
+            for (Index gap = first; gap < i; ++gap)
+            {
+                float value = isnan(left) ? right : left;
+                if (!isnan(left) && !isnan(right))
+                {
+                    const float fraction = is_forecasting()
+                        ? float(gap - first + 1) / float(i - first + 1)
+                        : float(samples[size_t(gap)] - samples[size_t(first - 1)])
+                            / float(samples[size_t(i)] - samples[size_t(first - 1)]);
+                    value = lerp(left, right, fraction);
+                }
+                data(samples[size_t(gap)], feature) = value;
+            }
+        }
+
+    if (!is_forecasting())
+        unuse_samples_with_missing_targets(samples, get_feature_indices(VariableRole::Target));
 }
 
 void TabularDataset::scrub_missing_values()
@@ -1634,7 +1663,9 @@ void TabularDataset::scrub_missing_values()
     {
 
         using enum MissingValuesMethod;
-        if (missing_values_method != Unuse)
+        if (is_forecasting() && missing_values_method == Unuse)
+            impute_missing_values_unuse();
+        else if (missing_values_method != Unuse)
             reuse_input_incomplete_rows_binary();
 
         return;
@@ -1751,13 +1782,291 @@ void TabularDataset::to_JSON(JsonWriter& printer) const
         {"DecimalSeparator", decimal_separator_name},
         {"ThousandsSeparator", group_separator_name},
         {"Codification", get_codification_string()},
-        {"StorageMode", get_storage_mode_string()}
+        {"StorageMode", get_storage_mode_string()},
+        {"LagsNumber", past_time_steps},
+        {"StepsAhead", future_time_steps},
+        {"MultiTarget", multi_target}
     });
 
     missing_values_to_JSON(printer);
     preview_data_to_JSON(printer);
 
     write_json_footer(printer);
+}
+
+void TabularDataset::set_forecasting_window(Index past, Index future, bool multiple_targets)
+{
+    throw_if(past <= 0 || future <= 0, "Forecasting time steps must be positive.");
+    detail::checked_index_add(past, future, "Forecasting window");
+    const Shape inputs{past, get_features_number(VariableRole::Input)};
+    const Shape targets{detail::checked_index_multiply(get_features_number(VariableRole::Target),
+                         multiple_targets ? future : 1, "Forecasting targets")};
+    static_cast<void>(inputs.size());
+    clear_training_scaling();
+    past_time_steps = past;
+    future_time_steps = future;
+    multi_target = multiple_targets;
+    input_shape = inputs;
+    target_shape = targets;
+}
+
+void TabularDataset::configure_forecasting(Index past, Index future, bool multiple_targets)
+{
+    set_forecasting_window(past, future, multiple_targets);
+    refresh_forecasting_roles();
+}
+
+void TabularDataset::clear_forecasting()
+{
+    clear_training_scaling();
+    past_time_steps = 0;
+    future_time_steps = 1;
+    multi_target = false;
+    input_shape = {get_features_number(VariableRole::Input)};
+    target_shape = {get_features_number(VariableRole::Target)};
+}
+
+void TabularDataset::resize_input_shape(Index feature_count)
+{
+    set_shape(VariableRole::Input, is_forecasting() ? Shape{past_time_steps, feature_count}
+                                                   : Shape{feature_count});
+}
+
+Tensor3 TabularDataset::get_sequence_data(const string& sample_role, const string& feature_role) const
+{
+    throw_if(!is_forecasting(), "Sequence data requires a forecasting window.");
+    const VariableRole role = string_to_variable_role(feature_role);
+    throw_if(!is_one_of(role, VariableRole::Input, VariableRole::InputTarget),
+             "Sequence data is available only for input variables.");
+    const vector<Index> samples = get_sample_indices(sample_role);
+    const vector<Index> features = get_feature_indices(role);
+    if (samples.empty() || features.empty()) return {};
+    Tensor3 result(ssize(samples), past_time_steps, ssize(features));
+    fill_inputs(samples, features, result.data(), FillMode::Inference);
+    return result;
+}
+
+void TabularDataset::fill_window_features(const vector<Index>& samples,
+                                          const vector<Index>& features,
+                                          float* output, Index row_offset, Index steps,
+                                          bool feature_major, ColumnContiguity column_contiguity) const
+{
+    if (samples.empty() || features.empty()) return;
+    const Index row_count = get_samples_number();
+    const Index feature_count = ssize(features);
+    const Index values_per_sample = detail::checked_index_multiply(steps, feature_count, "Forecasting inputs");
+    for (Index sample : samples)
+        throw_if(sample < 0 || sample >= row_count, "Forecasting sample index is out of range.");
+    for (Index feature : features)
+        throw_if(feature < 0 || feature >= get_features_number(), "Forecasting feature index is out of range.");
+
+    const bool contiguous = resolve_column_contiguity(column_contiguity, features);
+    const bool direct = storage_mode != StorageMode::BinaryFile && contiguous && !feature_major;
+    const auto fill_sample = [&](Index sample)
+    {
+        const Index available = row_count - samples[size_t(sample)];
+        const Index valid_steps = min(steps, max(Index(0), available - row_offset));
+        float* const destination = output + sample * values_per_sample;
+        if (valid_steps == 0)
+        {
+            fill_n(destination, values_per_sample, 0.0f);
+            return;
+        }
+        const Index start = samples[size_t(sample)] + row_offset;
+        if (direct)
+        {
+            if (features.front() == 0 && feature_count == data.cols())
+                memcpy(destination, data.data() + start * data.cols(),
+                       size_t(valid_steps * feature_count) * sizeof(float));
+            else
+                for (Index step = 0; step < valid_steps; ++step)
+                    memcpy(destination + step * feature_count,
+                           data.data() + (start + step) * data.cols() + features.front(),
+                           size_t(feature_count) * sizeof(float));
+            apply_training_scaling(features, destination, valid_steps);
+        }
+        else
+        {
+            vector<Index> rows(size_t(valid_steps), 0);
+            iota(rows.begin(), rows.end(), start);
+            vector<float> gathered(feature_major ? size_t(valid_steps * feature_count) : 0);
+            fill_features(rows, features, feature_major ? gathered.data() : destination, column_contiguity);
+            if (feature_major)
+            {
+                for (Index feature = 0; feature < feature_count; ++feature)
+                    for (Index step = 0; step < steps; ++step)
+                        destination[feature * steps + step] = step < valid_steps
+                            ? gathered[size_t(step * feature_count + feature)] : 0.0f;
+                return;
+            }
+        }
+        fill_n(destination + valid_steps * feature_count,
+               (steps - valid_steps) * feature_count, 0.0f);
+    };
+
+    // Cache reads can fail; keep their exceptions outside OpenMP regions.
+    if (storage_mode == StorageMode::BinaryFile)
+    {
+        for (Index sample = 0; sample < ssize(samples); ++sample) fill_sample(sample);
+        return;
+    }
+    #pragma omp parallel for schedule(static) if(ssize(samples) * values_per_sample >= 262144)
+    for (Index sample = 0; sample < ssize(samples); ++sample) fill_sample(sample);
+}
+
+void TabularDataset::refresh_forecasting_roles()
+{
+    const Index samples_number = get_samples_number();
+    const Index window_span = past_time_steps + future_time_steps;
+
+    if (samples_number == 0 || window_span <= 0) return;
+
+    const Index a = Index(0.6f * float(samples_number));
+    const Index b = a + Index(0.2f * float(samples_number));
+
+    auto mark = [&](Index lo, Index hi, SampleRole role)
+    {
+        const Index last_valid_start = hi - window_span + 1;
+        for (Index i = lo; i < hi; ++i)
+            sample_roles[i] = (i < last_valid_start) ? role : SampleRole::None;
+    };
+
+    mark(0, a, SampleRole::Training);
+    mark(a, b, SampleRole::Validation);
+    mark(b, samples_number, SampleRole::Testing);
+    on_used_samples_changed();
+}
+
+vector<Variable> TabularDataset::get_model_input_variables() const
+{
+    if (!is_forecasting()) return Dataset::get_model_input_variables();
+    const vector<string> feature_names = get_feature_names(VariableRole::Input);
+    vector<Variable> model_variables;
+    model_variables.reserve(feature_names.size() * size_t(past_time_steps));
+
+    for (Index lag = 0; lag < past_time_steps; ++lag)
+        for (const string& feature_name : feature_names)
+            model_variables.emplace_back(
+                format("{}_lag{}", feature_name.empty() ? "variable" : feature_name, lag),
+                "Input",
+                VariableType::Numeric,
+                "None");
+
+    return model_variables;
+}
+
+void TabularDataset::fill_batch(Batch& batch,
+                                const vector<Index>& sample_indices,
+                                const FeatureSelection& features,
+                                FillMode mode) const
+{
+    const Shape expected_input = input_shape.empty() ? Shape{} : Shape({batch.batch_size}).append(input_shape);
+    const Shape expected_target = target_shape.empty() ? Shape{} : Shape({batch.batch_size}).append(target_shape);
+    throw_if(batch.input.shape != expected_input || batch.target.shape != expected_target,
+             "TabularDataset batch shape is stale; recreate it after changing the dataset layout.");
+    if (!is_forecasting()) return Dataset::fill_batch(batch, sample_indices, features, mode);
+    const vector<Index>& input_indices = features.inputs;
+    const vector<Index>& target_indices = features.targets;
+
+    throw_if(Index(sample_indices.size()) != batch.batch_size,
+             "fill_batch sample count does not match the batch size.");
+    throw_if((batch.input.shape != Shape{batch.batch_size, past_time_steps, ssize(input_indices)}
+             || batch.target.shape != Shape{batch.batch_size,
+                 detail::checked_index_multiply(ssize(target_indices),
+                     multi_target ? future_time_steps : 1, "Forecasting targets")}),
+             "TabularDataset batch shape does not match the forecasting window.");
+
+    if (batch.input.type != Type::BF16
+        && can_device_gather(batch, features))
+    {
+        DeviceGather& gather = start_device_gather(batch, sample_indices, features);
+        gather.window_past = past_time_steps;
+        gather.window_future = future_time_steps;
+        gather.window_features = ssize(input_indices);
+        gather.window_target_cols = ssize(target_indices);
+        gather.window_multi_target = multi_target;
+        gather.window_matrix_rows = get_samples_number();
+        return;
+    }
+
+    fill_batch_host(batch, sample_indices, features, mode);
+}
+
+pair<vector<Index>, Index> TabularDataset::correlation_lags(Index lags) const
+{
+    require_in_memory_data("TabularDataset temporal correlations");
+    const Index samples = get_samples_number();
+    throw_if(lags < 0 || lags > samples, "Lag count must be between zero and the sample count.");
+    const Index effective = samples <= lags && lags > 2 ? lags - 2
+                          : samples == lags + 1 && lags > 1 ? lags - 1 : lags;
+    vector<Index> numeric;
+    for (Index i = 0; i < ssize(variables); ++i)
+        if (variables[size_t(i)].role != VariableRole::None && variables[size_t(i)].type == VariableType::Numeric)
+            numeric.push_back(i);
+    return {std::move(numeric), effective};
+}
+
+MatrixR TabularDataset::calculate_autocorrelations(const Index lags_number) const
+{
+    const auto [numeric_variable_indices, effective_lags_number] = correlation_lags(lags_number);
+    const Index numeric_variables_number = ssize(numeric_variable_indices);
+
+    MatrixR autocorrelations(numeric_variables_number, effective_lags_number);
+
+    for (Index i = 0; i < numeric_variables_number; ++i)
+    {
+        const Index variable_index = numeric_variable_indices[i];
+
+        const MatrixR input_i = get_variable_data(variable_index);
+        if (display) logging::info() << "Calculating " << variables[variable_index].name << " autocorrelations" << "\n";
+
+        const Map<const VectorR> current_input_i(input_i.data(), input_i.rows());
+
+        autocorrelations.row(i) = opennn::autocorrelations(current_input_i, effective_lags_number).transpose();
+    }
+
+    return autocorrelations;
+}
+
+Tensor3 TabularDataset::calculate_cross_correlations(const Index lags_number) const
+{
+    const auto [numeric_variable_indices, effective_lags_number] = correlation_lags(lags_number);
+    const Index numeric_variables_number = ssize(numeric_variable_indices);
+
+    Tensor3 cross_correlations(numeric_variables_number,
+                               numeric_variables_number,
+                               effective_lags_number);
+
+    VectorR cross_correlations_vector(effective_lags_number);
+
+    for (Index i = 0; i < numeric_variables_number; ++i)
+    {
+        const Index variable_i = numeric_variable_indices[i];
+
+        const MatrixR input_i = get_variable_data(variable_i);
+
+        if (display) logging::info() << "Calculating " << variables[variable_i].name << " cross correlations:" << "\n";
+
+        for (Index j = 0; j < numeric_variables_number; ++j)
+        {
+            const Index variable_j = numeric_variable_indices[j];
+
+            const MatrixR input_j = get_variable_data(variable_j);
+
+            if (display) logging::info() << "  vs. " << variables[variable_j].name << "\n";
+
+            const Map<const VectorR> current_input_i(input_i.data(), input_i.rows());
+            const Map<const VectorR> current_input_j(input_j.data(), input_j.rows());
+
+            cross_correlations_vector =
+                opennn::cross_correlations(current_input_i, current_input_j, effective_lags_number);
+
+            for (Index k = 0; k < effective_lags_number; ++k)
+                cross_correlations(i, j, k) = cross_correlations_vector(k);
+        }
+    }
+
+    return cross_correlations;
 }
 
 }

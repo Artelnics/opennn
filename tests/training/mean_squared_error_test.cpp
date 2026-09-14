@@ -8,7 +8,6 @@
 #include "opennn/dataset/batch.h"
 #include "opennn/dataset/dataset.h"
 #include "opennn/dataset/tabular_dataset.h"
-#include "opennn/dataset/language_dataset.h"
 #include "opennn/dataset/image_dataset.h"
 #include "opennn/network/layers/dense_layer.h"
 #include "opennn/network/layers/pooling_layer.h"
