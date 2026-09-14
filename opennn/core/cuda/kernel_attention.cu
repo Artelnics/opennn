@@ -633,15 +633,38 @@ __global__ void grouped_attention_decode_combine_kernel(const int group, const i
     O[size_t(hq) * head_dim + d] = static_cast<T>(out / L);
 }
 
-__device__ __forceinline__ void block_argmax(float& v, int& i,
-                                             typename BlockArgMaxReduce::TempStorage& temp,
-                                             cub::KeyValuePair<int, float>& winner)
+template<int SLOTS, typename Store>
+__device__ __forceinline__ void block_top_candidates(float (&values)[SLOTS], const int (&indices)[SLOTS],
+                                                     const int k, Store store)
 {
-    const auto best = BlockArgMaxReduce(temp).Reduce(cub::KeyValuePair<int, float>(i, v), cub::ArgMax());
-    if (threadIdx.x == 0) winner = best;
-    __syncthreads();
-    v = winner.value; i = winner.key;
-    __syncthreads();
+    __shared__ typename BlockArgMaxReduce::TempStorage temp;
+    __shared__ cub::KeyValuePair<int, float> winner;
+
+    for (int round = 0; round < k; ++round)
+    {
+        float best = -1e30f;
+        int best_index = 0x7fffffff, slot = -1;
+        #pragma unroll
+        for (int j = 0; j < SLOTS; ++j)
+            if (values[j] > best || (values[j] == best && indices[j] < best_index))
+            {
+                best = values[j];
+                best_index = indices[j];
+                slot = j;
+            }
+
+        const auto reduced = BlockArgMaxReduce(temp).Reduce(
+            cub::KeyValuePair<int, float>(best_index, best), cub::ArgMax());
+        if (threadIdx.x == 0) winner = reduced;
+        __syncthreads();
+        const float value = winner.value;
+        const int index = winner.key;
+        __syncthreads();
+
+        if (threadIdx.x == 0) store(round, value, index);
+        if (slot >= 0 && best_index == index) values[slot] = -1e30f;
+        __syncthreads();
+    }
 }
 
 template<typename T, int SLOTS>
@@ -661,23 +684,10 @@ __global__ void logits_top_candidates_kernel(const int n, const int k, const T* 
         v[cnt] = static_cast<float>(logits[i]); vi[cnt] = i; ++cnt;
     }
 
-    __shared__ typename BlockArgMaxReduce::TempStorage sm_argmax;
-    __shared__ cub::KeyValuePair<int, float> sm_winner;
-
-    for (int round = 0; round < k; ++round)
+    block_top_candidates(v, vi, k, [&](const int round, const float value, const int index)
     {
-        float best = -1e30f; int besti = 0x7fffffff, slot = -1;
-        #pragma unroll
-        for (int j = 0; j < SLOTS; ++j)
-            if (v[j] > best || (v[j] == best && vi[j] < besti)) { best = v[j]; besti = vi[j]; slot = j; }
-
-        float wv = best; int wi = besti;
-        block_argmax(wv, wi, sm_argmax, sm_winner);
-
-        if (threadIdx.x == 0) out[blockIdx.x * k + round] = make_float2(wv, __int_as_float(wi));
-        if (slot >= 0 && besti == wi) v[slot] = -1e30f;
-        __syncthreads();
-    }
+        out[blockIdx.x * k + round] = make_float2(value, __int_as_float(index));
+    });
 }
 
 template<int SLOTS>
@@ -698,25 +708,14 @@ __global__ void sample_from_candidates_kernel(const int m, const int k,
         v[cnt] = c.x; vi[cnt] = __float_as_int(c.y); ++cnt;
     }
 
-    __shared__ typename BlockArgMaxReduce::TempStorage sm_argmax;
-    __shared__ cub::KeyValuePair<int, float> sm_winner;
     __shared__ float top_v[32];
     __shared__ int   top_i[32];
 
-    for (int round = 0; round < k; ++round)
+    block_top_candidates(v, vi, k, [&](const int round, const float value, const int index)
     {
-        float best = -1e30f; int besti = 0x7fffffff, slot = -1;
-        #pragma unroll
-        for (int j = 0; j < SLOTS; ++j)
-            if (v[j] > best || (v[j] == best && vi[j] < besti)) { best = v[j]; besti = vi[j]; slot = j; }
-
-        float wv = best; int wi = besti;
-        block_argmax(wv, wi, sm_argmax, sm_winner);
-
-        if (threadIdx.x == 0) { top_v[round] = wv; top_i[round] = wi; }
-        if (slot >= 0 && besti == wi) v[slot] = -1e30f;
-        __syncthreads();
-    }
+        top_v[round] = value;
+        top_i[round] = index;
+    });
 
     if (threadIdx.x != 0) return;
 

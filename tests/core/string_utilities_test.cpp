@@ -143,6 +143,56 @@ TEST(StringUtilitiesTest, TokenizeViews)
     EXPECT_TRUE(tokenize_views("   ").empty());
 }
 
+TEST(StringUtilitiesTest, TokenizersShareBoundariesAndViewsRetainSourceCase)
+{
+    string document = "Ab";
+    document.push_back('\0');
+    document += "CD_9!\tX";
+
+    EXPECT_EQ(tokenize(document), (vector<string>{"ab", "cd", "_", "9", "!", "x"}));
+    const vector<string_view> tokens = tokenize_views(document);
+    ASSERT_EQ(tokens, (vector<string_view>{"Ab", "CD", "_", "9", "!", "X"}));
+    EXPECT_EQ(tokens[0].data(), document.data());
+    EXPECT_EQ(tokens[1].data(), document.data() + 3);
+    document[3] = 'Z';
+    EXPECT_EQ(tokens[1], "ZD");
+}
+
+TEST(StringUtilitiesTest, QuotedFieldsPreserveEmptyFieldsAndFirstFieldScratch)
+{
+    const vector<pair<string, vector<string>>> cases{
+        {"\"a,b\",c,\"\",tail,", {"a,b", "c", "", "tail", ""}},
+        {",\"second,field\"", {"", "second,field"}},
+        {"a\"b,c", {"a\"b", "c"}},
+        {"\"unterminated,field", {"unterminated,field"}},
+        {"\"" + string(256, 'a') + ",b\",tail", {string(256, 'a') + ",b", "tail"}}
+    };
+
+    for (const auto& [line, expected] : cases)
+    {
+        SCOPED_TRACE(line);
+        string scratch = "stale";
+        vector<string_view> fields{"stale"};
+        get_token_views_maybe_quoted(line, ',', true, scratch, fields);
+        ASSERT_EQ(fields.size(), expected.size());
+        for (size_t i = 0; i < fields.size(); ++i)
+            EXPECT_EQ(fields[i], expected[i]);
+
+        const string_view first = first_token_maybe_quoted(line, ',', true, scratch);
+        EXPECT_EQ(first, expected.front());
+        EXPECT_EQ(scratch, expected.front());
+        EXPECT_EQ(first.data(), scratch.data());
+    }
+
+    string scratch = "unchanged";
+    const string line = "\"a,b\",c";
+    EXPECT_EQ(first_token_maybe_quoted(line, ',', false, scratch), "\"a");
+    EXPECT_EQ(scratch, "unchanged");
+    EXPECT_EQ(get_token_views_maybe_quoted("plain,", ',', true, scratch),
+              (vector<string_view>{"plain", ""}));
+    EXPECT_EQ(scratch, "unchanged");
+}
+
 TEST(StringUtilitiesTest, ConvertStringVector)
 {
     const vector<vector<string>> input = {{"a", "b", "c"}, {"x", "y"}, {}};
@@ -358,4 +408,31 @@ TEST(StringUtilitiesTest, EnvFlagEnabled)
 
     unsetenv("OPENNN_TEST_FLAG_MISSING");
     EXPECT_FALSE(env_flag_enabled("OPENNN_TEST_FLAG_MISSING"));
+}
+
+TEST(StringUtilitiesTest, EnvFlagDefaultsApplyOnlyToUnknownValues)
+{
+    const char* name = "OPENNN_TEST_FLAG_DEFAULT";
+    for (const char* value : {"1", "TrUe", "ON", "Yes"})
+    {
+        setenv(name, value, 1);
+        EXPECT_TRUE(env_flag_enabled(name));
+        EXPECT_TRUE(env_flag_enabled(name, false));
+    }
+    for (const char* value : {"0", "FaLsE", "OFF", "No"})
+    {
+        setenv(name, value, 1);
+        EXPECT_FALSE(env_flag_enabled(name));
+        EXPECT_FALSE(env_flag_enabled(name, true));
+    }
+    for (const char* value : {"", "unknown", " true "})
+    {
+        setenv(name, value, 1);
+        EXPECT_FALSE(env_flag_enabled(name));
+        EXPECT_FALSE(env_flag_enabled(name, false));
+        EXPECT_TRUE(env_flag_enabled(name, true));
+    }
+    unsetenv(name);
+    EXPECT_FALSE(env_flag_enabled(name));
+    EXPECT_TRUE(env_flag_enabled(name, true));
 }

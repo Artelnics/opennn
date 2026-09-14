@@ -188,13 +188,36 @@ namespace
         DeviceStream stream;
     };
 
+    template<typename Handle, auto Destroy>
+    struct MatmulHandleDeleter
+    {
+        void operator()(Handle handle) const noexcept { Destroy(handle); }
+    };
+
+    template<typename Handle, auto Destroy>
+    using MatmulHandle = unique_ptr<remove_pointer_t<Handle>, MatmulHandleDeleter<Handle, Destroy>>;
+
+    using LtDescriptor = MatmulHandle<cublasLtMatmulDesc_t, cublasLtMatmulDescDestroy>;
+    using LtLayout = MatmulHandle<cublasLtMatrixLayout_t, cublasLtMatrixLayoutDestroy>;
+    using LtPreference = MatmulHandle<cublasLtMatmulPreference_t, cublasLtMatmulPreferenceDestroy>;
+
+    template<typename Resource, typename Create, typename... Args>
+    Resource create_lt_resource(Create create, Args... args)
+    {
+        typename Resource::pointer handle = nullptr;
+        const cublasStatus_t status = create(&handle, args...);
+        Resource resource(handle);
+        CHECK_CUBLAS(status);
+        return resource;
+    }
+
     struct MatmulPlan
     {
         MatmulPlanKey        key{};
-        cublasLtMatmulDesc_t   matmul_descriptor = nullptr;
-        cublasLtMatrixLayout_t a_matrix_layout = nullptr;
-        cublasLtMatrixLayout_t b_matrix_layout = nullptr;
-        cublasLtMatrixLayout_t output_matrix_layout = nullptr;
+        LtDescriptor          matmul_descriptor;
+        LtLayout              a_matrix_layout;
+        LtLayout              b_matrix_layout;
+        LtLayout              output_matrix_layout;
         cublasLtMatmulAlgo_t   algorithm{};
         bool                   has_algorithm = false;
         size_t                 workspace_bytes = 0;
@@ -206,7 +229,7 @@ namespace
         // to cuBLASLt" is a one-line branch at the call site and stays true
         // even if a cuDNN execution fails at run time, years from now, on a
         // driver nobody here has seen.
-        matmul::cudnn::Plan*    cudnn_plan = nullptr;
+        MatmulHandle<matmul::cudnn::Plan*, matmul::cudnn::destroy> cudnn_plan;
         int                    cudnn_candidate = -1;
         size_t                 cudnn_workspace_bytes = 0;
 
@@ -217,31 +240,7 @@ namespace
         MatmulPlan(const MatmulPlan&) = delete;
         MatmulPlan& operator=(const MatmulPlan&) = delete;
         MatmulPlan& operator=(MatmulPlan&&) = delete;
-        MatmulPlan(MatmulPlan&& other) noexcept
-        {
-            swap(key, other.key);
-            swap(matmul_descriptor, other.matmul_descriptor);
-            swap(a_matrix_layout, other.a_matrix_layout);
-            swap(b_matrix_layout, other.b_matrix_layout);
-            swap(output_matrix_layout, other.output_matrix_layout);
-            swap(algorithm, other.algorithm);
-            swap(has_algorithm, other.has_algorithm);
-            swap(workspace_bytes, other.workspace_bytes);
-            swap(cudnn_plan, other.cudnn_plan);
-            swap(cudnn_candidate, other.cudnn_candidate);
-            swap(cudnn_workspace_bytes, other.cudnn_workspace_bytes);
-            swap(candidates, other.candidates);
-            swap(tuned, other.tuned);
-        }
-
-        ~MatmulPlan()
-        {
-            matmul::cudnn::destroy(cudnn_plan);
-            cublasLtMatrixLayoutDestroy(output_matrix_layout);
-            cublasLtMatrixLayoutDestroy(b_matrix_layout);
-            cublasLtMatrixLayoutDestroy(a_matrix_layout);
-            cublasLtMatmulDescDestroy(matmul_descriptor);
-        }
+        MatmulPlan(MatmulPlan&&) noexcept = default;
 
         // Called when the tuner has decided against cuDNN, or could not tune
         // at all. The graph and its built plans are the only thing on this
@@ -249,8 +248,7 @@ namespace
         // peak memory, so an unused engine set is released rather than parked.
         void release_cudnn() noexcept
         {
-            matmul::cudnn::destroy(cudnn_plan);
-            cudnn_plan = nullptr;
+            cudnn_plan.reset();
             cudnn_candidate = -1;
             cudnn_workspace_bytes = 0;
         }
@@ -259,10 +257,10 @@ namespace
                                  const cublasLtMatmulAlgo_t* selected_algorithm,
                                  void* workspace, size_t bytes) const
         {
-            return cublasLtMatmul(device::get_cublas_lt_handle(), matmul_descriptor,
-                                  &call.alpha, call.a, a_matrix_layout, call.b, b_matrix_layout,
-                                  &call.beta, call.c, output_matrix_layout,
-                                  call.d, output_matrix_layout,
+            return cublasLtMatmul(device::get_cublas_lt_handle(), matmul_descriptor.get(),
+                                  &call.alpha, call.a, a_matrix_layout.get(), call.b, b_matrix_layout.get(),
+                                  &call.beta, call.c, output_matrix_layout.get(),
+                                  call.d, output_matrix_layout.get(),
                                   selected_algorithm, workspace, bytes, call.stream);
         }
     };
@@ -459,9 +457,9 @@ namespace
     {
         cublasLtMatmulHeuristicResult_t check{};
         if(cublasLtMatmulAlgoCheck(device::get_cublas_lt_handle(),
-                                   plan.matmul_descriptor,
-                                   plan.a_matrix_layout, plan.b_matrix_layout,
-                                   plan.output_matrix_layout, plan.output_matrix_layout,
+                                   plan.matmul_descriptor.get(),
+                                   plan.a_matrix_layout.get(), plan.b_matrix_layout.get(),
+                                   plan.output_matrix_layout.get(), plan.output_matrix_layout.get(),
                                    &algorithm, &check) != CUBLAS_STATUS_SUCCESS
            || check.state != CUBLAS_STATUS_SUCCESS
            || check.workspaceSize > cublas_lt_workspace_search_bytes)
@@ -510,14 +508,14 @@ namespace
         {
             {
                 PROFILE_SCOPE_HOST("lt:plan_cache_cudnn_rebuild");
-                plan.cudnn_plan = matmul::cudnn::create(
-                    make_cudnn_problem(plan.key), record.cudnn_plan_index);
+                plan.cudnn_plan.reset(matmul::cudnn::create(
+                    make_cudnn_problem(plan.key), record.cudnn_plan_index));
             }
-            if (plan.cudnn_plan && matmul::cudnn::candidate_count(plan.cudnn_plan) == 1)
+            if (plan.cudnn_plan && matmul::cudnn::candidate_count(plan.cudnn_plan.get()) == 1)
             {
                 plan.cudnn_candidate = 0;
                 plan.cudnn_workspace_bytes =
-                    matmul::cudnn::candidate(plan.cudnn_plan, 0).workspace_bytes;
+                    matmul::cudnn::candidate(plan.cudnn_plan.get(), 0).workspace_bytes;
             }
             else
             {
@@ -538,7 +536,7 @@ namespace
         record.cudnn_candidate = plan.cudnn_candidate;
         record.cudnn_workspace_bytes = plan.cudnn_workspace_bytes;
         record.cudnn_plan_index = matmul::cudnn::candidate(
-            plan.cudnn_plan, plan.cudnn_candidate).plan_index;
+            plan.cudnn_plan.get(), plan.cudnn_candidate).plan_index;
 
         error_code failed;
         filesystem::create_directories(lt_plan_cache_path(), failed);
@@ -792,13 +790,13 @@ namespace
     // so tile_traffic cannot price it at all.
     void add_cudnn_candidates(MatmulPlan& plan)
     {
-        plan.cudnn_plan = matmul::cudnn::create(make_cudnn_problem(plan.key));
+        plan.cudnn_plan.reset(matmul::cudnn::create(make_cudnn_problem(plan.key)));
         if (!plan.cudnn_plan) return;
 
-        const int count = matmul::cudnn::candidate_count(plan.cudnn_plan);
+        const int count = matmul::cudnn::candidate_count(plan.cudnn_plan.get());
         for (int candidate = 0; candidate < count; ++candidate)
         {
-            const auto info = matmul::cudnn::candidate(plan.cudnn_plan, candidate);
+            const auto info = matmul::cudnn::candidate(plan.cudnn_plan.get(), candidate);
             MatmulCandidate entry;
             entry.workspace_bytes = info.workspace_bytes;
             entry.traffic = numeric_limits<float>::infinity();
@@ -817,12 +815,12 @@ namespace
         const auto dtype_a = cudaDataType_t(key.dtype_a);
         const auto dtype_b = cudaDataType_t(key.dtype_b);
         const auto out_dtype = cudaDataType_t(key.out_dtype);
-        CHECK_CUBLAS(cublasLtMatmulDescCreate(
-            &plan.matmul_descriptor, matmul_compute_type(dtype_a, dtype_b), CUDA_R_32F));
+        plan.matmul_descriptor = create_lt_resource<LtDescriptor>(
+            cublasLtMatmulDescCreate, matmul_compute_type(dtype_a, dtype_b), CUDA_R_32F);
 
         const auto set = [&](cublasLtMatmulDescAttributes_t attribute, const auto& value) {
             CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(
-                plan.matmul_descriptor, attribute, &value, sizeof(value)));
+                plan.matmul_descriptor.get(), attribute, &value, sizeof(value)));
         };
         set(CUBLASLT_MATMUL_DESC_TRANSA, trans_a);
         set(CUBLASLT_MATMUL_DESC_TRANSB, trans_b);
@@ -845,20 +843,19 @@ namespace
         const int a_cols = trans_a == CUBLAS_OP_N ? key.k : key.m;
         const int b_rows = trans_b == CUBLAS_OP_N ? key.k : key.n;
         const int b_cols = trans_b == CUBLAS_OP_N ? key.n : key.k;
-        CHECK_CUBLAS(cublasLtMatrixLayoutCreate(
-            &plan.a_matrix_layout, dtype_a, a_rows, a_cols, key.lda ? key.lda : a_rows));
-        CHECK_CUBLAS(cublasLtMatrixLayoutCreate(
-            &plan.b_matrix_layout, dtype_b, b_rows, b_cols, key.ldb ? key.ldb : b_rows));
-        CHECK_CUBLAS(cublasLtMatrixLayoutCreate(
-            &plan.output_matrix_layout, out_dtype, key.m, key.n, key.ldd ? key.ldd : key.m));
+        plan.a_matrix_layout = create_lt_resource<LtLayout>(
+            cublasLtMatrixLayoutCreate, dtype_a, a_rows, a_cols, key.lda ? key.lda : a_rows);
+        plan.b_matrix_layout = create_lt_resource<LtLayout>(
+            cublasLtMatrixLayoutCreate, dtype_b, b_rows, b_cols, key.ldb ? key.ldb : b_rows);
+        plan.output_matrix_layout = create_lt_resource<LtLayout>(
+            cublasLtMatrixLayoutCreate, out_dtype, key.m, key.n, key.ldd ? key.ldd : key.m);
     }
 
     vector<cublasLtMatmulHeuristicResult_t> collect_cublas_candidates(MatmulPlan& plan)
     {
-        cublasLtMatmulPreference_t preference = nullptr;
-        CHECK_CUBLAS(cublasLtMatmulPreferenceCreate(&preference));
+        auto preference = create_lt_resource<LtPreference>(cublasLtMatmulPreferenceCreate);
         CHECK_CUBLAS(cublasLtMatmulPreferenceSetAttribute(
-            preference, CUBLASLT_MATMUL_PREF_MAX_WORKSPACE_BYTES,
+            preference.get(), CUBLASLT_MATMUL_PREF_MAX_WORKSPACE_BYTES,
             &cublas_lt_workspace_search_bytes, sizeof(cublas_lt_workspace_search_bytes)));
 
         const int requested = int(clamp(
@@ -866,11 +863,11 @@ namespace
         vector<cublasLtMatmulHeuristicResult_t> results(static_cast<size_t>(requested));
         int returned = 0;
         const cublasStatus_t status = cublasLtMatmulAlgoGetHeuristic(
-            device::get_cublas_lt_handle(), plan.matmul_descriptor,
-            plan.a_matrix_layout, plan.b_matrix_layout,
-            plan.output_matrix_layout, plan.output_matrix_layout,
-            preference, requested, results.data(), &returned);
-        cublasLtMatmulPreferenceDestroy(preference);
+            device::get_cublas_lt_handle(), plan.matmul_descriptor.get(),
+            plan.a_matrix_layout.get(), plan.b_matrix_layout.get(),
+            plan.output_matrix_layout.get(), plan.output_matrix_layout.get(),
+            preference.get(), requested, results.data(), &returned);
+        preference.reset();
         CHECK_CUBLAS(status);
 
         results.resize(size_t(max(returned, 0)));
@@ -1056,7 +1053,7 @@ namespace
 
         bool launch_cudnn(size_t index) const
         {
-            return matmul::cudnn::run(plan.cudnn_plan,
+            return matmul::cudnn::run(plan.cudnn_plan.get(),
                                      plan.candidates[index].cudnn_candidate,
                                      invocation.a, invocation.b, invocation.bias, invocation.d, workspace);
         }
@@ -1147,7 +1144,7 @@ namespace
             {
                 logging::warning() << "cudnn matmul: candidate "
                     << matmul::cudnn::candidate(
-                           call.plan.cudnn_plan, option.cudnn_candidate).name
+                           call.plan.cudnn_plan.get(), option.cudnn_candidate).name
                     << " disagreed with cuBLASLt and was dropped.\n";
                 continue;
             }
@@ -1315,7 +1312,7 @@ namespace
             if(matmul::cudnn::verbose())
                 logging::warning() << "cudnn matmul: chose "
                     << matmul::cudnn::candidate(
-                           plan.cudnn_plan, plan.cudnn_candidate).name
+                           plan.cudnn_plan.get(), plan.cudnn_candidate).name
                     << " at " << times[chosen] * 1000.0f / timed_runs
                     << " us against cuBLASLt's "
                     << (best_lt < plan.candidates.size()
@@ -1432,11 +1429,11 @@ void run_lt_matmul_cached(
     };
     MatmulPlan& plan = get_matmul_plan(key);
 
-    CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.matmul_descriptor,
+    CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.matmul_descriptor.get(),
         CUBLASLT_MATMUL_DESC_BIAS_POINTER, &bias_pointer, sizeof(bias_pointer)));
 
     if (aux_pointer)
-        CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.matmul_descriptor,
+        CHECK_CUBLAS(cublasLtMatmulDescSetAttribute(plan.matmul_descriptor.get(),
             CUBLASLT_MATMUL_DESC_EPILOGUE_AUX_POINTER, &aux_pointer, sizeof(aux_pointer)));
 
     // C is the addend when there is one and the destination otherwise; at
@@ -1479,7 +1476,7 @@ void run_lt_matmul_cached(
         }
 
         if (have_workspace
-            && matmul::cudnn::run(plan.cudnn_plan, plan.cudnn_candidate,
+            && matmul::cudnn::run(plan.cudnn_plan.get(), plan.cudnn_candidate,
                                  a_data, b_data, bias_pointer, d_data, cudnn_workspace))
             return;
 

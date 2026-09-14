@@ -1,23 +1,23 @@
 {
   "limits": {
     "files": 207,
-    "nloc": 56999,
-    "functions": 3450,
+    "nloc": 56918,
+    "functions": 3453,
     "functions_nloc_100": 36,
     "functions_ccn_25": 29,
     "maximum_function_nloc": 282,
     "maximum_function_ccn": 47,
     "duplicate_percent": 0.79,
-    "physical_lines": 73746,
+    "physical_lines": 73646,
     "cuda_files": 44,
-    "cuda_nloc": 6140,
-    "cuda_functions": 327,
+    "cuda_nloc": 6132,
+    "cuda_functions": 325,
     "cuda_functions_nloc_100": 1,
     "cuda_functions_ccn_25": 1,
     "cuda_maximum_function_nloc": 119,
     "cuda_maximum_function_ccn": 28,
-    "cuda_duplicate_percent": 4.09,
-    "cuda_physical_lines": 8169,
-    "combined_duplicate_percent": 1.18
+    "cuda_duplicate_percent": 3.68,
+    "cuda_physical_lines": 8156,
+    "combined_duplicate_percent": 1.12
   }
 }

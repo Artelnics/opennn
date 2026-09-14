@@ -363,6 +363,54 @@ TEST(StatisticsTest, Quartiles)
     
 }
 
+TEST(StatisticsTest, IndexedQuartilesPreserveNonfiniteAndRepeatedSelectionPolicy)
+{
+    VectorR values(7);
+    values << QUIET_NAN, POS_INFINITY, NEG_INFINITY, 8.0f, 2.0f, 4.0f, 6.0f;
+    const vector<Index> indices{3, 0, 6, 1, 4, 2, 5, 4};
+    const VectorR selected = quartiles(values, indices);
+    ASSERT_EQ(selected.size(), 3);
+    EXPECT_EQ(selected(0), 2.0f);
+    EXPECT_EQ(selected(1), 4.0f);
+    EXPECT_EQ(selected(2), 7.0f);
+
+    const BoxPlot indexed = box_plot(values, indices);
+    EXPECT_EQ(indexed.minimum, NEG_INFINITY);
+    EXPECT_EQ(indexed.maximum, POS_INFINITY);
+    EXPECT_EQ(indexed.first_quartile, 2.0f);
+    EXPECT_EQ(indexed.median, 4.0f);
+    EXPECT_EQ(indexed.third_quartile, 7.0f);
+
+    const BoxPlot plain = box_plot(values);
+    EXPECT_EQ(plain.minimum, 2.0f);
+    EXPECT_EQ(plain.maximum, 8.0f);
+    EXPECT_EQ(plain.first_quartile, 3.0f);
+    EXPECT_EQ(plain.median, 5.0f);
+    EXPECT_EQ(plain.third_quartile, 7.0f);
+
+    const vector<Index> missing_indices{0, 0};
+    EXPECT_TRUE(quartiles(values, missing_indices).array().isNaN().all());
+    EXPECT_TRUE(quartiles(values, {}).array().isNaN().all());
+    const BoxPlot missing = box_plot(values, missing_indices);
+    EXPECT_EQ(missing.minimum, MAX);
+    EXPECT_EQ(missing.maximum, -MAX);
+    EXPECT_TRUE(isnan(missing.median));
+    EXPECT_TRUE(isnan(box_plot(values, {}).minimum));
+}
+
+TEST(StatisticsTest, ColumnMeanExcludesNonfiniteValuesAndRetainsEmptyGuard)
+{
+    MatrixR values(4, 2);
+    values << QUIET_NAN, POS_INFINITY,
+              POS_INFINITY, NEG_INFINITY,
+              2.0f, QUIET_NAN,
+              6.0f, QUIET_NAN;
+    EXPECT_EQ(mean(values, 0), 4.0f);
+    EXPECT_TRUE(isnan(mean(values, 1)));
+    EXPECT_TRUE(isnan(mean(MatrixR(0, 2), 0)));
+    EXPECT_TRUE(isnan(mean(MatrixR(2, 0), 0)));
+}
+
 TEST(StatisticsTest, Histogram)
 {
     VectorR vector;

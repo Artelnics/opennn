@@ -17,6 +17,10 @@
 #include "opennn/core/tensor_types.h"
 #include "opennn/network/operators/layer_normalization_operator.h"
 
+#ifdef OPENNN_HAS_CUDA
+#include "opennn/core/cuda/kernel_normalization.cuh"
+#endif
+
 using namespace opennn;
 
 namespace
@@ -195,6 +199,103 @@ TEST(LayerNormalizationOperatorTest, RmsForwardMatchesTheClosedFormAndSkipsCentr
                 << "column " << column;
     }
 }
+
+#ifdef OPENNN_HAS_CUDA
+TEST(LayerNormalizationOperatorTest, CudaWarpShapesAndFallbackMatchForwardAndGradientFormulas)
+{
+    if (!device::has_cuda_device()) GTEST_SKIP() << "No CUDA device.";
+    const auto stream = device::get_compute_stream();
+    for (const Type precision : {Type::FP32, Type::BF16})
+    {
+        if (precision == Type::BF16 && device::cuda_compute_capability() < 80) continue;
+        SCOPED_TRACE(precision == Type::FP32 ? "FP32" : "BF16");
+        visit_type<Type::FP32, Type::BF16>(precision, [&]<typename T>()
+        {
+            constexpr int width = 32 * 16 / sizeof(T);
+            for (const int columns : {width, width * 2, width * 3, width * 4, width + 1})
+            {
+                SCOPED_TRACE(columns);
+                const Index count = rows * columns;
+                vector<T> input(size_t(count), T(0.0f));
+                for (Index row = 0; row < rows; ++row)
+                    for (int column = 0; column < columns; ++column)
+                        input[size_t(row * columns + column)] = T((column % 2 ? -1.0f : 1.0f) * (1.0f + 0.5f * row));
+                vector<float> weights(size_t(2 * columns), 0.0f);
+                fill_n(weights.begin(), columns, 1.0f);
+                Buffer x_device(Device::CUDA), y_device(Device::CUDA), dx_device(Device::CUDA);
+                Buffer weights_device(Device::CUDA), stats_device(Device::CUDA), gradients_device(Device::CUDA);
+                T* x = x_device.ensure<T>(count);
+                T* y = y_device.ensure<T>(count);
+                T* dx = dx_device.ensure<T>(count);
+                float* gamma = weights_device.ensure<float>(2 * columns);
+                float* means = stats_device.ensure<float>(2 * rows);
+                float* inverse = means + rows;
+                float* gradients = gradients_device.ensure<float>(2 * columns);
+                device::copy_async(x, input.data(), count * sizeof(T), device::CopyKind::HostToDevice, stream);
+                device::copy_async(gamma, weights.data(), Index(weights.size() * sizeof(float)),
+                    device::CopyKind::HostToDevice, stream);
+
+                for (const bool rms : {false, true})
+                {
+                    SCOPED_TRACE(rms ? "RMS" : "LayerNorm");
+                    if (rms)
+                    {
+                        rmsnorm_forward_cuda<T>(int(rows), columns, x, y, inverse, gamma, epsilon);
+                        rmsnorm_backward_cuda<T>(int(rows), columns, x, x, inverse, gamma, dx, gradients);
+                    }
+                    else
+                    {
+                        layernorm_forward_cuda<T>(int(rows), columns, x, y, means, inverse, gamma, gamma + columns, epsilon);
+                        layernorm_backward_cuda<T>(int(rows), columns, x, x, means, inverse, gamma,
+                            dx, nullptr, gradients, gradients + columns);
+                    }
+                    vector<T> output(size_t(count), T(0.0f)), delta(size_t(count), T(0.0f));
+                    vector<float> parameter_gradient(size_t(2 * columns), 0.0f);
+                    device::copy_async(output.data(), y, count * sizeof(T), device::CopyKind::DeviceToHost, stream);
+                    device::copy_async(delta.data(), dx, count * sizeof(T), device::CopyKind::DeviceToHost, stream);
+                    device::copy_async(parameter_gradient.data(), gradients, Index(parameter_gradient.size() * sizeof(float)),
+                        device::CopyKind::DeviceToHost, stream);
+                    device::synchronize(stream);
+
+                    vector<double> expected_gamma(size_t(columns), 0.0), expected_beta(size_t(columns), 0.0);
+                    for (Index row = 0; row < rows; ++row)
+                    {
+                        double mean = 0.0, squared = 0.0, mean_delta = 0.0, mean_delta_xhat = 0.0;
+                        for (int column = 0; column < columns; ++column)
+                            mean += float(input[size_t(row * columns + column)]);
+                        mean = rms ? 0.0 : mean / columns;
+                        for (int column = 0; column < columns; ++column)
+                            squared += pow(double(float(input[size_t(row * columns + column)])) - mean, 2);
+                        const double inv = 1.0 / sqrt(squared / columns + epsilon);
+                        for (int column = 0; column < columns; ++column)
+                        {
+                            const double value = float(input[size_t(row * columns + column)]);
+                            mean_delta += value / columns;
+                            mean_delta_xhat += value * (value - mean) * inv / columns;
+                        }
+                        for (int column = 0; column < columns; ++column)
+                        {
+                            const size_t index = size_t(row * columns + column);
+                            const double value = float(input[index]);
+                            const double xhat = (value - mean) * inv;
+                            const double expected_delta = (value - (rms ? 0.0 : mean_delta) - xhat * mean_delta_xhat) * inv;
+                            EXPECT_NEAR(float(output[index]), xhat, precision == Type::BF16 ? 0.005 : 0.00001);
+                            EXPECT_NEAR(float(delta[index]), expected_delta, 0.00001);
+                            expected_gamma[size_t(column)] += value * xhat;
+                            expected_beta[size_t(column)] += value;
+                        }
+                    }
+                    for (int column = 0; column < columns; ++column)
+                    {
+                        EXPECT_NEAR(parameter_gradient[size_t(column)], expected_gamma[size_t(column)], 0.0001);
+                        if (!rms) EXPECT_NEAR(parameter_gradient[size_t(columns + column)], expected_beta[size_t(column)], 0.0001);
+                    }
+                }
+            }
+        });
+    }
+}
+#endif
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.

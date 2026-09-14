@@ -4,7 +4,6 @@
 #include "opennn/core/string_utilities.h"
 
 #include <cctype>
-#include <utility>
 
 namespace opennn
 {
@@ -20,6 +19,57 @@ bool equal_ignoring_case(string_view left, string_view right) noexcept
                          {
                              return tolower(left_char) == tolower(right_char);
                          });
+}
+
+template <typename Emit>
+void for_each_token(string_view document, Emit&& emit)
+{
+    size_t i = 0;
+    while (i < document.size())
+    {
+        const unsigned char character = static_cast<unsigned char>(document[i]);
+        const size_t start = i++;
+
+        if (isalnum(character))
+        {
+            while (i < document.size() && isalnum(static_cast<unsigned char>(document[i])))
+                ++i;
+        }
+        else if (!ispunct(character))
+            continue;
+
+        emit(document.substr(start, i - start));
+    }
+}
+
+template <typename Emit>
+void for_each_quoted_field(string_view line, char separator, string& scratch, Emit&& emit)
+{
+    scratch.clear();
+    scratch.reserve(line.size());
+    const char* const base = scratch.data();
+
+    bool in_quote = false;
+    size_t field_start = 0;
+
+    for (const char character : line)
+    {
+        if (character == '"' && (in_quote || scratch.size() == field_start))
+        {
+            in_quote = !in_quote;
+            continue;
+        }
+
+        if (!in_quote && character == separator)
+        {
+            if (!emit(string_view(base + field_start, scratch.size() - field_start))) return;
+            field_start = scratch.size();
+        }
+        else
+            scratch.push_back(character);
+    }
+
+    emit(string_view(base + field_start, scratch.size() - field_start));
 }
 
 }
@@ -42,31 +92,12 @@ long parse_long(string_view text, string_view context)
 vector<string> tokenize(const string& document)
 {
     vector<string> tokens;
-    string current_token;
-
-    for (const char character : document)
+    for_each_token(document, [&](string_view token)
     {
-        const unsigned char unsigned_character = static_cast<unsigned char>(character);
-
-        if (isalnum(unsigned_character))
-        {
-            current_token += static_cast<char>(tolower(unsigned_character));
-        }
-        else
-        {
-            if (!current_token.empty())
-            {
-                tokens.emplace_back(std::move(current_token));
-                current_token.clear();
-            }
-
-            if (ispunct(unsigned_character))
-                tokens.emplace_back(1, character);
-        }
-    }
-
-    if (!current_token.empty())
-        tokens.emplace_back(std::move(current_token));
+        string& value = tokens.emplace_back(token);
+        for (char& character : value)
+            character = static_cast<char>(tolower(static_cast<unsigned char>(character)));
+    });
 
     return tokens;
 }
@@ -74,30 +105,7 @@ vector<string> tokenize(const string& document)
 vector<string_view> tokenize_views(string_view document)
 {
     vector<string_view> tokens;
-
-    size_t i = 0;
-    while (i < document.size())
-    {
-        const unsigned char c = static_cast<unsigned char>(document[i]);
-
-        if (isalnum(c))
-        {
-            const size_t start = i;
-            while (i < document.size() && isalnum(static_cast<unsigned char>(document[i])))
-                ++i;
-            tokens.emplace_back(document.substr(start, i - start));
-        }
-        else if (ispunct(c))
-        {
-            tokens.emplace_back(document.substr(i, 1));
-            ++i;
-        }
-        else
-        {
-            ++i;
-        }
-    }
-
+    for_each_token(document, [&](string_view token) { tokens.push_back(token); });
     return tokens;
 }
 
@@ -147,33 +155,11 @@ void get_token_views_maybe_quoted(string_view line, char separator, bool file_ha
     if (!file_has_quotes || line.find('"') == string_view::npos)
         return split_views(line, separator, out);
 
-    scratch.clear();
-    scratch.reserve(line.size());
-    const char* const base = scratch.data();
-
-    bool in_quote = false;
-    size_t field_start = 0;
-
-    for (const char c : line)
+    for_each_quoted_field(line, separator, scratch, [&](string_view field)
     {
-
-        if (c == '"' && (in_quote || scratch.size() == field_start))
-        {
-            in_quote = !in_quote;
-            continue;
-        }
-
-        if (!in_quote && c == separator)
-        {
-            out.emplace_back(base + field_start, scratch.size() - field_start);
-            field_start = scratch.size();
-            continue;
-        }
-
-        scratch.push_back(c);
-    }
-
-    out.emplace_back(base + field_start, scratch.size() - field_start);
+        out.push_back(field);
+        return true;
+    });
 }
 
 vector<string_view> get_token_views_maybe_quoted(string_view line, char separator,
@@ -192,19 +178,13 @@ string_view first_token_maybe_quoted(string_view line, char separator, bool file
         return pos == string_view::npos ? line : line.substr(0, pos);
     }
 
-    scratch.clear();
-    scratch.reserve(line.size());
-
-    bool in_quote = false;
-
-    for (const char c : line)
+    string_view first;
+    for_each_quoted_field(line, separator, scratch, [&](string_view field)
     {
-        if (c == '"' && (in_quote || scratch.empty())) { in_quote = !in_quote; continue; }
-        if (!in_quote && c == separator) break;
-        scratch.push_back(c);
-    }
-
-    return string_view(scratch.data(), scratch.size());
+        first = field;
+        return false;
+    });
+    return first;
 }
 
 string_view trim_view(string_view text)
@@ -385,17 +365,7 @@ bool starts_with_any(string_view text, initializer_list<string_view> prefixes)
 
 bool env_flag_enabled(const char* name) noexcept
 {
-    const char* const value = getenv(name);
-    if (!value) return false;
-
-    const string_view text(value);
-
-    const initializer_list<string_view> enabled_values{"1", "true", "on", "yes"};
-    return ranges::any_of(enabled_values,
-                          [text](string_view enabled_value)
-                          {
-                              return equal_ignoring_case(text, enabled_value);
-                          });
+    return env_flag_enabled(name, false);
 }
 
 bool env_flag_enabled(const char* name, bool default_value) noexcept

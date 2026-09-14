@@ -4,6 +4,11 @@
 #include "opennn/models/models.h"
 #include "opennn/network/layers/tokenizer_layer.h"
 
+#ifdef OPENNN_HAS_CUDA
+#include "opennn/core/cuda/kernel_attention.cuh"
+#include <bit>
+#endif
+
 using namespace opennn;
 
 TEST(SamplingConfig, Defaults)
@@ -123,6 +128,72 @@ TEST(SampleToken, RepeatedCallsWithDifferentVocabularySizesAreIndependent)
     second << 0.8f, 0.2f;
     EXPECT_EQ(sample_token(second, config, {}), Index(0));
 }
+
+#ifdef OPENNN_HAS_CUDA
+TEST(SampleToken, CudaCandidatesMatchSortedLogitsAcrossBlocksAndTies)
+{
+    if (!device::has_cuda_device()) GTEST_SKIP() << "No CUDA device.";
+    constexpr int vocabulary_size = 65539;
+    constexpr int threads = 256;
+    vector<float> logits(vocabulary_size);
+    for (int i = 0; i < vocabulary_size; ++i) logits[size_t(i)] = float(i % 97) * 0.125f - 7.0f;
+    logits[0] = 1000.0f; // Padding must never enter the candidates.
+    for (int i : {17, 257, 32785, 65537}) logits[size_t(i)] = 20.0f;
+
+    vector<vector<int>> sorted_blocks(LOGITS_SAMPLE_BLOCKS);
+    for (int i = 1; i < vocabulary_size; ++i)
+        sorted_blocks[size_t((i / threads) % LOGITS_SAMPLE_BLOCKS)].push_back(i);
+    for (auto& indices : sorted_blocks)
+        ranges::sort(indices, [&](int left, int right)
+        {
+            return logits[size_t(left)] == logits[size_t(right)] ? left < right
+                : logits[size_t(left)] > logits[size_t(right)];
+        });
+
+    const auto stream = device::get_compute_stream();
+    for (const Type precision : {Type::FP32, Type::BF16})
+    {
+        if (precision == Type::BF16 && device::cuda_compute_capability() < 80) continue;
+        SCOPED_TRACE(precision == Type::FP32 ? "FP32" : "BF16");
+        visit_type<Type::FP32, Type::BF16>(precision, [&]<typename T>()
+        {
+            vector<T> input(logits.begin(), logits.end());
+            Buffer input_device(Device::CUDA), candidates_device(Device::CUDA);
+            Buffer id_device(Device::CUDA), token_device(Device::CUDA);
+            device::copy_async(input_device.ensure<T>(vocabulary_size), input.data(),
+                Index(input.size() * sizeof(T)), device::CopyKind::HostToDevice, stream);
+            float2* candidates = candidates_device.ensure<float2>(LOGITS_SAMPLE_BLOCKS * 32);
+            int* id = id_device.ensure<int>(1);
+            float* token = token_device.ensure<float>(1);
+
+            for (const int k : {1, 7, 32})
+            {
+                SCOPED_TRACE(k);
+                sample_logits_row_cuda<T>(vocabulary_size, k == 1 ? 0.0f : 1.0f, k, 1.0e-8f,
+                    42, 3, input_device.as<T>(), candidates, id, token);
+                vector<float2> actual(size_t(LOGITS_SAMPLE_BLOCKS * k));
+                int sampled_id = -1;
+                float sampled_token = -1.0f;
+                device::copy_async(actual.data(), candidates, Index(actual.size() * sizeof(float2)),
+                    device::CopyKind::DeviceToHost, stream);
+                device::copy_async(&sampled_id, id, sizeof(int), device::CopyKind::DeviceToHost, stream);
+                device::copy_async(&sampled_token, token, sizeof(float), device::CopyKind::DeviceToHost, stream);
+                device::synchronize(stream);
+                EXPECT_EQ(sampled_id, 17);
+                EXPECT_FLOAT_EQ(sampled_token, 17.0f);
+                for (int block = 0; block < LOGITS_SAMPLE_BLOCKS; ++block)
+                    for (int rank = 0; rank < k; ++rank)
+                    {
+                        const int expected_id = sorted_blocks[size_t(block)][size_t(rank)];
+                        const float2 candidate = actual[size_t(block * k + rank)];
+                        EXPECT_EQ(std::bit_cast<int>(candidate.y), expected_id);
+                        EXPECT_FLOAT_EQ(candidate.x, logits[size_t(expected_id)]);
+                    }
+            }
+        });
+    }
+}
+#endif
 
 TEST(TokenizerLayer, IdentityPassthroughShape)
 {

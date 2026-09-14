@@ -48,6 +48,10 @@ remaining limitations.
 
 ### Reliability and portability
 
+- Consolidate core token and quoted-field parsing, random fills, statistics and
+  memory-pool ordering. Share CUDA top-k selection and normalization shape
+  dispatch, and give matmul resources automatic ownership. Preserve numerical
+  policies, tie ordering, launch shapes and cache formats; synchronize TF32 setup.
 - Reduce seven concrete dataset classes to four: `TabularDataset` includes
   forecasting windows, and `TextDataset` handles classification, translation,
   next-token prediction and token/attention-mask inputs. Remove the former

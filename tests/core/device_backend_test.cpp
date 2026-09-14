@@ -437,6 +437,42 @@ TEST(DeviceBackendTest, LibraryHandlesMatchBuild)
     }
 }
 
+TEST(DeviceBackendTest, Tf32SettingRefreshesExistingHandles)
+{
+#ifdef OPENNN_HAS_CUDA
+    if (!device::has_cuda_device()) GTEST_SKIP() << "CUDA device unavailable.";
+#endif
+    const bool original = device::allow_tf32();
+    const int original_lane = device::active_lane();
+    const ScopeExit restore([=] {
+        device::set_active_lane(original_lane);
+        device::set_allow_tf32(original);
+    });
+
+#ifdef OPENNN_HAS_CUDA
+    vector<BlasHandle> handles;
+    for (int lane = 0; lane < device::lanes_available(); ++lane)
+    {
+        device::set_active_lane(lane);
+        handles.push_back(device::get_cublas_handle());
+        ASSERT_NE(handles.back(), nullptr);
+    }
+#endif
+    for (const bool enabled : {false, true, false})
+    {
+        device::set_allow_tf32(enabled);
+        EXPECT_EQ(device::allow_tf32(), enabled);
+#ifdef OPENNN_HAS_CUDA
+        for (const BlasHandle handle : handles)
+        {
+            cublasMath_t mode = CUBLAS_DEFAULT_MATH;
+            ASSERT_EQ(cublasGetMathMode(handle, &mode), CUBLAS_STATUS_SUCCESS);
+            EXPECT_EQ(mode, enabled ? CUBLAS_TF32_TENSOR_OP_MATH : CUBLAS_DEFAULT_MATH);
+        }
+#endif
+    }
+}
+
 #ifdef OPENNN_HAS_CUDA
 TEST(DeviceBackendTest, CublasPointerModeGuardRestoresMode)
 {

@@ -56,8 +56,8 @@ template <typename Tensor, typename Distribution>
 static void fill_random(Tensor&& tensor, Distribution distribution)
 {
     lock_guard<mutex> lock(rng_mutex);
-    for (Index i = 0; i < tensor.size(); ++i)
-        tensor(i) = distribution(generator);
+    for (auto& value : span(tensor.data(), size_t(tensor.size())))
+        value = distribution(generator);
 }
 
 void set_random_uniform(MatrixR& tensor, float min, float max)
@@ -72,10 +72,7 @@ void set_random_uniform(VectorMap tensor, float min, float max)
 
 void set_random_bernoulli(span<uint8_t> values, float probability)
 {
-    lock_guard<mutex> lock(rng_mutex);
-    bernoulli_distribution distribution(probability);
-    for (uint8_t& value : values)
-        value = uint8_t(distribution(generator));
+    fill_random(values, bernoulli_distribution(probability));
 }
 
 void set_random_normal(MatrixMap tensor, float mean, float std_dev)
@@ -91,12 +88,7 @@ void set_random_orthogonal(MatrixMap tensor)
     throw_if(rows < cols, "set_random_orthogonal requires rows >= cols.");
 
     MatrixR gaussian(rows, cols);
-    {
-        lock_guard<mutex> lock(rng_mutex);
-        normal_distribution<float> distribution(0.0f, 1.0f);
-        for (Index i = 0; i < gaussian.size(); ++i)
-            gaussian(i) = distribution(generator);
-    }
+    fill_random(gaussian, normal_distribution<float>(0.0f, 1.0f));
 
     const Eigen::HouseholderQR<MatrixR> qr(gaussian);
     MatrixR q = qr.householderQ() * MatrixR::Identity(rows, cols);
@@ -183,10 +175,7 @@ Index get_random_element(const vector<Index>& values)
 
 void set_random_integer(MatrixR &tensor, Index min, Index max)
 {
-    lock_guard<mutex> lock(rng_mutex);
-    uniform_int_distribution<Index> distribution(min, max);
-    for (Index i = 0; i < tensor.size(); ++i)
-        tensor(i) = distribution(generator);
+    fill_random(tensor, uniform_int_distribution<Index>(min, max));
 }
 
 }

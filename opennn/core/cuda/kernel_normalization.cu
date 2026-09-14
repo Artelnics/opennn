@@ -839,10 +839,19 @@ template void add_relu_cuda<__nv_bfloat16>(const Index, const __nv_bfloat16*,
 
 static constexpr int norm_warp_rows_per_block = 8;
 
-template<typename T, int ITER>
-__device__ __forceinline__ bool norm_warp_shape(const int D)
+template<typename T, typename Launch>
+static bool try_norm_warp_shape(const int D, Launch launch)
 {
-    return D == 32 * vec16<T> * ITER;
+    constexpr int width = 32 * vec16<T>;
+    switch (D)
+    {
+    case width:     launch.template operator()<1>(); break;
+    case width * 2: launch.template operator()<2>(); break;
+    case width * 3: launch.template operator()<3>(); break;
+    case width * 4: launch.template operator()<4>(); break;
+    default: return false;
+    }
+    return true;
 }
 
 template<typename T, bool FuseResidual, bool HasMean, int ITER>
@@ -1051,45 +1060,18 @@ static inline int norm_warp_blocks(const int N)
     return needed < 240 ? needed : 240;
 }
 
-template<typename T, bool FuseResidual, bool HasMean, int ITER>
-static bool norm_forward_warp_try(const int N, const int D, const T* X, const T* R, T* sum, T* Y,
-                                  float* means, float* inv_vars, const float* gamma, const float* beta,
-                                  const float eps)
-{
-    if (D != 32 * vec16<T> * ITER) return false;
-    OPENNN_CUDA_LAUNCH((norm_forward_warp_kernel<T, FuseResidual, HasMean, ITER>
-        <<<ceil_div(N, norm_warp_rows_per_block), 256, 0, opennn::device::get_compute_stream()>>>(
-            N, D, X, R, sum, Y, means, inv_vars, gamma, beta, eps)));
-    return true;
-}
-
-template<typename T, bool HasMean, int ITER>
-static bool norm_backward_warp_try(const int N, const int D, const T* dY, const T* X, const float* means,
-                                   const float* inv_vars, const float* gamma, T* dX, T* dX2, float* dGamma, float* dBeta)
-{
-    if (D != 32 * vec16<T> * ITER) return false;
-    const int blocks = norm_warp_blocks(N);
-    float* partials = opennn::ensure_workspace<float>(opennn::device::GraphWorkspaceKind::NormPartials,
-                                                      Index(blocks) * 2 * D);
-    const cudaStream_t stream = opennn::device::get_compute_stream();
-    OPENNN_CUDA_LAUNCH((norm_backward_warp_kernel<T, HasMean, ITER><<<blocks, 256, 0, stream>>>(
-        N, D, dY, X, means, inv_vars, gamma, dX, dX2, partials)));
-    OPENNN_CUDA_LAUNCH((norm_weight_gradient_finalize_kernel<HasMean><<<ceil_div(D, 256), 256, 0, stream>>>(
-        blocks, D, partials, dGamma, dBeta)));
-    return true;
-}
-
 template<typename T, bool FuseResidual, bool HasMean>
 static void norm_forward_launch(const int N, const int D, const T* X, const T* R, T* sum, T* Y,
                                 float* means, float* inv_vars, const float* gamma, const float* beta, const float eps)
 {
     if (N == 0 || D == 0) return;
 
-    if (are_aligned<16>(X, R, sum, Y, gamma, beta)
-        && (norm_forward_warp_try<T, FuseResidual, HasMean, 1>(N, D, X, R, sum, Y, means, inv_vars, gamma, beta, eps)
-         || norm_forward_warp_try<T, FuseResidual, HasMean, 2>(N, D, X, R, sum, Y, means, inv_vars, gamma, beta, eps)
-         || norm_forward_warp_try<T, FuseResidual, HasMean, 3>(N, D, X, R, sum, Y, means, inv_vars, gamma, beta, eps)
-         || norm_forward_warp_try<T, FuseResidual, HasMean, 4>(N, D, X, R, sum, Y, means, inv_vars, gamma, beta, eps)))
+    if (are_aligned<16>(X, R, sum, Y, gamma, beta) && try_norm_warp_shape<T>(D, [&]<int ITER>()
+    {
+        OPENNN_CUDA_LAUNCH((norm_forward_warp_kernel<T, FuseResidual, HasMean, ITER>
+            <<<ceil_div(N, norm_warp_rows_per_block), 256, 0, opennn::device::get_compute_stream()>>>(
+                N, D, X, R, sum, Y, means, inv_vars, gamma, beta, eps)));
+    }))
         return;
 
     OPENNN_CUDA_LAUNCH((norm_forward_kernel<T, FuseResidual, HasMean><<<N, threads_for_width(D), 0, opennn::device::get_compute_stream()>>>(
@@ -1235,11 +1217,17 @@ __global__ void norm_weight_gradient_coalesced_kernel(const int N, const int D,
 template<typename T, bool HasMean>
 static void norm_backward_launch(const int N, const int D, const T* dY, const T* X, const float* means, const float* inv_vars, const float* gamma, T* dX, T* dX2, float* dGamma, float* dBeta)
 {
-    if (are_aligned<16>(dY, X, dX, dX2, gamma)
-        && (norm_backward_warp_try<T, HasMean, 1>(N, D, dY, X, means, inv_vars, gamma, dX, dX2, dGamma, dBeta)
-         || norm_backward_warp_try<T, HasMean, 2>(N, D, dY, X, means, inv_vars, gamma, dX, dX2, dGamma, dBeta)
-         || norm_backward_warp_try<T, HasMean, 3>(N, D, dY, X, means, inv_vars, gamma, dX, dX2, dGamma, dBeta)
-         || norm_backward_warp_try<T, HasMean, 4>(N, D, dY, X, means, inv_vars, gamma, dX, dX2, dGamma, dBeta)))
+    if (are_aligned<16>(dY, X, dX, dX2, gamma) && try_norm_warp_shape<T>(D, [&]<int ITER>()
+    {
+        const int blocks = norm_warp_blocks(N);
+        float* partials = opennn::ensure_workspace<float>(opennn::device::GraphWorkspaceKind::NormPartials,
+                                                          Index(blocks) * 2 * D);
+        const cudaStream_t stream = opennn::device::get_compute_stream();
+        OPENNN_CUDA_LAUNCH((norm_backward_warp_kernel<T, HasMean, ITER><<<blocks, 256, 0, stream>>>(
+            N, D, dY, X, means, inv_vars, gamma, dX, dX2, partials)));
+        OPENNN_CUDA_LAUNCH((norm_weight_gradient_finalize_kernel<HasMean><<<ceil_div(D, 256), 256, 0, stream>>>(
+            blocks, D, partials, dGamma, dBeta)));
+    }))
         return;
 
     if (dX)

@@ -20,8 +20,12 @@ atomic<int64_t> conv_workspace_cap_mode{-1};
 atomic<int64_t> conv_workspace_auto_bytes{conv_workspace_auto_ceiling};
 atomic_bool conv_autotune_enabled_flag{false};
 
-atomic_bool allow_tf32_flag{true};
-bool allow_tf32_flag_initialised = false;
+atomic_bool& allow_tf32_setting() noexcept
+{
+    static atomic_bool setting{env_flag_enabled("OPENNN_ALLOW_TF32", true)};
+    return setting;
+}
+
 template<typename Rung> atomic<Rung>& rung_setting() noexcept
 {
     static atomic<Rung> setting{Rung::Auto};
@@ -208,18 +212,12 @@ void set_conv_autotune(bool enabled) noexcept
 
 bool allow_tf32() noexcept
 {
-    if (!allow_tf32_flag_initialised)
-    {
-        allow_tf32_flag = env_flag_enabled("OPENNN_ALLOW_TF32", true);
-        allow_tf32_flag_initialised = true;
-    }
-    return allow_tf32_flag;
+    return allow_tf32_setting().load();
 }
 
 void set_allow_tf32(bool enabled) noexcept
 {
-    allow_tf32_flag = enabled;
-    allow_tf32_flag_initialised = true;
+    allow_tf32_setting().store(enabled);
     refresh_blas_math_mode();
 }
 
@@ -316,21 +314,21 @@ void copy_async(void* destination,
 
     if (byte_count == 0 || !destination || !source) return;
 
-#ifdef OPENNN_HAS_CUDA
-    cudaMemcpyKind cuda_kind = cudaMemcpyHostToHost;
-    switch (kind)
-    {
-        case CopyKind::HostToHost:     cuda_kind = cudaMemcpyHostToHost;     break;
-        case CopyKind::HostToDevice:   cuda_kind = cudaMemcpyHostToDevice;   break;
-        case CopyKind::DeviceToHost:   cuda_kind = cudaMemcpyDeviceToHost;   break;
-        case CopyKind::DeviceToDevice: cuda_kind = cudaMemcpyDeviceToDevice; break;
-        default: throw runtime_error("Invalid device copy kind.");
-    }
-
     if (kind == CopyKind::HostToHost)
     {
         memcpy(destination, source, static_cast<size_t>(byte_count));
         return;
+    }
+
+#ifdef OPENNN_HAS_CUDA
+    cudaMemcpyKind cuda_kind = cudaMemcpyHostToHost;
+    switch (kind)
+    {
+        case CopyKind::HostToHost:     break;
+        case CopyKind::HostToDevice:   cuda_kind = cudaMemcpyHostToDevice;   break;
+        case CopyKind::DeviceToHost:   cuda_kind = cudaMemcpyDeviceToHost;   break;
+        case CopyKind::DeviceToDevice: cuda_kind = cudaMemcpyDeviceToDevice; break;
+        default: throw runtime_error("Invalid device copy kind.");
     }
 
     // The compute lanes are nonblocking CUDA streams. A synchronous copy on
@@ -343,8 +341,7 @@ void copy_async(void* destination,
 
 #else
     (void)stream;
-    if (kind != CopyKind::HostToHost) throw_cuda_unavailable();
-    memcpy(destination, source, static_cast<size_t>(byte_count));
+    throw_cuda_unavailable();
 #endif
 }
 

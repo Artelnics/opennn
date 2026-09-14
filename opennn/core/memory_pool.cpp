@@ -54,52 +54,30 @@ Index memory_pool_live_bytes_lower_bound(const vector<MemoryPoolEntry>& entries)
     return lower_bound;
 }
 
-bool memory_pool_entry_less(const vector<MemoryPoolEntry>& entries,
-                            MemoryPoolStrategy strategy,
-                            size_t left, size_t right)
+std::array<Index, 4> memory_pool_priority(const MemoryPoolEntry& entry,
+                                        MemoryPoolStrategy strategy)
 {
-    const MemoryPoolEntry& a = entries[left];
-    const MemoryPoolEntry& b = entries[right];
-
-    if(strategy == MemoryPoolStrategy::Chronological)
-        return a.first_step != b.first_step ? a.first_step < b.first_step : left < right;
-
-    if(strategy == MemoryPoolStrategy::Compact)
+    // Compare priorities from left to right; negate descending fields.
+    // Sizes and lifetime endpoints have already been validated as nonnegative.
+    const auto [bytes, first, last] = entry;
+    switch(strategy)
     {
-        if(a.bytes != b.bytes) return a.bytes > b.bytes;
-        if(a.first_step != b.first_step) return a.first_step < b.first_step;
-        if(a.last_step != b.last_step) return a.last_step > b.last_step;
-        return left < right;
+        case MemoryPoolStrategy::Chronological:
+            return {first, 0, 0, 0};
+        case MemoryPoolStrategy::Compact:
+            return {-bytes, first, -last, 0};
+        case MemoryPoolStrategy::ChronologicalLargestFirst:
+            return {first, -bytes, -last, 0};
+        case MemoryPoolStrategy::EarliestEndFirst:
+            return {last, bytes, first, 0};
+        case MemoryPoolStrategy::LatestEndFirst:
+            return {-last, -bytes, first, 0};
+        case MemoryPoolStrategy::LongestLifetimeFirst:
+            return {-(last - first), -bytes, first, -last};
+        case MemoryPoolStrategy::ShortestLifetimeFirst:
+        default:
+            return {last - first, -bytes, first, -last};
     }
-
-    if(strategy == MemoryPoolStrategy::ChronologicalLargestFirst)
-    {
-        if(a.first_step != b.first_step) return a.first_step < b.first_step;
-        if(a.bytes != b.bytes) return a.bytes > b.bytes;
-        if(a.last_step != b.last_step) return a.last_step > b.last_step;
-        return left < right;
-    }
-
-    if(is_one_of(strategy, MemoryPoolStrategy::EarliestEndFirst,
-                 MemoryPoolStrategy::LatestEndFirst))
-    {
-        const bool earliest = strategy == MemoryPoolStrategy::EarliestEndFirst;
-        if(a.last_step != b.last_step)
-            return earliest ? a.last_step < b.last_step : a.last_step > b.last_step;
-        if(a.bytes != b.bytes) return earliest ? a.bytes < b.bytes : a.bytes > b.bytes;
-        if(a.first_step != b.first_step) return a.first_step < b.first_step;
-        return left < right;
-    }
-
-    const Index a_lifetime = a.last_step - a.first_step;
-    const Index b_lifetime = b.last_step - b.first_step;
-    if(a_lifetime != b_lifetime)
-        return strategy == MemoryPoolStrategy::LongestLifetimeFirst
-            ? a_lifetime > b_lifetime : a_lifetime < b_lifetime;
-    if(a.bytes != b.bytes) return a.bytes > b.bytes;
-    if(a.first_step != b.first_step) return a.first_step < b.first_step;
-    if(a.last_step != b.last_step) return a.last_step > b.last_step;
-    return left < right;
 }
 
 }
@@ -118,7 +96,8 @@ MemoryPoolPlan plan_memory_pool(const vector<MemoryPoolEntry>& entries,
     iota(allocation_order.begin(), allocation_order.end(), 0);
 
     ranges::sort(allocation_order, [&](size_t left, size_t right) {
-        return memory_pool_entry_less(entries, strategy, left, right);
+        return pair{memory_pool_priority(entries[left], strategy), left}
+             < pair{memory_pool_priority(entries[right], strategy), right};
     });
 
     vector<size_t> placed_entries;

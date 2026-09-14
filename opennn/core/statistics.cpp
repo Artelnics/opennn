@@ -290,51 +290,26 @@ VectorR quartiles(const VectorR& data)
 
 VectorR quartiles(const VectorR& data, const vector<Index>& indices)
 {
-    VectorR valid_data(indices.size());
-    Index sorted_index = 0;
-
-    for (const Index index : indices)
-        if (!isnan(data(index)))
-            valid_data(sorted_index++) = data(index);
-
-    valid_data.conservativeResize(sorted_index);
-
-    return quartiles(valid_data);
+    return quartiles(VectorR(data(indices)));
 }
 
 BoxPlot box_plot(const VectorR& vector)
 {
-    BoxPlot box_plot;
-
     const VectorR valid = filter_missing_values(vector);
 
-    if (valid.size() == 0) return box_plot;
+    if (valid.size() == 0) return {};
 
     const VectorR quartiles = opennn::quartiles(valid);
-    box_plot.minimum = minimum(valid);
-    box_plot.first_quartile = quartiles(0);
-    box_plot.median = quartiles(1);
-    box_plot.third_quartile = quartiles(2);
-    box_plot.maximum = maximum(valid);
-    return box_plot;
+    return {minimum(valid), quartiles(0), quartiles(1), quartiles(2), maximum(valid)};
 }
 
 BoxPlot box_plot(const VectorR& data, const vector<Index>& indices)
 {
-    BoxPlot box_plot;
-
     if (data.size() == 0 || indices.empty())
-        return box_plot;
+        return {};
 
     const VectorR quartiles = opennn::quartiles(data, indices);
-
-    box_plot.minimum = minimum(data, indices);
-    box_plot.first_quartile = quartiles(0);
-    box_plot.median = quartiles(1);
-    box_plot.third_quartile = quartiles(2);
-    box_plot.maximum = maximum(data, indices);
-
-    return box_plot;
+    return {minimum(data, indices), quartiles(0), quartiles(1), quartiles(2), maximum(data, indices)};
 }
 
 Histogram histogram(const VectorR& new_vector, Index bins_number)
@@ -588,14 +563,7 @@ VectorR mean(const MatrixR& matrix, const vector<Index>& row_indices, const vect
 float mean(const MatrixR& matrix, Index column_index)
 {
     if (matrix.size() == 0) return QUIET_NAN;
-
-    const VectorR col = matrix.col(column_index);
-    const auto finite = col.array().isFinite();
-    const Index count = finite.count();
-
-    if (count == 0) return QUIET_NAN;
-
-    return finite.select(col.array(), 0.0f).sum() / float(count);
+    return mean(VectorR(matrix.col(column_index)));
 }
 
 float median(const MatrixR& matrix, Index column_index)

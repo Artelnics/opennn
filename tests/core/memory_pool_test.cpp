@@ -85,25 +85,37 @@ TEST(MemoryPoolTest, CompactLargestFirstEliminatesAvoidableFragmentation)
     EXPECT_EQ(plan.fragmentation_bytes(), 0);
 }
 
-TEST(MemoryPoolTest, BothStrategiesRespectRecordedLifetimes)
+TEST(MemoryPoolTest, AllStrategiesRespectRecordedLifetimesAndBreakTiesByInputOrder)
 {
     const vector<MemoryPoolEntry> entries = {
         {56,  3, 3},
         {80,  4, 5},
         {80,  0, 6},
         {128, 0, 4},
-        {112, 3, 5}
+        {112, 3, 5},
+        {80,  0, 6},
+        {0,   0, 0}
     };
 
     for (const MemoryPoolStrategy strategy : {
              MemoryPoolStrategy::Chronological,
-             MemoryPoolStrategy::Compact})
+             MemoryPoolStrategy::Compact,
+             MemoryPoolStrategy::ChronologicalLargestFirst,
+             MemoryPoolStrategy::EarliestEndFirst,
+             MemoryPoolStrategy::LatestEndFirst,
+             MemoryPoolStrategy::LongestLifetimeFirst,
+             MemoryPoolStrategy::ShortestLifetimeFirst})
     {
+        SCOPED_TRACE(static_cast<int>(strategy));
         const MemoryPoolPlan plan = plan_memory_pool(entries, strategy);
+        EXPECT_LT(plan.byte_offsets[2], plan.byte_offsets[5]);
+        EXPECT_EQ(plan.byte_offsets[6], -1);
+        EXPECT_GE(plan.peak_bytes, plan.lower_bound_live_bytes);
 
         for (size_t i = 0; i < entries.size(); ++i)
             for (size_t j = i + 1; j < entries.size(); ++j)
             {
+                if (entries[i].bytes == 0 || entries[j].bytes == 0) continue;
                 const bool lifetimes_overlap =
                     entries[i].first_step <= entries[j].last_step
                     && entries[j].first_step <= entries[i].last_step;
