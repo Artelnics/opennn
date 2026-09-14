@@ -1025,9 +1025,14 @@ void LSTMOperator::apply(const TensorView& input,
     float* hidden = hidden_state.as<float>();
     float* cell_act = cell_activation.as<float>();
 
-    const auto [bf, bi, bg, bo] = gate_data<const float>(gate_biases());
-    const auto [Wf, Wi, Wg, Wo] = gate_data<const float>(gate_weights());
-    const auto [Uf, Ui, Ug, Uo] = gate_data<const float>(gate_recurrent_weights());
+    // Use ordinary pointer variables: Apple Clang cannot capture structured
+    // bindings in the OpenMP regions below.
+    const auto bias_data = gate_data<const float>(gate_biases());
+    const float* const bf = bias_data[0], * const bi = bias_data[1], * const bg = bias_data[2], * const bo = bias_data[3];
+    const auto weight_data = gate_data<const float>(gate_weights());
+    const float* const Wf = weight_data[0], * const Wi = weight_data[1], * const Wg = weight_data[2], * const Wo = weight_data[3];
+    const auto recurrent_data = gate_data<const float>(gate_recurrent_weights());
+    const float* const Uf = recurrent_data[0], * const Ui = recurrent_data[1], * const Ug = recurrent_data[2], * const Uo = recurrent_data[3];
 
     if (H >= 96)
     {
@@ -1420,11 +1425,16 @@ void LSTMOperator::apply_delta(const TensorView& input,
     const float* hidden = hidden_state.as<float>();
     const float* cell_act = cell_activation.as<float>();
 
-    const auto [Wf, Wi, Wg, Wo] = gate_data<const float>(gate_weights());
-    const auto [Uf, Ui, Ug, Uo] = gate_data<const float>(gate_recurrent_weights());
-    const auto [gbf, gbi, gbg, gbo] = gate_data<float>(gate_bias_gradients());
-    const auto [gWf, gWi, gWg, gWo] = gate_data<float>(gate_weight_gradients());
-    const auto [gUf, gUi, gUg, gUo] = gate_data<float>(gate_recurrent_weight_gradients());
+    const auto weight_data = gate_data<const float>(gate_weights());
+    const float* const Wf = weight_data[0], * const Wi = weight_data[1], * const Wg = weight_data[2], * const Wo = weight_data[3];
+    const auto recurrent_data = gate_data<const float>(gate_recurrent_weights());
+    const float* const Uf = recurrent_data[0], * const Ui = recurrent_data[1], * const Ug = recurrent_data[2], * const Uo = recurrent_data[3];
+    const auto bias_gradient_data = gate_data<float>(gate_bias_gradients());
+    float* const gbf = bias_gradient_data[0], * const gbi = bias_gradient_data[1], * const gbg = bias_gradient_data[2], * const gbo = bias_gradient_data[3];
+    const auto weight_gradient_data = gate_data<float>(gate_weight_gradients());
+    float* const gWf = weight_gradient_data[0], * const gWi = weight_gradient_data[1], * const gWg = weight_gradient_data[2], * const gWo = weight_gradient_data[3];
+    const auto recurrent_gradient_data = gate_data<float>(gate_recurrent_weight_gradients());
+    float* const gUf = recurrent_gradient_data[0], * const gUi = recurrent_gradient_data[1], * const gUg = recurrent_gradient_data[2], * const gUo = recurrent_gradient_data[3];
 
     if (H >= 96)
     {

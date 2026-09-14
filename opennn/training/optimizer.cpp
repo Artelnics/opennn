@@ -3,7 +3,9 @@
 
 #include "opennn/training/optimizer.h"
 
-#if defined(__linux__) || defined(__unix__)
+#if defined(__APPLE__)
+#include <mach/mach.h>
+#elif defined(__linux__) || defined(__unix__)
 #include <unistd.h>
 #endif
 #if defined(_WIN32)
@@ -477,7 +479,28 @@ Index Optimizer::get_maximum_batch_size() const
     }
     else
     {
-#if defined(__linux__) || defined(__unix__)
+#if defined(__APPLE__)
+
+        const mach_port_t host = mach_host_self();
+        vm_size_t page_size = 0;
+        vm_statistics64_data_t statistics{};
+        mach_msg_type_number_t count = HOST_VM_INFO64_COUNT;
+
+        const kern_return_t page_result = host_page_size(host, &page_size);
+        const kern_return_t statistics_result = host_statistics64(
+            host, HOST_VM_INFO64, reinterpret_cast<host_info64_t>(&statistics), &count);
+        mach_port_deallocate(mach_task_self(), host);
+
+        throw_if(page_result != KERN_SUCCESS || statistics_result != KERN_SUCCESS
+                     || page_size == 0,
+                 "Optimizer::get_maximum_batch_size: Mach failed to query available RAM.");
+
+        // Estimate reclaimable physical RAM; speculative pages are already
+        // included in free_count. Keep the existing memory-fraction margin below.
+        available_bytes = (Index(statistics.free_count) + Index(statistics.inactive_count))
+                          * Index(page_size);
+
+#elif defined(__linux__) || defined(__unix__)
 
         const long pages = sysconf(_SC_AVPHYS_PAGES);
         const long page_size = sysconf(_SC_PAGE_SIZE);
