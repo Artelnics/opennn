@@ -4,6 +4,7 @@
 #pragma once
 
 #include <array>
+#include <utility>
 
 #include "opennn/core/opennn_types.h"
 #include "opennn/core/configuration.h"
@@ -24,21 +25,16 @@ struct CudnnDescriptor
     CudnnDescriptor() = default;
 
     CudnnDescriptor(CudnnDescriptor&& other) noexcept
-        : handle(other.handle), deleter(other.deleter)
-    {
-        other.handle = nullptr;
-        other.deleter = nullptr;
-    }
+        : handle(std::exchange(other.handle, nullptr)),
+          deleter(std::exchange(other.deleter, nullptr)) {}
 
     CudnnDescriptor& operator=(CudnnDescriptor&& other) noexcept
     {
         if (this != &other)
         {
             reset();
-            handle = other.handle;
-            deleter = other.deleter;
-            other.handle = nullptr;
-            other.deleter = nullptr;
+            handle = std::exchange(other.handle, nullptr);
+            deleter = std::exchange(other.deleter, nullptr);
         }
         return *this;
     }

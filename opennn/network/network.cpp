@@ -841,36 +841,23 @@ void Network::forward_propagate(const vector<TensorView>& input_view,
                                          && external_input_allows_bf16_cast(i);
 
             Buffer& input_buffer = forward_propagation.staged_input_storage[i];
-            const auto ensure_cuda_capacity = [&](Index required_bytes)
-            {
-                if (input_buffer.get_device() != Device::CUDA)
-                    input_buffer.resize_bytes(required_bytes, Device::CUDA);
-                else
-                    input_buffer.grow_to(required_bytes);
-            };
-
+            const void* upload_data = source.get_data();
+            const Index upload_bytes = cast_input_to_bf16
+                ? source.size() * Index(sizeof(uint16_t)) : source.byte_size();
             if (cast_input_to_bf16)
             {
                 const Index n = source.size();
                 vector<uint16_t>& bf16_cpu = forward_propagation.host_bf16_input_scratch[i];
                 bf16_cpu.resize(size_t(n));
                 float_2_bfloat16_host(n, source.as<float>(), bf16_cpu.data());
-                ensure_cuda_capacity(n * Index(sizeof(uint16_t)));
-                device::copy_async(input_buffer.data(),
-                                   bf16_cpu.data(),
-                                   size_t(n) * sizeof(uint16_t),
-                                   device::CopyKind::HostToDevice,
-                                   stream);
+                upload_data = bf16_cpu.data();
             }
+            if (input_buffer.get_device() != Device::CUDA)
+                input_buffer.resize_bytes(upload_bytes, Device::CUDA);
             else
-            {
-                ensure_cuda_capacity(source.byte_size());
-                device::copy_async(input_buffer.data(),
-                                   source.get_data(),
-                                   source.byte_size(),
-                                   device::CopyKind::HostToDevice,
-                                   stream);
-            }
+                input_buffer.grow_to(upload_bytes);
+            device::copy_async(input_buffer.data(), upload_data, upload_bytes,
+                               device::CopyKind::HostToDevice, stream);
 
             device_inputs[i] = TensorView(input_buffer.data(),
                                           source.get_shape(),
@@ -1169,27 +1156,21 @@ void Network::link_parameters()
         float* const fp32_slot = fp32_base ? fp32_base + slot.master_offset : nullptr;
 
         void* slot_ptr = fp32_slot;
-        Type view_type = Type::FP32;
-        Device view_device = parameter_store.master.get_device();
         TensorView scale_view;
 
-        if (slot.dtype == Type::INT8 && int8_base != nullptr)
+        if (expected_type == Type::INT8)
         {
             throw_if(fp32_inference_base == nullptr,
                      "Network::link_parameters: INT8 parameters require compact FP32 scale storage.");
 
             slot_ptr = int8_base + slot.int8_offset;
-            view_type = Type::INT8;
-            view_device = Device::CUDA;
             scale_view = TensorView(fp32_inference_base + slot.fp32_offset,
                                     Shape{slot.scale_channels}, Type::FP32, Device::CUDA);
         }
-        else if (slot.dtype == Type::BF16 && bf16_mirror_base != nullptr)
+        else if (expected_type == Type::BF16)
         {
             slot_ptr = bf16_mirror_base
                 + (parameter_store.bf16_compact ? slot.bf16_offset : slot.master_offset);
-            view_type = Type::BF16;
-            view_device = Device::CUDA;
         }
         else if (fp32_inference_base != nullptr)
         {
@@ -1198,8 +1179,6 @@ void Network::link_parameters()
                      "Network::link_parameters: unaligned compact fp32 parameter memory.");
 
             slot_ptr = compact_slot;
-            view_type = Type::FP32;
-            view_device = Device::CUDA;
         }
         else
         {
@@ -1207,7 +1186,8 @@ void Network::link_parameters()
                      "Network::link_parameters: unaligned parameter memory.");
         }
 
-        param_views.emplace_back(slot_ptr, slot.shape, view_type, view_device);
+        param_views.emplace_back(slot_ptr, slot.shape, expected_type,
+                                 parameter_store.master.get_device());
         param_scales.emplace_back(scale_view);
     },
     [&](Layer& layer)
@@ -1356,52 +1336,29 @@ void Network::release_bf16_fp32_parameter_master_for_inference()
 
     if (!can_release_parameter_master) return;
 
-    const auto specs = get_parameter_specs();
-
-    Index fp32_keep_floats = 0;
-    for (const auto& layer_specs : specs)
-        for (const auto& [shape, dtype] : layer_specs)
-            if (!shape.empty() && dtype != Type::BF16)
-                fp32_keep_floats += get_aligned_size(shape.size());
-
-    if (fp32_keep_floats > 0)
+    const ParameterSlotTotals totals = for_each_parameter_slot({});
+    parameter_store.fp32_inference.resize_bytes(
+        totals.fp32_elements * Index(sizeof(float)), Device::CUDA);
+    if (totals.fp32_elements > 0)
     {
-        parameter_store.fp32_inference.resize_bytes(fp32_keep_floats * Index(sizeof(float)), Device::CUDA);
-
         DeviceStream stream = device::get_compute_stream();
         float* const source_base = parameter_store.master.as<float>();
         float* const destination_base = parameter_store.fp32_inference.as<float>();
 
-        Index source_offset = 0;
-        Index destination_offset = 0;
-
-        for (const auto& layer_specs : specs)
-            for (const auto& [shape, dtype] : layer_specs)
-            {
-                if (shape.empty()) continue;
-
-                const Index aligned = get_aligned_size(shape.size());
-                if (dtype != Type::BF16)
-                {
-                    device::copy_async(destination_base + destination_offset,
-                                       source_base + source_offset,
-                                       aligned * Index(sizeof(float)),
-                                       device::CopyKind::DeviceToDevice,
-                                       stream);
-                    destination_offset += aligned;
-                }
-                source_offset += aligned;
-            }
+        for_each_parameter_slot([&](const ParameterSlot& slot)
+        {
+            if (slot.shape.empty() || slot.tied || slot.dtype == Type::BF16) return;
+            device::copy_async(destination_base + slot.fp32_offset,
+                               source_base + slot.master_offset,
+                               get_aligned_size(slot.shape.size()) * Index(sizeof(float)),
+                               device::CopyKind::DeviceToDevice, stream);
+        });
 
         device::synchronize(stream);
         memory_debug::record("parameters",
                              "fp32_compact_inference",
                              parameter_store.fp32_inference.byte_size(),
                              "bf16_release");
-    }
-    else
-    {
-        parameter_store.fp32_inference.resize_bytes(0, Device::CUDA);
     }
 
     const Index fp32_master_bytes = parameter_store.master.byte_size();
@@ -1548,15 +1505,10 @@ void Network::activate_transposed_inference_weights()
         {
             const TensorView& weight = combination->weights;
             const Shape& shape = weight.get_shape();
-            if (weight.is_int8())
-                transpose_2d_cuda<int8_t>(shape[0], shape[1],
-                                          weight.as<int8_t>(), scratch.as<int8_t>());
-            else
-                weight.dispatch([&]<typename T>()
-                {
-                    transpose_2d_cuda<T>(shape[0], shape[1],
-                                         weight.as<T>(), scratch.as<T>());
-                });
+            visit_type<Type::FP32, Type::BF16, Type::INT8>(weight.get_type(), [&]<typename T>()
+            {
+                transpose_2d_cuda<T>(shape[0], shape[1], weight.as<T>(), scratch.as<T>());
+            });
             device::copy_async(weight.get_data(), scratch.data(), weight.byte_size(),
                                device::CopyKind::DeviceToDevice, stream);
             combination->transposed_inference_active = true;

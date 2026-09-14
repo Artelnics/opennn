@@ -271,15 +271,6 @@ CudaAllocationGrowthGuard::~CudaAllocationGrowthGuard() noexcept
     }
 }
 
-namespace
-{
-
-#ifdef OPENNN_HAS_CUDA
-
-#endif
-
-}
-
 void set_zero(void* data, Index byte_count, Device device_type)
 {
     throw_if_auto(device_type);
@@ -290,7 +281,7 @@ void set_zero(void* data, Index byte_count, Device device_type)
     if (device_type == Device::CUDA)
     {
 #ifdef OPENNN_HAS_CUDA
-        CHECK_CUDA(cudaMemsetAsync(data, 0, static_cast<size_t>(byte_count), get_compute_stream()));
+        set_zero_async(data, byte_count);
 #else
         throw_cuda_unavailable();
 #endif

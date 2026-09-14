@@ -48,6 +48,11 @@ remaining limitations.
 
 ### Reliability and portability
 
+- Share cuBLASLt launch and algorithm checks, CUDA activation traversal, and
+  mixed-precision upload and parameter-layout handling. Preserve public APIs,
+  kernel selection and cache formats.
+- Preserve tied FP32 parameters and subsequent compact offsets when releasing
+  the FP32 master for BF16 inference.
 - Separate training epoch orchestration, CUDA graph staging and replay, and
   remainder-batch execution into focused internal helpers. Preserve optimizer
   settings and public interfaces, with regression checks for sample-weighted

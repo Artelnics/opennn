@@ -75,26 +75,38 @@ void swiglu_backward_cuda(const int n, const T* dout, const T* gate, const T* up
     launch_elementwise(n, swiglu_backward_kernel<T>, dout, gate, up, dgate, dup);
 }
 
-template<typename T, int VEC>
-__global__ void activation_forward_kernel(const int n_vec, const int n,
-                                          T* __restrict__ data, const int function)
+template<typename T, int VEC, bool Backward>
+__global__ void activation_kernel(const int n_vec, const int n,
+                                  const T* __restrict__ outputs,
+                                  T* __restrict__ data, const int function)
 {
     const Index tid = Index(blockIdx.x) * blockDim.x + threadIdx.x;
     const Index stride = Index(blockDim.x) * gridDim.x;
 
     for (Index i = tid; i < n_vec; i += stride)
     {
-        float v[VEC];
+        float y[VEC], v[VEC];
+        if constexpr (Backward) VecIO<T, VEC>::load_float(outputs + i * VEC, y);
         VecIO<T, VEC>::load_float(data + i * VEC, v);
 
         #pragma unroll
-        for (int k = 0; k < VEC; ++k) v[k] = opennn_activation_value(v[k], function);
+        for (int k = 0; k < VEC; ++k)
+        {
+            if constexpr (Backward) v[k] = opennn_activation_grad(y[k], v[k], function);
+            else                    v[k] = opennn_activation_value(v[k], function);
+        }
 
         VecIO<T, VEC>::store_float(data + i * VEC, v);
     }
 
     for (Index i = Index(n_vec) * VEC + tid; i < n; i += stride)
-        data[i] = static_cast<T>(opennn_activation_value(static_cast<float>(data[i]), function));
+    {
+        if constexpr (Backward)
+            data[i] = static_cast<T>(opennn_activation_grad(static_cast<float>(outputs[i]),
+                                                           static_cast<float>(data[i]), function));
+        else
+            data[i] = static_cast<T>(opennn_activation_value(static_cast<float>(data[i]), function));
+    }
 }
 
 template<typename T>
@@ -102,33 +114,7 @@ void activation_forward_cuda(const Index n, T* data, const int function)
 {
     launch_vec_on<vec16<T>>(opennn::device::get_compute_stream(), n,
                             are_aligned<16>(data),
-                            activation_forward_kernel<T, vec16<T>>, data, function);
-}
-
-template<typename T, int VEC>
-__global__ void activation_backward_kernel(const int n_vec, const int n,
-                                           const T* __restrict__ outputs,
-                                           T* __restrict__ delta, const int function)
-{
-    const Index tid = Index(blockIdx.x) * blockDim.x + threadIdx.x;
-    const Index stride = Index(blockDim.x) * gridDim.x;
-
-    for (Index i = tid; i < n_vec; i += stride)
-    {
-        float y[VEC];
-        float d[VEC];
-        VecIO<T, VEC>::load_float(outputs + i * VEC, y);
-        VecIO<T, VEC>::load_float(delta + i * VEC, d);
-
-        #pragma unroll
-        for (int k = 0; k < VEC; ++k) d[k] = opennn_activation_grad(y[k], d[k], function);
-
-        VecIO<T, VEC>::store_float(delta + i * VEC, d);
-    }
-
-    for (Index i = Index(n_vec) * VEC + tid; i < n; i += stride)
-        delta[i] = static_cast<T>(opennn_activation_grad(static_cast<float>(outputs[i]),
-                                                         static_cast<float>(delta[i]), function));
+                            activation_kernel<T, vec16<T>, false>, nullptr, data, function);
 }
 
 template<typename T>
@@ -136,7 +122,7 @@ void activation_backward_cuda(const Index n, const T* outputs, T* delta, const i
 {
     launch_vec_on<vec16<T>>(opennn::device::get_compute_stream(), n,
                             are_aligned<16>(outputs, delta),
-                            activation_backward_kernel<T, vec16<T>>,
+                            activation_kernel<T, vec16<T>, true>,
                             outputs, delta, function);
 }
 

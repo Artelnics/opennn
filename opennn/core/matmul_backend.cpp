@@ -175,6 +175,19 @@ namespace
         };
     }
 
+    struct MatmulInvocation
+    {
+        const void* a;
+        const void* b;
+        const void* c;
+        void* d;
+        const void* bias;
+        float alpha;
+        float beta;
+        size_t destination_bytes;
+        DeviceStream stream;
+    };
+
     struct MatmulPlan
     {
         MatmulPlanKey        key{};
@@ -240,6 +253,17 @@ namespace
             cudnn_plan = nullptr;
             cudnn_candidate = -1;
             cudnn_workspace_bytes = 0;
+        }
+
+        cublasStatus_t launch_lt(const MatmulInvocation& call,
+                                 const cublasLtMatmulAlgo_t* selected_algorithm,
+                                 void* workspace, size_t bytes) const
+        {
+            return cublasLtMatmul(device::get_cublas_lt_handle(), matmul_descriptor,
+                                  &call.alpha, call.a, a_matrix_layout, call.b, b_matrix_layout,
+                                  &call.beta, call.c, output_matrix_layout,
+                                  call.d, output_matrix_layout,
+                                  selected_algorithm, workspace, bytes, call.stream);
         }
     };
 
@@ -382,19 +406,17 @@ namespace
         uint64_t cudnn_workspace_bytes = 0;
         int64_t cudnn_plan_index = -1;
 
+        array<long long, 12> tuning_knobs() const noexcept
+        {
+            return {static_cast<long long>(version), candidates, tile_tolerance, traffic_budget,
+                    cross_source_gain, anchor_on_fastest, cudnn_enabled, cudnn_workspace_mb,
+                    cudnn_min_gflop, cudnn_min_dim, cudnn_candidates,
+                    static_cast<long long>(workspace_search_bytes)};
+        }
+
         bool same_tuning(const MatmulPlanCacheRecord& other) const noexcept
         {
-            return magic == other.magic && version == other.version && key == other.key
-                && candidates == other.candidates && tile_tolerance == other.tile_tolerance
-                && traffic_budget == other.traffic_budget
-                && cross_source_gain == other.cross_source_gain
-                && anchor_on_fastest == other.anchor_on_fastest
-                && cudnn_enabled == other.cudnn_enabled
-                && cudnn_workspace_mb == other.cudnn_workspace_mb
-                && cudnn_min_gflop == other.cudnn_min_gflop
-                && cudnn_min_dim == other.cudnn_min_dim
-                && cudnn_candidates == other.cudnn_candidates
-                && workspace_search_bytes == other.workspace_search_bytes;
+            return magic == other.magic && key == other.key && tuning_knobs() == other.tuning_knobs();
         }
     };
 
@@ -426,15 +448,28 @@ namespace
         // different versions keep separate files instead of each rejecting
         // and re-tuning the other's on every launch.
         size_t name = MatmulPlanKeyHash{}(record.key);
-        for (const long long knob : {static_cast<long long>(record.version),
-                                     record.candidates, record.tile_tolerance, record.traffic_budget,
-                                     record.cross_source_gain, record.anchor_on_fastest,
-                                     record.cudnn_enabled, record.cudnn_workspace_mb,
-                                     record.cudnn_min_gflop, record.cudnn_min_dim, record.cudnn_candidates,
-                                     static_cast<long long>(record.workspace_search_bytes)})
+        for (const long long knob : record.tuning_knobs())
             name ^= std::hash<long long>{}(knob) + 0x9e3779b9u + (name << 6) + (name >> 2);
 
         return lt_plan_cache_path() / format("{:016x}.ltplan", name);
+    }
+
+    optional<size_t> checked_matmul_workspace(const MatmulPlan& plan,
+                                             const cublasLtMatmulAlgo_t& algorithm)
+    {
+        cublasLtMatmulHeuristicResult_t check{};
+        if(cublasLtMatmulAlgoCheck(device::get_cublas_lt_handle(),
+                                   plan.matmul_descriptor,
+                                   plan.a_matrix_layout, plan.b_matrix_layout,
+                                   plan.output_matrix_layout, plan.output_matrix_layout,
+                                   &algorithm, &check) != CUBLAS_STATUS_SUCCESS
+           || check.state != CUBLAS_STATUS_SUCCESS
+           || check.workspaceSize > cublas_lt_workspace_search_bytes)
+        {
+            device::reset_last_error();
+            return nullopt;
+        }
+        return check.workspaceSize;
     }
 
     // The plan already has its descriptor and layouts, which is what the
@@ -458,24 +493,12 @@ namespace
         if (!stream.read(reinterpret_cast<char*>(&record), streamsize(sizeof(record)))) return false;
         if (!record.same_tuning(expected)) return false;
 
-        cublasLtMatmulHeuristicResult_t check{};
-        if (cublasLtMatmulAlgoCheck(device::get_cublas_lt_handle(),
-                                    plan.matmul_descriptor,
-                                    plan.a_matrix_layout,
-                                    plan.b_matrix_layout,
-                                    plan.output_matrix_layout,
-                                    plan.output_matrix_layout,
-                                    &record.algorithm, &check) != CUBLAS_STATUS_SUCCESS
-            || check.state != CUBLAS_STATUS_SUCCESS
-            || check.workspaceSize > cublas_lt_workspace_search_bytes)
-        {
-            device::reset_last_error();
-            return false;
-        }
+        const optional<size_t> workspace = checked_matmul_workspace(plan, record.algorithm);
+        if (!workspace) return false;
 
         plan.algorithm = record.algorithm;
         plan.has_algorithm = true;
-        plan.workspace_bytes = check.workspaceSize;
+        plan.workspace_bytes = *workspace;
         plan.tuned = true;
 
         // The tuner preferred a cuDNN engine: rebuild that one engine, which
@@ -624,21 +647,9 @@ namespace
                                   cublasLtMatmulAlgo_t& algorithm,
                                   float traffic)
     {
-        cublasLtMatmulHeuristicResult_t check{};
-        if(cublasLtMatmulAlgoCheck(device::get_cublas_lt_handle(),
-                                   plan.matmul_descriptor,
-                                   plan.a_matrix_layout,
-                                   plan.b_matrix_layout,
-                                   plan.output_matrix_layout,
-                                   plan.output_matrix_layout,
-                                   &algorithm, &check) != CUBLAS_STATUS_SUCCESS
-           || check.state != CUBLAS_STATUS_SUCCESS
-           || check.workspaceSize > cublas_lt_workspace_search_bytes)
-        {
-            device::reset_last_error();
-            return false;
-        }
-        plan.candidates.push_back({algorithm, check.workspaceSize, traffic});
+        const optional<size_t> workspace = checked_matmul_workspace(plan, algorithm);
+        if (!workspace) return false;
+        plan.candidates.push_back({algorithm, *workspace, traffic});
         return true;
     }
 
@@ -1028,49 +1039,26 @@ namespace
         return true;
     }
 
-    struct MatmulInvocation
-    {
-        const void* a;
-        const void* b;
-        const void* c;
-        void* d;
-        const void* bias;
-        float alpha;
-        float beta;
-        size_t destination_bytes;
-        DeviceStream stream;
-    };
-
     struct CandidateRunner
     {
         MatmulPlan& plan;
-        const void* a;
-        const void* b;
-        const void* c;
-        void* d;
-        const void* bias;
-        float alpha;
-        float beta;
+        const MatmulInvocation& invocation;
         void* workspace;
         void* destination;
-        DeviceStream stream;
 
         cublasStatus_t launch_lt(size_t index) const
         {
             const MatmulCandidate& candidate = plan.candidates[index];
-            return cublasLtMatmul(device::get_cublas_lt_handle(), plan.matmul_descriptor,
-                                  &alpha, a, plan.a_matrix_layout, b, plan.b_matrix_layout,
-                                  &beta, c, plan.output_matrix_layout,
-                                  destination, plan.output_matrix_layout,
-                                  &candidate.algorithm, workspace,
-                                  candidate.workspace_bytes, stream);
+            MatmulInvocation call = invocation;
+            call.d = destination;
+            return plan.launch_lt(call, &candidate.algorithm, workspace, candidate.workspace_bytes);
         }
 
         bool launch_cudnn(size_t index) const
         {
             return matmul::cudnn::run(plan.cudnn_plan,
                                      plan.candidates[index].cudnn_candidate,
-                                     a, b, bias, d, workspace);
+                                     invocation.a, invocation.b, invocation.bias, invocation.d, workspace);
         }
     };
 
@@ -1112,7 +1100,7 @@ namespace
             if(call.plan.candidates[index].source != MatmulSource::CublasLt) continue;
             const optional<float> milliseconds = time_candidate(
                 [&] { return call.launch_lt(index) == CUBLAS_STATUS_SUCCESS; },
-                start, stop, call.stream, timed_runs);
+                start, stop, call.invocation.stream, timed_runs);
             if(!milliseconds)
             {
                 device::reset_last_error();
@@ -1142,19 +1130,19 @@ namespace
         const bool comparable = reference_index < call.plan.candidates.size()
             && !destination_is_operand && elements > 0
             && call.launch_lt(reference_index) == CUBLAS_STATUS_SUCCESS
-            && read_verification_windows(call.d, elements, reference, call.stream);
+            && read_verification_windows(call.invocation.d, elements, reference, call.invocation.stream);
         if(!comparable) device::reset_last_error();
 
         for(size_t index = 0; comparable && index < call.plan.candidates.size(); ++index)
         {
             const MatmulCandidate& option = call.plan.candidates[index];
             if(option.source != MatmulSource::Cudnn || !call.launch_cudnn(index)) continue;
-            if(cudaStreamSynchronize(call.stream) != cudaSuccess)
+            if(cudaStreamSynchronize(call.invocation.stream) != cudaSuccess)
             {
                 device::reset_last_error();
                 continue;
             }
-            if(!read_verification_windows(call.d, elements, candidate, call.stream)) continue;
+            if(!read_verification_windows(call.invocation.d, elements, candidate, call.invocation.stream)) continue;
             if(!verification_windows_agree(reference, candidate))
             {
                 logging::warning() << "cudnn matmul: candidate "
@@ -1166,7 +1154,7 @@ namespace
 
             const optional<float> milliseconds = time_candidate(
                 [&] { return call.launch_cudnn(index); },
-                start, stop, call.stream, timed_runs);
+                start, stop, call.invocation.stream, timed_runs);
             if(!milliseconds)
             {
                 device::reset_last_error();
@@ -1290,9 +1278,7 @@ namespace
 
         void* destination = destination_is_operand
                           ? static_cast<char*>(workspace) + destination_offset : invocation.d;
-        CandidateRunner call{plan, invocation.a, invocation.b, invocation.c,
-                             invocation.d, invocation.bias, invocation.alpha,
-                             invocation.beta, workspace, destination, invocation.stream};
+        CandidateRunner call{plan, invocation, workspace, destination};
         const device::CudaEvent start(cudaEventDefault), stop(cudaEventDefault);
         constexpr int timed_runs = 7;
         vector<float> times(plan.candidates.size(), numeric_limits<float>::infinity());
@@ -1458,12 +1444,12 @@ void run_lt_matmul_cached(
     // always safe and still is.
     const void* const c_data = addend ? addend : d_data;
 
-    if (!plan.tuned)
-        autotune_matmul_plan(plan, {
-            a_data, b_data, c_data, d_data, bias_pointer, alpha, beta,
-            size_t(ldd ? ldd : m) * size_t(n) * matmul_dtype_bytes(out_dtype),
-            device::get_compute_stream()
-        });
+    const MatmulInvocation invocation{
+        a_data, b_data, c_data, d_data, bias_pointer, alpha, beta,
+        size_t(ldd ? ldd : m) * size_t(n) * matmul_dtype_bytes(out_dtype),
+        device::get_compute_stream()
+    };
+    if (!plan.tuned) autotune_matmul_plan(plan, invocation);
 
     // The cuDNN overlay, when the tuner chose one. Three things are checked
     // here rather than trusted from the plan, because none of them is part of
@@ -1503,18 +1489,8 @@ void run_lt_matmul_cached(
         plan.release_cudnn();
     }
 
-    CHECK_CUBLAS(cublasLtMatmul(device::get_cublas_lt_handle(),
-                                plan.matmul_descriptor,
-                                &alpha,
-                                a_data, plan.a_matrix_layout,
-                                b_data, plan.b_matrix_layout,
-                                &beta,
-                                c_data, plan.output_matrix_layout,
-                                d_data, plan.output_matrix_layout,
-                                plan.has_algorithm ? &plan.algorithm : nullptr,
-                                ensure_shared_scratch(plan.workspace_bytes),
-                                plan.workspace_bytes,
-                                device::get_compute_stream()));
+    CHECK_CUBLAS(plan.launch_lt(invocation, plan.has_algorithm ? &plan.algorithm : nullptr,
+                                ensure_shared_scratch(plan.workspace_bytes), plan.workspace_bytes));
 }
 
 void gemm_strided_batched_cuda(cublasOperation_t transa, cublasOperation_t transb,

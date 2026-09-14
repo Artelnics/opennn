@@ -25,10 +25,8 @@ struct PrecisionPlan
 
 constexpr PrecisionPlan make_precision_plan(const Type type) noexcept
 {
-    if(type == Type::BF16)
-        return {Type::BF16, Type::BF16, Type::FP32, Type::FP32, Type::FP32};
-    if(type == Type::INT8)
-        return {Type::BF16, Type::INT8, Type::FP32, Type::FP32, Type::FP32};
+    if(type == Type::BF16 || type == Type::INT8)
+        return {Type::BF16, type};
     return {};
 }
 
