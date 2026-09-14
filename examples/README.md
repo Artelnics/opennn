@@ -11,9 +11,10 @@ some language and detection examples require large downloads or a CUDA device.
 | [`blank`](blank/main.cpp) | A two-input dense network and one prediction | CPU FP32; fixed demo weights; no data or downloads |
 | [`iris_plant`](iris_plant/main.cpp) | Classification, evaluation and C/Python export | Bundled small CSV; explicitly CPU FP32 |
 | [`airfoil_self_noise`](airfoil_self_noise/main.cpp) | Tabular regression | Bundled CSV |
+| [`yacht_hydrodynamics`](yacht_hydrodynamics/main.cpp) | Regression with neuron selection, quasi-Newton training and test-set regression analysis | Bundled CSV; explicitly CPU FP32 with one thread |
 | [`breast_cancer`](breast_cancer/main.cpp) | Binary classification | Bundled CSV; explicitly CPU FP32 |
 | [`concrete`](concrete/main.cpp) | Constrained response optimization | Bundled saved network; loads from the source tree |
-| [`ecg5000_anomaly_detection`](ecg5000_anomaly_detection/main.cpp) | Autoencoder anomaly detection | Bundled ECG CSV |
+| [`ecg5000_anomaly_detection`](ecg5000_anomaly_detection/main.cpp) | Autoencoder anomaly detection with a reconstruction-error threshold | Bundled ECG CSV and stored test indices; explicitly CPU FP32 |
 | [`forecasting_tinyml`](forecasting_tinyml/main.cpp) | RNN/LSTM export parity | Constructs inputs; CPU FP32; optional emulator tools |
 | [`amazon_reviews`](amazon_reviews/main.cpp) | Sentiment classification | Bundled labelled text |
 | [`emotion_analysis`](emotion_analysis/main.cpp) | Multi-class text classification | Bundled labelled text |
@@ -144,11 +145,16 @@ the bundled model. See [the data review](../DATASETS.md).
 This example trains an autoencoder to recognize normal ECG signals and flags
 signals with unusually large reconstruction errors:
 
-- OpenNN creates a reproducible 80/20 training and testing split;
-- only normal samples are used to train the autoencoder;
-- input and output scaling are prepared automatically from the training data;
-- the anomaly threshold is the mean training reconstruction error plus one
-  population standard deviation.
+- the 1,000 testing signals are the rows listed in
+  `ecg5000_anomaly_detection/data/test_indices.csv`; the other 3,998 rows are the
+  development set;
+- all 140 values of every signal are scaled to [0, 1] with one global minimum and
+  maximum taken from the development rows;
+- a 140-32-16-8-16-32-140 autoencoder with ReLU hidden layers and a sigmoid output
+  is trained only on the normal development signals, minimizing the mean absolute
+  error with Adam (learning rate 0.001, batch size 512) for 20 epochs;
+- a signal raises an alert when its mean absolute reconstruction error reaches the
+  mean plus one population standard deviation of the normal training errors.
 
 The tutorial data is stored in `ecg5000_anomaly_detection/data/ecg.csv` from the tutorial's
 [official download](https://storage.googleapis.com/download.tensorflow.org/data/ecg.csv).
@@ -159,8 +165,9 @@ Although the dataset is commonly called ECG5000, this prepared CSV contains
 72ce7b040ca0c6ed36c3368e570c6ac4ddf20100476e47373c63b2395e012df1
 ```
 
-The executable prints the learned threshold and the number of anomalies found
-in the testing partition.
+The executable prints the threshold and, with anomaly as the positive class, the
+test confusion matrix, accuracy, precision, sensitivity, specificity, F1 score and
+ROC AUC.
 
 ## TinyML export parity
 

@@ -42,6 +42,7 @@ foreach(example
     mnist
     qwen3
     translation
+    yacht_hydrodynamics
     yolo)
     opennn_example(${example})
 endforeach()

@@ -37,6 +37,7 @@ these adaptations.
 | `breast_cancer/data` | Wolberg, W. (1990), [Breast Cancer Wisconsin (Original), UCI](https://archive.ics.uci.edu/dataset/15/breast+cancer+wisconsin+original), DOI 10.24432/C5HP4Z | Clean CSV matches all 683 complete upstream rows: remove ID, omit rows containing `?`, map 2/4 to 0/1, add header and semicolons. The missing-values variant differs only by replacing eleven cells with `NA`, listed below. Both CSVs are cleared with this attribution. |
 | `concrete/data` | Yeh, I. (1998), [Concrete Compressive Strength, UCI](https://archive.ics.uci.edu/dataset/165/concrete+compressive+strength), DOI 10.24432/C5PK67 | All 1,030 rows and nine columns match `Concrete_Data.xls` within 8e-15 absolute error. XLS converted to CSV; headers renamed. See existing `data/SOURCE.md`. The `nn/` model was introduced in commit `538e8881b`; [the example guide](examples/README.md#concrete-response-optimization) attributes it to unspecified IDC paper companion material. Record the exact paper, model source/terms and training recipe before clearing that artifact. |
 | `iris_plant/data` | Fisher, R. (1936), [Iris, UCI](https://archive.ics.uci.edu/dataset/53/iris), DOI 10.24432/C56C76 | All 150 rows match `bezdekIris.data` numerically; labels lowercased with underscores, header and semicolons added. This includes corrected rows 35 and 38. `iris_model.json`, introduced in commit `480b91352`, needs a model-generation/source record. |
+| `yacht_hydrodynamics/data` | Gerritsma, J., Onnink, R., Versluis, A. (1981), [Yacht Hydrodynamics, UCI](https://archive.ics.uci.edu/dataset/243/yacht+hydrodynamics), DOI 10.24432/C5XG7R | All 308 rows of `yacht_hydrodynamics.data` match numerically in order (the member's trailing blank line is not a row). Header added from the UCI variable descriptions; single and double spaces changed to semicolons, number text unchanged. Cleared with this attribution. |
 | `amazon_reviews/data` | Kotzias, D. (2015), [Sentiment Labelled Sentences, UCI](https://archive.ics.uci.edu/dataset/331/sentiment+labelled+sentences), DOI 10.24432/C57604; Kotzias et al., *From Group to Individual Labels using Deep Features*, KDD 2015 | The 1,000 labelled sentences match after 0/1 to Bad/Good mapping, except an added leading apostrophe on the first local sentence. Small/reduced samples and tokenized files are derivatives; reconstruction settings are missing. `amazon_cells_reduced_data.txt` contains NUL bytes and malformed tabular fields and is not a validated replacement for the original text. |
 
 The breast-cancer missing-value adaptation replaces these cells (one-based data
@@ -58,6 +59,7 @@ Upstream ZIP SHA-256 values from this review:
 15   3f91e49bceb30c0de8ea988344357236f26ed8bd536415ac594226015b6fd84d
 53   d11fe30213d36434a0879aab7cb00ce3c812eb7ba2495874438abff7b7b762e9
 165  dad85d14de8aee4e07479daa774e6b569a313715b71a3b92c95a07cf91c2c9a7
+243  aa52b68f88c4bb552187a53ef4c5753fa178f6a36035a3771c5bc04e078487ac
 291  5c7767ba53ad827d3f48ba1eb9434117f4892df8f10bc4c99e118a9e8a7ae07c
 331  afc26626d710899948693e1a61405dce197f57ffa719fa1130d346b4cc095343
 ```
