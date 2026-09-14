@@ -6,37 +6,21 @@
 #include <utility>
 
 #include "opennn/core/string_utilities.h"
-#include "opennn/network/layers/activation_layer.h"
-#include "opennn/network/layers/addition_layer.h"
 #include "opennn/network/layers/clamping_layer.h"
-#include "opennn/network/layers/c2psa_layer.h"
-#include "opennn/network/layers/concatenation_layer.h"
-#include "opennn/network/layers/convolutional_layer.h"
 #include "opennn/network/layers/dense_layer.h"
-#include "opennn/network/layers/detection_layer.h"
-#include "opennn/network/layers/detection_v8_layer.h"
-#include "opennn/network/layers/embedding_layer.h"
-#include "opennn/network/layers/flatten_layer.h"
-#include "opennn/network/layers/grouped_query_attention_layer.h"
 #include "opennn/network/layers/lstm_layer.h"
-#include "opennn/network/layers/multihead_attention_layer.h"
-#include "opennn/network/layers/non_max_suppression_layer.h"
-#include "opennn/network/layers/normalization_layer_3d.h"
-#include "opennn/network/layers/pooling_layer.h"
-#include "opennn/network/layers/pooling_layer_3d.h"
 #include "opennn/network/layers/recurrent_layer.h"
 #include "opennn/network/layers/scaling_layer.h"
-#include "opennn/network/layers/tokenizer_layer.h"
 #include "opennn/network/layers/unscaling_layer.h"
-#include "opennn/network/layers/upsampling_layer.h"
 
 namespace opennn
 {
 
-static void finalize_build(Network& network)
+static void append_dense(Network& network, const Shape& output_shape,
+                          const string& activation, const string& label)
 {
-    network.compile();
-    network.set_parameters_glorot();
+    network.add_layer(make_unique<Dense>(network.get_output_shape(), output_shape,
+                                         activation, BatchNormalization::No, label));
 }
 
 static void add_dense_stack(Network& network,
@@ -44,19 +28,32 @@ static void add_dense_stack(Network& network,
                             const string& hidden_activation)
 {
     for (size_t i = 0; i < complexity_dimensions.get_rank(); ++i)
-        network.add_layer(make_unique<Dense>(network.get_output_shape(),
-                                             Shape{ complexity_dimensions[i] },
-                                             hidden_activation,
-                                             BatchNormalization::No,
-                                             format("dense_layer_{}", i + 1)));
+        append_dense(network, Shape{complexity_dimensions[i]}, hidden_activation,
+                      format("dense_layer_{}", i + 1));
+}
+
+static void add_regression_output(Network& network,
+                                  const Shape& output_shape,
+                                  const string& output_label,
+                                  Clamping::ClampingMethod clamping_method
+                                      = Clamping::ClampingMethod::Clamping)
+{
+    append_dense(network, output_shape, "Identity", output_label);
+
+    network.add_layer(make_unique<Unscaling>(output_shape));
+
+    network.add_layer(make_unique<Clamping>(output_shape, clamping_method));
 }
 
 template<typename MakeLayer>
-static void add_recurrent_stack(Network& network,
-                                const Shape& complexity_dimensions,
-                                const string& base_label,
-                                MakeLayer make_layer)
+static void add_forecasting_layers(Network& network,
+                                    const Shape& input_shape,
+                                    const Shape& complexity_dimensions,
+                                    const Shape& output_shape,
+                                    const string& base_label,
+                                    MakeLayer make_layer)
 {
+    network.add_layer(make_unique<Scaling>(input_shape));
     const Index layer_count = complexity_dimensions.get_rank();
 
     for (Index i = 0; i < layer_count; ++i)
@@ -68,23 +65,9 @@ static void add_recurrent_stack(Network& network,
         if (!last) layer->set_return_sequences(true);
         network.add_layer(std::move(layer));
     }
-}
 
-static void add_regression_output(Network& network,
-                                  const Shape& output_shape,
-                                  const string& output_label,
-                                  Clamping::ClampingMethod clamping_method
-                                      = Clamping::ClampingMethod::Clamping)
-{
-    network.add_layer(make_unique<Dense>(network.get_output_shape(),
-                                         output_shape,
-                                         "Identity",
-                                         BatchNormalization::No,
-                                         output_label));
-
-    network.add_layer(make_unique<Unscaling>(output_shape));
-
-    network.add_layer(make_unique<Clamping>(output_shape, clamping_method));
+    add_regression_output(network, output_shape, "forecasting_layer",
+                          Clamping::ClampingMethod::NoClamping);
 }
 
 ApproximationNetwork::ApproximationNetwork(const Shape& input_shape,
@@ -99,7 +82,7 @@ ApproximationNetwork::ApproximationNetwork(const Shape& input_shape,
 
     add_regression_output(*this, output_shape, "approximation_layer");
 
-    finalize_build(*this);
+    finalize_build();
 }
 
 ClassificationNetwork::ClassificationNetwork(const Shape& input_shape,
@@ -112,13 +95,10 @@ ClassificationNetwork::ClassificationNetwork(const Shape& input_shape,
 
     add_dense_stack(*this, complexity_dimensions, hidden_activation);
 
-    add_layer(make_unique<Dense>(get_output_shape(),
-                                   output_shape,
-                                   output_shape[0] == 1 ? "Sigmoid" : "Softmax",
-                                   BatchNormalization::No,
-                                   "classification_layer"));
+    append_dense(*this, output_shape, output_shape[0] == 1 ? "Sigmoid" : "Softmax",
+                  "classification_layer");
 
-    finalize_build(*this);
+    finalize_build();
 }
 
 ForecastingNetwork::ForecastingNetwork(const Shape& input_shape,
@@ -126,16 +106,11 @@ ForecastingNetwork::ForecastingNetwork(const Shape& input_shape,
                                        const Shape& output_shape)
     : Network(NetworkTask::Forecasting)
 {
-    add_layer(make_unique<Scaling>(input_shape));
+    add_forecasting_layers(*this, input_shape, complexity_dimensions, output_shape, "recurrent_layer",
+                            [](const Shape& in, const Shape& out, const string& label)
+                            { return make_unique<Recurrent>(in, out, "Tanh", label); });
 
-    add_recurrent_stack(*this, complexity_dimensions, "recurrent_layer",
-                        [](const Shape& in, const Shape& out, const string& label)
-                        { return make_unique<Recurrent>(in, out, "Tanh", label); });
-
-    add_regression_output(*this, output_shape, "forecasting_layer",
-                          Clamping::ClampingMethod::NoClamping);
-
-    finalize_build(*this);
+    finalize_build();
 }
 
 ForecastingLstmNetwork::ForecastingLstmNetwork(const Shape& input_shape,
@@ -143,16 +118,11 @@ ForecastingLstmNetwork::ForecastingLstmNetwork(const Shape& input_shape,
                                                const Shape& output_shape)
     : Network(NetworkTask::Forecasting)
 {
-    add_layer(make_unique<Scaling>(input_shape));
+    add_forecasting_layers(*this, input_shape, complexity_dimensions, output_shape, "lstm_layer",
+                            [](const Shape& in, const Shape& out, const string& label)
+                            { return make_unique<LSTM>(in, out, "Tanh", "Sigmoid", label); });
 
-    add_recurrent_stack(*this, complexity_dimensions, "lstm_layer",
-                        [](const Shape& in, const Shape& out, const string& label)
-                        { return make_unique<LSTM>(in, out, "Tanh", "Sigmoid", label); });
-
-    add_regression_output(*this, output_shape, "forecasting_layer",
-                          Clamping::ClampingMethod::NoClamping);
-
-    finalize_build(*this);
+    finalize_build();
 }
 
 Autoencoder::Autoencoder(const Shape& input_shape,
@@ -174,31 +144,20 @@ Autoencoder::Autoencoder(const Shape& input_shape,
                  "Autoencoder: encoder dimensions must be positive.");
 
         const bool bottleneck = i == encoder_dimensions.get_rank() - 1;
-        add_layer(make_unique<Dense>(get_output_shape(),
-                                     Shape{encoder_dimensions[i]},
-                                     hidden_activation,
-                                     BatchNormalization::No,
-                                     bottleneck ? "bottleneck_layer"
-                                                : format("encoder_layer_{}", i + 1)));
+        append_dense(*this, Shape{encoder_dimensions[i]}, hidden_activation,
+                      bottleneck ? "bottleneck_layer" : format("encoder_layer_{}", i + 1));
     }
 
     Index decoder = 1;
     for (Index i = Index(encoder_dimensions.get_rank()) - 2; i >= 0; --i, ++decoder)
-        add_layer(make_unique<Dense>(get_output_shape(),
-                                     Shape{encoder_dimensions[i]},
-                                     hidden_activation,
-                                     BatchNormalization::No,
-                                     format("decoder_layer_{}", decoder)));
+        append_dense(*this, Shape{encoder_dimensions[i]}, hidden_activation,
+                      format("decoder_layer_{}", decoder));
 
-    add_layer(make_unique<Dense>(get_output_shape(),
-                                 input_shape,
-                                 output_activation,
-                                 BatchNormalization::No,
-                                 "output_layer"));
+    append_dense(*this, input_shape, output_activation, "output_layer");
 
     add_layer(make_unique<Unscaling>(input_shape));
 
-    finalize_build(*this);
+    finalize_build();
 }
 
 }

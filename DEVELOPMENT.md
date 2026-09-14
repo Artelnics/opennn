@@ -120,7 +120,7 @@ header `pch.h` in an application.
 | --- | --- |
 | `opennn/core/` | Configuration, tensor/storage types, backend operations, persistence utilities; CUDA kernels are under `core/cuda/`. Start with `configuration.h` and `opennn_types.h`. |
 | `opennn/network/` | `Network`, propagation, save/load, chat and `ModelExpression` source export; `layers/` contains network layers and `operators/` reusable computation operators. |
-| `opennn/models/` | Ready-made tabular, image, language and forecasting models declared in `models.h`. |
+| `opennn/models/` | Ready-made tabular, image, language and forecasting architectures declared in `models.h`; shared execution and tokenizer methods belong to `Network`. |
 | `opennn/dataset/` | `TabularDataset` and specialized image, language and time-series data handling. |
 | `opennn/training/` | `Training`, losses and optimizers such as `Adam` and `SGD`. |
 | `opennn/evaluation/` | `Evaluation` for prediction-quality analysis. |

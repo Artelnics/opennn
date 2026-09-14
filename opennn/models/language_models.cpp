@@ -6,60 +6,17 @@
 #include <utility>
 
 #include "opennn/core/io_utilities.h"
-#include "opennn/core/string_utilities.h"
-#include "opennn/network/layers/activation_layer.h"
 #include "opennn/network/layers/addition_layer.h"
-#include "opennn/network/layers/clamping_layer.h"
-#include "opennn/network/layers/c2psa_layer.h"
-#include "opennn/network/layers/concatenation_layer.h"
-#include "opennn/network/layers/convolutional_layer.h"
 #include "opennn/network/layers/dense_layer.h"
-#include "opennn/network/layers/detection_layer.h"
-#include "opennn/network/layers/detection_v8_layer.h"
 #include "opennn/network/layers/embedding_layer.h"
-#include "opennn/network/layers/flatten_layer.h"
 #include "opennn/network/layers/grouped_query_attention_layer.h"
-#include "opennn/network/layers/lstm_layer.h"
 #include "opennn/network/layers/multihead_attention_layer.h"
-#include "opennn/network/layers/non_max_suppression_layer.h"
 #include "opennn/network/layers/normalization_layer_3d.h"
-#include "opennn/network/layers/pooling_layer.h"
 #include "opennn/network/layers/pooling_layer_3d.h"
-#include "opennn/network/layers/recurrent_layer.h"
-#include "opennn/network/layers/scaling_layer.h"
 #include "opennn/network/layers/tokenizer_layer.h"
-#include "opennn/network/layers/unscaling_layer.h"
-#include "opennn/network/layers/upsampling_layer.h"
 
 namespace opennn
 {
-
-static void recompile_if_specs_changed(Network& network,
-                                       const vector<vector<TensorSpec>>& forward_before,
-                                       const vector<vector<TensorSpec>>& backward_before)
-{
-    if (forward_before == network.get_forward_specs(1)
-        && backward_before == network.get_backward_specs(1))
-        return;
-
-    VectorR parameters_snapshot;
-    if (network.get_parameters_buffer_size() > 0)
-    {
-        network.copy_parameters_host();
-        parameters_snapshot = network.get_parameters_map();
-    }
-
-    network.compile();
-
-    if (parameters_snapshot.size() > 0)
-        network.set_parameters(parameters_snapshot);
-}
-
-static void finalize_build(Network& network)
-{
-    network.compile();
-    network.set_parameters_glorot();
-}
 
 #ifndef OPENNN_NO_VISION
 
@@ -111,7 +68,7 @@ TextClassificationNetwork::TextClassificationNetwork(const Shape& input_shape,
                                  BatchNormalization::No,
                                  "classification_layer"));
 
-    finalize_build(*this);
+    finalize_build();
 }
 
 static Index add_residual_and_norm(Network& network,
@@ -257,48 +214,19 @@ Transformer::Transformer(Index input_sequence_length,
     add_layer(make_unique<Dense>(decoder_shape, Shape{output_vocabulary_size},
                                  "Identity", BatchNormalization::No, "output_projection"));
 
-    finalize_build(*this);
-}
-
-template<typename Apply>
-static void apply_and_recompile(Network& network, Apply apply)
-{
-    const auto forward_before = network.get_forward_specs(1);
-    const auto backward_before = network.get_backward_specs(1);
-
-    for (const auto& layer : network.get_layers())
-        if (layer) apply(*layer);
-
-    recompile_if_specs_changed(network, forward_before, backward_before);
-}
-
-static void set_attention_and_dense_dropout(Network& network, float new_dropout_rate,
-                                            initializer_list<string_view> dense_prefixes)
-{
-    apply_and_recompile(network, [&](Layer& layer)
-    {
-        if (auto* mha = dynamic_cast<MultiHeadAttention*>(&layer))
-            mha->set_dropout_rate(new_dropout_rate);
-        else if (starts_with_any(layer.get_label(), dense_prefixes))
-            if (auto* dense = dynamic_cast<Dense*>(&layer))
-                dense->set_dropout_rate(new_dropout_rate);
-    });
+    finalize_build();
 }
 
 void Transformer::set_dropout_rate(const float new_dropout_rate)
 {
-    set_attention_and_dense_dropout(*this, new_dropout_rate,
+    set_attention_and_dense_dropout(new_dropout_rate,
                                     {"encoder_internal_dense", "encoder_external_dense",
                                      "decoder_internal_dense", "decoder_external_dense"});
 }
 
 void Transformer::set_attention_sdpa_min_sequence_length(Index new_threshold)
 {
-    apply_and_recompile(*this, [&](Layer& layer)
-    {
-        if (auto* mha = dynamic_cast<MultiHeadAttention*>(&layer))
-            mha->set_sdpa_min_sequence_length(new_threshold);
-    });
+    Network::set_attention_sdpa_min_sequence_length(new_threshold);
 }
 
 TextGenerationNetwork::TextGenerationNetwork()
@@ -362,38 +290,24 @@ TextGenerationNetwork::TextGenerationNetwork(Index sequence_length,
                             "self_attention" + suffix);
         const Index attn_index = add_layer(std::move(self_attention), {attention_input_index});
 
+        const Index residual_index = pre_normalization
+            ? add_layer(make_unique<Addition>(block_shape, "attention_addition" + suffix),
+                        {current_index, attn_index})
+            : add_residual_and_norm(*this, block_shape, "self_attention_normalization" + suffix,
+                                    current_index, attn_index);
         if (pre_normalization)
-        {
-            const Index residual_index = add_layer(make_unique<Addition>(block_shape, "attention_addition" + suffix),
-                                                   {current_index, attn_index});
-
             add_layer(make_unique<Normalization3d>(block_shape,
                                                    "dense_normalization" + suffix),
                       {residual_index});
 
-            const Index ff_index = add_feed_forward(*this, block_shape, feed_forward_dimension,
-                "internal_dense" + suffix,
-                "external_dense" + suffix,
-                feed_forward_activation);
+        const Index ff_index = add_feed_forward(*this, block_shape, feed_forward_dimension,
+            "internal_dense" + suffix, "external_dense" + suffix, feed_forward_activation);
 
-            current_index = add_layer(make_unique<Addition>(block_shape, "dense_addition" + suffix),
-                                      {residual_index, ff_index});
-        }
-        else
-        {
-            const Index norm1_index = add_residual_and_norm(*this, block_shape,
-                "self_attention_normalization" + suffix,
-                current_index, attn_index);
-
-            const Index ff_index = add_feed_forward(*this, block_shape, feed_forward_dimension,
-                "internal_dense" + suffix,
-                "external_dense" + suffix,
-                feed_forward_activation);
-
-            current_index = add_residual_and_norm(*this, block_shape,
-                "dense_normalization" + suffix,
-                norm1_index, ff_index);
-        }
+        current_index = pre_normalization
+            ? add_layer(make_unique<Addition>(block_shape, "dense_addition" + suffix),
+                        {residual_index, ff_index})
+            : add_residual_and_norm(*this, block_shape, "dense_normalization" + suffix,
+                                    residual_index, ff_index);
     }
 
     if (pre_normalization)
@@ -406,7 +320,7 @@ TextGenerationNetwork::TextGenerationNetwork(Index sequence_length,
                                  BatchNormalization::No,
                                  "output_projection"));
 
-    finalize_build(*this);
+    finalize_build();
 }
 
 static Index add_bert_encoder(Network& net,
@@ -501,7 +415,7 @@ Bert::Bert(Index sequence_length,
 {
     add_bert_encoder(*this, sequence_length, vocabulary_size, hidden_size, heads_number,
                      intermediate_size, layers_number, type_vocabulary_size);
-    finalize_build(*this);
+    finalize_build();
 }
 
 namespace
@@ -686,49 +600,13 @@ void Qwen3::build(const Index sequence_length,
 
 void TextGenerationNetwork::set_dropout_rate(const float new_dropout_rate)
 {
-    set_attention_and_dense_dropout(*this, new_dropout_rate,
+    set_attention_and_dense_dropout(new_dropout_rate,
                                     {"internal_dense", "external_dense"});
 }
 
 void TextGenerationNetwork::set_attention_sdpa_auto(bool new_sdpa_auto)
 {
-    apply_and_recompile(*this, [&](Layer& layer)
-    {
-        if (auto* mha = dynamic_cast<MultiHeadAttention*>(&layer))
-            mha->set_sdpa_auto(new_sdpa_auto);
-    });
-}
-
-namespace
-{
-
-// The caller's identity comes from source_location rather than a string each
-// call site spells out. Eleven of them passed their own name by hand, which a
-// rename would have left quietly lying.
-template <typename Network>
-auto& get_tokenizer_layer(Network& network, const char* label,
-                          const source_location location = source_location::current())
-{
-    using TokenizerType = conditional_t<is_const_v<Network>, const Tokenizer, Tokenizer>;
-    TokenizerType* tokenizer_layer = nullptr;
-
-    try
-    {
-        tokenizer_layer =
-            dynamic_cast<TokenizerType*>(network.get_layer(label).get());
-    }
-    catch (const exception&)
-    {
-    }
-
-    throw_if(!tokenizer_layer,
-             format("{}: network has no '{}' layer. Rebuild the network or "
-                    "re-save the model with a tokenizer.",
-                    location.function_name(), label));
-
-    return *tokenizer_layer;
-}
-
+    Network::set_attention_sdpa_auto(new_sdpa_auto);
 }
 
 Transformer::Transformer(const filesystem::path& path)
@@ -738,34 +616,32 @@ Transformer::Transformer(const filesystem::path& path)
 
 void Transformer::set_input_vocabulary(const vector<string>& new_vocabulary)
 {
-    get_tokenizer_layer(*this, "encoder_tokenizer")
-        .set_vocabulary(new_vocabulary);
+    Network::set_vocabulary(new_vocabulary, "encoder_tokenizer");
 }
 
 void Transformer::set_target_vocabulary(const vector<string>& new_vocabulary)
 {
-    get_tokenizer_layer(*this, "decoder_tokenizer")
-        .set_vocabulary(new_vocabulary);
+    Network::set_vocabulary(new_vocabulary, "decoder_tokenizer");
 }
 
 const TokenizerOperator* Transformer::get_input_tokenizer() const
 {
-    return get_tokenizer_layer(*this, "encoder_tokenizer").get_tokenizer();
+    return Network::get_tokenizer("encoder_tokenizer");
 }
 
 const TokenizerOperator* Transformer::get_target_tokenizer() const
 {
-    return get_tokenizer_layer(*this, "decoder_tokenizer").get_tokenizer();
+    return Network::get_tokenizer("decoder_tokenizer");
 }
 
 const vector<string>& Transformer::get_input_vocabulary() const
 {
-    return get_tokenizer_layer(*this, "encoder_tokenizer").get_vocabulary();
+    return Network::get_vocabulary("encoder_tokenizer");
 }
 
 const vector<string>& Transformer::get_target_vocabulary() const
 {
-    return get_tokenizer_layer(*this, "decoder_tokenizer").get_vocabulary();
+    return Network::get_vocabulary("decoder_tokenizer");
 }
 
 TextGenerationNetwork::TextGenerationNetwork(const filesystem::path& path)
@@ -792,30 +668,27 @@ void TextGenerationNetwork::load_pretrained(const filesystem::path& data_directo
 
 void TextGenerationNetwork::set_tokenizer(unique_ptr<TokenizerOperator> new_tokenizer)
 {
-    get_tokenizer_layer(*this, "tokenizer")
-        .set_tokenizer(std::move(new_tokenizer));
+    Network::set_tokenizer(std::move(new_tokenizer));
 }
 
 void TextGenerationNetwork::set_vocabulary(const vector<string>& new_vocabulary)
 {
-    get_tokenizer_layer(*this, "tokenizer")
-        .set_vocabulary(new_vocabulary);
+    Network::set_vocabulary(new_vocabulary);
 }
 
 const TokenizerOperator* TextGenerationNetwork::get_tokenizer() const
 {
-    return get_tokenizer_layer(*this, "tokenizer").get_tokenizer();
+    return Network::get_tokenizer();
 }
 
 void TextClassificationNetwork::set_tokenizer(unique_ptr<TokenizerOperator> new_tokenizer)
 {
-    get_tokenizer_layer(*this, "tokenizer")
-        .set_tokenizer(std::move(new_tokenizer));
+    Network::set_tokenizer(std::move(new_tokenizer));
 }
 
 const TokenizerOperator* TextClassificationNetwork::get_tokenizer() const
 {
-    return get_tokenizer_layer(*this, "tokenizer").get_tokenizer();
+    return Network::get_tokenizer();
 }
 
 TextClassificationNetwork::Prediction TextClassificationNetwork::classify(
@@ -859,28 +732,7 @@ TextClassificationNetwork::Prediction TextClassificationNetwork::classify(
 MatrixR TextClassificationNetwork::calculate_text_outputs(
     const Tensor<string, 1>& input_documents)
 {
-    const Tokenizer& tokenizer_layer = get_tokenizer_layer(
-        *this, "tokenizer");
-    const TokenizerOperator* tokenizer = tokenizer_layer.get_tokenizer();
-
-    throw_if(!tokenizer || tokenizer->get_vocabulary_size() == 0,
-             "TextClassificationNetwork::calculate_text_outputs: the tokenizer "
-             "has no vocabulary; call set_tokenizer() first.");
-
-    const Index sequence_length = tokenizer_layer.get_output_shape()[0];
-    const Index batch_size = input_documents.size();
-    MatrixR inputs = MatrixR::Zero(batch_size, sequence_length);
-
-    for (Index i = 0; i < batch_size; ++i)
-    {
-        const vector<Index> ids =
-            tokenizer->encode_sequence(input_documents.data()[i], sequence_length);
-
-        for (Index j = 0; j < min(ssize(ids), sequence_length); ++j)
-            inputs(i, j) = float(ids[size_t(j)]);
-    }
-
-    return calculate_outputs(inputs);
+    return Network::calculate_text_outputs(input_documents);
 }
 
 BertForSequenceClassification::BertForSequenceClassification()
@@ -913,12 +765,12 @@ BertForSequenceClassification::BertForSequenceClassification(Index sequence_leng
     add_layer(make_unique<Dense>(Shape{hidden_size}, Shape{labels_number},
                                  labels_number == 1 ? "Sigmoid" : "Softmax", BatchNormalization::No, "classifier"));
 
-    finalize_build(*this);
+    finalize_build();
 }
 
 void BertForSequenceClassification::set_dropout_rate(const float new_dropout_rate)
 {
-    set_attention_and_dense_dropout(*this, new_dropout_rate,
+    set_attention_and_dense_dropout(new_dropout_rate,
                                     {"feed_forward_output", "pooler"});
 }
 

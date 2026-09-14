@@ -7,10 +7,12 @@
 #include "opennn/network/layers/embedding_layer.h"
 #include "opennn/network/layers/layer.h"
 #include "opennn/network/layers/lstm_layer.h"
+#include "opennn/network/layers/multihead_attention_layer.h"
 #include "opennn/network/layers/recurrent_layer.h"
 #include "opennn/network/layers/scaling_layer.h"
 #include "opennn/network/layers/tokenizer_layer.h"
 #include "opennn/dataset/dataset.h"
+#include "tests/test_helpers.h"
 
 using namespace opennn;
 
@@ -91,6 +93,116 @@ void expect_snapshot_values(const Network& network, SnapshotKind kind,
     const float* actual = snapshot_data(network, kind);
     for (Index i = 0; i < expected.size(); ++i)
         EXPECT_FLOAT_EQ(actual[i], expected(i));
+}
+
+class ReconfigurableNetwork : public Network
+{
+public:
+    void set_dense_dropout(float rate)
+    {
+        configure_layers([rate](Layer& layer)
+        {
+            if (auto* dense = dynamic_cast<opennn::Dense*>(&layer))
+                dense->set_dropout_rate(rate);
+        });
+    }
+};
+
+void expect_reconfiguration_preserves_model(Device device)
+{
+    Configuration::instance().set(device, Type::FP32);
+    const ScopeExit restore_configuration([]
+    {
+        Configuration::instance().set(Device::CPU, Type::FP32);
+    });
+    ReconfigurableNetwork network;
+    configure_snapshot_network(network, Shape{3}, Shape{2}, SnapshotKind::States);
+    const VectorR parameters = VectorR::LinSpaced(network.get_parameters_buffer_size(), 0.01f, 0.4f);
+    const VectorR states = VectorR::LinSpaced(network.get_states_buffer_size(), 0.5f, 1.5f);
+    ASSERT_GT(states.size(), 0);
+    network.set_parameters(parameters);
+    network.set_states(states);
+    MatrixR inputs(2, 3);
+    inputs << -1.0f, 0.5f, 2.0f, 1.5f, -0.25f, 0.75f;
+    const MatrixR expected_outputs = network.calculate_outputs(inputs);
+    ASSERT_TRUE(expected_outputs.allFinite());
+    ASSERT_FALSE(expected_outputs.isZero());
+    const EffectiveConfig frozen = network.get_config();
+
+    // A layer setting must retain the compiled model's configuration, even
+    // after another model changes the global defaults (and generation).
+    Configuration::instance().set(Device::CPU, Type::FP32);
+    ASSERT_NE(Configuration::instance().get_generation(), frozen.generation);
+    for (float rate : {0.25f, 0.5f, 0.0f})
+    {
+        SCOPED_TRACE(rate);
+        const auto previous_specs = network.get_forward_specs(2);
+        const uint64_t previous_version = network.get_parameters_version();
+        network.set_dense_dropout(rate);
+        EXPECT_EQ(network.get_config().device, frozen.device);
+        EXPECT_EQ(network.get_config().training_type, frozen.training_type);
+        EXPECT_EQ(network.get_config().generation, frozen.generation);
+        if (network.get_forward_specs(2) == previous_specs)
+            EXPECT_EQ(network.get_parameters_version(), previous_version);
+        else
+            EXPECT_GT(network.get_parameters_version(), previous_version);
+
+        if (device == Device::CUDA)
+        {
+            network.copy_parameters_host();
+            network.copy_states_host();
+        }
+        expect_snapshot_values(network, SnapshotKind::Parameters, parameters);
+        expect_snapshot_values(network, SnapshotKind::States, states);
+        EXPECT_TRUE(network.calculate_outputs(inputs).isApprox(expected_outputs, 1.0e-5f));
+    }
+}
+
+template<typename Model>
+void expect_model_dropout_policy(Model& network, initializer_list<string_view> selected_dense_labels)
+{
+    const VectorR parameters = VectorR::Constant(network.get_parameters_buffer_size(), 0.125f);
+    network.set_parameters(parameters);
+    for (float rate : {0.25f, 0.5f, 0.0f})
+    {
+        SCOPED_TRACE(rate);
+        network.set_dropout_rate(rate);
+        size_t selected_dense_count = 0;
+        size_t attention_count = 0;
+        for (const auto& layer : network.get_layers())
+        {
+            SCOPED_TRACE(layer->get_label());
+            const auto specs = layer->get_forward_specs(2);
+            for (const Operator* op : layer->get_operators())
+            {
+                if (const auto* attention = dynamic_cast<const AttentionOperator*>(op))
+                {
+                    ++attention_count;
+                    EXPECT_FLOAT_EQ(attention->dropout.rate, rate);
+                    ASSERT_GT(attention->dropout_mask_slot, 0);
+                    const size_t mask_index = attention->dropout_mask_slot - 1;
+                    ASSERT_LT(mask_index, specs.size());
+                    EXPECT_EQ(specs[mask_index].shape.empty(), rate == 0.0f);
+                }
+                if (dynamic_cast<const opennn::Dense*>(layer.get()))
+                    if (const auto* dropout = dynamic_cast<const DropoutOperator*>(op))
+                    {
+                        const bool selected = ranges::find(selected_dense_labels, layer->get_label())
+                            != selected_dense_labels.end();
+                        selected_dense_count += selected;
+                        EXPECT_FLOAT_EQ(dropout->rate, selected ? rate : 0.0f);
+                        ASSERT_TRUE(dropout->mask_slot.has_value());
+                        ASSERT_GT(*dropout->mask_slot, 0);
+                        const size_t mask_index = *dropout->mask_slot - 1;
+                        ASSERT_LT(mask_index, specs.size());
+                        EXPECT_EQ(specs[mask_index].shape.empty(), !selected || rate == 0.0f);
+                    }
+            }
+        }
+        EXPECT_EQ(selected_dense_count, selected_dense_labels.size());
+        EXPECT_GT(attention_count, 0);
+        expect_snapshot_values(network, SnapshotKind::Parameters, parameters);
+    }
 }
 
 void validate_snapshot_format(SnapshotKind kind, string_view file_stem,
@@ -199,6 +311,85 @@ TEST(NetworkTest, DefaultConstructor)
     EXPECT_EQ(network.is_empty(), true);
     EXPECT_EQ(network.get_layers_number(), 0);
     EXPECT_EQ(network.get_task(), NetworkTask::Generic);
+}
+
+TEST(NetworkTest, LayerReconfigurationPreservesParametersStatesAndConfiguration)
+{
+    expect_reconfiguration_preserves_model(Device::CPU);
+}
+
+#ifdef OPENNN_HAS_CUDA
+TEST(NetworkTest, LayerReconfigurationPreservesParametersStatesAndConfigurationCuda)
+{
+    if (!device::has_cuda_device()) GTEST_SKIP() << "No CUDA device.";
+    expect_reconfiguration_preserves_model(Device::CUDA);
+}
+#endif
+
+TEST(NetworkTest, LanguageModelsRetainTheirDropoutPolicies)
+{
+    Configuration::instance().set(Device::CPU, Type::FP32);
+    Transformer transformer(3, 2, 6, 7, 4, 2, 8, 1);
+    expect_model_dropout_policy(transformer,
+        {"encoder_internal_dense_1", "encoder_external_dense_1",
+         "decoder_internal_dense_1", "decoder_external_dense_1"});
+    TextGenerationNetwork generation(3, 6, 4, 2, 8, 1);
+    expect_model_dropout_policy(generation, {"internal_dense_1", "external_dense_1"});
+    BertForSequenceClassification bert(3, 6, 4, 2, 8, 1, 2);
+    expect_model_dropout_policy(bert, {"feed_forward_output_1", "pooler"});
+}
+
+TEST(NetworkTest, LoadedTransformerExposesNamedTokenizersAndAttentionSettings)
+{
+    Configuration::instance().set(Device::CPU, Type::FP32);
+    const opennn_test::TempDir directory("opennn_named_tokenizers");
+    const filesystem::path model_path = directory.path / "transformer.json";
+    const vector<string> input_vocabulary = {"[PAD]", "[UNK]", "[START]", "[END]", "alpha", "beta"};
+    const vector<string> target_vocabulary = {"[PAD]", "[UNK]", "uno", "dos"};
+    Transformer transformer(3, 2, 6, 4, 4, 2, 8, 1);
+    transformer.set_input_vocabulary(input_vocabulary);
+    Network& base = transformer;
+    base.set_tokenizer(make_unique<WordLevelTokenizer>(vector<string>{"[PAD]", "[UNK]"}),
+                       "decoder_tokenizer");
+    base.set_vocabulary(target_vocabulary, "decoder_tokenizer");
+    EXPECT_EQ(base.get_tokenizer("encoder_tokenizer"), transformer.get_input_tokenizer());
+    EXPECT_EQ(base.get_tokenizer("decoder_tokenizer"), transformer.get_target_tokenizer());
+    EXPECT_EQ(transformer.get_target_vocabulary(), target_vocabulary);
+    base.set_attention_sdpa_auto(false);
+    base.set_attention_sdpa_min_sequence_length(1);
+    transformer.save(model_path);
+
+    Network restored(model_path);
+    EXPECT_EQ(restored.get_vocabulary("encoder_tokenizer"), input_vocabulary);
+    EXPECT_EQ(restored.get_vocabulary("decoder_tokenizer"), target_vocabulary);
+    ASSERT_NE(restored.get_tokenizer("encoder_tokenizer"), nullptr);
+    ASSERT_NE(restored.get_tokenizer("decoder_tokenizer"), nullptr);
+    EXPECT_EQ(restored.get_tokenizer("encoder_tokenizer")->encode("alpha"), (vector<Index>{4}));
+    EXPECT_EQ(restored.get_tokenizer("decoder_tokenizer")->encode_sequence("dos", 2), (vector<Index>{3}));
+    EXPECT_THROW(restored.get_tokenizer(), runtime_error);
+    EXPECT_THROW(restored.get_tokenizer("output_projection"), runtime_error);
+    const auto* decoder = dynamic_cast<const Tokenizer*>(restored.get_layer("decoder_tokenizer").get());
+    ASSERT_NE(decoder, nullptr);
+    EXPECT_EQ(decoder->get_variable_role(), VariableRole::Decoder);
+    EXPECT_EQ(restored.get_source_layers()[size_t(restored.get_layer_index("decoder_tokenizer"))],
+              (vector<Index>{-1}));
+    EXPECT_EQ(restored.get_source_layers()[size_t(restored.get_layer_index("encoder_tokenizer"))],
+              (vector<Index>{-2}));
+
+    size_t attention_count = 0;
+    for (const auto& layer : restored.get_layers())
+        if (const auto* attention = dynamic_cast<const MultiHeadAttention*>(layer.get()))
+        {
+            ++attention_count;
+            JsonWriter writer;
+            writer.open_element("Attention");
+            attention->write_JSON_body(writer);
+            writer.close_element();
+            const Json settings = Json::parse(writer.c_str()).at("Attention");
+            EXPECT_FALSE(settings.at("SdpaAuto").as_bool());
+            EXPECT_EQ(settings.at("SdpaMinSequenceLength").as_long(), 1);
+        }
+    EXPECT_EQ(attention_count, 3);
 }
 
 // Caches derived from the weights -- cuDNN's packed RNN weight space, folded
@@ -491,8 +682,8 @@ TEST(NetworkTest, SavedCustomTokenizerPreservesTiedLanguageModelPredictions)
     auto tokenizer = make_unique<Tokenizer>(Shape{sequence_length});
     auto word_level = make_unique<WordLevelTokenizer>(vector<string>{"[PAD]", "[UNK]"});
     word_level->set_vocabulary({"[PAD]", "[UNK]", "alpha", "beta", "gamma"});
-    tokenizer->set_tokenizer(std::move(word_level));
     original.add_layer(std::move(tokenizer));
+    original.set_tokenizer(std::move(word_level));
     auto embedding = make_unique<Embedding>(Shape{vocabulary_size, sequence_length}, embedding_dimension);
     embedding->set_learned_positional(true);
     Layer* const tied_source = embedding.get();
@@ -515,13 +706,13 @@ TEST(NetworkTest, SavedCustomTokenizerPreservesTiedLanguageModelPredictions)
 
     const auto encode_prompts = [=](const Network& network)
     {
-        const auto* layer = dynamic_cast<const Tokenizer*>(network.get_layer(0).get());
-        throw_if(!layer || !layer->get_tokenizer(), "The restored network lost its tokenizer.");
+        const TokenizerOperator* tokenizer = network.get_tokenizer();
+        throw_if(!tokenizer, "The restored network lost its tokenizer.");
         MatrixR inputs = MatrixR::Zero(2, sequence_length);
         const vector<string> prompts = {"alpha beta", "unknown gamma"};
         for (size_t sample = 0; sample < prompts.size(); ++sample)
         {
-            const auto ids = layer->get_tokenizer()->encode_sequence(prompts[sample], sequence_length);
+            const auto ids = tokenizer->encode_sequence(prompts[sample], sequence_length);
             for (size_t position = 0; position < ids.size(); ++position)
                 inputs(Index(sample), Index(position)) = float(ids[position]);
         }
@@ -537,6 +728,10 @@ TEST(NetworkTest, SavedCustomTokenizerPreservesTiedLanguageModelPredictions)
     EXPECT_FLOAT_EQ(expected_outputs(0, vocabulary_size + 3), 1.5f);
     EXPECT_FLOAT_EQ(expected_outputs(1, vocabulary_size + 4), 2.875f);
     EXPECT_TRUE(expected_outputs.rightCols(2 * vocabulary_size).isZero());
+    Tensor<string, 1> documents(2);
+    documents(0) = "alpha beta";
+    documents(1) = "unknown gamma";
+    EXPECT_TRUE(original.calculate_text_outputs(documents).isApprox(expected_outputs, 1.0e-6f));
 
     original.save(model_path);
     // The reload must get the saved weights, not a live alias to the original.
@@ -553,7 +748,7 @@ TEST(NetworkTest, SavedCustomTokenizerPreservesTiedLanguageModelPredictions)
 
     const MatrixR restored_inputs = encode_prompts(restored);
     EXPECT_TRUE(restored_inputs.isApprox(expected_inputs, 0.0f));
-    const MatrixR actual_outputs = restored.calculate_outputs(restored_inputs);
+    const MatrixR actual_outputs = restored.calculate_text_outputs(documents);
     ASSERT_EQ(actual_outputs.rows(), expected_outputs.rows());
     ASSERT_EQ(actual_outputs.cols(), expected_outputs.cols());
     EXPECT_TRUE(actual_outputs.isApprox(expected_outputs, 1.0e-6f));

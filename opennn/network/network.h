@@ -5,6 +5,7 @@
 
 #include <cstdint>
 #include <functional>
+#include <initializer_list>
 
 #include "opennn/core/configuration.h"
 #include "opennn/core/tensor_types.h"
@@ -15,6 +16,7 @@ namespace opennn
 {
 
 class Network;
+class TokenizerOperator;
 
 namespace detail
 {
@@ -165,6 +167,9 @@ public:
 
     void compile();
     void compile(Device device);
+
+    void set_attention_sdpa_auto(bool);
+    void set_attention_sdpa_min_sequence_length(Index);
     bool has(const string&) const;
     bool has(LayerType) const;
     bool has_recurrent_layers() const;
@@ -308,6 +313,14 @@ public:
 
     MatrixR calculate_outputs(const Tensor4&);
 
+    // Text input for a single-input network with a layer named "tokenizer".
+    MatrixR calculate_text_outputs(const Tensor<string, 1>&);
+
+    void set_tokenizer(unique_ptr<TokenizerOperator>, const string& label = "tokenizer");
+    const TokenizerOperator* get_tokenizer(const string& label = "tokenizer") const;
+    void set_vocabulary(const vector<string>&, const string& label = "tokenizer");
+    const vector<string>& get_vocabulary(const string& label = "tokenizer") const;
+
     void calculate_outputs(const MatrixR&, MatrixR& outputs);
 
     void calculate_outputs(const Tensor3&, MatrixR& outputs);
@@ -373,6 +386,13 @@ protected:
 
     explicit Network(NetworkTask);
     Network(const filesystem::path&, NetworkTask);
+
+    // Compile a newly built model and initialize its parameters with Glorot.
+    void finalize_build();
+    // Update execution settings without changing parameter/state layouts.
+    // Preserve learned values and the compiled device/precision configuration.
+    void configure_layers(const function<void(Layer&)>&);
+    void set_attention_and_dense_dropout(float, initializer_list<string_view> dense_prefixes);
 
     // For a model factory that builds the layers and loads a BF16 inference
     // binary in one step: compiles without the fp32 master the loader would
