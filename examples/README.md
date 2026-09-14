@@ -17,7 +17,7 @@ some language and detection examples require large downloads or a CUDA device.
 | [`ecg5000_anomaly_detection`](ecg5000_anomaly_detection/main.cpp) | Autoencoder anomaly detection with a reconstruction-error threshold | Bundled ECG CSV and stored test indices; explicitly CPU FP32 |
 | [`forecasting_tinyml`](forecasting_tinyml/main.cpp) | RNN/LSTM export parity | Constructs inputs; CPU FP32; optional emulator tools |
 | [`amazon_reviews`](amazon_reviews/main.cpp) | Sentiment classification | Bundled labelled text |
-| [`emotion_analysis`](emotion_analysis/main.cpp) | Multi-class text classification | Bundled labelled text |
+| [`emotion_analysis`](emotion_analysis/main.cpp) | Multi-class text classification with a transformer encoder built layer by layer | Bundled labelled text; stratified split; `--device`, `--seed`, `--epochs` and `--data` arguments |
 | [`mnist`](mnist/main.cpp) | Image classification | Bundled `data/images.zip`; unpacked automatically |
 | [`melanoma_cancer`](melanoma_cancer/main.cpp) | Binary image classification | Bundled `data/images.zip`; unpacked automatically; attribution review pending |
 | [`bert`](bert/main.cpp) | Fine-tuning a pretrained text classifier | Bundled SST-2 text; downloads model weights; accepts text and model-directory arguments |
