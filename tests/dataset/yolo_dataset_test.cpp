@@ -102,8 +102,8 @@ TEST(YoloDataset, SerializationRestoresTargetLayoutsWithoutExistingCaches)
 
         const bool multi_head = layout == Layout::MultiHead || layout == Layout::V8WithHeads;
         const bool v8 = layout == Layout::V8 || layout == Layout::V8WithHeads;
-        const vector<array<float, 2>> anchors = layout == Layout::V8
-            ? vector<array<float, 2>>{} : vector<array<float, 2>>{{0.57f, 0.63f}, {0.73f, 0.77f}};
+        const vector<std::array<float, 2>> anchors = layout == Layout::V8
+            ? vector<std::array<float, 2>>{} : vector<std::array<float, 2>>{{0.57f, 0.63f}, {0.73f, 0.77f}};
         const auto read_targets = [](const YoloDataset& dataset)
         {
             vector<float> targets(size_t(dataset.get_target_shape().size()));
