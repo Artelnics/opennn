@@ -121,7 +121,7 @@ pair<MatrixR, MatrixR> DomainContraction::sample_local_domains(
 
     for (const pair<VectorR, VectorR>& domain : local_domains)
     {
-        feasibility_system.reshape_borders(domain);
+        feasibility_system.borders = domain;
 
         Index sampled = 0;
 

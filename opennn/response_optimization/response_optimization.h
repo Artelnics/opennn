@@ -35,28 +35,20 @@ public:
             Equal, Between, GreaterEqual, LessEqual, Greater, Less, AllowedSet, Integer, Cardinality
         };
 
-        string string_expression;
+        Constraint(const string&, Condition, vector<float>, const ResponseOptimization&);
 
         Condition condition = Condition::Equal;
 
         vector<float> values;
 
-        vector<CompiledExpression> equations;
-
-        vector<pair<float, float>> equation_limits;
-
-        vector<pair<Index, Index>> involved_variables;
-
-        void compile_equations(const Network*, const VectorR& spans, Index first_switch, float tolerance);
+        CompiledExpression equation;
     };
 
     struct FeasibilitySystem
     {
         void initialize();
 
-        void reshape_borders(const pair<VectorR, VectorR>&);
-
-        VectorR force_into_borders(const VectorR&) const;
+        VectorR round_to_grid(const VectorR&) const;
 
         VectorR evaluate(const VectorR&, VectorR&, VectorR&, const VectorR& = {}) const;
 
@@ -65,8 +57,6 @@ public:
         pair<VectorR, VectorR> solve(VectorR) const;
 
         const ResponseOptimization* problem = nullptr;
-
-        vector<pair<const Constraint*, Index>> rows;
 
         pair<VectorR, VectorR> borders;
     };

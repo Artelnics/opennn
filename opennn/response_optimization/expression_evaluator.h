@@ -55,6 +55,12 @@ struct CompiledExpression
 
     vector<pair<Index, ExpressionProgram>> input_gradient;
 
+    Index symmetric_order = 0;
+
+    vector<pair<Index, double>> symmetric_terms;
+
+    double symmetric_scale = 1.0;
+
     float evaluate(const VectorR&, const VectorR&) const;
 };
 
@@ -65,11 +71,10 @@ CompiledExpression compile_expression(const string&,
 
 CompiledExpression compile_expression(const string&, const Network*, const string& role = "Expression");
 
-CompiledExpression compile_sum(const vector<Index>&);
-
-CompiledExpression compile_coupling(Index variable, Index switch_variable, float span);
-
-CompiledExpression compile_binarity(Index variable);
+CompiledExpression compile_elementary_symmetric(const vector<Index>& variables,
+                                                const vector<float>& spans,
+                                                Index order,
+                                                float tolerance);
 
 CompiledExpression compile_integrality(const string&, const Network*);
 
@@ -80,8 +85,6 @@ bool is_output_coupled(const CompiledExpression&);
 bool is_univariate(const CompiledExpression&);
 
 bool is_bare_variable(const CompiledExpression&);
-
-bool same_expression(const CompiledExpression&, const CompiledExpression&);
 
 void evaluate_input_gradient(const CompiledExpression&,
                              const VectorR& point,

@@ -63,22 +63,19 @@ vector<Index> get_group_members(const string& text)
 }
 
 
-VectorR seed_switches(const VectorR& point, const vector<Index>& members, const Index budget)
+// The placement the repair makes before solving: the budget largest counted inputs by |x| stay,
+// every other one goes to zero.
+
+VectorR keep_largest(const VectorR& point, vector<Index> members, const Index budget)
 {
-    VectorR unknowns = VectorR::Zero(VariablesNumber + Index(members.size()));
+    VectorR placed = point;
 
-    unknowns.head(VariablesNumber) = point;
+    ranges::stable_sort(members, {}, [&](const Index column) { return -abs(point(column)); });
 
-    vector<Index> positions(members.size());
+    for (size_t i = size_t(budget); i < members.size(); i++)
+        placed(members[i]) = 0.0f;
 
-    iota(positions.begin(), positions.end(), Index(0));
-
-    ranges::sort(positions, {}, [&](const Index position) { return -abs(point(members[size_t(position)])); });
-
-    for (Index i = 0; i < budget; i++)
-        unknowns(VariablesNumber + positions[size_t(i)]) = 1.0f;
-
-    return unknowns;
+    return placed;
 }
 
 
@@ -147,24 +144,15 @@ TEST(ToyNonlinearSystem, LevenbergMarquardtReachesTheRoot)
     add(compile_expression("strength - 0.20 * cement", mix_columns, response_columns), 0.0f, unbounded);
     add(compile_expression("binder_a + binder_b + binder_c", mix_columns, response_columns), 60.0f, 60.0f);
 
-    vector<Index> switches;
+    const CompiledExpression cardinality =
+        compile_elementary_symmetric(members, vector<float>(members.size(), binder_span), budget + 1, tolerance);
 
-    for (const Index member : members)
-    {
-        const Index switch_column = VariablesNumber + Index(switches.size());
-
-        switches.push_back(switch_column);
-
-        add(compile_coupling(member, switch_column, binder_span), -tolerance, tolerance);
-        add(compile_binarity(switch_column), -0.5f*tolerance, 0.5f*tolerance);
-    }
-
-    add(compile_sum(switches), float(budget), float(budget));
+    add(cardinality, -1.0f, 1.0f);
 
     VectorR point(VariablesNumber);
     point << 200.0f, 260.0f, 30.0f, 25.0f, 15.0f;
 
-    VectorR unknowns = seed_switches(point, members, budget);
+    VectorR unknowns = keep_largest(point, members, budget);
 
     ToySystem system(move(equations), move(bands), unknowns.size());
 
@@ -193,16 +181,14 @@ TEST(ToyNonlinearSystem, LevenbergMarquardtReachesTheRoot)
     const float binder_b = unknowns(BinderB);
     const float binder_c = unknowns(BinderC);
 
-    const float switch_a = unknowns(VariablesNumber);
-    const float switch_b = unknowns(VariablesNumber + 1);
-    const float switch_c = unknowns(VariablesNumber + 2);
+    const float row = cardinality.evaluate(unknowns, fake_output(unknowns));
 
     const float water_cement = water/cement;
     const float strength = fake_output(unknowns)(0);
 
-    const Index binders_used = Index(switch_a > 0.5f)
-                             + Index(switch_b > 0.5f)
-                             + Index(switch_c > 0.5f);
+    const Index binders_used = Index(binder_a > 1e-2f*binder_span)
+                             + Index(binder_b > 1e-2f*binder_span)
+                             + Index(binder_c > 1e-2f*binder_span);
 
     EXPECT_NEAR(cement + water, 400.0f, 1e-2f);
 
@@ -215,14 +201,15 @@ TEST(ToyNonlinearSystem, LevenbergMarquardtReachesTheRoot)
 
     EXPECT_EQ(binders_used, 2);
 
-    EXPECT_LE(min({binder_a, binder_b, binder_c}), 2.0f*tolerance*binder_span);
+    EXPECT_LE(abs(row), 1.0f + 1e-3f);
 
     cout << fixed << setprecision(4)
          << "\ncement        " << cement << "\n"
          << "water         " << water << "\n"
-         << "binder_a      " << binder_a << "   switch " << switch_a << "\n"
-         << "binder_b      " << binder_b << "   switch " << switch_b << "\n"
-         << "binder_c      " << binder_c << "   switch " << switch_c << "\n"
+         << "binder_a      " << binder_a << "\n"
+         << "binder_b      " << binder_b << "\n"
+         << "binder_c      " << binder_c << "\n"
+         << "cardinality   " << row << "   in [-1, 1]\n"
          << "batch         " << cement + water << "   = 400\n"
          << "water/cement  " << water_cement << "   in [0.35, 0.60]\n"
          << "strength      " << strength << "   >= " << 0.20f*cement << "\n"

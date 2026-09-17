@@ -54,6 +54,25 @@ protected:
     void SetUp() override { set_seed(1234); }
 };
 
+
+// Reaches the repair without a solver around it.
+
+class RepairProbe : public ResponseOptimization
+{
+public:
+
+    explicit RepairProbe(Network* network) : ResponseOptimization(network) {}
+
+    using ResponseOptimization::calculate_domain;
+    using ResponseOptimization::calculate_random_input;
+    using ResponseOptimization::feasibility_system;
+
+private:
+
+    MatrixR single_optimization() override { return {}; }
+    MatrixR multi_optimization() override { return {}; }
+};
+
 }
 
 
@@ -224,14 +243,40 @@ TEST(ResponseOptimizationSetup, AllowedSetNeedsAtLeastOneValue)
 }
 
 
-TEST(ResponseOptimizationSetup, IntegerConditionOnlyAppliesToASingleVariable)
+TEST(ResponseOptimizationSetup, DiscreteConditionsTakeAnInputOrAnExpressionOfSeveral)
 {
     MinimalApproximation setup({"x1", "x2"}, {"y"});
 
     DomainContraction optimization(setup.network.get());
 
-    EXPECT_THROW(optimization.add_constraint("x1 + x2", Condition::Integer), runtime_error);
     EXPECT_NO_THROW(optimization.add_constraint("x1", Condition::Integer));
+    EXPECT_NO_THROW(optimization.add_constraint("x1 + x2", Condition::Integer));
+    EXPECT_NO_THROW(optimization.add_constraint("x1 / x2", Condition::AllowedSet, {1.0f, 2.0f}));
+
+    EXPECT_THROW(optimization.add_constraint("2*x1", Condition::Integer), runtime_error);
+    EXPECT_THROW(optimization.add_constraint("x1 + y", Condition::AllowedSet, {1.0f, 2.0f}), runtime_error);
+}
+
+
+TEST_P(ResponseDriver, IntegerOnAnExpressionKeepsItWhole)
+{
+    MinimalApproximation setup({"x1", "x2"}, {"y"}, 0.0f, 10.0f);
+
+    const unique_ptr<ResponseOptimization> optimization = make_driver(GetParam(), setup.network.get());
+
+    optimization->add_objective("y", Sense::Maximize);
+    optimization->add_constraint("x1 + x2", Condition::Integer);
+
+    const MatrixR results = optimization->perform_response_optimization();
+
+    ASSERT_GT(results.rows(), 0);
+
+    for (Index i = 0; i < results.rows(); i++)
+    {
+        const float sum = results(i, 0) + results(i, 1);
+
+        EXPECT_LT(abs(sum - round(sum)), 2e-3f) << "row " << i << " x1 + x2 = " << sum;
+    }
 }
 
 
@@ -538,10 +583,70 @@ TEST_P(ResponseDriver, CardinalityLeavesAtMostTheBudgetInPlay)
         Index in_play = 0;
 
         for (Index j = 0; j < 4; j++)
-            if (abs(results(i, j)) > 1e-2f) in_play++;
+            if (results(i, j) != 0.0f) in_play++;
 
         EXPECT_LE(in_play, 2) << "row " << i << " keeps " << in_play << " of the 4 variables in play";
     }
+}
+
+
+// The repair on its own, from random starts: whatever it returns has at most k counted inputs
+// that are not exactly zero, alone and beside a budget row that couples every counted input.
+
+TEST(CardinalityRepair, ReturnsOnlyKSparsePoints)
+{
+    set_seed(1234);
+
+    for (const Index variables_number : {Index(4), Index(8)})
+        for (const Index kept : {Index(1), variables_number/2, variables_number - 1})
+            for (const bool budget : {false, true})
+            {
+                vector<string> names;
+
+                for (Index i = 1; i <= variables_number; i++)
+                    names.push_back("x" + to_string(i));
+
+                MinimalApproximation setup(names, {"y"}, 0.0f, 10.0f);
+
+                RepairProbe probe(setup.network.get());
+
+                string list;
+                string sum;
+
+                for (const string& name : names)
+                {
+                    list += (list.empty() ? "" : "; ") + name;
+                    sum += (sum.empty() ? "" : " + ") + name;
+                }
+
+                probe.add_constraint(list, Condition::Cardinality, {float(kept)});
+
+                const float total = 2.5f*float(kept);
+
+                if (budget) probe.add_constraint(sum, Condition::Equal, {total});
+
+                const pair<VectorR, VectorR> domain = probe.calculate_domain();
+
+                Index repaired = 0;
+
+                for (Index draw = 0; draw < 50; draw++)
+                {
+                    const auto [input, output] = probe.feasibility_system.solve(probe.calculate_random_input(domain));
+
+                    if (input.size() == 0) continue;
+
+                    repaired++;
+
+                    const Index in_play = Index((input.array() != 0.0f).count());
+
+                    EXPECT_LE(in_play, kept) << "n=" << variables_number << " k=" << kept
+                                             << " budget=" << budget << " draw=" << draw;
+
+                    if (budget) EXPECT_NEAR(input.sum(), total, 1e-2f*total);
+                }
+
+                EXPECT_GT(repaired, 0) << "n=" << variables_number << " k=" << kept << " budget=" << budget;
+            }
 }
 
 

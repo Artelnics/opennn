@@ -328,7 +328,7 @@ int main()
         // 11. Cardinality: how many of a group of variables may be in play at once. Here
         // one of the three admixtures is allowed, because a plant with one silo cannot
         // dose three. The variables it counts must be able to reach zero, and the ones
-        // switched off come back at zero to a tolerance rather than exactly.
+        // switched off come back at exactly zero.
         //
         // Expect warnings about local domains running short of feasible points: switching
         // variables off carves the box up, so random draws land outside it far more often.
@@ -495,11 +495,11 @@ int main()
         {
             DomainContraction problem_16(&network);
 
-            problem_16.add_constraint("water / cement", Condition::Integer);
+            problem_16.add_constraint("2 * cement", Condition::Integer);
         }
         catch (const exception& error)
         {
-            cout << "an expression asked to be whole: " << error.what() << "\n";
+            cout << "one input read through an expression: " << error.what() << "\n";
         }
 
         try

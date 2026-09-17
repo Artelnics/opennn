@@ -18,8 +18,12 @@
 
 #include "tests/pch.h"
 
+#include <bit>
+#include <random>
+
 #include "tests/response_optimization/synthetic_fixture.h"
 
+#include "opennn/response_optimization/domain_contraction.h"
 #include "opennn/response_optimization/expression_evaluator.h"
 
 namespace
@@ -46,6 +50,84 @@ float lookup_coefficient(const vector<pair<Index, float>>& terms, const Index co
         if (term_column == column) return coefficient;
 
     return 0.0f;
+}
+
+
+// sqrt(e_order(u^2)/C(n, order)) by listing every subset of order variables, in double: the
+// reference the recursion is checked against. It shares nothing with the library's code.
+
+double rooted_mean_by_subsets(const vector<double>& scaled, const Index order)
+{
+    const size_t variables_number = scaled.size();
+
+    double sum = 0.0;
+    double subsets = 0.0;
+
+    for (uint32_t mask = 0; mask < (uint32_t(1) << variables_number); mask++)
+    {
+        if (popcount(mask) != int(order)) continue;
+
+        double product = 1.0;
+
+        for (size_t i = 0; i < variables_number; i++)
+            if ((mask >> i) & 1u) product *= scaled[i]*scaled[i];
+
+        sum += product;
+        subsets += 1.0;
+    }
+
+    return sqrt(sum/subsets);
+}
+
+
+// A cardinality row over n counted columns, listed in reverse so that a column and its position
+// in the list differ, with its spans and a point to read it at.
+
+struct CardinalityCase
+{
+    vector<Index> columns;
+    vector<float> spans;
+    VectorR point;
+
+    CompiledExpression row(const Index order, const float tolerance) const
+    {
+        return compile_elementary_symmetric(columns, spans, order, tolerance);
+    }
+
+    vector<double> scaled(const VectorR& at) const
+    {
+        vector<double> values(columns.size());
+
+        for (size_t i = 0; i < columns.size(); i++)
+            values[i] = double(at(columns[i]))/double(spans[i]);
+
+        return values;
+    }
+};
+
+
+CardinalityCase draw_cardinality_case(mt19937& generator, const Index variables_number,
+                                      const double smallest_magnitude)
+{
+    uniform_real_distribution<double> span(0.5, 50.0);
+    uniform_real_distribution<double> magnitude(smallest_magnitude, 1.0);
+    bernoulli_distribution negative(0.3);
+
+    CardinalityCase c;
+
+    c.point.resize(variables_number);
+
+    for (Index i = 0; i < variables_number; i++)
+    {
+        c.columns.push_back(variables_number - 1 - i);
+        c.spans.push_back(float(span(generator)));
+    }
+
+    for (Index i = 0; i < variables_number; i++)
+        c.point(c.columns[size_t(i)]) = float((negative(generator) ? -1.0 : 1.0)
+                                              *magnitude(generator)*double(c.spans[size_t(i)]));
+
+    return c;
 }
 
 }
@@ -296,7 +378,7 @@ TEST(Expression, PowerCallIsTheSameAsThePowerOperator)
     const CompiledExpression called = compile_expression("pow(x1, 2) + x2", inputs, {});
     const CompiledExpression written = compile_expression("x1^2 + x2", inputs, {});
 
-    EXPECT_TRUE(same_expression(called, written));
+    EXPECT_TRUE(ranges::equal(called.program.operations, written.program.operations));
 
     VectorR point(2); point << 3.0f, 4.0f;
     const VectorR output(0);
@@ -367,20 +449,16 @@ TEST(ConstraintCompilation, AnIntervalConditionBecomesOneEquationAndItsBand)
 {
     MinimalApproximation setup({"x1", "x2"}, {"y"});
 
-    ResponseOptimization::Constraint between{"x1", Condition::Between, {2.0f, 6.0f}};
-    ResponseOptimization::Constraint equal{"x1", Condition::Equal, {5.0f}};
+    const DomainContraction problem(setup.network.get());
 
-    between.compile_equations(setup.network.get(), {}, 0, 1e-3f);
-    equal.compile_equations(setup.network.get(), {}, 0, 1e-3f);
+    const ResponseOptimization::Constraint between("x1", Condition::Between, {2.0f, 6.0f}, problem);
+    const ResponseOptimization::Constraint equal("x1", Condition::Equal, {5.0f}, problem);
 
-    ASSERT_EQ(between.equations.size(), 1u);
-    ASSERT_EQ(equal.equations.size(), 1u);
+    EXPECT_TRUE(is_bare_variable(between.equation));
+    EXPECT_EQ(between.equation.text, "x1");
 
-    EXPECT_NEAR(between.equation_limits.front().first, 2.0f, 1e-6f);
-    EXPECT_NEAR(between.equation_limits.front().second, 6.0f, 1e-6f);
-
-    EXPECT_NEAR(equal.equation_limits.front().first, 5.0f, 1e-6f);
-    EXPECT_NEAR(equal.equation_limits.front().second, 5.0f, 1e-6f);
+    EXPECT_EQ(between.values, vector<float>({2.0f, 6.0f}));
+    EXPECT_EQ(equal.values, vector<float>({5.0f}));
 }
 
 
@@ -388,55 +466,167 @@ TEST(ConstraintCompilation, ADiscreteConditionAddsAMeasureThatVanishesOnItsValue
 {
     MinimalApproximation setup({"x1", "x2"}, {"y"});
 
-    ResponseOptimization::Constraint whole{"x1", Condition::Integer, {}};
-    ResponseOptimization::Constraint listed{"x1", Condition::AllowedSet, {1.0f, 5.0f, 9.0f}};
+    const DomainContraction problem(setup.network.get());
 
-    whole.compile_equations(setup.network.get(), {}, 0, 1e-3f);
-    listed.compile_equations(setup.network.get(), {}, 0, 1e-3f);
+    const ResponseOptimization::Constraint whole("x1", Condition::Integer, {}, problem);
+    const ResponseOptimization::Constraint listed("x1", Condition::AllowedSet, {9.0f, 1.0f, 5.0f, 5.0f},
+                                                  problem);
 
-    ASSERT_EQ(whole.equations.size(), 2u);
-    ASSERT_EQ(listed.equations.size(), 2u);
+    EXPECT_EQ(whole.equation.input_indices, vector<Index>({0}));
+    EXPECT_EQ(listed.equation.input_indices, vector<Index>({0}));
+    EXPECT_EQ(listed.values, vector<float>({1.0f, 5.0f, 9.0f})) << "allowed values are kept sorted and unique";
 
     VectorR point(2);
     point << 3.0f, 0.0f;
 
-    EXPECT_NEAR(whole.equations.back().evaluate(point, {}), 0.0f, 1e-6f);
-    EXPECT_GT(abs(listed.equations.back().evaluate(point, {})), 1e-3f);
+    EXPECT_NEAR(whole.equation.evaluate(point, {}), 0.0f, 1e-6f);
+    EXPECT_GT(abs(listed.equation.evaluate(point, {})), 1e-3f);
 
     point(0) = 3.5f;
 
-    EXPECT_GT(abs(whole.equations.back().evaluate(point, {})), 0.1f);
+    EXPECT_GT(abs(whole.equation.evaluate(point, {})), 0.1f);
 
     point(0) = 5.0f;
 
-    EXPECT_NEAR(listed.equations.back().evaluate(point, {}), 0.0f, 1e-6f);
+    EXPECT_NEAR(listed.equation.evaluate(point, {}), 0.0f, 1e-6f);
 }
 
 
-TEST(ExpressionHelpers, SameExpressionComparesTheCompiledForm)
+TEST(ConstraintCompilation, CardinalityBecomesOneRowHeldToTheUnitBand)
 {
-    const vector<pair<string, Index>> inputs = make_named_columns({"x1", "x2"});
+    MinimalApproximation setup({"x1", "x2", "x3"}, {"y"});
 
-    EXPECT_TRUE(same_expression(compile_expression("x1 + 2*x2", inputs, {}),
-                                compile_expression("x1+2*x2", inputs, {})));
+    const DomainContraction problem(setup.network.get());
 
-    EXPECT_TRUE(same_expression(compile_expression("2*(x1 + x2)", inputs, {}),
-                                compile_expression("2*x1 + 2*x2", inputs, {})));
+    const ResponseOptimization::Constraint budget("x1; x2; x3", Condition::Cardinality, {1.0f},
+                                                  problem);
+    const ResponseOptimization::Constraint roomy("x1; x2; x3", Condition::Cardinality, {3.0f},
+                                                 problem);
 
-    EXPECT_FALSE(same_expression(compile_expression("x1", inputs, {}),
-                                 compile_expression("2*x1", inputs, {})));
+    EXPECT_EQ(budget.equation.input_indices, vector<Index>({0, 1, 2}));
+    EXPECT_EQ(budget.equation.text, "x1; x2; x3");
+    EXPECT_EQ(budget.equation.symmetric_order, 2);
 
-    EXPECT_FALSE(same_expression(compile_expression("x1 + x2", inputs, {}),
-                                 compile_expression("x1 * x2", inputs, {})));
+    EXPECT_TRUE(roomy.equation.text.empty()) << "a budget of every counted variable restricts nothing";
+
+    VectorR point(3);
+
+    point << 4.0f, 0.0f, 0.0f;
+    EXPECT_EQ(budget.equation.evaluate(point, {}), 0.0f);
+
+    // Two inputs at 0.4 and 0.3 of their span: sqrt(0.4^2 * 0.3^2 / C(3, 2))/tolerance.
+
+    point << 4.0f, 3.0f, 0.0f;
+    EXPECT_NEAR(budget.equation.evaluate(point, {}), 0.12/sqrt(3.0)/1e-3, 1e-2);
 }
 
 
-TEST(ExpressionHelpers, SameExpressionIsSensitiveToTermOrder)
+TEST(CardinalityRow, ValueMatchesSubsetEnumeration)
 {
-    const vector<pair<string, Index>> inputs = make_named_columns({"x1", "x2"});
+    mt19937 generator(7);
 
-    EXPECT_FALSE(same_expression(compile_expression("x1 + x2", inputs, {}),
-                                 compile_expression("x2 + x1", inputs, {})));
+    constexpr float tolerance = 1e-3f;
+
+    for (Index variables_number = 2; variables_number <= 8; variables_number++)
+        for (Index order = 1; order <= variables_number; order++)
+            for (int draw = 0; draw < 5; draw++)
+            {
+                const CardinalityCase c = draw_cardinality_case(generator, variables_number, 0.0);
+
+                const double expected = rooted_mean_by_subsets(c.scaled(c.point), order)/double(tolerance);
+
+                EXPECT_NEAR(c.row(order, tolerance).evaluate(c.point, {}), expected, 1e-5*max(1.0, expected))
+                    << "n=" << variables_number << " order=" << order << " draw=" << draw;
+            }
+}
+
+
+TEST(CardinalityRow, GradientMatchesCentralDifferences)
+{
+    mt19937 generator(11);
+
+    constexpr float tolerance = 1e-3f;
+
+    for (Index variables_number = 2; variables_number <= 8; variables_number++)
+        for (Index order = 1; order <= variables_number; order++)
+            for (int draw = 0; draw < 5; draw++)
+            {
+                const CardinalityCase c = draw_cardinality_case(generator, variables_number, 0.1);
+
+                const CompiledExpression row = c.row(order, tolerance);
+
+                const VectorR gradient = evaluate_input_gradient(row, c.point, {});
+
+                for (size_t i = 0; i < c.columns.size(); i++)
+                {
+                    const Index column = c.columns[i];
+
+                    const double step = 1e-6*double(c.spans[i]);
+
+                    vector<double> plus = c.scaled(c.point);
+                    vector<double> minus = plus;
+
+                    plus[i] += step/double(c.spans[i]);
+                    minus[i] -= step/double(c.spans[i]);
+
+                    const double difference = (rooted_mean_by_subsets(plus, order)
+                                             - rooted_mean_by_subsets(minus, order))/(2.0*step*double(tolerance));
+
+                    EXPECT_NEAR(gradient(column), difference, 1e-4*max(1.0, abs(difference)))
+                        << "n=" << variables_number << " order=" << order << " draw=" << draw << " column=" << column;
+                }
+            }
+}
+
+
+TEST(CardinalityRow, VanishesExactlyOnTheKSparsePoints)
+{
+    mt19937 generator(13);
+
+    constexpr Index variables_number = 6;
+
+    for (Index kept = 0; kept < variables_number; kept++)
+        for (Index support = 0; support <= variables_number; support++)
+            for (int draw = 0; draw < 10; draw++)
+            {
+                CardinalityCase c = draw_cardinality_case(generator, variables_number, 1e-2);
+
+                vector<Index> order_of_columns = c.columns;
+
+                ranges::shuffle(order_of_columns, generator);
+
+                for (Index i = support; i < variables_number; i++)
+                    c.point(order_of_columns[size_t(i)]) = 0.0f;
+
+                const CompiledExpression row = c.row(kept + 1, 1e-3f);
+
+                const float value = row.evaluate(c.point, {});
+
+                if (support <= kept)
+                {
+                    EXPECT_EQ(value, 0.0f) << "k=" << kept << " support=" << support << " draw=" << draw;
+
+                    const VectorR gradient = evaluate_input_gradient(row, c.point, {});
+
+                    EXPECT_TRUE(gradient.allFinite());
+                    EXPECT_EQ(gradient.cwiseAbs().maxCoeff(), 0.0f);
+                }
+                else
+                    EXPECT_GT(value, 0.0f) << "k=" << kept << " support=" << support << " draw=" << draw;
+            }
+}
+
+
+TEST(CardinalityRow, BuilderRefusesWhatItCannotWrite)
+{
+    const vector<Index> columns = {0, 1, 2};
+    const vector<float> spans = {1.0f, 1.0f, 1.0f};
+
+    EXPECT_THROW(compile_elementary_symmetric(columns, spans, 0, 1e-3f), runtime_error);
+    EXPECT_THROW(compile_elementary_symmetric(columns, spans, 4, 1e-3f), runtime_error);
+    EXPECT_THROW(compile_elementary_symmetric(columns, {1.0f, 1.0f}, 2, 1e-3f), runtime_error);
+    EXPECT_THROW(compile_elementary_symmetric(columns, spans, 2, 0.0f), runtime_error);
+    EXPECT_NO_THROW(compile_elementary_symmetric(columns, spans, 3, 1e-3f));
 }
 
 

@@ -1075,8 +1075,115 @@ ExpressionNodePtr parse_expression_tree(const string& expression,
 }
 
 
+namespace
+{
+
+
+double evaluate_symmetric_polynomial(const CompiledExpression& expression, const VectorR& point)
+{
+    const size_t order = size_t(expression.symmetric_order);
+
+    thread_local vector<double> table;
+
+    table.assign(order + 1, 0.0);
+    table[0] = 1.0;
+
+    size_t reachable = 0;
+
+    for (const auto& [column, inverse_span] : expression.symmetric_terms)
+    {
+        const double scaled = double(point(column))*inverse_span;
+
+        const double term = scaled*scaled;
+
+        reachable = min(reachable + 1, order);
+
+        for (size_t m = reachable; m >= 1; m--)
+            table[m] += term*table[m - 1];
+    }
+
+    return table[order];
+}
+
+
+void evaluate_symmetric_gradient(const CompiledExpression& expression, const VectorR& point, VectorR& gradient)
+{
+    const size_t order = size_t(expression.symmetric_order);
+    const size_t width = order + 1;
+    const size_t terms_number = expression.symmetric_terms.size();
+
+    thread_local vector<double> scaled;
+    thread_local vector<double> prefix;
+    thread_local vector<double> suffix;
+
+    scaled.resize(terms_number);
+
+    for (size_t j = 0; j < terms_number; j++)
+    {
+        const auto& [column, inverse_span] = expression.symmetric_terms[j];
+
+        scaled[j] = double(point(column))*inverse_span;
+    }
+
+    prefix.assign((terms_number + 1)*width, 0.0);
+    suffix.assign((terms_number + 1)*width, 0.0);
+
+    prefix[0] = 1.0;
+    suffix[terms_number*width] = 1.0;
+
+    for (size_t j = 0; j < terms_number; j++)
+    {
+        const double term = scaled[j]*scaled[j];
+
+        const double* before = &prefix[j*width];
+        double* after = &prefix[(j + 1)*width];
+
+        after[0] = 1.0;
+
+        for (size_t m = 1; m < width; m++)
+            after[m] = before[m] + term*before[m - 1];
+    }
+
+    for (size_t j = terms_number; j-- > 0;)
+    {
+        const double term = scaled[j]*scaled[j];
+
+        const double* later = &suffix[(j + 1)*width];
+        double* here = &suffix[j*width];
+
+        here[0] = 1.0;
+
+        for (size_t m = 1; m < width; m++)
+            here[m] = later[m] + term*later[m - 1];
+    }
+
+    const double value = prefix[terms_number*width + order];
+
+    if (!(value > 0.0)) return;
+
+    const double chain = expression.symmetric_scale/sqrt(value);
+
+    for (size_t j = 0; j < terms_number; j++)
+    {
+        double leave_one_out = 0.0;
+
+        for (size_t a = 0; a < order; a++)
+            leave_one_out += prefix[j*width + a]*suffix[(j + 1)*width + order - 1 - a];
+
+        const auto& [column, inverse_span] = expression.symmetric_terms[j];
+
+        gradient(column) = float(chain*scaled[j]*inverse_span*leave_one_out);
+    }
+}
+
+}
+
+
 float CompiledExpression::evaluate(const VectorR& inputs_row, const VectorR& outputs_row) const
 {
+    if (symmetric_order > 0)
+        return float(symmetric_scale*sqrt(evaluate_symmetric_polynomial(*this, inputs_row)));
+
     if (linearity == ExpressionLinearity::Nonlinear)
         return evaluate_program(program, inputs_row, outputs_row);
 
@@ -1092,31 +1199,44 @@ float CompiledExpression::evaluate(const VectorR& inputs_row, const VectorR& out
 }
 
 
-CompiledExpression compile_sum(const vector<Index>& variables)
+CompiledExpression compile_elementary_symmetric(const vector<Index>& variables,
+                                                const vector<float>& spans,
+                                                const Index order,
+                                                const float tolerance)
 {
-    throw_if(variables.empty(), "ExpressionParser: a sum needs at least one variable");
+    throw_if(variables.empty() || variables.size() != spans.size(),
+             "ExpressionParser: a symmetric polynomial needs one span per variable");
 
-    ExpressionNodePtr sum;
+    throw_if(order < 1 || order > Index(variables.size()),
+             "ExpressionParser: a symmetric polynomial of order " + to_string(order)
+             + " over " + to_string(variables.size()) + " variables is not defined");
 
-    for (const Index variable : variables)
-        sum = sum ? make_add(move(sum), make_input(variable)) : make_input(variable);
+    throw_if(!(tolerance > 0.0f), "ExpressionParser: a symmetric polynomial needs a positive tolerance");
 
-    return compile_ast(*sum);
-}
+    const double variables_number = double(variables.size());
 
+    const double log_combinations = lgamma(variables_number + 1.0) - lgamma(double(order) + 1.0)
+                                  - lgamma(variables_number - double(order) + 1.0);
 
-CompiledExpression compile_coupling(const Index variable, const Index switch_variable, const float span)
-{
-    return compile_ast(*make_mul(make_sub(make_input(variable),
-                                          make_mul(make_input(variable), make_input(switch_variable))),
-                                 make_const(1.0f/max(span, EPSILON))));
-}
+    CompiledExpression result;
 
+    result.text = "sqrt(e_" + to_string(order) + "(u^2)/C(" + to_string(variables.size()) + ", "
+                + to_string(order) + "))";
 
-CompiledExpression compile_binarity(const Index variable)
-{
-    return compile_ast(*make_sub(make_mul(make_input(variable), make_input(variable)),
-                                 make_input(variable)));
+    result.linearity = ExpressionLinearity::Nonlinear;
+
+    result.input_indices = variables;
+
+    ranges::sort(result.input_indices);
+
+    result.symmetric_order = order;
+
+    result.symmetric_scale = exp(-0.5*log_combinations - log(double(tolerance)));
+
+    for (size_t i = 0; i < variables.size(); i++)
+        result.symmetric_terms.emplace_back(variables[i], 1.0/max(double(spans[i]), double(EPSILON)));
+
+    return result;
 }
 
 
@@ -1135,8 +1255,6 @@ ExpressionNodePtr parse_for_network(const string& expression, const Network* net
 }
 
 
-// sin(pi*e)/pi: zero exactly where the expression takes a whole number, with unit slope there.
-
 CompiledExpression compile_integrality(const string& expression, const Network* network)
 {
     const float pi = numbers::pi_v<float>;
@@ -1147,8 +1265,6 @@ CompiledExpression compile_integrality(const string& expression, const Network* 
                                  make_const(pi)));
 }
 
-
-// prod(e - a)/span^(n-1): zero exactly where the expression takes one of the allowed values.
 
 CompiledExpression compile_membership(const string& expression,
                                       const Network* network,
@@ -1231,19 +1347,6 @@ bool is_bare_variable(const CompiledExpression& expression)
 }
 
 
-bool same_expression(const CompiledExpression& first, const CompiledExpression& second)
-{
-    if (first.linearity != second.linearity) return false;
-
-    if (first.linearity == ExpressionLinearity::Linear)
-        return first.linear_input_terms == second.linear_input_terms
-            && first.linear_output_terms == second.linear_output_terms
-            && abs(first.linear_constant - second.linear_constant) <= EPSILON;
-
-    return ranges::equal(first.program.operations, second.program.operations);
-}
-
-
 void evaluate_input_gradient(const CompiledExpression& expression,
                              const VectorR& point,
                              const VectorR& output,
@@ -1254,7 +1357,9 @@ void evaluate_input_gradient(const CompiledExpression& expression,
 
     gradient.setZero();
 
-    if (expression.linearity == ExpressionLinearity::Linear)
+    if (expression.symmetric_order > 0)
+        evaluate_symmetric_gradient(expression, point, gradient);
+    else if (expression.linearity == ExpressionLinearity::Linear)
         for (const auto& [column, coefficient] : expression.linear_input_terms)
             gradient(column) = coefficient;
     else
