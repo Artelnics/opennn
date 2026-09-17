@@ -35,8 +35,6 @@ public:
             Equal, Between, GreaterEqual, LessEqual, Greater, Less, AllowedSet, Integer, Cardinality
         };
 
-        Constraint(const string&, Condition, vector<float>, const ResponseOptimization&);
-
         Condition condition = Condition::Equal;
 
         vector<float> values;
@@ -109,11 +107,33 @@ private:
 
     pair<VectorR, VectorR> get_unconstrained_domain() const;
 
+    float get_bound_tolerance(float) const;
+
+    float calculate_band_residual(const pair<float, float>&, float) const;
+
+    pair<float, float> get_band(const Constraint&) const;
+
+    pair<VectorR, VectorR> narrow_domain(pair<VectorR, VectorR>) const;
+
+    void check_domain(const pair<VectorR, VectorR>&) const;
+
+    float numeric_tolerance = 1e-6f;
+
     float constraint_tolerance = 1e-3f;
 
     float feasibility_margin_factor = 0.1f;
 
+    Index feasibility_rounds = 3;
+
     Index feasibility_evaluations = 50;
+
+    float difference_step = 1e-3f;
+
+    float discrete_difference_step = 0.25f;
+
+    float box_weight = 100.0f;
+
+    size_t discrete_values_warning = 8;
 
     float diversity_factor = 0.2f;
 };

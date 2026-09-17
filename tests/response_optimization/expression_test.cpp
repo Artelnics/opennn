@@ -106,6 +106,16 @@ struct CardinalityCase
 };
 
 
+// Exposes the constraints a problem compiled, so a test can read what add_constraint made of them.
+
+struct ConstraintProbe : DomainContraction
+{
+    using DomainContraction::DomainContraction;
+
+    using ResponseOptimization::constraints;
+};
+
+
 CardinalityCase draw_cardinality_case(mt19937& generator, const Index variables_number,
                                       const double smallest_magnitude)
 {
@@ -449,10 +459,15 @@ TEST(ConstraintCompilation, AnIntervalConditionBecomesOneEquationAndItsBand)
 {
     MinimalApproximation setup({"x1", "x2"}, {"y"});
 
-    const DomainContraction problem(setup.network.get());
+    ConstraintProbe problem(setup.network.get());
 
-    const ResponseOptimization::Constraint between("x1", Condition::Between, {2.0f, 6.0f}, problem);
-    const ResponseOptimization::Constraint equal("x1", Condition::Equal, {5.0f}, problem);
+    problem.add_constraint("x1", Condition::Between, {2.0f, 6.0f});
+    problem.add_constraint("x1", Condition::Equal, {5.0f});
+
+    ASSERT_EQ(problem.constraints.size(), 2u);
+
+    const ResponseOptimization::Constraint& between = problem.constraints[0];
+    const ResponseOptimization::Constraint& equal = problem.constraints[1];
 
     EXPECT_TRUE(is_bare_variable(between.equation));
     EXPECT_EQ(between.equation.text, "x1");
@@ -466,11 +481,15 @@ TEST(ConstraintCompilation, ADiscreteConditionAddsAMeasureThatVanishesOnItsValue
 {
     MinimalApproximation setup({"x1", "x2"}, {"y"});
 
-    const DomainContraction problem(setup.network.get());
+    ConstraintProbe problem(setup.network.get());
 
-    const ResponseOptimization::Constraint whole("x1", Condition::Integer, {}, problem);
-    const ResponseOptimization::Constraint listed("x1", Condition::AllowedSet, {9.0f, 1.0f, 5.0f, 5.0f},
-                                                  problem);
+    problem.add_constraint("x1", Condition::Integer);
+    problem.add_constraint("x1", Condition::AllowedSet, {9.0f, 1.0f, 5.0f, 5.0f});
+
+    ASSERT_EQ(problem.constraints.size(), 2u);
+
+    const ResponseOptimization::Constraint& whole = problem.constraints[0];
+    const ResponseOptimization::Constraint& listed = problem.constraints[1];
 
     EXPECT_EQ(whole.equation.input_indices, vector<Index>({0}));
     EXPECT_EQ(listed.equation.input_indices, vector<Index>({0}));
@@ -496,18 +515,18 @@ TEST(ConstraintCompilation, CardinalityBecomesOneRowHeldToTheUnitBand)
 {
     MinimalApproximation setup({"x1", "x2", "x3"}, {"y"});
 
-    const DomainContraction problem(setup.network.get());
+    ConstraintProbe problem(setup.network.get());
 
-    const ResponseOptimization::Constraint budget("x1; x2; x3", Condition::Cardinality, {1.0f},
-                                                  problem);
-    const ResponseOptimization::Constraint roomy("x1; x2; x3", Condition::Cardinality, {3.0f},
-                                                 problem);
+    problem.add_constraint("x1; x2; x3", Condition::Cardinality, {1.0f});
+    problem.add_constraint("x1; x2; x3", Condition::Cardinality, {3.0f});
+
+    ASSERT_EQ(problem.constraints.size(), 1u) << "a budget of every counted variable restricts nothing";
+
+    const ResponseOptimization::Constraint& budget = problem.constraints[0];
 
     EXPECT_EQ(budget.equation.input_indices, vector<Index>({0, 1, 2}));
     EXPECT_EQ(budget.equation.text, "x1; x2; x3");
     EXPECT_EQ(budget.equation.symmetric_order, 2);
-
-    EXPECT_TRUE(roomy.equation.text.empty()) << "a budget of every counted variable restricts nothing";
 
     VectorR point(3);
 
