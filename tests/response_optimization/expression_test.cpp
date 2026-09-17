@@ -196,6 +196,39 @@ TEST(Expression, ProductOfVariablesIsNonlinear)
 }
 
 
+TEST(Expression, QuotedNamesPreservePunctuationAndRemainDistinct)
+{
+    const auto inputs = make_named_columns({"Flow rate (m3/s)", "Flow/rate", "Flow_rate", "a`b", "1st;input", "sqrt"});
+    const auto outputs = make_named_columns({"Pressure (Pa)"});
+    const auto expression = compile_expression(
+        "`Flow rate (m3/s)` + 2*`Flow/rate` + Flow_rate + `a``b` + `1st;input` + sqrt(`sqrt`) + `Pressure (Pa)`",
+        inputs, outputs);
+    VectorR input(6); input << 1, 2, 3, 4, 5, 9;
+    VectorR output(1); output << 7;
+    EXPECT_FLOAT_EQ(expression.evaluate(input, output), 27.0f);
+    const string unicode_name = "Flow (m\xC2\xB3/s)";
+    const auto unicode_expression = compile_expression("`" + unicode_name + "`", {{unicode_name, 0}}, {});
+    EXPECT_FLOAT_EQ(unicode_expression.evaluate(input, {}), 1.0f);
+    EXPECT_TRUE(is_bare_variable(compile_expression("`Flow/rate`", inputs, outputs)));
+    EXPECT_THROW(compile_expression("`missing`", inputs, outputs), runtime_error);
+    EXPECT_THROW(compile_expression("`Flow/rate", inputs, outputs), runtime_error);
+    EXPECT_THROW(compile_expression("``", inputs, outputs), runtime_error);
+    EXPECT_THROW(compile_expression("`sqrt`(4)", inputs, outputs), runtime_error);
+}
+
+
+TEST(ConstraintCompilation, CardinalityAcceptsQuotedNamesAndEmbeddedSeparators)
+{
+    MinimalApproximation setup({"Flow (m3/s)", "a;b", "a`b"}, {"y"});
+    ConstraintProbe problem(setup.network.get());
+    problem.add_constraint("`Flow (m3/s)`; `a;b`; `a``b`", Condition::Cardinality, {1.0f});
+    ASSERT_EQ(problem.constraints.size(), 1u);
+    EXPECT_EQ(problem.constraints[0].equation.input_indices, vector<Index>({0, 1, 2}));
+    EXPECT_THROW(problem.add_constraint("`a;b`; `a;b`", Condition::Cardinality, {1.0f}), runtime_error);
+    EXPECT_THROW(problem.add_constraint("`a;b`;", Condition::Cardinality, {1.0f}), runtime_error);
+}
+
+
 TEST(Expression, DivisionByVariableIsNonlinear)
 {
     const CompiledExpression expression =

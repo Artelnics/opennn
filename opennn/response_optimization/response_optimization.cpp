@@ -52,7 +52,7 @@ vector<Index> get_group_members(const string& expression, const Network* network
 {
     vector<Index> members;
 
-    for (const string_view entry : get_token_views(expression, ';'))
+    for (const string& entry : split_expression_list(expression))
     {
         const string name(trim_view(entry));
 

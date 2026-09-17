@@ -227,7 +227,7 @@ const FunctionEntry* find_function(const string& name)
 
 struct Token
 {
-    enum class Kind { Number, Identifier, Operator, LeftParen, RightParen, Comma, End };
+    enum class Kind { Number, Identifier, QuotedIdentifier, Operator, LeftParen, RightParen, Comma, Semicolon, End };
 
     Kind kind = Kind::End;
     string text;
@@ -259,6 +259,33 @@ struct Lexer
 
             Token token;
             token.position = position;
+
+            if (character == '`')
+            {
+                token.kind = Token::Kind::QuotedIdentifier;
+                ++position;
+                bool closed = false;
+                while (position < source.size())
+                {
+                    const char current = source[position++];
+                    if (current != '`')
+                        token.text += current;
+                    else if (position < source.size() && source[position] == '`')
+                    {
+                        token.text += '`';
+                        ++position;
+                    }
+                    else
+                    {
+                        closed = true;
+                        break;
+                    }
+                }
+                throw_if(!closed, format("ExpressionParser: unclosed quoted variable at position {}", token.position));
+                throw_if(token.text.empty(), "ExpressionParser: quoted variable names cannot be empty.");
+                tokens.push_back(move(token));
+                continue;
+            }
 
             if (isdigit(static_cast<unsigned char>(character))
             || (character == '.'
@@ -311,6 +338,7 @@ struct Lexer
             case '(': token.kind = Token::Kind::LeftParen;  token.text = "("; break;
             case ')': token.kind = Token::Kind::RightParen; token.text = ")"; break;
             case ',': token.kind = Token::Kind::Comma;      token.text = ","; break;
+            case ';': token.kind = Token::Kind::Semicolon;  token.text = ";"; break;
             case '+': case '-': case '*': case '/': case '^':
                 token.kind = Token::Kind::Operator;
                 token.text = string(1, character);
@@ -443,9 +471,9 @@ struct Parser
             return inner_node;
         }
 
-        if (token.kind == Token::Kind::Identifier)
+        if (token.kind == Token::Kind::Identifier || token.kind == Token::Kind::QuotedIdentifier)
         {
-            if (lexer.peek().kind == Token::Kind::LeftParen)
+            if (token.kind == Token::Kind::Identifier && lexer.peek().kind == Token::Kind::LeftParen)
                 return parse_call(token.text);
 
             for (const auto& named_column : input_columns)
@@ -1284,6 +1312,21 @@ CompiledExpression compile_membership(const string& expression,
                                     make_const(span)));
 
     return compile_ast(*product);
+}
+
+
+vector<string> split_expression_list(const string& expression)
+{
+    const Lexer lexer(expression);
+    vector<string> members;
+    size_t start = 0;
+    for (const Token& token : lexer.tokens)
+        if (token.kind == Token::Kind::Semicolon || token.kind == Token::Kind::End)
+        {
+            members.push_back(expression.substr(start, token.position - start));
+            start = token.position + 1;
+        }
+    return members;
 }
 
 

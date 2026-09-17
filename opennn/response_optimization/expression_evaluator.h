@@ -65,6 +65,9 @@ struct CompiledExpression
 };
 
 
+// Semicolons inside backtick-quoted names are part of the name, not separators.
+vector<string> split_expression_list(const string&);
+
 CompiledExpression compile_expression(const string&,
                                       const vector<pair<string, Index>>&,
                                       const vector<pair<string, Index>>&);

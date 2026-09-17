@@ -10,6 +10,11 @@ remaining limitations.
 
 ### Reconciliation and release preparation
 
+- Response optimization expressions accept original variable names in backticks,
+  including spaces, units and punctuation (for example, `` `Flow rate (m3/s)` ``).
+  Double a backtick inside a name to escape it. Existing unquoted expressions
+  and serialized variable names are unchanged; Cardinality lists also accept
+  quoted names containing semicolons.
 - Separate YOLO discovery, annotation conversion and cache persistence into
   `yolo_dataset_io.cpp`, with shared cache formats and target encoders kept in
   a private internal header. Batch filling, augmentation and device residency
