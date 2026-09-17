@@ -1655,7 +1655,8 @@ void Network::copy_parameters_host()
              "Network::copy_parameters_host: the fp32 CUDA parameter master "
              "was released for quantized inference and cannot be copied back.");
 
-    parameter_store.master.migrate_to(Device::CPU, device::get_compute_stream());
+    if (parameter_store.master.get_device() == Device::CUDA)
+        parameter_store.master.migrate_to(Device::CPU, device::get_compute_stream());
     clear_low_precision_parameter_storage();
 
     for (const auto& layer : layers)
