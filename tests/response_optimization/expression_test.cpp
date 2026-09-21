@@ -474,6 +474,67 @@ TEST(Expression, MismatchedParenthesesThrow)
 }
 
 
+// Parsing, differentiating, analyzing and destroying a tree each recurse once per
+// level, so without a limit a deep enough expression exhausts the stack before any
+// of them can report a problem. Nesting is counted by the parser as it descends.
+
+TEST(Expression, NestingBeyondTheLimitThrows)
+{
+    const vector<pair<string, Index>> inputs = make_named_columns({"x1"});
+
+    const auto nested = [](const size_t depth)
+    { return string(depth, '(') + "x1" + string(depth, ')'); };
+
+    EXPECT_NO_THROW(compile_expression(nested(250), inputs, {}));
+    EXPECT_THROW(compile_expression(nested(300), inputs, {}), runtime_error);
+    EXPECT_THROW(compile_expression(nested(5000), inputs, {}), runtime_error);
+}
+
+
+// A chain of operations leaves the parser shallow and the tree deep, so the tree
+// carries its own depth and is checked separately.
+
+TEST(Expression, ChainedOperationsBeyondTheLimitThrow)
+{
+    const vector<pair<string, Index>> inputs = make_named_columns({"x1"});
+
+    const auto chained = [](const size_t terms)
+    {
+        string expression = "x1";
+
+        for (size_t term = 1; term < terms; term++)
+            expression += " + x1";
+
+        return expression;
+    };
+
+    EXPECT_NO_THROW(compile_expression(chained(500), inputs, {}));
+    EXPECT_THROW(compile_expression(chained(600), inputs, {}), runtime_error);
+    EXPECT_THROW(compile_expression(chained(5000), inputs, {}), runtime_error);
+}
+
+
+// The refused expression reaches the user inside the message, and the ones these
+// limits reject can be tens of thousands of characters long.
+
+TEST(Expression, ARefusedExpressionIsQuotedBackAbbreviated)
+{
+    MinimalApproximation setup({"x1"}, {"y"});
+
+    try
+    {
+        compile_expression(string(5000, '(') + "x1" + string(5000, ')'),
+                           setup.network.get(), "Objective");
+
+        FAIL() << "an expression nested five thousand levels deep must be refused";
+    }
+    catch (const runtime_error& error)
+    {
+        EXPECT_LT(string(error.what()).size(), size_t(400));
+    }
+}
+
+
 TEST(Expression, ComparisonSymbolsAreRejectedAgainstANetwork)
 {
     MinimalApproximation setup({"x1", "x2"}, {"y"});

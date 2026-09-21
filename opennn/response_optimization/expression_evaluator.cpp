@@ -18,6 +18,36 @@ namespace
 struct ExpressionNode;
 using ExpressionNodePtr = unique_ptr<ExpressionNode>;
 
+// Parsing, differentiating, analyzing and even destroying an expression tree all
+// recurse once per level, so an expression that nests or chains far enough
+// overflows the stack before any of them can report a problem. Both limits sit
+// well below the depth that actually crashes (about a thousand levels of nesting,
+// two thousand chained operations) and far above any expression a model needs.
+
+constexpr Index max_nesting_depth = 256;
+
+constexpr Index max_operation_depth = 512;
+
+
+// A rejected expression is quoted back to the user, and the ones these limits
+// reject can be tens of thousands of characters long. Cut on a character
+// boundary, not in the middle of a multi-byte name.
+
+string abbreviate(const string& expression)
+{
+    constexpr size_t limit = 80;
+
+    if (expression.size() <= limit) return expression;
+
+    size_t cut = limit;
+
+    while (cut > 0 && (static_cast<unsigned char>(expression[cut]) & 0xC0) == 0x80)
+        --cut;
+
+    return expression.substr(0, cut) + "...";
+}
+
+
 struct ExpressionNode
 {
     enum class Kind { Const, Input, Output, UnaryNeg, Add, Sub, Mul, Div, Pow, Func };
@@ -29,6 +59,9 @@ struct ExpressionNode
     ExpressionOp::Kind function = ExpressionOp::Kind::Sqrt;
 
     vector<ExpressionNodePtr> children;
+
+    // Levels below this node, kept as the tree is built so no walk is needed.
+    Index depth = 1;
 };
 
 
@@ -77,6 +110,7 @@ ExpressionNodePtr make_binary(const ExpressionNode::Kind kind, ExpressionNodePtr
 {
     auto node = make_unique<ExpressionNode>();
     node->kind = kind;
+    node->depth = 1 + max(left->depth, right->depth);
     node->children.reserve(2);
     node->children.push_back(move(left));
     node->children.push_back(move(right));
@@ -90,6 +124,7 @@ ExpressionNodePtr make_call(const ExpressionOp::Kind function, ExpressionNodePtr
     auto node = make_unique<ExpressionNode>();
     node->kind = ExpressionNode::Kind::Func;
     node->function = function;
+    node->depth = 1 + argument->depth;
     node->children.push_back(move(argument));
 
     return node;
@@ -103,6 +138,7 @@ ExpressionNodePtr make_neg(ExpressionNodePtr operand)
 
     auto node = make_unique<ExpressionNode>();
     node->kind = ExpressionNode::Kind::UnaryNeg;
+    node->depth = 1 + operand->depth;
     node->children.push_back(move(operand));
 
     return node;
@@ -183,6 +219,7 @@ ExpressionNodePtr clone(const ExpressionNode& node)
     copy->constant = node.constant;
     copy->index = node.index;
     copy->function = node.function;
+    copy->depth = node.depth;
 
     copy->children.reserve(node.children.size());
 
@@ -368,6 +405,26 @@ struct Parser
     const vector<pair<string, Index>>& input_columns;
     const vector<pair<string, Index>>& output_columns;
 
+    Index nesting = 0;
+
+    // Counts one level per nested parenthesis, call or right-hand power, and
+    // refuses the expression before the recursion can exhaust the stack.
+    struct NestingGuard
+    {
+        explicit NestingGuard(Index& counter) : level(counter)
+        {
+            throw_if(level >= max_nesting_depth,
+                     format("ExpressionParser: the expression nests more than {} levels deep",
+                            max_nesting_depth));
+
+            ++level;
+        }
+
+        ~NestingGuard() { --level; }
+
+        Index& level;
+    };
+
     Parser(Lexer& new_lexer,
            const vector<pair<string, Index>>& new_input_columns,
            const vector<pair<string, Index>>& new_output_columns)
@@ -405,6 +462,8 @@ struct Parser
 
     ExpressionNodePtr parse_expression()
     {
+        const NestingGuard guard(nesting);
+
         return parse_binary(&Parser::parse_term, "+-",
                             ExpressionNode::Kind::Add, ExpressionNode::Kind::Sub);
     }
@@ -425,6 +484,8 @@ struct Parser
         {
             lexer.consume();
 
+            const NestingGuard guard(nesting);
+
             return make_binary(ExpressionNode::Kind::Pow, move(left_node), parse_factor());
         }
 
@@ -439,12 +500,16 @@ struct Parser
         {
             lexer.consume();
 
+            const NestingGuard guard(nesting);
+
             return make_neg(parse_unary());
         }
 
         if (next_token.kind == Token::Kind::Operator && next_token.text == "+")
         {
             lexer.consume();
+
+            const NestingGuard guard(nesting);
 
             return parse_unary();
         }
@@ -1095,7 +1160,13 @@ ExpressionNodePtr parse_expression_tree(const string& expression,
     ExpressionNodePtr ast = parser.parse_expression();
 
     throw_if(lexer.peek().kind != Token::Kind::End,
-             format("ExpressionParser: trailing tokens after valid expression in '{}'", expression));
+             format("ExpressionParser: trailing tokens after valid expression in '{}'", abbreviate(expression)));
+
+    // Chained operations ('a + a + a + ...') leave the parser shallow but the tree
+    // deep, so the tree itself is checked too.
+    throw_if(ast->depth > max_operation_depth,
+             format("ExpressionParser: the expression chains more than {} operations",
+                    max_operation_depth));
 
     return ast;
 }
@@ -1349,7 +1420,7 @@ CompiledExpression compile_expression(const string& expression,
     throw_if(!network, "The neural network has not been set.");
 
     throw_if(expression.find_first_of("<>=") != string::npos,
-             role + " '" + expression + "' cannot contain comparison symbols. Use a condition instead.");
+             role + " '" + abbreviate(expression) + "' cannot contain comparison symbols. Use a condition instead.");
 
     try
     {
@@ -1359,7 +1430,7 @@ CompiledExpression compile_expression(const string& expression,
     }
     catch (const exception& e)
     {
-        throw runtime_error(role + " '" + expression + "' cannot be read. " + e.what());
+        throw runtime_error(role + " '" + abbreviate(expression) + "' cannot be read. " + e.what());
     }
 }
 
