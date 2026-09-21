@@ -108,6 +108,20 @@ float ResponseOptimization::get_bound_tolerance(const float bound) const
 }
 
 
+// The user writes variable names, so errors about the domain name them back
+// instead of the feature index the solver works with.
+
+string ResponseOptimization::get_input_column_name(const Index column) const
+{
+    if (network)
+        for (const auto& [name, index] : get_variable_columns(network->get_input_variables()))
+            if (index == column)
+                return name;
+
+    return "input column " + to_string(column);
+}
+
+
 float ResponseOptimization::calculate_band_residual(const pair<float, float>& band, const float value) const
 {
     const auto [lower, upper] = band;
@@ -210,7 +224,7 @@ pair<VectorR, VectorR> ResponseOptimization::narrow_domain(pair<VectorR, VectorR
         domain.second(column) = min(domain.second(column), upper);
 
         throw_if(domain.first(column) > domain.second(column) + get_bound_tolerance(domain.second(column)),
-                 "The constraints leave input column " + to_string(column) + " with an empty range ["
+                 "The constraints leave '" + get_input_column_name(column) + "' with an empty range ["
                  + to_string(domain.first(column)) + ", " + to_string(domain.second(column)) + "].");
     }
 
@@ -226,8 +240,9 @@ void ResponseOptimization::check_domain(const pair<VectorR, VectorR>& domain) co
             for (const Index counted : constraint.equation.input_indices)
                 throw_if(domain.first(counted) > get_bound_tolerance(domain.first(counted))
                       || domain.second(counted) < -get_bound_tolerance(domain.second(counted)),
-                         "Constraint on '" + constraint.equation.text + "' counts input column "
-                         + to_string(counted) + ", whose range [" + to_string(domain.first(counted)) + ", "
+                         "Constraint on '" + constraint.equation.text + "' counts '"
+                         + get_input_column_name(counted) + "', whose range ["
+                         + to_string(domain.first(counted)) + ", "
                          + to_string(domain.second(counted)) + "] excludes zero, so it can never be switched off.");
 
         const Index column = get_discrete_column(constraint);

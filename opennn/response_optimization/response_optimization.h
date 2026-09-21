@@ -107,6 +107,8 @@ private:
 
     pair<VectorR, VectorR> get_unconstrained_domain() const;
 
+    string get_input_column_name(Index) const;
+
     float get_bound_tolerance(float) const;
 
     float calculate_band_residual(const pair<float, float>&, float) const;
