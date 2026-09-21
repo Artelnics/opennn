@@ -187,11 +187,15 @@ MatrixR DomainContraction::single_optimization()
 
     float best_value = -MAX;
 
+    bool finite_value_seen = false;
+
     for (Index iteration = 0; iteration < iterations_number; iteration++)
     {
         const auto [feasible_inputs, feasible_outputs] = sample_local_domains({domain});
 
         const VectorR values = evaluate_objectives(feasible_inputs, feasible_outputs).col(0);
+
+        finite_value_seen = finite_value_seen || values.array().isFinite().any();
 
         for (const auto [row, column] : category_columns(feasible_inputs, blocks))
             category_scores(column) = max(category_scores(column), values(row));
@@ -214,6 +218,13 @@ MatrixR DomainContraction::single_optimization()
 
         domain = local_domain(best_input, half_interval, allowed_domain);
     }
+
+    // Feasible points were drawn (sample_local_domains throws otherwise), so an
+    // empty result means the objective itself never produced a usable value.
+    throw_if(best_input.size() == 0 && !finite_value_seen,
+             "Objective '" + objectives.front().expression.text + "' has no finite value at any feasible "
+             "point. Check the expression for divisions by zero, logarithms or square roots of negative "
+             "values, and exponents that overflow.");
 
     throw_if(best_input.size() == 0, "No feasible point was found.");
 
