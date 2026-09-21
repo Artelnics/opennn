@@ -32,31 +32,6 @@ VectorR initial_half_interval(const pair<VectorR, VectorR>& domain,
 }
 
 
-Index category_column(const VectorR& input, const pair<Index, Index>& block)
-{
-    Index category = 0;
-
-    input.segment(block.first, block.second).maxCoeff(&category);
-
-    return block.first + category;
-}
-
-
-vector<pair<Index, Index>> category_columns(const MatrixR& inputs,
-                                            const vector<pair<Index, Index>>& blocks)
-{
-    vector<pair<Index, Index>> columns;
-
-    columns.reserve(size_t(inputs.rows())*blocks.size());
-
-    for (Index i = 0; i < inputs.rows(); i++)
-        for (const pair<Index, Index>& block : blocks)
-            columns.emplace_back(i, category_column(inputs.row(i).transpose(), block));
-
-    return columns;
-}
-
-
 vector<pair<VectorR, VectorR>> local_domains_around(const MatrixR& centers,
                                                     const VectorR& half_interval,
                                                     const pair<VectorR, VectorR>& initial_domain)
@@ -84,9 +59,9 @@ void DomainContraction::set_contraction_factor(const float new_contraction_facto
 }
 
 
-pair<VectorR, VectorR> DomainContraction::contract_categories(pair<VectorR, VectorR> domain,
-                                                              const VectorR& category_scores,
-                                                              const Index iteration) const
+void DomainContraction::contract_categories(pair<VectorR, VectorR>& domain,
+                                            const VectorR& category_scores,
+                                            const Index iteration) const
 {
     for (const pair<Index, Index>& block : get_categorical_blocks(network->get_input_variables()))
     {
@@ -105,8 +80,6 @@ pair<VectorR, VectorR> DomainContraction::contract_categories(pair<VectorR, Vect
         for (Index i = 0; i < Index(live_columns.size()) - survivors_number; i++)
             domain.second(live_columns[size_t(i)]) = 0.0f;
     }
-
-    return domain;
 }
 
 
@@ -114,9 +87,12 @@ pair<MatrixR, MatrixR> DomainContraction::sample_local_domains(
     const vector<pair<VectorR, VectorR>>& local_domains)
 {
     const Index sample_size = max(Index(1), points_number/Index(local_domains.size()));
+    const Index capacity = sample_size*Index(local_domains.size());
 
-    pair<MatrixR, MatrixR> points;
+    pair<MatrixR, MatrixR> points{MatrixR(capacity, local_domains.front().first.size()),
+                                 MatrixR(capacity, network->get_outputs_number())};
 
+    Index total_sampled = 0;
     Index starved_domains = 0;
 
     for (const pair<VectorR, VectorR>& domain : local_domains)
@@ -131,39 +107,33 @@ pair<MatrixR, MatrixR> DomainContraction::sample_local_domains(
         {
             const Index batch = sample_size - sampled;
 
-            MatrixR inputs(batch, domain.first.size());
-            MatrixR outputs(batch, network->get_outputs_number());
-
-            Index feasible_number = 0;
-
             for (Index i = 0; i < batch; i++)
             {
                 const auto [input, output] = feasibility_system.solve(calculate_random_input(domain));
 
                 if (input.size() == 0) continue;
 
-                inputs.row(feasible_number) = input.transpose();
-                outputs.row(feasible_number) = output.transpose();
+                points.first.row(total_sampled) = input.transpose();
+                points.second.row(total_sampled) = output.transpose();
 
-                feasible_number++;
+                total_sampled++;
+                sampled++;
             }
-
-            sampled += feasible_number;
-
-            points = append_rows(points, {inputs.topRows(feasible_number),
-                                          outputs.topRows(feasible_number)});
         }
 
         if (sampled < sample_size) starved_domains++;
     }
 
-    throw_if(points.first.rows() == 0,
+    throw_if(total_sampled == 0,
              "No feasible point could be drawn in " + to_string(iterations_number)
              + " attempts. The constraints may be impossible to satisfy.");
 
     if (starved_domains > 0)
         logging::warning() << "Warning: " << starved_domains << " of " << local_domains.size()
              << " local domains yielded fewer than " << sample_size << " feasible points.\n";
+
+    points.first.conservativeResize(total_sampled, Eigen::NoChange);
+    points.second.conservativeResize(total_sampled, Eigen::NoChange);
 
     return points;
 }
@@ -197,8 +167,15 @@ MatrixR DomainContraction::single_optimization()
 
         finite_value_seen = finite_value_seen || values.array().isFinite().any();
 
-        for (const auto [row, column] : category_columns(feasible_inputs, blocks))
-            category_scores(column) = max(category_scores(column), values(row));
+        for (Index row = 0; row < feasible_inputs.rows(); row++)
+            for (const pair<Index, Index>& block : blocks)
+            {
+                Index category = 0;
+                feasible_inputs.row(row).segment(block.first, block.second).maxCoeff(&category);
+
+                const Index column = block.first + category;
+                category_scores(column) = max(category_scores(column), values(row));
+            }
 
         Index best_row = 0;
 
@@ -214,7 +191,7 @@ MatrixR DomainContraction::single_optimization()
 
         half_interval *= contraction_factor;
 
-        allowed_domain = contract_categories(allowed_domain, category_scores, iteration);
+        contract_categories(allowed_domain, category_scores, iteration);
 
         domain = local_domain(best_input, half_interval, allowed_domain);
     }
@@ -256,12 +233,18 @@ MatrixR DomainContraction::multi_optimization()
 
         VectorR category_scores = VectorR::Zero(allowed_domain.first.size());
 
-        for (const auto [row, column] : category_columns(candidates.first, blocks))
-            category_scores(column) += 1.0f;
+        for (Index row = 0; row < candidates.first.rows(); row++)
+            for (const pair<Index, Index>& block : blocks)
+            {
+                Index category = 0;
+                candidates.first.row(row).segment(block.first, block.second).maxCoeff(&category);
+
+                category_scores(block.first + category) += 1.0f;
+            }
 
         half_interval *= contraction_factor;
 
-        allowed_domain = contract_categories(allowed_domain, category_scores, iteration);
+        contract_categories(allowed_domain, category_scores, iteration);
 
         local_domains = local_domains_around(candidates.first, half_interval, allowed_domain);
     }

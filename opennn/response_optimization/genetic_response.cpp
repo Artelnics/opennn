@@ -119,15 +119,14 @@ pair<MatrixR, MatrixR> GeneticResponse::evolve_population(const pair<VectorR, Ve
 
     for (Index generation = 0; generation < iterations_number; generation++)
     {
-        const vector<Index> ranking = calculate_fitness(population.first, population.second);
-        const auto children = recombinate_population(population.first, ranking, domain);
+        const vector<Index> fitness_ranking = calculate_fitness(population.first, population.second);
+        const MatrixR children = recombinate_population(population.first, fitness_ranking, domain);
 
-        population = append_rows(population, mutate_population(children.first, domain));
+        population = append_rows(population, mutate_population(children, domain));
 
-        const vector<Index> survivors = calculate_fitness(population.first, population.second);
-        population = slice_rows(population,
-                                vector<Index>(survivors.begin(),
-                                              survivors.begin() + min(points_number, Index(survivors.size()))));
+        vector<Index> survivors = calculate_fitness(population.first, population.second);
+        survivors.resize(min(size_t(points_number), survivors.size()));
+        population = slice_rows(population, survivors);
     }
 
     return population;
@@ -143,12 +142,9 @@ MatrixR GeneticResponse::multi_optimization()
 
     for (Index i = 0; i < iterations_number && Index(front.size()) < requested_front_size; i++)
     {
-        const vector<Index> parents =
-            calculate_pareto_front(evaluate_objectives(population.first, population.second));
+        const MatrixR children = recombinate_population(population.first, front, domain);
 
-        const pair<MatrixR, MatrixR> children = recombinate_population(population.first, parents, domain);
-
-        const pair<MatrixR, MatrixR> offspring = mutate_population(children.first, domain);
+        const pair<MatrixR, MatrixR> offspring = mutate_population(children, domain);
 
         if (offspring.first.rows() == 0) break;
 
@@ -211,14 +207,13 @@ vector<Index> GeneticResponse::calculate_fitness(const MatrixR& inputs, const Ma
 }
 
 
-pair<MatrixR, MatrixR> GeneticResponse::recombinate_population(const MatrixR& parent_inputs,
-                                                               const vector<Index>& ranking,
-                                                               const pair<VectorR, VectorR>& domain) const
+MatrixR GeneticResponse::recombinate_population(const MatrixR& parent_inputs,
+                                                const vector<Index>& ranking,
+                                                const pair<VectorR, VectorR>& domain) const
 {
     const Index attempts_number = iterations_number*points_number;
 
     MatrixR inputs(points_number, parent_inputs.cols());
-    MatrixR outputs(points_number, network->get_outputs_number());
 
     Index feasible_number = 0;
 
@@ -230,24 +225,22 @@ pair<MatrixR, MatrixR> GeneticResponse::recombinate_population(const MatrixR& pa
         if (random_uniform(0.0f, 1.0f) < crossover_probability)
             crossover(first_child, second_child, domain);
 
-        const auto [first_input, first_output] = feasibility_system.solve(first_child);
+        const VectorR first_input = feasibility_system.solve(first_child).first;
 
         if (first_input.size() > 0)
         {
             inputs.row(feasible_number) = first_input.transpose();
-            outputs.row(feasible_number) = first_output.transpose();
 
             feasible_number++;
         }
 
         if (feasible_number == points_number) break;
 
-        const auto [second_input, second_output] = feasibility_system.solve(second_child);
+        const VectorR second_input = feasibility_system.solve(second_child).first;
 
         if (second_input.size() > 0)
         {
             inputs.row(feasible_number) = second_input.transpose();
-            outputs.row(feasible_number) = second_output.transpose();
 
             feasible_number++;
         }
@@ -258,7 +251,7 @@ pair<MatrixR, MatrixR> GeneticResponse::recombinate_population(const MatrixR& pa
              + " children could be recombined into feasible points in " + to_string(attempts_number)
              + " attempts. The constraints may be impossible to satisfy.");
 
-    return {inputs, outputs};
+    return inputs;
 }
 
 

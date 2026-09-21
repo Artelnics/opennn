@@ -131,7 +131,7 @@ TEST(LinearForwardTransposedTest, CudaLtPreservesPaddedOperandsAndCallTimeValues
             {
                 check_padded_lt_invocations<float>(CUDA_R_32F, trans_a, trans_b, epilogue);
                 if (device::cuda_compute_capability() >= 80)
-                    check_padded_lt_invocations<bfloat16>(CUDA_R_16BF, trans_a, trans_b, epilogue);
+                    check_padded_lt_invocations<opennn::bfloat16>(CUDA_R_16BF, trans_a, trans_b, epilogue);
             }
 }
 #endif

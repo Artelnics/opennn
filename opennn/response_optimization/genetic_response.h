@@ -24,9 +24,9 @@ private:
 
     vector<Index> calculate_fitness(const MatrixR&, const MatrixR&) const;
 
-    pair<MatrixR, MatrixR> recombinate_population(const MatrixR&,
-                                                  const vector<Index>&,
-                                                  const pair<VectorR, VectorR>&) const;
+    MatrixR recombinate_population(const MatrixR&,
+                                   const vector<Index>&,
+                                   const pair<VectorR, VectorR>&) const;
 
     pair<MatrixR, MatrixR> mutate_population(const MatrixR&, const pair<VectorR, VectorR>&) const;
 

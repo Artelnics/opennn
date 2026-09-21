@@ -126,21 +126,16 @@ float ResponseOptimization::calculate_band_residual(const pair<float, float>& ba
 {
     const auto [lower, upper] = band;
 
-    float residual = 0.0f;
     float crossed_bound = 0.0f;
 
     if (value < lower - get_bound_tolerance(lower))
-    {
-        residual = value - lower;
         crossed_bound = lower;
-    }
     else if (value > upper + get_bound_tolerance(upper))
-    {
-        residual = value - upper;
         crossed_bound = upper;
-    }
     else
         return 0.0f;
+
+    const float residual = value - crossed_bound;
 
     const float inset = min(feasibility_margin_factor*max(abs(residual), feasibility_margin_factor*abs(crossed_bound)),
                             0.5f*(upper - lower));
@@ -613,7 +608,7 @@ void ResponseOptimization::add_constraint(const string& expression,
                                           const Constraint::Condition condition,
                                           const vector<float>& values)
 {
-    Constraint constraint{condition, values, {}};
+    Constraint constraint{{}, condition, values};
 
     throw_if(ranges::any_of(constraint.values, [](const float value) { return !isfinite(value); }),
              "Constraint on '" + expression + "' has a value that is not a finite number.");
@@ -673,10 +668,12 @@ void ResponseOptimization::add_constraint(const string& expression,
 
         ranges::sort(constraint.values);
 
-        if (ranges::adjacent_find(constraint.values) != constraint.values.end())
+        const auto duplicates = ranges::unique(constraint.values);
+
+        if (!duplicates.empty())
             logging::warning() << "Warning: constraint on '" << expression << "' repeats allowed values.\n";
 
-        constraint.values.erase(ranges::unique(constraint.values).begin(), constraint.values.end());
+        constraint.values.erase(duplicates.begin(), duplicates.end());
 
         if (constraint.values.size() > discrete_values_warning)
             logging::warning() << "Warning: constraint on '" << expression << "' lists "

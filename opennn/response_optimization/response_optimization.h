@@ -35,11 +35,11 @@ public:
             Equal, Between, GreaterEqual, LessEqual, Greater, Less, AllowedSet, Integer, Cardinality
         };
 
+        CompiledExpression equation;
+
         Condition condition = Condition::Equal;
 
         vector<float> values;
-
-        CompiledExpression equation;
     };
 
     struct FeasibilitySystem

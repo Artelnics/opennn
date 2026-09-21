@@ -395,7 +395,7 @@ struct Lexer
     }
 
     const Token& peek() const { return tokens[cursor]; }
-    Token consume() { return tokens[cursor++]; }
+    const Token& consume() { return tokens[cursor++]; }
 };
 
 
@@ -519,7 +519,7 @@ struct Parser
 
     ExpressionNodePtr parse_primary()
     {
-        Token token = lexer.consume();
+        const Token& token = lexer.consume();
 
         if (token.kind == Token::Kind::Number)
             return make_const(token.number);
@@ -528,7 +528,7 @@ struct Parser
         {
             ExpressionNodePtr inner_node = parse_expression();
 
-            const Token closing_token = lexer.consume();
+            const Token& closing_token = lexer.consume();
 
             throw_if(closing_token.kind != Token::Kind::RightParen,
                      format("ExpressionParser: expected ')' at position {}", closing_token.position));
@@ -575,7 +575,7 @@ struct Parser
             }
         }
 
-        const Token closing_token = lexer.consume();
+        const Token& closing_token = lexer.consume();
 
         throw_if(closing_token.kind != Token::Kind::RightParen,
                  format("ExpressionParser: expected ')' in call to '{}'", name));
@@ -617,16 +617,7 @@ void accumulate_into(unordered_map<Index, float>& destination,
                      const float scaling)
 {
     for (const auto& [column, coefficient] : source)
-    {
-        const float contribution = scaling * coefficient;
-
-        const auto existing = destination.find(column);
-
-        if (existing == destination.end())
-            destination.emplace(column, contribution);
-        else
-            existing->second += contribution;
-    }
+        destination[column] += scaling * coefficient;
 }
 
 
@@ -679,12 +670,10 @@ LinearForm analyze_linear(const ExpressionNode& node)
         if (!left_form.is_linear || !right_form.is_linear) { result.is_linear = false; return result; }
 
         const float sign = (node.kind == ExpressionNode::Kind::Add) ? 1.0f : -1.0f;
-        result.constant = left_form.constant + sign * right_form.constant;
-        result.input_terms = move(left_form.input_terms);
-        result.output_terms = move(left_form.output_terms);
-        accumulate_into(result.input_terms, right_form.input_terms, sign);
-        accumulate_into(result.output_terms, right_form.output_terms, sign);
-        return result;
+        left_form.constant += sign * right_form.constant;
+        accumulate_into(left_form.input_terms, right_form.input_terms, sign);
+        accumulate_into(left_form.output_terms, right_form.output_terms, sign);
+        return left_form;
     }
 
     case Mul:
@@ -765,10 +754,10 @@ void collect_variable_references(const ExpressionNode& node,
 }
 
 
-ExpressionNodePtr differentiate_call(const ExpressionNode& node, const bool wrt_is_output, const Index wrt_index);
+ExpressionNodePtr differentiate_call(const ExpressionNode& node, const Index wrt_index);
 
 
-ExpressionNodePtr differentiate(const ExpressionNode& node, const bool wrt_is_output, const Index wrt_index)
+ExpressionNodePtr differentiate(const ExpressionNode& node, const Index wrt_index)
 {
     switch (node.kind)
     {
@@ -777,26 +766,26 @@ ExpressionNodePtr differentiate(const ExpressionNode& node, const bool wrt_is_ou
         return make_const(0.0f);
 
     case Input:
-        return make_const((!wrt_is_output && node.index == wrt_index) ? 1.0f : 0.0f);
+        return make_const(node.index == wrt_index ? 1.0f : 0.0f);
 
     case Output:
-        return make_const((wrt_is_output && node.index == wrt_index) ? 1.0f : 0.0f);
+        return make_const(0.0f);
 
     case UnaryNeg:
-        return make_neg(differentiate(*node.children[0], wrt_is_output, wrt_index));
+        return make_neg(differentiate(*node.children[0], wrt_index));
 
     case Add:
-        return make_add(differentiate(*node.children[0], wrt_is_output, wrt_index),
-                        differentiate(*node.children[1], wrt_is_output, wrt_index));
+        return make_add(differentiate(*node.children[0], wrt_index),
+                        differentiate(*node.children[1], wrt_index));
 
     case Sub:
-        return make_sub(differentiate(*node.children[0], wrt_is_output, wrt_index),
-                        differentiate(*node.children[1], wrt_is_output, wrt_index));
+        return make_sub(differentiate(*node.children[0], wrt_index),
+                        differentiate(*node.children[1], wrt_index));
 
     case Mul:
     {
-        ExpressionNodePtr left_derivative = differentiate(*node.children[0], wrt_is_output, wrt_index);
-        ExpressionNodePtr right_derivative = differentiate(*node.children[1], wrt_is_output, wrt_index);
+        ExpressionNodePtr left_derivative = differentiate(*node.children[0], wrt_index);
+        ExpressionNodePtr right_derivative = differentiate(*node.children[1], wrt_index);
 
         return make_add(make_mul(move(left_derivative), clone(*node.children[1])),
                         make_mul(clone(*node.children[0]), move(right_derivative)));
@@ -804,8 +793,8 @@ ExpressionNodePtr differentiate(const ExpressionNode& node, const bool wrt_is_ou
 
     case Div:
     {
-        ExpressionNodePtr left_derivative = differentiate(*node.children[0], wrt_is_output, wrt_index);
-        ExpressionNodePtr right_derivative = differentiate(*node.children[1], wrt_is_output, wrt_index);
+        ExpressionNodePtr left_derivative = differentiate(*node.children[0], wrt_index);
+        ExpressionNodePtr right_derivative = differentiate(*node.children[1], wrt_index);
 
         ExpressionNodePtr numerator = make_sub(make_mul(move(left_derivative), clone(*node.children[1])),
                                                make_mul(clone(*node.children[0]), move(right_derivative)));
@@ -822,7 +811,7 @@ ExpressionNodePtr differentiate(const ExpressionNode& node, const bool wrt_is_ou
 
         if (const optional<float> constant_exponent = as_constant(exponent))
         {
-            ExpressionNodePtr base_derivative = differentiate(base, wrt_is_output, wrt_index);
+            ExpressionNodePtr base_derivative = differentiate(base, wrt_index);
 
             ExpressionNodePtr power = make_pow(clone(base), make_const(*constant_exponent - 1.0f));
 
@@ -831,15 +820,15 @@ ExpressionNodePtr differentiate(const ExpressionNode& node, const bool wrt_is_ou
 
         if (const optional<float> constant_base = as_constant(base))
         {
-            ExpressionNodePtr exponent_derivative = differentiate(exponent, wrt_is_output, wrt_index);
+            ExpressionNodePtr exponent_derivative = differentiate(exponent, wrt_index);
 
             ExpressionNodePtr value = make_pow(make_const(*constant_base), clone(exponent));
 
             return make_mul(make_mul(move(value), make_const(log(*constant_base))), move(exponent_derivative));
         }
 
-        ExpressionNodePtr base_derivative = differentiate(base, wrt_is_output, wrt_index);
-        ExpressionNodePtr exponent_derivative = differentiate(exponent, wrt_is_output, wrt_index);
+        ExpressionNodePtr base_derivative = differentiate(base, wrt_index);
+        ExpressionNodePtr exponent_derivative = differentiate(exponent, wrt_index);
 
         ExpressionNodePtr from_exponent = make_mul(move(exponent_derivative),
                                                    make_call(ExpressionOp::Kind::Log, clone(base)));
@@ -851,18 +840,18 @@ ExpressionNodePtr differentiate(const ExpressionNode& node, const bool wrt_is_ou
     }
 
     case Func:
-        return differentiate_call(node, wrt_is_output, wrt_index);
+        return differentiate_call(node, wrt_index);
     }
 
     return make_const(0.0f);
 }
 
 
-ExpressionNodePtr differentiate_call(const ExpressionNode& node, const bool wrt_is_output, const Index wrt_index)
+ExpressionNodePtr differentiate_call(const ExpressionNode& node, const Index wrt_index)
 {
     const ExpressionNode& argument = *node.children[0];
 
-    ExpressionNodePtr argument_derivative = differentiate(argument, wrt_is_output, wrt_index);
+    ExpressionNodePtr argument_derivative = differentiate(argument, wrt_index);
 
     switch (node.function)
     {
@@ -873,7 +862,7 @@ ExpressionNodePtr differentiate_call(const ExpressionNode& node, const bool wrt_
     {
         const ExpressionNode& second = *node.children[1];
 
-        ExpressionNodePtr second_derivative = differentiate(second, wrt_is_output, wrt_index);
+        ExpressionNodePtr second_derivative = differentiate(second, wrt_index);
 
         ExpressionNodePtr gap = make_sub(clone(argument), clone(second));
         ExpressionNodePtr magnitude = make_call(Abs, clone(*gap));
@@ -1142,7 +1131,7 @@ CompiledExpression compile_ast(const ExpressionNode& ast)
 
     for (const Index input_column : result.input_indices)
         result.input_gradient.emplace_back(input_column,
-                                           build_program(*differentiate(ast, false, input_column)));
+                                           build_program(*differentiate(ast, input_column)));
 
     return result;
 }
@@ -1466,10 +1455,7 @@ void evaluate_input_gradient(const CompiledExpression& expression,
                              const VectorR& output,
                              VectorR& gradient)
 {
-    if (gradient.size() != point.size())
-        gradient.resize(point.size());
-
-    gradient.setZero();
+    gradient.setZero(point.size());
 
     if (expression.symmetric_order > 0)
         evaluate_symmetric_gradient(expression, point, gradient);
