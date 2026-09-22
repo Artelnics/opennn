@@ -296,6 +296,33 @@ TEST_F(ModelExpressionTest, SavePhpExpression)
     filesystem::remove(path);
 }
 
+TEST_F(ModelExpressionTest, SaveCSharpExpression)
+{
+    const ModelExpression model_expression(network.get());
+
+    const filesystem::path path =
+        filesystem::temp_directory_path() / "opennn_model_expression_test.cs";
+
+    model_expression.save(path, ModelExpression::ProgrammingLanguage::CSharp);
+
+    ASSERT_TRUE(filesystem::exists(path));
+
+    const string source = read_whole_file(path);
+
+    EXPECT_FALSE(source.empty());
+    EXPECT_TRUE(contains_token(source, "using System;"));
+    EXPECT_TRUE(contains_token(source, "public static class Network"));
+    EXPECT_TRUE(contains_token(source, "public static double[] CalculateOutputs(double[] inputs)"));
+    EXPECT_TRUE(contains_token(source, "public static double Identity"));
+    EXPECT_TRUE(contains_token(source, "public static void Main()"));
+    EXPECT_TRUE(contains_token(source, "#if !OPENNN_EXPORT_NO_MAIN"));
+    EXPECT_TRUE(contains_token(source, "double alpha = inputs[0];"));
+    EXPECT_TRUE(contains_token(source, "gamma"));
+    EXPECT_FALSE(contains_token(source, "float "));
+
+    filesystem::remove(path);
+}
+
 TEST_F(ModelExpressionTest, SaveThrowsOnUnwritablePath)
 {
     const ModelExpression model_expression(network.get());
@@ -405,6 +432,19 @@ TEST_F(ModelExpressionSoftmaxTest, SavePhpExpressionContainsSoftmaxBlock)
     EXPECT_TRUE(contains_token(source, "$versicolor /= $sum;"));
 }
 
+TEST_F(ModelExpressionSoftmaxTest, SaveCSharpExpressionContainsSoftmaxBlock)
+{
+    const string source =
+        save_and_read(ModelExpression::ProgrammingLanguage::CSharp, "opennn_model_expression_softmax_test.cs");
+
+    EXPECT_TRUE(contains_token(source, "// Softmax (numerically stable)"));
+    EXPECT_TRUE(contains_token(source, "private static void ApplySoftmax(double[] values)"));
+    EXPECT_TRUE(contains_token(source, "double max_out = values[0];"));
+    EXPECT_TRUE(contains_token(source, "for(int i = 1; i < values.Length; ++i) if(values[i] > max_out) max_out = values[i];"));
+    EXPECT_TRUE(contains_token(source, "values[i] = Math.Exp(values[i] - max_out); sum += values[i];"));
+    EXPECT_TRUE(contains_token(source, "ApplySoftmax(outputs);"));
+}
+
 TEST(ModelExpressionActivationTest, ExportsEveryActivationToEveryLanguage)
 {
     struct ActivationCase
@@ -433,11 +473,12 @@ TEST(ModelExpressionActivationTest, ExportsEveryActivationToEveryLanguage)
     };
 
     using enum ModelExpression::ProgrammingLanguage;
-    const std::array<LanguageCase, 4> languages = {{
+    const std::array<LanguageCase, 5> languages = {{
         {C, "c", "float "},
         {Python, "py", "def "},
         {JavaScript, "html", "function "},
-        {PHP, "php", "function "}
+        {PHP, "php", "function "},
+        {CSharp, "cs", "public static double "}
     }};
 
     for (const ActivationCase& activation : activations)

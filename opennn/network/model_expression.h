@@ -16,7 +16,7 @@ class ModelExpression
 {
 public:
 
-    enum class ProgrammingLanguage{C, CEmbedded, Python, JavaScript, PHP};
+    enum class ProgrammingLanguage{C, CEmbedded, Python, JavaScript, PHP, CSharp};
 
     ModelExpression(const Network*);
 
@@ -33,6 +33,7 @@ private:
     string get_expression_python() const;
     string get_expression_php() const;
     string get_expression_javascript() const;
+    string get_expression_csharp() const;
 
     static string c_string_literal(string_view);
     static string c_float_literal(float);
@@ -74,6 +75,10 @@ private:
     void emit_js_outputs_html(ostringstream&, bool use_category_select, const ExportNames&) const;
     void emit_js_runtime(ostringstream&, const string&, const vector<string>&, bool has_softmax, bool use_category_select, const ExportNames&) const;
 
+    void emit_csharp_prelude(ostringstream&, const ExportNames&) const;
+    void emit_csharp_calculate_outputs(ostringstream&, const string&, const vector<string>&, bool has_softmax, const ExportNames&) const;
+    void emit_csharp_main(ostringstream&, const ExportNames&) const;
+
     static vector<string> split_expression_lines(const string&);
     static void rename_spaced_var_definitions(vector<string>&);
     static vector<string> prepare_body_lines(const string&);
@@ -105,6 +110,7 @@ private:
         string javascript;
         string python;
         string php;
+        string csharp;
     };
 
     static void emit_activations(ostringstream&,

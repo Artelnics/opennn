@@ -46,7 +46,8 @@ const LanguageCase language_cases[] = {
     {Language::CEmbedded,  "embedded.c"},
     {Language::Python,     "py"},
     {Language::JavaScript, "html"},
-    {Language::PHP,        "php"}
+    {Language::PHP,        "php"},
+    {Language::CSharp,     "cs"}
 };
 
 

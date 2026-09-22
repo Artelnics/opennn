@@ -242,6 +242,17 @@ color: #333;
 <table class="form-table">
 )HTML";
 
+static constexpr const char* csharp_header =
+    "// Artificial Intelligence Techniques SL\n"
+    "// artelnics@artelnics.com\n"
+    "//\n"
+    "// Model exported to C#. Edit inputs[] in Main() or call Network.CalculateOutputs().\n"
+    "//\n"
+    "// Build and run it on its own with: csc model.cs (or add it to any .NET project).\n"
+    "// Define OPENNN_EXPORT_NO_MAIN to exclude Main() when embedding.\n"
+    "//\n"
+    "// Input names:";
+
 static constexpr const char* python_header =
     "''' \n"
     "Artificial Intelligence Techniques SL\n"
@@ -503,55 +514,65 @@ const vector<pair<ActivationFunction, ModelExpression::ActivationBodies>>& Model
             "float Identity (float x) {\n\treturn x;\n}\n\n",
             "\nfunction Identity(x) {\n\treturn x;\n}\n",
             "\t@staticmethod\n\tdef Identity(x):\n\t\treturn x\n\n",
-            "function Identity($x) { return $x; }\n"
+            "function Identity($x) { return $x; }\n",
+            "\tpublic static double Identity(double x)\n\t{\n\t\treturn x;\n\t}\n\n"
         }},
         {Sigmoid, {
             "float Sigmoid(float x) {\n\tfloat z = 1.0f / (1.0f + expf(-x));\n\treturn z;\n}\n\n",
             "function Sigmoid(x) {\n\tvar z = 1/(1+Math.exp(-x));\n\treturn z;\n}\n",
             "\t@staticmethod\n\tdef Sigmoid (x):\n\t\tz = 1/(1+np.exp(-x))\n\t\treturn z\n\n",
-            "function Sigmoid($x) { return 1 / (1 + exp(-$x)); }\n"
+            "function Sigmoid($x) { return 1 / (1 + exp(-$x)); }\n",
+            "\tpublic static double Sigmoid(double x)\n\t{\n\t\treturn 1.0 / (1.0 + Math.Exp(-x));\n\t}\n\n"
         }},
         {Tanh, {
             "float Tanh(float x) {\n\treturn tanhf(x);\n}\n\n",
             "function Tanh(x) {\n\treturn Math.tanh(x);\n}\n",
             "\t@staticmethod\n\tdef Tanh(x):\n\t\treturn np.tanh(x)\n\n",
-            "function OpenNNTanh($x) { return tanh($x); }\n"
+            "function OpenNNTanh($x) { return tanh($x); }\n",
+            "\tpublic static double Tanh(double x)\n\t{\n\t\treturn Math.Tanh(x);\n\t}\n\n"
         }},
         {ReLU, {
             "float ReLU(float x) {\n\tfloat z = fmaxf(0.0f, x);\n\treturn z;\n}\n\n",
             "function ReLU(x) {\n\tvar z = Math.max(0, x);\n\treturn z;\n}\n",
             "\t@staticmethod\n\tdef ReLU (x):\n\t\tz = np.maximum(0, x)\n\t\treturn z\n\n",
-            "function ReLU($x) { return max(0, $x); }\n"
+            "function ReLU($x) { return max(0, $x); }\n",
+            "\tpublic static double ReLU(double x)\n\t{\n\t\treturn Math.Max(0.0, x);\n\t}\n\n"
         }},
         {Softmax, {
             "// Returns the raw logit: the numerically stable softmax is applied over the whole output vector afterwards.\nfloat Softmax(float x) {\n\treturn x;\n}\n\n",
             "// Returns the raw logit: the numerically stable softmax is applied over the whole output vector afterwards.\nfunction Softmax(x) {\n\treturn x;\n}\n",
             "\t@staticmethod\n\tdef Softmax(x):\n\t\t# Raw logit: the stable softmax is applied over the whole output vector afterwards\n\t\treturn x\n\n",
-            "// Returns the raw logit: the numerically stable softmax is applied over the whole output vector afterwards.\nfunction Softmax($x) { return $x; }\n"
+            "// Returns the raw logit: the numerically stable softmax is applied over the whole output vector afterwards.\nfunction Softmax($x) { return $x; }\n",
+            "\t// Returns the raw logit: the numerically stable softmax is applied over the whole output vector afterwards.\n\tpublic static double Softmax(double x)\n\t{\n\t\treturn x;\n\t}\n\n"
         }},
         {LeakyReLU, {
             format("float LeakyReLU(float x) {{\n\treturn x >= 0.0f ? x : {} * x;\n}}\n\n", slope_c),
             format("function LeakyReLU(x) {{\n\treturn x >= 0 ? x : {} * x;\n}}\n", slope),
             format("\t@staticmethod\n\tdef LeakyReLU(x):\n\t\treturn x if x >= 0 else {} * x\n\n", slope),
-            format("function LeakyReLU($x) {{ return $x >= 0 ? $x : {} * $x; }}\n", slope)
+            format("function LeakyReLU($x) {{ return $x >= 0 ? $x : {} * $x; }}\n", slope),
+            format("\tpublic static double LeakyReLU(double x)\n\t{{\n\t\treturn x >= 0.0 ? x : {} * x;\n\t}}\n\n", slope)
         }},
         {GELU, {
             "float GELU(float x) {\n\treturn 0.5f * x * (1.0f + erff(0.7071067811865475f * x));\n}\n\n",
             "function GELU(x) {\n\tconst sign = x < 0 ? -1 : 1;\n\tconst a = Math.abs(x) * 0.7071067811865475;\n\tconst t = 1 / (1 + 0.3275911 * a);\n\tconst erf = sign * (1 - (((((1.061405429 * t - 1.453152027) * t + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-a * a)));\n\treturn 0.5 * x * (1 + erf);\n}\n",
             "\t@staticmethod\n\tdef GELU(x):\n\t\treturn 0.5 * x * (1 + math.erf(x / np.sqrt(2)))\n\n",
-            "function GELU($x) { $sign = $x < 0 ? -1 : 1; $a = abs($x) * 0.7071067811865475; $t = 1 / (1 + 0.3275911 * $a); $erf = $sign * (1 - (((((1.061405429 * $t - 1.453152027) * $t + 1.421413741) * $t - 0.284496736) * $t + 0.254829592) * $t * exp(-$a * $a))); return 0.5 * $x * (1 + $erf); }\n"
+            "function GELU($x) { $sign = $x < 0 ? -1 : 1; $a = abs($x) * 0.7071067811865475; $t = 1 / (1 + 0.3275911 * $a); $erf = $sign * (1 - (((((1.061405429 * $t - 1.453152027) * $t + 1.421413741) * $t - 0.284496736) * $t + 0.254829592) * $t * exp(-$a * $a))); return 0.5 * $x * (1 + $erf); }\n",
+            // .NET has no Math.Erf, so this is the same erf approximation as JavaScript and PHP.
+            "\tpublic static double GELU(double x)\n\t{\n\t\tdouble sign = x < 0.0 ? -1.0 : 1.0;\n\t\tdouble a = Math.Abs(x) * 0.7071067811865475;\n\t\tdouble t = 1.0 / (1.0 + 0.3275911 * a);\n\t\tdouble erf = sign * (1.0 - (((((1.061405429 * t - 1.453152027) * t + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.Exp(-a * a)));\n\t\treturn 0.5 * x * (1.0 + erf);\n\t}\n\n"
         }},
         {GELUTanh, {
             "float GELUTanh(float x) {\n\treturn 0.5f * x * (1.0f + tanhf(0.7978845608028654f * (x + 0.044715f * x * x * x)));\n}\n\n",
             "function GELUTanh(x) {\n\treturn 0.5 * x * (1 + Math.tanh(0.7978845608028654 * (x + 0.044715 * x * x * x)));\n}\n",
             "\t@staticmethod\n\tdef GELUTanh(x):\n\t\treturn 0.5 * x * (1 + np.tanh(0.7978845608028654 * (x + 0.044715 * x * x * x)))\n\n",
-            "function GELUTanh($x) { return 0.5 * $x * (1 + tanh(0.7978845608028654 * ($x + 0.044715 * $x * $x * $x))); }\n"
+            "function GELUTanh($x) { return 0.5 * $x * (1 + tanh(0.7978845608028654 * ($x + 0.044715 * $x * $x * $x))); }\n",
+            "\tpublic static double GELUTanh(double x)\n\t{\n\t\treturn 0.5 * x * (1.0 + Math.Tanh(0.7978845608028654 * (x + 0.044715 * x * x * x)));\n\t}\n\n"
         }},
         {SiLU, {
             "float SiLU(float x) {\n\treturn x / (1.0f + expf(-x));\n}\n\n",
             "function SiLU(x) {\n\treturn x / (1 + Math.exp(-x));\n}\n",
             "\t@staticmethod\n\tdef SiLU(x):\n\t\treturn x / (1 + np.exp(-x))\n\n",
-            "function SiLU($x) { return $x / (1 + exp(-$x)); }\n"
+            "function SiLU($x) { return $x / (1 + exp(-$x)); }\n",
+            "\tpublic static double SiLU(double x)\n\t{\n\t\treturn x / (1.0 + Math.Exp(-x));\n\t}\n\n"
         }}
     };
     return table;
@@ -572,6 +593,7 @@ ModelExpression::LanguageSyntax ModelExpression::language_syntax(ProgrammingLang
         return syntax;
     }
     case PHP:        return {};
+    case CSharp:     return {"\t\t", "double ", true, "double ", "int", "0.0", "Math.Exp", "values.Length"};
     }
 
     throw runtime_error("ModelExpression: unknown programming language.");
@@ -1950,6 +1972,149 @@ void ModelExpression::emit_js_runtime(ostringstream& buffer,
               "</html>\n";
 }
 
+string ModelExpression::get_expression_csharp() const
+{
+    ExportNames names = collect_names();
+
+    // An auto-associative network names its outputs after its inputs. C# rejects
+    // declaring a local twice, and assigning over an input could clobber a value a
+    // later line still reads, so those outputs get names of their own. Main still
+    // labels them with the network's names.
+    const unordered_set<string> input_identifiers(names.fixed_inputs.begin(), names.fixed_inputs.end());
+    for (size_t i = 0; i < names.outputs.size(); ++i)
+        if (input_identifiers.contains(names.fixed_outputs[i]))
+            names.outputs[i] = names.fixed_outputs[i] = names.fixed_outputs[i] + "_output";
+
+    string expression = build_expression(names.inputs, names.outputs);
+    apply_name_mapping(expression, names.outputs, names.fixed_outputs);
+    const vector<string> lines = prepare_body_lines(expression);
+    const bool has_softmax = expression.find("Softmax") != string::npos;
+
+    ostringstream buffer;
+    emit_csharp_prelude(buffer, names);
+    emit_activations(buffer, expression, &ActivationBodies::csharp, {"Identity"});
+    emit_csharp_calculate_outputs(buffer, expression, lines, has_softmax, names);
+    emit_csharp_main(buffer, names);
+    buffer << "}\n";
+    return buffer.str();
+}
+
+void ModelExpression::emit_csharp_prelude(ostringstream& buffer, const ExportNames& names) const
+{
+    const vector<string>& input_names = names.inputs;
+
+    buffer << csharp_header;
+
+    for (size_t i = 0; i < input_names.size(); ++i)
+        buffer << "\n// \t " << i << ")  " << input_names[i];
+
+    buffer << "\n\nusing System;\n\n"
+              "public static class Network\n{\n";
+}
+
+void ModelExpression::emit_csharp_calculate_outputs(ostringstream& buffer,
+                                                    const string& expression,
+                                                    const vector<string>& lines,
+                                                    bool has_softmax,
+                                                    const ExportNames& names) const
+{
+    const vector<string>& input_names = names.inputs;
+    const vector<string>& output_names = names.outputs;
+    const vector<string>& fixed_input_names = names.fixed_inputs;
+    const vector<string>& fixed_output_names = names.fixed_outputs;
+
+    const Index inputs_number = input_names.size();
+    const Index outputs_number = output_names.size();
+
+    const LanguageSyntax syntax = language_syntax(ProgrammingLanguage::CSharp, outputs_number);
+
+    // C# forbids a local that shadows another local of the same method, so the
+    // softmax loop lives in its own method rather than next to the model's names.
+    if (has_softmax)
+        buffer << "\t// Softmax (numerically stable)\n"
+               << "\tprivate static void ApplySoftmax(double[] values)\n\t{\n"
+               << "\t\t" << syntax.softmax_declaration << "max_out = values[0];\n"
+               << "\t\tfor(" << syntax.softmax_counter << " i = 1; i < " << syntax.softmax_limit
+               << "; ++i) if(values[i] > max_out) max_out = values[i];\n"
+               << "\t\t" << syntax.softmax_declaration << "sum = " << syntax.softmax_zero << ";\n"
+               << "\t\tfor(" << syntax.softmax_counter << " i = 0; i < " << syntax.softmax_limit
+               << "; ++i) { values[i] = " << syntax.softmax_exp << "(values[i] - max_out); sum += values[i]; }\n"
+               << "\t\tfor(" << syntax.softmax_counter << " i = 0; i < " << syntax.softmax_limit
+               << "; ++i) values[i] /= sum;\n"
+               << "\t}\n\n";
+
+    buffer << "\tpublic static double[] CalculateOutputs(double[] inputs)\n\t{\n"
+           << "\t\tif (inputs == null || inputs.Length != " << inputs_number << ")\n"
+           << "\t\t\tthrow new ArgumentException(\"Expected " << inputs_number << " input values.\");\n\n";
+
+    for (Index i = 0; i < inputs_number; ++i)
+        buffer << "\t\tdouble " << fixed_input_names[i] << " = inputs[" << i << "];\n";
+
+    buffer << "\n";
+
+    static const pair<const char*, const char*> math_functions[] = {
+        {"exp", "Math.Exp"}, {"log", "Math.Log"}, {"tanh", "Math.Tanh"}, {"max", "Math.Max"}, {"min", "Math.Min"}
+    };
+
+    emit_body_lines(buffer, lines, syntax,
+        [&](const string& raw_line)
+        {
+            string line = process_body_line(raw_line, input_names, fixed_input_names);
+            for (const auto& [function, method] : math_functions)
+                replace_all_word_appearances(line, function, method);
+            return line;
+        });
+
+    const vector<string> fixed_outputs = fix_output_names(expression, output_names, ProgrammingLanguage::CSharp);
+    if (!fixed_outputs.empty())
+    {
+        buffer << "\n";
+        for (const string& l : fixed_outputs)
+            buffer << "\t\t" << l << "\n";
+    }
+
+    buffer << "\n\t\tdouble[] outputs = new double[" << outputs_number << "];\n\n";
+
+    for (Index i = 0; i < outputs_number; ++i)
+        buffer << "\t\toutputs[" << i << "] = " << fixed_output_names[i] << ";\n";
+
+    if (has_softmax)
+        buffer << "\n\t\tApplySoftmax(outputs);\n";
+
+    buffer << "\n\t\treturn outputs;\n\t}\n\n";
+}
+
+void ModelExpression::emit_csharp_main(ostringstream& buffer, const ExportNames& names) const
+{
+    const vector<string>& input_names = names.inputs;
+    const vector<string> output_names = network->get_output_feature_names();
+
+    const Index inputs_number = input_names.size();
+    const Index outputs_number = names.outputs.size();
+
+    buffer << "#if !OPENNN_EXPORT_NO_MAIN\n"
+              "\tpublic static void Main()\n\t{\n"
+              "\t\tdouble[] inputs = new double[" << inputs_number << "];\n\n"
+              "\t\t// Please enter your values here:\n";
+
+    // Unnamed variables fall back to the identifier the body uses for them.
+    const auto label = [](const string& name, const string& fixed) { return name.empty() ? fixed : name; };
+
+    for (Index i = 0; i < inputs_number; ++i)
+        buffer << "\t\tinputs[" << i << "] = 0.0; // " << label(input_names[i], names.fixed_inputs[i]) << "\n";
+
+    buffer << "\n\t\tdouble[] outputs = CalculateOutputs(inputs);\n\n"
+              "\t\tConsole.WriteLine(\"These are your outputs:\");\n";
+
+    for (Index i = 0; i < outputs_number; ++i)
+        buffer << "\t\tConsole.WriteLine(\"{0}: {1}\", \""
+               << c_string_literal(label(i < ssize(output_names) ? output_names[i] : string(), names.fixed_outputs[i]))
+               << "\", outputs[" << i << "]);\n";
+
+    buffer << "\t}\n"
+              "#endif\n";
+}
+
 string ModelExpression::get_expression_python() const
 {
     const ExportNames names = collect_names();
@@ -2136,6 +2301,11 @@ string ModelExpression::replace_reserved_keywords(const string& input)
         "endforeach", "endif", "endswitch", "endwhile", "exit", "final", "fn", "foreach",
         "include", "include_once", "isset", "list", "match", "readonly", "require",
         "require_once", "trait", "unset", "use",
+        "abstract", "base", "byte", "checked", "decimal", "delegate", "event", "false",
+        "fixed", "implicit", "internal", "lock", "object", "override", "ref", "sbyte",
+        "sealed", "stackalloc", "string", "true", "uint", "ulong", "unchecked", "unsafe",
+        "ushort", "ArgumentException", "Math",
+        "Identity", "Sigmoid", "Tanh", "ReLU", "Softmax", "LeakyReLU", "GELU", "GELUTanh", "SiLU",
         "abs", "calculate_batch_output", "calculate_outputs", "exp", "input_batch",
         "inputs", "log", "main", "max", "max_out", "min", "nn", "np", "out",
         "output_batch", "outputs", "params", "pd", "pow", "self", "sum", "sum_val", "tanh"
@@ -2224,6 +2394,10 @@ vector<string> ModelExpression::fix_output_names(const string& str,
         rhs_prefix = "$";
         suffix = ";";
         break;
+    case CSharp:
+        lhs_prefix = "double ";
+        suffix = ";";
+        break;
     }
 
     const size_t base = final_vars.size() - num_outputs;
@@ -2274,6 +2448,7 @@ void ModelExpression::save(const filesystem::path& file_name, ProgrammingLanguag
     case Python:     expression = get_expression_python();     break;
     case JavaScript: expression = get_expression_javascript(); break;
     case PHP:        expression = get_expression_php();        break;
+    case CSharp:     expression = get_expression_csharp();     break;
     default:         throw runtime_error("ModelExpression: unknown programming language.");
     }
 

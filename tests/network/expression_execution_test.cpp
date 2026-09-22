@@ -220,6 +220,87 @@ string run_exported_c_model(const filesystem::path& directory,
     return run_capturing(quoted_path(program_path), output_path, "RUN FAILED");
 }
 
+// Any C# compiler that takes csc-style options: csc on PATH, Mono's mcs, or the
+// csc that every Windows installation carries with the .NET Framework.
+string find_csharp_compiler()
+{
+    static const string compiler = []() -> string
+    {
+        vector<string> candidates = {"csc", "mcs"};
+#ifdef _WIN32
+        if (const char* windows = getenv("WINDIR"))
+            candidates.push_back(quoted_path(filesystem::path(windows)
+                / "Microsoft.NET" / "Framework64" / "v4.0.30319" / "csc.exe"));
+#endif
+        for (const string& candidate : candidates)
+        {
+            const filesystem::path probe =
+                filesystem::temp_directory_path() / "opennn_csharp_compiler_probe.txt";
+            const string output = run_capturing(candidate + " -help", probe, "NOT FOUND");
+
+            error_code error;
+            filesystem::remove(probe, error);
+
+            if (!output.starts_with("NOT FOUND")) return candidate;
+        }
+
+        return {};
+    }();
+
+    return compiler;
+}
+
+// The emitted class is compiled with its own Main excluded, next to a driver
+// that prints every row in the invariant culture so a decimal comma never
+// reaches the parser.
+string run_exported_csharp_model(const filesystem::path& directory,
+                                 const ModelExpression& model_expression,
+                                 const MatrixR& inputs)
+{
+    const filesystem::path model_path = directory / "opennn_exported_model.cs";
+    model_expression.save(model_path, ModelExpression::ProgrammingLanguage::CSharp);
+
+    ostringstream driver;
+    driver << setprecision(9);
+    driver << "using System;\nusing System.Globalization;\n\n"
+           << "public static class Driver\n{\n"
+           << "\tpublic static void Main()\n\t{\n"
+           << "\t\tdouble[][] rows = new double[][] {\n";
+
+    for (Index row = 0; row < inputs.rows(); ++row)
+    {
+        driver << "\t\t\tnew double[] {";
+        for (Index column = 0; column < inputs.cols(); ++column)
+            driver << (column ? ", " : "") << inputs(row, column);
+        driver << "},\n";
+    }
+
+    driver << "\t\t};\n\n"
+           << "\t\tforeach (double[] row in rows)\n\t\t{\n"
+           << "\t\t\tdouble[] outputs = Network.CalculateOutputs(row);\n"
+           << "\t\t\tstring[] text = new string[outputs.Length];\n"
+           << "\t\t\tfor (int i = 0; i < outputs.Length; ++i)\n"
+           << "\t\t\t\ttext[i] = outputs[i].ToString(\"R\", CultureInfo.InvariantCulture);\n"
+           << "\t\t\tConsole.WriteLine(string.Join(\" \", text));\n"
+           << "\t\t}\n\t}\n}\n";
+
+    const filesystem::path driver_path = directory / "opennn_exported_driver.cs";
+    write_file(driver_path, driver.str());
+
+    const filesystem::path program_path = directory / "opennn_exported_model.exe";
+
+    const string compiler = find_csharp_compiler();
+    const string build = compiler + " -define:OPENNN_EXPORT_NO_MAIN -out:" + quoted_path(program_path)
+                       + " " + quoted_path(model_path) + " " + quoted_path(driver_path);
+
+    const string build_output = run_capturing(build, directory / "opennn_exported_build.txt", "COMPILE FAILED");
+    if (build_output.starts_with("COMPILE FAILED")) return build_output;
+
+    const string run = compiler == "mcs" ? "mono " + quoted_path(program_path) : quoted_path(program_path);
+
+    return run_capturing(run, directory / "opennn_exported_output.txt", "RUN FAILED");
+}
+
 MatrixR parse_output(const string& text, Index rows, Index columns)
 {
     MatrixR values(rows, columns);
@@ -359,10 +440,12 @@ MatrixR logarithmic_inputs()
 
 // The targets differ only in how the export is run, so every check below is
 // written once and pointed at any of them.
-enum class Target { Python, C, CEmbedded, JavaScript };
+enum class Target { Python, C, CEmbedded, JavaScript, CSharp };
 
 bool target_available(Target target)
 {
+    if (target == Target::CSharp) return !find_csharp_compiler().empty();
+
     if (target == Target::JavaScript)
     {
 #ifdef _WIN32
@@ -377,6 +460,7 @@ bool target_available(Target target)
 const char* target_missing(Target target)
 {
     if (target == Target::JavaScript) return "node is not on PATH.";
+    if (target == Target::CSharp) return "no C# compiler found.";
     return target == Target::Python ? "python is not on PATH." : "no C compiler on PATH.";
 }
 
@@ -388,6 +472,7 @@ const char* target_name(Target target)
     case Target::C:         return "c";
     case Target::CEmbedded: return "embedded";
     case Target::JavaScript: return "javascript";
+    case Target::CSharp:    return "csharp";
     }
     return "unknown";
 }
@@ -401,6 +486,7 @@ ModelExpression::ProgrammingLanguage target_language(Target target)
     case Target::C:         return C;
     case Target::CEmbedded: return CEmbedded;
     case Target::JavaScript: return JavaScript;
+    case Target::CSharp:    return CSharp;
     }
     return C;
 }
@@ -443,6 +529,8 @@ void expect_export_matches(Target target, const string& directory_name,
         write_file(script_path, script.str());
         output = run_capturing("node " + quoted_path(script_path), directory / "output.txt", "RUN FAILED");
     }
+    else if (target == Target::CSharp)
+        output = run_exported_csharp_model(directory, model_expression, inputs);
     else output = target == Target::Python
         ? run_exported_python_model(directory, model_expression, inputs)
         : run_exported_c_model(directory, model_expression, inputs, expected.cols(),
@@ -476,7 +564,7 @@ TEST(ExpressionExecution, EveryDenseActivationMatchesEveryExecutableTarget)
         "Identity", "Sigmoid", "Tanh", "ReLU", "Softmax",
         "LeakyReLU", "GELU", "GELUTanh", "SiLU"
     };
-    constexpr std::array<Target, 4> targets = {Target::Python, Target::C, Target::CEmbedded, Target::JavaScript};
+    constexpr std::array<Target, 5> targets = {Target::Python, Target::C, Target::CEmbedded, Target::JavaScript, Target::CSharp};
 
     MatrixR inputs(4, 2);
     inputs << -2.0f,  1.0f,
@@ -610,6 +698,58 @@ TEST(ExpressionExecution, CModelMatchesTheNetworkItCameFrom)
                           *network, inputs, network->calculate_outputs(inputs));
 }
 
+TEST(ExpressionExecution, CSharpModelMatchesTheNetworkItCameFrom)
+{
+    if (!target_available(Target::CSharp)) GTEST_SKIP() << target_missing(Target::CSharp);
+
+    const unique_ptr<ApproximationNetwork> network = build_network();
+    const MatrixR inputs = sample_inputs();
+
+    expect_export_matches(Target::CSharp, "opennn_expression_csharp",
+                          *network, inputs, network->calculate_outputs(inputs));
+}
+
+TEST(ExpressionExecution, CSharpModelReproducesDegenerateScaling)
+{
+    if (!target_available(Target::CSharp)) GTEST_SKIP() << target_missing(Target::CSharp);
+
+    const unique_ptr<ApproximationNetwork> network = build_degenerate_network();
+    const MatrixR inputs = degenerate_inputs();
+
+    expect_export_matches(Target::CSharp, "opennn_degenerate_csharp",
+                          *network, inputs, network->calculate_outputs(inputs));
+}
+
+// Auto-associative networks name every output after an input. The C# export
+// must neither declare those locals twice nor overwrite an input that a later
+// neuron still reads - the second case only shows up without a scaling layer.
+TEST(ExpressionExecution, CSharpModelHandlesOutputsNamedAfterInputs)
+{
+    if (!target_available(Target::CSharp)) GTEST_SKIP() << target_missing(Target::CSharp);
+
+    const unique_ptr<ApproximationNetwork> scaled = build_network();
+    scaled->set_output_names({"alpha", "beta"});
+
+    expect_export_matches(Target::CSharp, "opennn_autoassociation_scaled_csharp",
+                          *scaled, sample_inputs(), scaled->calculate_outputs(sample_inputs()));
+
+    Network unscaled;
+    unscaled.add_layer(make_unique<opennn::Dense>(Shape{2}, Shape{2}, "Tanh"));
+    unscaled.compile();
+    unscaled.set_input_variables(vector<Variable>(2));
+    unscaled.set_output_variables(vector<Variable>(2));
+    unscaled.set_input_names({"first", "second"});
+    unscaled.set_output_names({"first", "second"});
+    unscaled.set_parameters(VectorR::LinSpaced(unscaled.get_parameters_buffer_size(), -0.75f, 0.85f));
+
+    MatrixR inputs(2, 2);
+    inputs << 0.5f, -1.0f,
+              2.0f,  0.25f;
+
+    expect_export_matches(Target::CSharp, "opennn_autoassociation_unscaled_csharp",
+                          unscaled, inputs, unscaled.calculate_outputs(inputs));
+}
+
 // The degenerate scaler rule has to survive into both exports: the emitters are
 // separate code from the numeric paths and from each other.
 TEST(ExpressionExecution, PythonModelReproducesDegenerateScaling)
@@ -650,7 +790,7 @@ TEST(ExpressionExecution, LogarithmicScalingMatchesEveryExecutableTarget)
 
     bool ran_target = false;
 
-    for (const Target target : {Target::Python, Target::C, Target::CEmbedded, Target::JavaScript})
+    for (const Target target : {Target::Python, Target::C, Target::CEmbedded, Target::JavaScript, Target::CSharp})
     {
         if (!target_available(target)) continue;
 
