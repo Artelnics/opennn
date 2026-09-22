@@ -25,6 +25,7 @@
 
 #include "tests/response_optimization/synthetic_fixture.h"
 
+#include "opennn/core/profiler.h"
 #include "opennn/response_optimization/domain_contraction.h"
 #include "opennn/response_optimization/genetic_response.h"
 
@@ -65,7 +66,7 @@ public:
 
     using ResponseOptimization::calculate_domain;
     using ResponseOptimization::calculate_random_input;
-    using ResponseOptimization::feasibility_system;
+    using ResponseOptimization::solve_system;
 
 private:
 
@@ -590,6 +591,164 @@ TEST_P(ResponseDriver, CardinalityLeavesAtMostTheBudgetInPlay)
 }
 
 
+TEST(Feasibility, RepairBudgetsControlNonlinearRepair)
+{
+    MinimalApproximation setup({"x1"}, {"y"});
+    const VectorR point = VectorR::Constant(1, 4.0f);
+
+    for (const float scale : {1.0f, 1000.0f})
+    {
+        SCOPED_TRACE(scale);
+        RepairProbe probe(setup.network.get());
+        probe.add_constraint(to_string(scale) + " * x1^2", Condition::Equal, {scale});
+        probe.calculate_domain();
+        probe.set_feasibility_evaluations(1);
+        probe.set_feasibility_rounds(1);
+
+        EXPECT_EQ(probe.solve_system(point).first.size(), 0);
+
+        probe.set_feasibility_evaluations(50);
+        const VectorR repaired = probe.solve_system(point).first;
+        ASSERT_EQ(repaired.size(), 1);
+        EXPECT_NEAR(repaired(0), 1.0f, 1e-4f);
+
+        probe.set_feasibility_evaluations(1);
+        probe.set_feasibility_rounds(10);
+        for (const float start : {4.0f, 9.0f})
+        {
+            const VectorR retried = probe.solve_system(VectorR::Constant(1, start)).first;
+            ASSERT_EQ(retried.size(), 1);
+            EXPECT_NEAR(retried(0), 1.0f, 1e-4f);
+        }
+    }
+}
+
+
+TEST(Feasibility, FeasiblePointsPassThroughWithMinimalBudgets)
+{
+    MinimalApproximation setup({"x1"}, {"y"});
+    RepairProbe probe(setup.network.get());
+    probe.set_feasibility_evaluations(1);
+    probe.set_feasibility_rounds(1);
+
+    const VectorR point = VectorR::Constant(1, 2.0f);
+    const VectorR expected_output = setup.network->calculate_outputs(point.transpose()).row(0).transpose();
+
+    for (const bool constrained : {false, true})
+    {
+        if (constrained) probe.add_constraint("x1^2", Condition::Between, {1.0f, 9.0f});
+        probe.calculate_domain();
+
+        const auto [input, output] = probe.solve_system(point);
+        ASSERT_EQ(input.size(), point.size());
+        EXPECT_EQ((input - point).squaredNorm(), 0.0f);
+        ASSERT_EQ(output.size(), expected_output.size());
+        EXPECT_TRUE(output.isApprox(expected_output, 1e-6f));
+    }
+}
+
+
+TEST(Feasibility, InputOnlyRepairAvoidsIntermediateNetworkCalls)
+{
+    MinimalApproximation setup({"x1"}, {"y"});
+    RepairProbe probe(setup.network.get());
+    probe.add_constraint("x1^2", Condition::Equal, {1.0f});
+    probe.calculate_domain();
+    probe.set_feasibility_rounds(1);
+
+    for (const bool succeeds : {false, true})
+    {
+        SCOPED_TRACE(succeeds);
+        probe.set_feasibility_evaluations(succeeds ? 50 : 1);
+
+        const bool profiling_enabled = profiler::is_enabled();
+        profiler::set_enabled(true);
+        const long previous_calls = profiler::stats().call_count("fp:set");
+
+        pair<VectorR, VectorR> result;
+        EXPECT_NO_THROW(result = probe.solve_system(VectorR::Constant(1, 4.0f)));
+
+        const long calls = profiler::stats().call_count("fp:set") - previous_calls;
+        profiler::set_enabled(profiling_enabled);
+
+        EXPECT_EQ(calls, succeeds ? 1 : 0);
+        ASSERT_EQ(result.first.size(), succeeds ? 1 : 0);
+        ASSERT_EQ(result.second.size(), succeeds ? 1 : 0);
+
+        if (succeeds)
+        {
+            EXPECT_NEAR(result.first(0), 1.0f, 1e-4f);
+            const VectorR expected = setup.network->calculate_outputs(result.first.transpose()).row(0).transpose();
+            EXPECT_TRUE(result.second.isApprox(expected, 1e-6f));
+        }
+    }
+}
+
+
+TEST(Feasibility, OutputCoupledRepairReturnsOutputAtTheRepairedPoint)
+{
+    MinimalApproximation setup({"x1"}, {"y"});
+    setup.network->set_parameters(VectorR::Constant(setup.network->get_parameters_buffer_size(), 0.1f));
+
+    const float target = setup.network->calculate_outputs(MatrixR::Constant(1, 1, 1.0f))(0, 0);
+
+    RepairProbe probe(setup.network.get());
+    probe.add_constraint("x1^2", Condition::Equal, {1.0f});
+    probe.calculate_domain();
+
+    // Adding the output row between solves must update which expressions need inference.
+    ASSERT_EQ(probe.solve_system(VectorR::Constant(1, 4.0f)).first.size(), 1);
+    probe.add_constraint("x1^2 + y", Condition::Equal, {1.0f + target});
+    probe.calculate_domain();
+
+    for (const float start : {4.0f, 10.0f})
+    {
+        SCOPED_TRACE(start);
+        const auto [input, output] = probe.solve_system(VectorR::Constant(1, start));
+
+        ASSERT_EQ(input.size(), 1);
+        ASSERT_EQ(output.size(), 1);
+        EXPECT_NEAR(input(0), 1.0f, 1e-4f);
+
+        const VectorR expected = setup.network->calculate_outputs(input.transpose()).row(0).transpose();
+        EXPECT_TRUE(output.isApprox(expected, 1e-6f));
+        EXPECT_NEAR(input(0)*input(0) + output(0), 1.0f + target, 1e-4f);
+    }
+}
+
+
+TEST(Feasibility, CopiesKeepTheirOwnConstraints)
+{
+    MinimalApproximation setup({"x1", "x2"}, {"y"});
+
+    RepairProbe source(setup.network.get());
+    source.add_constraint("x1 + x2", Condition::Equal, {5.0f});
+    source.calculate_domain();
+
+    RepairProbe copied(source);
+    RepairProbe assigned(nullptr);
+    assigned = source;
+
+    source.add_constraint("x1 + x2", Condition::Equal, {12.0f});
+
+    VectorR point(2); point << 2.0f, 3.0f;
+
+    for (const RepairProbe* copy : {&copied, &assigned})
+    {
+        SCOPED_TRACE(copy == &copied ? "copy construction" : "copy assignment");
+
+        const auto [input, output] = copy->solve_system(point);
+        ASSERT_EQ(input.size(), point.size());
+        EXPECT_EQ((input - point).squaredNorm(), 0.0f);
+        EXPECT_EQ(output.size(), 1);
+
+        const VectorR repaired = copy->solve_system(VectorR::Constant(2, 4.0f)).first;
+        ASSERT_EQ(repaired.size(), point.size());
+        EXPECT_NEAR(repaired.sum(), 5.0f, 1e-4f);
+    }
+}
+
+
 // The repair on its own, from random starts: whatever it returns has at most k counted inputs
 // that are not exactly zero, alone and beside a budget row that couples every counted input.
 
@@ -631,7 +790,7 @@ TEST(CardinalityRepair, ReturnsOnlyKSparsePoints)
 
                 for (Index draw = 0; draw < 50; draw++)
                 {
-                    const auto [input, output] = probe.feasibility_system.solve(probe.calculate_random_input(domain));
+                    const auto [input, output] = probe.solve_system(probe.calculate_random_input(domain));
 
                     if (input.size() == 0) continue;
 

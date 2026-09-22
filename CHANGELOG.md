@@ -10,6 +10,21 @@ remaining limitations.
 
 ### Reconciliation and release preparation
 
+- Collect response feasibility repair in the private `FeasibilityRepairSystem`,
+  created locally by `ResponseOptimization::solve_system()`. Remove the public
+  nested `FeasibilitySystem` and its stored owner pointer. Derived
+  optimizers now use protected `solve_system()` and `input_bounds` directly.
+  Initialize bounds with `calculate_domain()`. Rebuild consumers; code accessing
+  `feasibility_system` must migrate to these members. Constraint evaluation,
+  discrete rounding, Jacobians and solver callbacks stay inside the repair type.
+  Repair avoids network inference for constraints using only inputs, reuses
+  outputs at the same point, and caches constraint bounds and categorical
+  metadata for each solve.
+- Add `set_feasibility_evaluations()` (default 50) and
+  `set_feasibility_rounds()` (default 3), both clamped to at least one. The
+  evaluation setting controls Eigen's per-round `maxfev` budget, not a strict
+  total network-call limit: Jacobian probes add work outside that counter. The fixed
+  numerical step sizes and box weight remain internal to the repair type.
 - Response optimization expressions accept original variable names in backticks,
   including spaces, units and punctuation (for example, `` `Flow rate (m3/s)` ``).
   Double a backtick inside a name to escape it. Existing unquoted expressions

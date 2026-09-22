@@ -95,7 +95,7 @@ pair<MatrixR, MatrixR> GeneticResponse::initialize_population(const pair<VectorR
 
     for (Index attempt = 0; attempt < attempts_number && feasible_number < points_number; attempt++)
     {
-        const auto [input, output] = feasibility_system.solve(calculate_random_input(domain));
+        const auto [input, output] = solve_system(calculate_random_input(domain));
 
         if (input.size() == 0) continue;
 
@@ -110,7 +110,7 @@ pair<MatrixR, MatrixR> GeneticResponse::initialize_population(const pair<VectorR
              + " individuals could be made feasible in " + to_string(attempts_number)
              + " attempts. The constraints may be impossible to satisfy.");
 
-    return {inputs, outputs};
+    return {move(inputs), move(outputs)};
 }
 
 pair<MatrixR, MatrixR> GeneticResponse::evolve_population(const pair<VectorR, VectorR>& domain) const
@@ -225,7 +225,7 @@ MatrixR GeneticResponse::recombinate_population(const MatrixR& parent_inputs,
         if (random_uniform(0.0f, 1.0f) < crossover_probability)
             crossover(first_child, second_child, domain);
 
-        const VectorR first_input = feasibility_system.solve(first_child).first;
+        const VectorR first_input = solve_system(move(first_child)).first;
 
         if (first_input.size() > 0)
         {
@@ -236,7 +236,7 @@ MatrixR GeneticResponse::recombinate_population(const MatrixR& parent_inputs,
 
         if (feasible_number == points_number) break;
 
-        const VectorR second_input = feasibility_system.solve(second_child).first;
+        const VectorR second_input = solve_system(move(second_child)).first;
 
         if (second_input.size() > 0)
         {
@@ -273,7 +273,7 @@ pair<MatrixR, MatrixR> GeneticResponse::mutate_population(const MatrixR& offspri
 
         mutate_individual(child, domain);
 
-        const auto [input, output] = feasibility_system.solve(child);
+        const auto [input, output] = solve_system(move(child));
 
         if (input.size() == 0) continue;
 
@@ -288,7 +288,7 @@ pair<MatrixR, MatrixR> GeneticResponse::mutate_population(const MatrixR& offspri
              + " children survived mutation feasibly in " + to_string(attempts_number)
              + " attempts. The constraints may be impossible to satisfy.");
 
-    return {inputs, outputs};
+    return {move(inputs), move(outputs)};
 }
 
 

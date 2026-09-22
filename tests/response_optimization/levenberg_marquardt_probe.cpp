@@ -10,7 +10,7 @@
 // of equations written as a functor, including one whose residuals read a network output?
 //
 // Nothing here touches the response optimization. It is a probe, kept next to the response
-// tests because the shape it tries out is the shape FeasibilitySystem already has: a set of
+// tests because the shape it tries out matches the response feasibility repair: a set of
 // residuals, some analytical in the inputs, some coupled through the network response, and
 // a numerical jacobian over all of them. If the probe holds, the same functor can later be
 // filled with the assembled constraint rows instead of the hand written ones below.

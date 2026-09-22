@@ -42,23 +42,6 @@ public:
         vector<float> values;
     };
 
-    struct FeasibilitySystem
-    {
-        void initialize();
-
-        VectorR round_to_grid(const VectorR&) const;
-
-        VectorR evaluate(const VectorR&, VectorR&, VectorR&, const VectorR& = {}) const;
-
-        MatrixR calculate_jacobian(const VectorR&, const VectorR&, const VectorR&, const VectorR& = {}) const;
-
-        pair<VectorR, VectorR> solve(VectorR) const;
-
-        const ResponseOptimization* problem = nullptr;
-
-        pair<VectorR, VectorR> borders;
-    };
-
     explicit ResponseOptimization(Network* = nullptr);
 
     virtual ~ResponseOptimization();
@@ -69,6 +52,9 @@ public:
     void set_iterations_number(Index);
     void set_points_number(Index);
 
+    void set_feasibility_rounds(Index);
+    // Eigen's per-round evaluation budget; excludes finite-difference probes.
+    void set_feasibility_evaluations(Index);
     void set_feasibility_margin_factor(float);
 
     MatrixR perform_response_optimization();
@@ -80,13 +66,15 @@ protected:
     vector<Objective> objectives;
     vector<Constraint> constraints;
 
-    FeasibilitySystem feasibility_system;
+    pair<VectorR, VectorR> input_bounds;
 
     virtual MatrixR single_optimization() = 0;
 
     virtual MatrixR multi_optimization() = 0;
 
     pair<VectorR, VectorR> calculate_domain();
+
+    pair<VectorR, VectorR> solve_system(VectorR) const;
 
     VectorR calculate_random_input(const pair<VectorR, VectorR>&) const;
 
@@ -105,19 +93,17 @@ protected:
 
 private:
 
+    struct FeasibilityRepairSystem;
+
     pair<VectorR, VectorR> get_unconstrained_domain() const;
 
     string get_input_column_name(Index) const;
 
     float get_bound_tolerance(float) const;
 
-    float calculate_band_residual(const pair<float, float>&, float) const;
-
-    pair<float, float> get_band(const Constraint&) const;
+    pair<float, float> get_constraint_bounds(const Constraint&) const;
 
     pair<VectorR, VectorR> narrow_domain(pair<VectorR, VectorR>) const;
-
-    void check_domain(const pair<VectorR, VectorR>&) const;
 
     float numeric_tolerance = 1e-6f;
 
@@ -128,12 +114,6 @@ private:
     Index feasibility_rounds = 3;
 
     Index feasibility_evaluations = 50;
-
-    float difference_step = 1e-3f;
-
-    float discrete_difference_step = 0.25f;
-
-    float box_weight = 100.0f;
 
     size_t discrete_values_warning = 8;
 

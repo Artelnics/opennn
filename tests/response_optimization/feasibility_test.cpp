@@ -178,7 +178,7 @@ public:
 
     using ResponseOptimization::calculate_domain;
     using ResponseOptimization::calculate_random_input;
-    using ResponseOptimization::feasibility_system;
+    using ResponseOptimization::solve_system;
 
 private:
 
@@ -220,7 +220,7 @@ RepairedCloud repair_from_random_starts(FeasibleSetProbe& probe,
     {
         const VectorR start = probe.calculate_random_input(domain);
 
-        const auto [input, output] = probe.feasibility_system.solve(start);
+        const auto [input, output] = probe.solve_system(start);
 
         if (input.size() == 0)
         {
