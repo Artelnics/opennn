@@ -142,6 +142,16 @@
       },
       "redistribution_cleared": false,
       "review": "See DATASETS.md for source, attribution, transformations and unresolved records."
+    },
+    {
+      "path": "examples/yacht_hydrodynamics",
+      "inventory": {
+        "files": 2,
+        "normalized_bytes": 12783,
+        "sha256": "237625bd961487f448cd4ad484b1c7198aeb882f4287d726ad810e92ae08190c"
+      },
+      "redistribution_cleared": true,
+      "review": "See DATASETS.md for source, attribution, transformations and unresolved records."
     }
   ],
   "storage_contract": "ZIP members are expanded under the archive parent directory before applying hash_contract; inventory paths and redistribution records are unchanged."

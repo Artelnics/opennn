@@ -566,13 +566,16 @@ TEST(ConcreteScenario, TighteningTheOutputConstraintKeepsResultsFeasible)
 TEST(ConcreteScenario, ImpossibleStrengthIsReportedNotReturned)
 {
     // The network was trained on strengths up to about 82 MPa. Asking for 150 cannot be
-    // met, and the run has to say so rather than hand back an infeasible mix.
+    // met, and the run has to say so rather than hand back an infeasible mix. An impossible
+    // run spends its whole sampling budget before giving up, so the budget is kept small.
 
     for (const Driver driver : {Driver::Contraction, Driver::Genetic})
     {
         set_seed(1234);
 
         const unique_ptr<ResponseOptimization> optimization = make_driver(driver);
+        optimization->set_points_number(50);
+        optimization->set_iterations_number(3);
 
         optimization->add_objective("cement", Sense::Minimize);
         optimization->add_constraint("strength", Condition::GreaterEqual, {150.0f});
