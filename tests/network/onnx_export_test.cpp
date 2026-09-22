@@ -91,9 +91,14 @@ void expect_onnxruntime_matches(const Network& network, const MatrixR& inputs, c
             script << (column ? "," : "") << inputs(row, column);
         script << "]";
     }
+    // The values go to their own file: onnxruntime may log warnings to the console
+    // (on CI runners it reports hardware it cannot identify).
+    const filesystem::path values_path = directory / "values.txt";
+
     script << "], dtype=np.float32)\n"
+           << "ort.set_default_logger_severity(3)\n"
            << "y = ort.InferenceSession(r'" << model_path.string() << "').run(None, {'input': x})[0]\n"
-           << "for row in y: print(' '.join(repr(float(v)) for v in row))\n";
+           << "np.savetxt(r'" << values_path.string() << "', y, fmt='%.9g')\n";
 
     const filesystem::path script_path = directory / "run.py";
     ofstream(script_path, ios::binary) << script.str();
@@ -103,12 +108,12 @@ void expect_onnxruntime_matches(const Network& network, const MatrixR& inputs, c
     const string output = read_file(output_path);
     ASSERT_TRUE(ran) << output;
 
-    istringstream lines(output);
+    istringstream lines(read_file(values_path));
     for (Index row = 0; row < expected.rows(); ++row)
         for (Index column = 0; column < expected.cols(); ++column)
         {
             double value = 0.0;
-            ASSERT_TRUE(lines >> value) << "onnxruntime printed too few values:\n" << output;
+            ASSERT_TRUE(lines >> value) << "onnxruntime returned too few values:\n" << output;
             const float reference = expected(row, column);
             EXPECT_NEAR(reference, float(value), 1e-4f * max(1.0f, abs(reference)))
                 << name << ": row " << row << ", output " << column;
