@@ -2034,6 +2034,10 @@ void ModelExpression::emit_python_calculate_outputs(ostringstream& buffer,
                 replace_all_word_appearances(processed_line, name, "self." + name);
             }
 
+            // Logarithmic scaling writes bare log()/exp(); Python only has max/min built in.
+            for (const char* function : {"exp", "log"})
+                replace_all_word_appearances(processed_line, function, string("np.") + function);
+
             replace(processed_line, ";", "");
             return processed_line;
         });

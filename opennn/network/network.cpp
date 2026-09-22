@@ -700,11 +700,23 @@ TensorView single_input_view(const Tensor4& inputs)
                       Type::FP32);
 }
 
+// A row-major matrix is read row by row with the network's input width, so a
+// matrix with extra columns (for instance, the targets of a data file) would be
+// read at shifted offsets from the second row on instead of failing.
+TensorView single_input_view(const Network& network, const MatrixR& inputs)
+{
+    throw_if(!network.is_empty() && inputs.cols() != network.get_inputs_number(),
+             "Network::calculate_outputs: the inputs have {} columns and the network expects {}.",
+             inputs.cols(), network.get_inputs_number());
+
+    return single_input_view(inputs);
+}
+
 }
 
 void Network::calculate_outputs(const MatrixR& inputs, MatrixR& outputs)
 {
-    calculate_outputs(vector<TensorView>{single_input_view(inputs)}, outputs);
+    calculate_outputs(vector<TensorView>{single_input_view(*this, inputs)}, outputs);
 }
 
 void Network::calculate_outputs(const Tensor3& inputs, MatrixR& outputs)
@@ -878,7 +890,7 @@ void Network::calculate_outputs(const vector<TensorView>& input_views,
 
 MatrixR Network::calculate_outputs(const MatrixR& inputs)
 {
-    return calculate_outputs(vector<TensorView>{single_input_view(inputs)});
+    return calculate_outputs(vector<TensorView>{single_input_view(*this, inputs)});
 }
 
 MatrixR Network::calculate_outputs(const Tensor3& inputs)

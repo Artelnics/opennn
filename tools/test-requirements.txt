@@ -2,3 +2,4 @@
 numpy==2.4.4
 pandas==2.3.3
 sacrebleu==2.5.1
+onnxruntime==1.30.0

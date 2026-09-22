@@ -323,6 +323,40 @@ MatrixR degenerate_inputs()
     return inputs;
 }
 
+// The logarithmic scaler is the one whose expression calls log() and exp(), which
+// each language has to resolve on its own.
+unique_ptr<ApproximationNetwork> build_logarithmic_network()
+{
+    auto network = make_unique<ApproximationNetwork>(Shape{2}, Shape{3}, Shape{1});
+
+    network->set_input_variables(vector<Variable>(network->get_inputs_number()));
+    network->set_output_variables(vector<Variable>(network->get_outputs_number()));
+    network->set_input_names({"positive", "ranged"});
+    network->set_output_names({"result"});
+
+    Scaling* scaling = static_cast<Scaling*>(network->get_first("Scaling"));
+    scaling->set_scalers(vector<string>{"Logarithm", "MinimumMaximum"});
+    scaling->set_descriptives({Descriptives(0.1f, 100.0f, 10.0f, 20.0f),
+                               Descriptives(-1.0f, 1.0f, 0.0f, 1.0f)});
+
+    Unscaling* unscaling = static_cast<Unscaling*>(network->get_first("Unscaling"));
+    unscaling->set_scalers(vector<string>{"Logarithm"});
+    unscaling->set_descriptives({Descriptives(0.5f, 50.0f, 5.0f, 10.0f)});
+
+    network->set_parameters_random();
+
+    return network;
+}
+
+MatrixR logarithmic_inputs()
+{
+    MatrixR inputs(3, 2);
+    inputs << 0.5f, -0.5f,
+              7.0f,  0.25f,
+             80.0f,  0.9f;
+    return inputs;
+}
+
 // The targets differ only in how the export is run, so every check below is
 // written once and pointed at any of them.
 enum class Target { Python, C, CEmbedded, JavaScript };
@@ -606,6 +640,28 @@ TEST(ExpressionExecution, CModelReproducesDegenerateScaling)
 
     expect_export_matches(Target::C, "opennn_degenerate_c",
                           *network, inputs, expected);
+}
+
+TEST(ExpressionExecution, LogarithmicScalingMatchesEveryExecutableTarget)
+{
+    const unique_ptr<ApproximationNetwork> network = build_logarithmic_network();
+    const MatrixR inputs = logarithmic_inputs();
+    const MatrixR expected = network->calculate_outputs(inputs);
+
+    bool ran_target = false;
+
+    for (const Target target : {Target::Python, Target::C, Target::CEmbedded, Target::JavaScript})
+    {
+        if (!target_available(target)) continue;
+
+        ran_target = true;
+        SCOPED_TRACE(target_name(target));
+
+        expect_export_matches(target, string("opennn_logarithmic_") + target_name(target),
+                              *network, inputs, expected);
+    }
+
+    if (!ran_target) GTEST_SKIP() << "No export target is available.";
 }
 
 // The embedded export is a separate emitter again - weight tables and its own

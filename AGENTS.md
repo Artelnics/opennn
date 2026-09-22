@@ -54,6 +54,21 @@ Use focused checks while editing and `full` as the final gate for a completed
 batch. A library change is not complete until the relevant CPU and CUDA suites
 pass, or an unavailable backend is reported clearly.
 
+Before every commit, run the source checks that gate CI:
+
+```bash
+python tools/check_code_quality.py
+python tools/check_architecture.py
+python tools/check_dataset_manifest.py
+```
+
+`check_code_quality.py` is a ratchet: any metric above `CODE_QUALITY.json` fails
+CI. When the commit legitimately grows the code (size metrics such as `nloc`,
+`physical_lines`, `functions` or `files`), run
+`python tools/check_code_quality.py --update` and include `CODE_QUALITY.json` in
+the same commit. Do not update it to absorb worse quality metrics (long or complex
+functions, duplication); simplify the code instead.
+
 For non-standard CUDA installations, configure the wrappers through
 `OPENNN_CUDA_ARCHITECTURES`, `OPENNN_CUDNN_INCLUDE_DIR` and
 `OPENNN_CUDNN_LIBRARY`. Do not add workstation-specific paths to repository
