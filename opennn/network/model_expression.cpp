@@ -2018,13 +2018,8 @@ void ModelExpression::emit_csharp_calculate_outputs(ostringstream& buffer,
                                                     bool has_softmax,
                                                     const ExportNames& names) const
 {
-    const vector<string>& input_names = names.inputs;
-    const vector<string>& output_names = names.outputs;
-    const vector<string>& fixed_input_names = names.fixed_inputs;
-    const vector<string>& fixed_output_names = names.fixed_outputs;
-
-    const Index inputs_number = input_names.size();
-    const Index outputs_number = output_names.size();
+    const Index inputs_number = ssize(names.inputs);
+    const Index outputs_number = ssize(names.outputs);
 
     const LanguageSyntax syntax = language_syntax(ProgrammingLanguage::CSharp, outputs_number);
 
@@ -2048,7 +2043,7 @@ void ModelExpression::emit_csharp_calculate_outputs(ostringstream& buffer,
            << "\t\t\tthrow new ArgumentException(\"Expected " << inputs_number << " input values.\");\n\n";
 
     for (Index i = 0; i < inputs_number; ++i)
-        buffer << "\t\tdouble " << fixed_input_names[i] << " = inputs[" << i << "];\n";
+        buffer << "\t\tdouble " << names.fixed_inputs[i] << " = inputs[" << i << "];\n";
 
     buffer << "\n";
 
@@ -2059,13 +2054,13 @@ void ModelExpression::emit_csharp_calculate_outputs(ostringstream& buffer,
     emit_body_lines(buffer, lines, syntax,
         [&](const string& raw_line)
         {
-            string line = process_body_line(raw_line, input_names, fixed_input_names);
+            string line = process_body_line(raw_line, names.inputs, names.fixed_inputs);
             for (const auto& [function, method] : math_functions)
                 replace_all_word_appearances(line, function, method);
             return line;
         });
 
-    const vector<string> fixed_outputs = fix_output_names(expression, output_names, ProgrammingLanguage::CSharp);
+    const vector<string> fixed_outputs = fix_output_names(expression, names.outputs, ProgrammingLanguage::CSharp);
     if (!fixed_outputs.empty())
     {
         buffer << "\n";
@@ -2076,7 +2071,7 @@ void ModelExpression::emit_csharp_calculate_outputs(ostringstream& buffer,
     buffer << "\n\t\tdouble[] outputs = new double[" << outputs_number << "];\n\n";
 
     for (Index i = 0; i < outputs_number; ++i)
-        buffer << "\t\toutputs[" << i << "] = " << fixed_output_names[i] << ";\n";
+        buffer << "\t\toutputs[" << i << "] = " << names.fixed_outputs[i] << ";\n";
 
     if (has_softmax)
         buffer << "\n\t\tApplySoftmax(outputs);\n";
