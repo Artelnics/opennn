@@ -24,7 +24,7 @@ int main()
         // Two inputs, one output, and fixed weights for a reproducible demo.
         // A trained application would learn or load these parameters instead.
         Network network;
-        network.add_layer(std::make_unique<Dense>(Shape{2}, Shape{1}, "Identity"), {-1});
+        network.add_layer(std::make_unique<opennn::Dense>(Shape{2}, Shape{1}, "Identity"), {-1});
         network.compile();
         network.get_parameters_map().setConstant(0.5f);
 
