@@ -43,6 +43,22 @@ public:
         return shape.empty() ? 0 : shape.size();
     }
 
+    const vector<string>& get_text_columns() const noexcept { return text_columns; }
+    vector<string> get_text_column_markers() const;
+    vector<Index> encode_text(span<const string> texts) const;
+
+    struct Record
+    {
+        string id;
+        vector<string> texts;
+        string target;
+    };
+
+    void for_each_record(const function<bool(Index, const Record&)>&) const;
+    vector<Record> read_records() const;
+
+    optional<Record> split_line(string_view line, bool with_id = true) const;
+
     const TokenizerOperator* get_training_tokenizer() const override { return get_tokenizer(); }
     const TokenizerOperator* get_training_tokenizer(VariableRole role) const override { return get_tokenizer(role); }
     bool supports_bf16_inputs() const override { return options.input_layout == InputLayout::TokensAndMask; }
@@ -69,9 +85,20 @@ private:
         Index prefix = -1;
     };
 
+    struct Documents
+    {
+        vector<string> text_columns;
+        vector<vector<string>> input;
+        vector<vector<Index>> input_lengths;
+        vector<vector<string>> target;
+        vector<string> ids;
+    };
+
     VariableRole token_role() const noexcept;
     void configure(Index samples, Index input_length, Index target_length);
-    void load_documents(vector<vector<string>>&, vector<vector<string>>&) const;
+    void load_documents(Documents&) const;
+    void prepare_tokenizer();
+    vector<Index> encode_input(span<const string> tokens, span<const Index> lengths, Index length) const;
     void build_labels(const vector<vector<string>>&);
     void read_rows();
     void read_corpus();
@@ -93,6 +120,7 @@ private:
     string tokenizer_identity;
     string target_tokenizer_identity;
     vector<string> labels;
+    vector<string> text_columns;
     vector<Segment> segments;
     Index record_tokens = 0;
     filesystem::path cache_path;

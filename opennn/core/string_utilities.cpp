@@ -52,12 +52,24 @@ void for_each_quoted_field(string_view line, char separator, string& scratch, Em
     bool in_quote = false;
     size_t field_start = 0;
 
-    for (const char character : line)
+    for (size_t i = 0; i < line.size(); ++i)
     {
-        if (character == '"' && (in_quote || scratch.size() == field_start))
+        const char character = line[i];
+
+        if (character == '"')
         {
-            in_quote = !in_quote;
-            continue;
+            if (in_quote && i + 1 < line.size() && line[i + 1] == '"')
+            {
+                scratch.push_back('"');
+                ++i;
+                continue;
+            }
+
+            if (in_quote || scratch.size() == field_start)
+            {
+                in_quote = !in_quote;
+                continue;
+            }
         }
 
         if (!in_quote && character == separator)

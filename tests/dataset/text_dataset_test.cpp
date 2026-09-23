@@ -818,6 +818,230 @@ TEST(TextDatasetClassification, JsonRejectsChangedClassMappings)
 
 namespace
 {
+    const string multi_column_content =
+        "id\ttitle\tbody\tlabel\n"
+        "r1\tgreat phone\texcellent product works\tGood\n"
+        "r2\tterrible battery\tawful screen\tBad\n"
+        "r3\tamazing camera\tfantastic value\tGood\n"
+        "r4\tbroken charger\tuseless device\tBad\n";
+
+    vector<float> data_row(const TextDataset& dataset, Index sample)
+    {
+        const MatrixR& data = dataset.get_data();
+        const Index length = dataset.get_sequence_length();
+        vector<float> row(static_cast<size_t>(length));
+        for (Index i = 0; i < length; ++i) row[size_t(i)] = data(sample, i);
+        return row;
+    }
+
+    vector<float> as_floats(const vector<Index>& ids, Index length)
+    {
+        vector<float> row(size_t(length), 0.0f);
+        for (size_t i = 0; i < ids.size() && Index(i) < length; ++i) row[i] = float(ids[i]);
+        return row;
+    }
+}
+
+TEST(TextDatasetClassification, SampleIdColumnIsSkippedAndKept)
+{
+    const string path = temp_language_file("opennn_text_ids.txt",
+        "r1\tgreat phone excellent product\tGood\n"
+        "r2\tterrible battery awful screen\tBad\n"
+        "r3\tamazing camera fantastic value\tGood\n"
+        "r4\tbroken charger useless device\tBad\n");
+    const string plain_path = temp_language_file("opennn_text_ids_plain.txt", sentiment_content);
+    TextDataset dataset;
+    dataset.set_storage_mode(Dataset::StorageMode::Matrix);
+    dataset.set_has_ids(true);
+    ASSERT_NO_THROW(dataset.read_txt(path));
+    TextDataset plain;
+    plain.set_storage_mode(Dataset::StorageMode::Matrix);
+    plain.read_txt(plain_path);
+
+    EXPECT_EQ(dataset.get_samples_number(), 4);
+    EXPECT_EQ(dataset.get_sample_ids(), (vector<string>{"r1", "r2", "r3", "r4"}));
+    EXPECT_EQ(dataset.get_text_columns(), (vector<string>{"variable_2"}));
+    EXPECT_TRUE(dataset.get_text_column_markers().empty());
+    EXPECT_EQ(dataset.get_vocabulary(), plain.get_vocabulary());
+    EXPECT_TRUE(dataset.get_data().isApprox(plain.get_data()));
+    remove_language_file(path);
+    remove_language_file(plain_path);
+}
+
+TEST(TextDatasetClassification, SingleColumnHeaderKeepsLegacyFraming)
+{
+    const string path = temp_language_file("opennn_text_single_header.txt",
+        "review\tsentiment\n" + sentiment_content);
+    TextDataset dataset;
+    dataset.set_storage_mode(Dataset::StorageMode::Matrix);
+    dataset.set_has_header(true);
+    dataset.read_txt(path);
+    EXPECT_EQ(dataset.get_samples_number(), 4);
+    EXPECT_EQ(dataset.get_text_columns(), (vector<string>{"review"}));
+    EXPECT_EQ(dataset.get_tokenizer()->get_reserved_tokens(),
+              (vector<string>{"[PAD]", "[UNK]", "[START]", "[END]"}));
+    EXPECT_EQ(dataset.get_vocabulary(VariableRole::Target), (vector<string>{"bad", "good"}));
+    remove_language_file(path);
+}
+
+TEST(TextDatasetClassification, SeveralTextColumnsAreFramedWithColumnMarkers)
+{
+    const string path = temp_language_file("opennn_text_multi.txt", multi_column_content);
+    TextDataset dataset;
+    dataset.set_storage_mode(Dataset::StorageMode::Matrix);
+    dataset.set_has_header(true);
+    dataset.set_has_ids(true);
+    ASSERT_NO_THROW(dataset.read_txt(path));
+
+    EXPECT_EQ(dataset.get_samples_number(), 4);
+    EXPECT_EQ(dataset.get_sample_ids(), (vector<string>{"r1", "r2", "r3", "r4"}));
+    EXPECT_EQ(dataset.get_text_columns(), (vector<string>{"title", "body"}));
+    EXPECT_EQ(dataset.get_text_column_markers(), (vector<string>{"[title]", "[body]"}));
+    EXPECT_EQ(dataset.get_vocabulary(VariableRole::Target), (vector<string>{"bad", "good"}));
+    const TokenizerOperator* tokenizer = dataset.get_tokenizer();
+    EXPECT_EQ(tokenizer->token_to_id("[START]"), 2);
+    EXPECT_EQ(tokenizer->token_to_id("[END]"), 3);
+    EXPECT_EQ(tokenizer->token_to_id("[title]"), 4);
+    EXPECT_EQ(tokenizer->token_to_id("[body]"), 5);
+
+    EXPECT_EQ(dataset.get_sequence_length(), 9);
+    const vector<float> expected{2, 4, float(tokenizer->token_to_id("great")), float(tokenizer->token_to_id("phone")),
+                                 5, float(tokenizer->token_to_id("excellent")), float(tokenizer->token_to_id("product")),
+                                 float(tokenizer->token_to_id("works")), 3};
+    EXPECT_EQ(data_row(dataset, 0), expected);
+    EXPECT_EQ(as_floats(dataset.encode_text(vector<string>{"great phone", "excellent product works"}), 9), expected);
+    EXPECT_THROW(dataset.encode_text(vector<string>{"great phone"}), std::exception);
+    remove_language_file(path);
+}
+
+TEST(TextDatasetClassification, ColumnsWithoutHeaderAreNamedAndTruncatedFairly)
+{
+    const string path = temp_language_file("opennn_text_multi_noheader.txt",
+        "one two three four five six\tseven\tGood\n"
+        "eight\tnine ten eleven\tBad\n");
+    TextDataset dataset(TextDataset::Options{.sequence_length = 8});
+    dataset.set_storage_mode(Dataset::StorageMode::Matrix);
+    dataset.read_txt(path);
+    EXPECT_EQ(dataset.get_text_columns(), (vector<string>{"variable_1", "variable_2"}));
+    EXPECT_EQ(dataset.get_sequence_length(), 8);
+    const TokenizerOperator* tokenizer = dataset.get_tokenizer();
+    const auto id = [&](const char* token) { return float(tokenizer->token_to_id(token)); };
+    EXPECT_EQ(data_row(dataset, 0), (vector<float>{2, id("[variable_1]"), id("one"), id("two"), id("three"),
+                                                    id("[variable_2]"), id("seven"), 3}));
+    EXPECT_EQ(data_row(dataset, 1), (vector<float>{2, id("[variable_1]"), id("eight"), id("[variable_2]"),
+                                                    id("nine"), id("ten"), id("eleven"), 3}));
+
+    TextDataset too_short(TextDataset::Options{.sequence_length = 5});
+    EXPECT_THROW(too_short.read_txt(path), std::exception);
+    remove_language_file(path);
+}
+
+TEST(TextDatasetClassification, RecordsAreReadTheWayTheModelReadsThem)
+{
+    const string path = temp_language_file("opennn_text_records.csv",
+        "id;title;body;label\n"
+        "r1;\"great phone; really\";excellent product works;Good\n"
+        "r2;terrible battery;awful screen;Bad\n");
+
+    TextDataset dataset;
+    dataset.set_storage_mode(Dataset::StorageMode::Matrix);
+    dataset.set_separator_name("Semicolon");
+    dataset.set_has_header(true);
+    dataset.set_has_ids(true);
+    ASSERT_NO_THROW(dataset.read_txt(path));
+
+    const vector<TextDataset::Record> records = dataset.read_records();
+
+    ASSERT_EQ(records.size(), size_t(dataset.get_samples_number()));
+    EXPECT_EQ(records[0].id, "r1");
+    EXPECT_EQ(records[0].texts, (vector<string>{"great phone; really", "excellent product works"}));
+    EXPECT_EQ(records[0].target, "Good");
+    EXPECT_EQ(records[1].id, "r2");
+    EXPECT_EQ(records[1].texts, (vector<string>{"terrible battery", "awful screen"}));
+
+    vector<Index> visited;
+    dataset.for_each_record([&](const Index row, const TextDataset::Record&)
+    {
+        visited.push_back(row);
+        return row < 0;
+    });
+    EXPECT_EQ(visited, (vector<Index>{0}));
+
+    const optional<TextDataset::Record> typed = dataset.split_line("r9;a title;a body", true);
+    ASSERT_TRUE(typed.has_value());
+    EXPECT_EQ(typed->id, "r9");
+    EXPECT_EQ(typed->texts, (vector<string>{"a title", "a body"}));
+
+    const optional<TextDataset::Record> without_id = dataset.split_line("a title;a body", false);
+    ASSERT_TRUE(without_id.has_value());
+    EXPECT_TRUE(without_id->id.empty());
+    EXPECT_EQ(without_id->texts, (vector<string>{"a title", "a body"}));
+
+    EXPECT_FALSE(dataset.split_line("only one text").has_value());
+
+    remove_language_file(path);
+}
+
+TEST(TextDatasetClassification, MalformedRecordKeepsItsWholeLine)
+{
+    const string path = temp_language_file("opennn_text_records_bad.csv",
+        "title;body;label\n"
+        "great phone;excellent product;Good\n"
+        "a line with no fields at all\n");
+
+    TextDataset dataset;
+    dataset.set_storage_mode(Dataset::StorageMode::Matrix);
+    dataset.set_separator_name("Semicolon");
+    dataset.set_has_header(true);
+
+    EXPECT_THROW(dataset.read_txt(path), std::exception);
+
+    const vector<TextDataset::Record> records = dataset.read_records();
+
+    ASSERT_EQ(records.size(), size_t(2));
+    EXPECT_EQ(records[0].texts, (vector<string>{"great phone", "excellent product"}));
+    EXPECT_EQ(records[0].target, "Good");
+    EXPECT_EQ(records[1].texts, (vector<string>{"a line with no fields at all"}));
+    EXPECT_TRUE(records[1].target.empty());
+
+    remove_language_file(path);
+}
+
+TEST(TextDatasetClassification, SeveralTextColumnsSurviveCacheAndJson)
+{
+    const string path = temp_language_file("opennn_text_multi_cache.txt", multi_column_content);
+    TextDataset dataset;
+    dataset.set_has_header(true);
+    dataset.set_has_ids(true);
+    dataset.read_txt(path);
+    TextDataset cached;
+    cached.set_has_header(true);
+    cached.set_has_ids(true);
+    cached.read_txt(path);
+    EXPECT_EQ(cached.get_text_columns(), dataset.get_text_columns());
+    EXPECT_EQ(cached.get_sample_ids(), dataset.get_sample_ids());
+    EXPECT_EQ(cached.get_vocabulary(), dataset.get_vocabulary());
+
+    JsonWriter saved;
+    dataset.to_JSON(saved);
+    JsonDocument document;
+    document.set_root(Json::parse(saved.c_str()));
+    TextDataset restored;
+    ASSERT_NO_THROW(restored.from_JSON(document));
+    EXPECT_EQ(restored.get_text_columns(), dataset.get_text_columns());
+    EXPECT_EQ(restored.get_sample_ids(), dataset.get_sample_ids());
+
+    document.get_root()["Dataset"]["DataSource"]["Path"] = path + ".missing";
+    TextDataset deployment;
+    deployment.from_JSON(document);
+    EXPECT_EQ(deployment.get_text_columns(), dataset.get_text_columns());
+    const vector<string> texts{"great phone", "excellent product works"};
+    EXPECT_EQ(deployment.encode_text(texts), dataset.encode_text(texts));
+    remove_language_file(path);
+}
+
+namespace
+{
 void check_resident_text_matrix(TextDataset& dataset)
 {
     const vector<Index> samples{1, 0};

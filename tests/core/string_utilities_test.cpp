@@ -165,6 +165,9 @@ TEST(StringUtilitiesTest, QuotedFieldsPreserveEmptyFieldsAndFirstFieldScratch)
         {",\"second,field\"", {"", "second,field"}},
         {"a\"b,c", {"a\"b", "c"}},
         {"\"unterminated,field", {"unterminated,field"}},
+        {"\"x \"\"q,r\"\" y\",lab", {"x \"q,r\" y", "lab"}},
+        {"\"\"\"quoted\"\"\",b", {"\"quoted\"", "b"}},
+        {"\"a\"\"\",b", {"a\"", "b"}},
         {"\"" + string(256, 'a') + ",b\",tail", {string(256, 'a') + ",b", "tail"}}
     };
 
