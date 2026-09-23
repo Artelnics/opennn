@@ -381,6 +381,13 @@ struct Lexer
                 token.text = string(1, character);
                 break;
             default:
+                // A byte outside ASCII is one piece of a multibyte UTF-8 character (an emoji,
+                // an accented letter); echoing it alone would write invalid UTF-8.
+                if (static_cast<unsigned char>(character) >= 0x80)
+                    throw runtime_error(format("ExpressionParser: unexpected character at position {}: "
+                                               "the expression contains a character that is not valid",
+                                               position - 1));
+
                 throw runtime_error(format("ExpressionParser: unexpected character '{}' at position {}",
                                            character, position - 1));
             }
