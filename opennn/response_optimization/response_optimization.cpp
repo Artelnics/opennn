@@ -24,29 +24,6 @@ using Constraint = ResponseOptimization::Constraint;
 using Condition = Constraint::Condition;
 
 
-float membership_scale(const vector<float>& values)
-{
-    const auto [smallest, largest] = ranges::minmax(values);
-
-    const float span = max(largest - smallest, EPSILON);
-
-    float scale = numeric_limits<float>::infinity();
-
-    for (const float root : values)
-    {
-        float slope = 1.0f;
-
-        for (const float other : values)
-            if (other != root)
-                slope *= (root - other)/span;
-
-        scale = min(scale, abs(slope));
-    }
-
-    return scale;
-}
-
-
 vector<Index> get_group_members(const string& expression, const Network* network)
 {
     vector<Index> members;
@@ -82,7 +59,7 @@ vector<Index> get_group_members(const string& expression, const Network* network
 Index get_discrete_column(const Constraint& constraint)
 {
     return ((constraint.condition == Condition::Integer || constraint.condition == Condition::AllowedSet)
-            && constraint.equation.input_indices.size() == 1)
+            && is_bare_variable(constraint.equation) && !is_output_coupled(constraint.equation))
          ? constraint.equation.input_indices.front()
          : -1;
 }
@@ -104,9 +81,6 @@ float ResponseOptimization::get_bound_tolerance(const float bound) const
     return max(EPSILON, abs(bound)*numeric_tolerance);
 }
 
-
-// The user writes variable names, so errors about the domain name them back
-// instead of the feature index the solver works with.
 
 string ResponseOptimization::get_input_column_name(const Index column) const
 {
@@ -139,14 +113,8 @@ pair<float, float> ResponseOptimization::get_constraint_bounds(const Constraint&
 
     case Condition::Less:         return {-unbounded, values[0] - 2.0f*get_bound_tolerance(values[0])};
 
-    case Condition::Integer:      return {-constraint_tolerance, constraint_tolerance};
-
-    case Condition::AllowedSet:
-    {
-        const float width = constraint_tolerance*membership_scale(values);
-
-        return {-width, width};
-    }
+    case Condition::Integer:
+    case Condition::AllowedSet:   return {-constraint_tolerance, constraint_tolerance};
 
     case Condition::Cardinality:  return {-1.0f, 1.0f};
     }
@@ -155,8 +123,10 @@ pair<float, float> ResponseOptimization::get_constraint_bounds(const Constraint&
 }
 
 
-pair<VectorR, VectorR> ResponseOptimization::narrow_domain(pair<VectorR, VectorR> domain) const
+pair<VectorR, VectorR> ResponseOptimization::calculate_domain()
 {
+    pair<VectorR, VectorR> domain = get_unconstrained_domain();
+
     for (const Constraint& constraint : constraints)
     {
         const CompiledExpression& expression = constraint.equation;
@@ -171,7 +141,8 @@ pair<VectorR, VectorR> ResponseOptimization::narrow_domain(pair<VectorR, VectorR
             lower = constraint.values.front();
             upper = constraint.values.back();
         }
-        else if (!is_output_coupled(expression)
+        else if (constraint.condition != Condition::Integer && constraint.condition != Condition::AllowedSet
+              && !is_output_coupled(expression)
               && expression.linearity == ExpressionLinearity::Linear
               && expression.linear_input_terms.size() == 1
               && abs(expression.linear_input_terms.front().second) > EPSILON)
@@ -193,9 +164,20 @@ pair<VectorR, VectorR> ResponseOptimization::narrow_domain(pair<VectorR, VectorR
         domain.first(column) = max(domain.first(column), lower);
         domain.second(column) = min(domain.second(column), upper);
 
-        throw_if(domain.first(column) > domain.second(column) + get_bound_tolerance(domain.second(column)),
+        throw_if(domain.first(column) > domain.second(column),
                  "The constraints leave '" + get_input_column_name(column) + "' with an empty range ["
                  + to_string(domain.first(column)) + ", " + to_string(domain.second(column)) + "].");
+    }
+
+    for (const auto& [first, size] : get_categorical_blocks(network->get_input_variables()))
+    {
+        auto lower = domain.first.segment(first, size);
+        auto upper = domain.second.segment(first, size);
+        lower = lower.array().max(0.0f).ceil();
+        upper = upper.array().min(1.0f).floor();
+        throw_if((lower.array() > upper.array()).any() || lower.sum() > 1.0f || upper.sum() < 1.0f,
+                 "The constraints leave categorical input '" + get_input_column_name(first) + "' with no valid category.");
+        if (lower.sum() == 1.0f) upper = lower;
     }
 
     for (const Constraint& constraint : constraints)
@@ -213,8 +195,8 @@ pair<VectorR, VectorR> ResponseOptimization::narrow_domain(pair<VectorR, VectorR
 
         if (column < 0) continue;
 
-        const float lower = domain.first(column) - get_bound_tolerance(domain.first(column));
-        const float upper = domain.second(column) + get_bound_tolerance(domain.second(column));
+        const float lower = domain.first(column);
+        const float upper = domain.second(column);
 
         if (constraint.condition == Condition::Integer)
             throw_if(ceil(lower) > floor(upper),
@@ -228,7 +210,9 @@ pair<VectorR, VectorR> ResponseOptimization::narrow_domain(pair<VectorR, VectorR
                      + to_string(lower) + ", " + to_string(upper) + "].");
     }
 
-    return domain;
+    input_bounds = move(domain);
+
+    return input_bounds;
 }
 
 
@@ -249,11 +233,12 @@ struct ResponseOptimization::FeasibilityRepairSystem : Eigen::DenseFunctor<float
     }
 
 
-    pair<VectorR, VectorR> solve_system(VectorR point)
+    pair<VectorR, VectorR> solve(VectorR point)
     {
         const auto& [lower_bounds, upper_bounds] = problem.input_bounds;
 
         VectorR previous;
+        VectorR before_previous;
 
         for (Index i = 0; ; i++)
         {
@@ -261,12 +246,29 @@ struct ResponseOptimization::FeasibilityRepairSystem : Eigen::DenseFunctor<float
 
             point = round_discrete(point);
 
+            if (point.size() == 0 || !point.allFinite()) return {};
+
             const VectorR output = evaluate_constraints(point, row_values, row_residuals);
 
-            if (!row_values.allFinite()) return {};
+            if (!row_values.allFinite() || !row_residuals.allFinite()) return {};
 
             if ((row_residuals.array() == 0.0f).all())
-                return {point, evaluate_outputs(point)};
+            {
+                const VectorR& response = evaluate_outputs(point);
+                if (!response.allFinite()) return {};
+                for (Index j = 0; j < Index(problem.objectives.size()); j++)
+                {
+                    const Objective& objective = problem.objectives[size_t(j)];
+                    const float value = objective.expression.evaluate(point, response);
+                    if (!isfinite(value) || (objective.sense == Objective::Sense::Fixed
+                                         && !isfinite(value - objective.value)))
+                    {
+                        problem.invalid_objective = j;
+                        return {};
+                    }
+                }
+                return {point, response};
+            }
 
             if (i == problem.feasibility_rounds) return {};
 
@@ -275,14 +277,17 @@ struct ResponseOptimization::FeasibilityRepairSystem : Eigen::DenseFunctor<float
                  <= problem.numeric_tolerance*(upper_bounds - lower_bounds).cwiseMax(EPSILON).array()).all())
                 return {};
 
+            if (before_previous.size() == point.size() && (before_previous.array() == point.array()).all())
+                return {};
+
+            before_previous.swap(previous);
             previous = point;
 
-            box_scales = (upper_bounds - lower_bounds).cwiseMax(EPSILON)/box_weight;
+            if (i == 0) box_scales = (upper_bounds - lower_bounds).cwiseMax(EPSILON)/box_weight;
             row_scales = calculate_jacobian(point, row_values, output).rowwise().norm();
 
-            for (Index row = 0; row < row_scales.size(); row++)
-                if (!isfinite(row_scales(row)) || row_scales(row) <= EPSILON)
-                    row_scales(row) = 1.0f;
+            row_scales = (row_scales.array().isFinite() && (row_scales.array() > EPSILON))
+                         .select(row_scales.array(), 1.0f);
 
             Eigen::LevenbergMarquardt<FeasibilityRepairSystem> levenberg_marquardt(*this);
 
@@ -324,7 +329,7 @@ struct ResponseOptimization::FeasibilityRepairSystem : Eigen::DenseFunctor<float
                 (upper_bounds.segment(first_column, categories_number).array() > 0.0f)
                 .select(forced.segment(first_column, categories_number).array(), -MAX).maxCoeff(&category) == -MAX;
 
-            if (none_open) continue;
+            if (none_open) return {};
 
             forced.segment(first_column, categories_number).setZero();
 
@@ -336,14 +341,25 @@ struct ResponseOptimization::FeasibilityRepairSystem : Eigen::DenseFunctor<float
             {
                 const float value = forced(column);
 
-                const float lower = lower_bounds(column) - problem.get_bound_tolerance(lower_bounds(column));
-                const float upper = upper_bounds(column) + problem.get_bound_tolerance(upper_bounds(column));
+                const float lower = lower_bounds(column);
+                const float upper = upper_bounds(column);
+
+                if (constraint.condition == Condition::Integer && ceil(lower) > floor(upper)) return {};
 
                 forced(column) = (constraint.condition == Condition::Integer)
                                ? clamp(round(value), ceil(lower), floor(upper))
                                : *ranges::min_element(constraint.values, {}, [&](const float allowed)
-                                     { return (allowed < lower || allowed > upper) ? MAX : abs(allowed - value); });
+                                     { return (allowed < lower || allowed > upper)
+                                            ? numeric_limits<double>::infinity() : abs(double(allowed) - value); });
             }
+
+        if ((forced.array() < lower_bounds.array()).any() || (forced.array() > upper_bounds.array()).any()) return {};
+
+        for (const auto& [first, size] : categorical_blocks)
+        {
+            const auto block = forced.segment(first, size).array();
+            if (!(block == 0.0f || block == 1.0f).all() || block.sum() != 1.0f) return {};
+        }
 
         return forced;
     }
@@ -380,7 +396,14 @@ struct ResponseOptimization::FeasibilityRepairSystem : Eigen::DenseFunctor<float
 
             values(i) = constraint.equation.evaluate(point, response);
 
-            residuals(i) = calculate_constraint_residual(constraint_bounds[size_t(i)], values(i));
+            float value = values(i);
+            if (constraint.condition == Condition::Integer)
+                value -= round(value);
+            else if (constraint.condition == Condition::AllowedSet)
+                value -= *ranges::min_element(constraint.values, {},
+                            [&](const float allowed) { return abs(double(value) - allowed); });
+
+            residuals(i) = calculate_constraint_residual(constraint_bounds[size_t(i)], value);
         }
 
         return response;
@@ -396,13 +419,14 @@ struct ResponseOptimization::FeasibilityRepairSystem : Eigen::DenseFunctor<float
 
         const bool every_row = residuals.size() != values.size();
 
-        VectorR steps = difference_step*(upper_bounds - lower_bounds).cwiseMax(0.0f);
+        VectorR steps = (upper_bounds - lower_bounds).cwiseMax(0.0f);
 
         for (const auto& [first_column, categories_number] : categorical_blocks)
             steps.segment(first_column, categories_number).setZero();
 
         for (Index j = 0; j < steps.size(); j++)
-            steps(j) = (steps(j) > EPSILON) ? max(steps(j), difference_step*abs(point(j))) : 0.0f;
+            if (steps(j) > 0.0f)
+                steps(j) = max(difference_step*max(steps(j), abs(point(j))), EPSILON);
 
         for (const Constraint& constraint : problem.constraints)
             if (const Index column = get_discrete_column(constraint); column >= 0)
@@ -411,8 +435,6 @@ struct ResponseOptimization::FeasibilityRepairSystem : Eigen::DenseFunctor<float
         MatrixR jacobian = MatrixR::Zero(values.size(), point.size());
 
         vector<Index> probed_rows;
-
-        bool probe_reads_output = false;
 
         VectorR gradient(point.size());
 
@@ -435,49 +457,75 @@ struct ResponseOptimization::FeasibilityRepairSystem : Eigen::DenseFunctor<float
             }
 
             probed_rows.push_back(i);
-
-            probe_reads_output = probe_reads_output || is_output_coupled(expression);
         }
 
         for (Index j = 0; j < point.size(); j++)
-            if (steps(j) <= EPSILON)
+            if (steps(j) == 0.0f)
                 jacobian.col(j).setZero();
 
-        if (probed_rows.empty()) return jacobian;
+        calculate_numerical_jacobian(point, values, steps, probed_rows, jacobian);
+
+        return jacobian;
+    }
+
+
+    void calculate_numerical_jacobian(const VectorR& point,
+                                      const VectorR& values,
+                                      const VectorR& steps,
+                                      const vector<Index>& rows,
+                                      MatrixR& jacobian) const
+    {
+        if (rows.empty()) return;
+
+        const auto& [lower_bounds, upper_bounds] = problem.input_bounds;
+
+        const bool reads_output = ranges::any_of(rows, [&](const Index i)
+            { return is_output_coupled(problem.constraints[size_t(i)].equation); });
 
         VectorR probe = point;
-
-        VectorR probe_values;
-        VectorR probe_residuals;
         VectorR probe_output;
 
         for (Index j = 0; j < point.size(); j++)
         {
-            if (steps(j) <= EPSILON) continue;
+            if (steps(j) == 0.0f) continue;
 
-            float step = steps(j);
+            const float first_direction = point(j) + steps(j) > upper_bounds(j) ? -1.0f : 1.0f;
 
-            if (point(j) + step > upper_bounds(j)) step = -step;
+            for (const Index i : rows) jacobian(i, j) = QUIET_NAN;
 
-            if (point(j) + step < lower_bounds(j)) continue;
+            for (const float direction : {first_direction, -first_direction})
+            {
+                const float bound = direction > 0.0f ? upper_bounds(j) : lower_bounds(j);
 
-            probe(j) = point(j) + step;
+                probe(j) = clamp(point(j) + direction*steps(j), lower_bounds(j), upper_bounds(j));
+                if (probe(j) == point(j)) probe(j) = nextafter(point(j), bound);
 
-            // Probe outputs must not replace the cached output at the solver's current point.
-            if (probe_reads_output)
-                probe_output = problem.network->calculate_outputs(probe.transpose()).row(0).transpose();
+                const double step = double(probe(j)) - point(j);
+                if (step == 0.0) continue;
 
-            evaluate_constraints(probe, probe_values, probe_residuals, probe_reads_output ? probe_output : output);
+                if (reads_output)
+                    probe_output = problem.network->calculate_outputs(probe.transpose()).row(0).transpose();
 
-            probe(j) = point(j);
+                bool complete = true;
 
-            if (!probe_values.allFinite()) continue;
+                for (const Index i : rows)
+                {
+                    if (isfinite(jacobian(i, j))) continue;
 
-            for (const Index i : probed_rows)
-                jacobian(i, j) = (probe_values(i) - values(i))/step;
+                    const float value = problem.constraints[size_t(i)].equation.evaluate(probe, probe_output);
+                    const float derivative = float((double(value) - values(i))/step);
+                    if (isfinite(derivative)) jacobian(i, j) = derivative;
+                    else complete = false;
+                }
+
+                probe(j) = point(j);
+
+                if (complete) break;
+            }
+
+            for (const Index i : rows)
+                if (!isfinite(jacobian(i, j))) jacobian(i, j) = 0.0f;
         }
-
-        return jacobian;
     }
 
 
@@ -511,8 +559,8 @@ struct ResponseOptimization::FeasibilityRepairSystem : Eigen::DenseFunctor<float
 
         violations.resize(row_values.size() + point.size());
 
-        for (Index i = 0; i < row_values.size(); i++)
-            violations(i) = isfinite(row_values(i)) ? row_residuals(i)/row_scales(i) : 1.0f/problem.numeric_tolerance;
+        violations.head(row_values.size()) = row_values.array().isFinite()
+            .select(row_residuals.array()/row_scales.array(), 1.0f/problem.numeric_tolerance);
 
         const auto& [lower, upper] = problem.input_bounds;
 
@@ -565,17 +613,29 @@ struct ResponseOptimization::FeasibilityRepairSystem : Eigen::DenseFunctor<float
 };
 
 
-pair<VectorR, VectorR> ResponseOptimization::solve_system(VectorR point) const
+pair<VectorR, VectorR> ResponseOptimization::solve(VectorR point) const
 {
-    FeasibilityRepairSystem repair_system(*this, point.size());
+    FeasibilityRepairSystem feasibility_system(*this, point.size());
 
-    return repair_system.solve_system(move(point));
+    return feasibility_system.solve(move(point));
 }
 
 
 void ResponseOptimization::set(Network* new_network)
 {
     network = new_network;
+    objectives.clear();
+    constraints.clear();
+    input_bounds = {};
+    invalid_objective = -1;
+}
+
+
+string ResponseOptimization::get_sampling_failure() const
+{
+    return invalid_objective < 0 ? "No feasible point with finite outputs and objectives was found. "
+         : "Objective '" + objectives[size_t(invalid_objective)].expression.text
+           + "' has no finite value at some sampled points. ";
 }
 
 
@@ -588,6 +648,18 @@ void ResponseOptimization::set_iterations_number(const Index new_iterations_numb
 void ResponseOptimization::set_points_number(const Index new_points_number)
 {
     points_number = max<Index>(new_points_number, 1);
+}
+
+
+void ResponseOptimization::set_sampling_budget_multiplier(const Index new_sampling_budget_multiplier)
+{
+    sampling_budget_multiplier = max<Index>(new_sampling_budget_multiplier, 0);
+}
+
+
+void ResponseOptimization::set_maximum_consecutive_failures(const Index new_maximum_consecutive_failures)
+{
+    maximum_consecutive_failures = max<Index>(new_maximum_consecutive_failures, 0);
 }
 
 
@@ -605,6 +677,7 @@ void ResponseOptimization::set_feasibility_evaluations(const Index new_feasibili
 
 void ResponseOptimization::set_feasibility_margin_factor(const float new_feasibility_margin_factor)
 {
+    throw_if(!isfinite(new_feasibility_margin_factor), "The feasibility margin factor must be finite.");
     feasibility_margin_factor = max(new_feasibility_margin_factor, 0.0f);
 }
 
@@ -617,12 +690,19 @@ pair<VectorR, VectorR> ResponseOptimization::get_unconstrained_domain() const
 
     throw_if(!scaling_layer, "The neural network has no scaling layer to take the input domain from.");
 
-    return {scaling_layer->get_minimums(), scaling_layer->get_maximums()};
+    pair<VectorR, VectorR> domain{scaling_layer->get_minimums(), scaling_layer->get_maximums()};
+    throw_if(domain.first.size() != network->get_inputs_number() || domain.first.size() == 0
+          || domain.second.size() != domain.first.size(), "The input domain has incompatible dimensions.");
+    throw_if(!domain.first.allFinite() || !domain.second.allFinite()
+          || !(domain.second - domain.first).allFinite()
+          || (domain.first.array() > domain.second.array()).any(), "The input domain must have finite, ordered bounds.");
+    return domain;
 }
 
 
 void ResponseOptimization::add_objective(const string& expression, const Objective::Sense sense, const float value)
 {
+    throw_if(!isfinite(value), "The objective target must be finite.");
     objectives.push_back(Objective{compile_expression(expression, network, "Objective"), sense, value});
 }
 
@@ -680,11 +760,7 @@ void ResponseOptimization::add_constraint(const string& expression,
                  "The Integer and AllowedSet conditions take that input alone, as in 'x1', "
                  "or an expression of several variables.");
 
-    if (condition == Condition::Integer)
-    {
-        constraint.equation = compile_integrality(expression, network);
-    }
-    else if (condition == Condition::AllowedSet)
+    if (condition == Condition::AllowedSet)
     {
         throw_if(constraint.values.empty(),
                  "Constraint on '" + expression + "' needs at least one allowed value.");
@@ -697,16 +773,8 @@ void ResponseOptimization::add_constraint(const string& expression,
             logging::warning() << "Warning: constraint on '" << expression << "' repeats allowed values.\n";
 
         constraint.values.erase(duplicates.begin(), duplicates.end());
-
-        if (constraint.values.size() > discrete_values_warning)
-            logging::warning() << "Warning: constraint on '" << expression << "' lists "
-                               << constraint.values.size()
-                               << " allowed values. The repair drives a polynomial of that degree, "
-                                  "which loses precision as the degree grows.\n";
-
-        constraint.equation = compile_membership(expression, network, constraint.values);
     }
-    else
+    else if (condition != Condition::Integer)
     {
         const size_t values_number = (condition == Condition::Between) ? 2 : 1;
 
@@ -740,17 +808,13 @@ void ResponseOptimization::add_constraint(const string& expression,
 
 MatrixR ResponseOptimization::perform_response_optimization()
 {
+    invalid_objective = -1;
+    throw_if(!network, "The neural network has not been set.");
     throw_if(objectives.empty(), "No objective has been set.");
+    const Index multiplier = sampling_budget_multiplier > 0 ? sampling_budget_multiplier : iterations_number;
+    throw_if(multiplier > numeric_limits<Index>::max()/points_number, "The sampling budget is too large.");
 
     return objectives.size() > 1 ? multi_optimization() : single_optimization();
-}
-
-
-pair<VectorR, VectorR> ResponseOptimization::calculate_domain()
-{
-    input_bounds = narrow_domain(get_unconstrained_domain());
-
-    return input_bounds;
 }
 
 

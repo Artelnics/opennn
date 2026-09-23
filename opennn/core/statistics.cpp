@@ -762,18 +762,13 @@ void farthest_point_fill(const MatrixR& distances, vector<Index>& selection, con
 {
     const Index points_number = distances.rows();
 
-    vector<char> chosen(points_number, 0);
-
-    for (const Index point : selection)
-        chosen[point] = 1;
-
     VectorR minimum_distance = VectorR::Constant(points_number, MAX);
 
     for (const Index point : selection)
         minimum_distance = minimum_distance.cwiseMin(distances.col(point));
 
-    for (Index i = 0; i < points_number; i++)
-        if (chosen[i]) minimum_distance(i) = -MAX;
+    for (const Index point : selection)
+        minimum_distance(point) = -MAX;
 
     while (ssize(selection) < quota)
     {

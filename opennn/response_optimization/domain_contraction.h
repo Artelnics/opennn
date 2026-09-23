@@ -21,9 +21,9 @@ private:
     MatrixR single_optimization() override;
     MatrixR multi_optimization() override;
 
-    pair<MatrixR, MatrixR> sample_local_domains(const vector<pair<VectorR, VectorR>>&);
+    pair<MatrixR, MatrixR> sample_local_domains(const vector<pair<VectorR, VectorR>>&, bool require_points = true);
 
-    void contract_categories(pair<VectorR, VectorR>&, const VectorR&, Index) const;
+    void contract_categories(pair<VectorR, VectorR>&, const vector<pair<Index, Index>>&, const VectorR&, Index) const;
 
     float contraction_factor = 0.85f;
 };

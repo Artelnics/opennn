@@ -66,7 +66,7 @@ public:
 
     using ResponseOptimization::calculate_domain;
     using ResponseOptimization::calculate_random_input;
-    using ResponseOptimization::solve_system;
+    using ResponseOptimization::solve;
 
 private:
 
@@ -591,6 +591,99 @@ TEST_P(ResponseDriver, CardinalityLeavesAtMostTheBudgetInPlay)
 }
 
 
+TEST_P(ResponseDriver, SamplingBudgetsLimitFailedRepairs)
+{
+    MinimalApproximation setup({"x1"}, {"y"});
+    setup.network->set_parameters(VectorR::Zero(setup.network->get_parameters_buffer_size()));
+
+    const auto optimization = make_driver(GetParam(), setup.network.get());
+    optimization->add_objective("x1", Sense::Minimize);
+    optimization->add_constraint("x1", Condition::Equal, {0.0f});
+    optimization->add_constraint("y", Condition::GreaterEqual, {1.0f});
+    optimization->set_points_number(3);
+    optimization->set_iterations_number(2);
+
+    const auto expect_attempts = [&](const long expected)
+    {
+        SCOPED_TRACE(expected);
+        const bool profiling_enabled = profiler::is_enabled();
+        profiler::set_enabled(true);
+        const long previous_calls = profiler::stats().call_count("fp:set");
+
+        EXPECT_THROW(optimization->perform_response_optimization(), runtime_error);
+
+        const long calls = profiler::stats().call_count("fp:set") - previous_calls;
+        profiler::set_enabled(profiling_enabled);
+        // With the only input fixed, each unsuccessful repair needs one inference.
+        EXPECT_EQ(calls, expected);
+    };
+
+    expect_attempts(6);
+    optimization->set_sampling_budget_multiplier(1);
+    expect_attempts(3);
+    optimization->set_sampling_budget_multiplier(4);
+    expect_attempts(12);
+    optimization->set_iterations_number(5);
+    expect_attempts(12);
+    optimization->set_maximum_consecutive_failures(2);
+    expect_attempts(2);
+    optimization->set_maximum_consecutive_failures(20);
+    expect_attempts(12);
+    optimization->set_maximum_consecutive_failures(0);
+    expect_attempts(12);
+    optimization->set_sampling_budget_multiplier(0);
+    expect_attempts(15);
+}
+
+
+TEST_P(ResponseDriver, FailureLimitPreservesPartialResultsAndResetsAfterSuccess)
+{
+    CategoricalApproximation setup({}, "material", {"first", "best", "rejected"});
+    setup.network->set_parameters(VectorR::Zero(setup.network->get_parameters_buffer_size()));
+
+    RepairProbe probe(setup.network.get());
+    const auto domain = probe.calculate_domain();
+
+    for (const bool interrupted : {false, true})
+    {
+        SCOPED_TRACE(interrupted);
+        const vector<Index> sequence = interrupted ? vector<Index>{0, 2, 2, 1} : vector<Index>{2, 0, 2, 1};
+
+        // Find the desired successes/failures without assuming a platform's RNG sequence.
+        unsigned seed = 0;
+        for (; seed < 1024; seed++)
+        {
+            set_seed(seed);
+            bool matches = true;
+            for (const Index category : sequence)
+                matches = (probe.calculate_random_input(domain)(category) == 1.0f) && matches;
+            if (matches) break;
+        }
+        ASSERT_LT(seed, 1024u);
+
+        const auto optimization = make_driver(GetParam(), setup.network.get());
+        optimization->add_objective("best", Sense::Maximize);
+        optimization->add_constraint("first + best + y1", Condition::Equal, {1.0f});
+        optimization->set_points_number(2);
+        optimization->set_iterations_number(1);
+        optimization->set_sampling_budget_multiplier(4);
+        optimization->set_maximum_consecutive_failures(2);
+
+        set_seed(seed);
+        if (interrupted && GetParam() == Driver::Genetic)
+        {
+            EXPECT_THROW(optimization->perform_response_optimization(), runtime_error);
+            continue;
+        }
+
+        MatrixR results;
+        ASSERT_NO_THROW(results = optimization->perform_response_optimization());
+        ASSERT_EQ(results.rows(), 1);
+        EXPECT_EQ(read_category(results, 0, 0, 3), interrupted ? 0 : 1);
+    }
+}
+
+
 TEST(Feasibility, RepairBudgetsControlNonlinearRepair)
 {
     MinimalApproximation setup({"x1"}, {"y"});
@@ -605,10 +698,10 @@ TEST(Feasibility, RepairBudgetsControlNonlinearRepair)
         probe.set_feasibility_evaluations(1);
         probe.set_feasibility_rounds(1);
 
-        EXPECT_EQ(probe.solve_system(point).first.size(), 0);
+        EXPECT_EQ(probe.solve(point).first.size(), 0);
 
         probe.set_feasibility_evaluations(50);
-        const VectorR repaired = probe.solve_system(point).first;
+        const VectorR repaired = probe.solve(point).first;
         ASSERT_EQ(repaired.size(), 1);
         EXPECT_NEAR(repaired(0), 1.0f, 1e-4f);
 
@@ -616,7 +709,7 @@ TEST(Feasibility, RepairBudgetsControlNonlinearRepair)
         probe.set_feasibility_rounds(10);
         for (const float start : {4.0f, 9.0f})
         {
-            const VectorR retried = probe.solve_system(VectorR::Constant(1, start)).first;
+            const VectorR retried = probe.solve(VectorR::Constant(1, start)).first;
             ASSERT_EQ(retried.size(), 1);
             EXPECT_NEAR(retried(0), 1.0f, 1e-4f);
         }
@@ -639,7 +732,7 @@ TEST(Feasibility, FeasiblePointsPassThroughWithMinimalBudgets)
         if (constrained) probe.add_constraint("x1^2", Condition::Between, {1.0f, 9.0f});
         probe.calculate_domain();
 
-        const auto [input, output] = probe.solve_system(point);
+        const auto [input, output] = probe.solve(point);
         ASSERT_EQ(input.size(), point.size());
         EXPECT_EQ((input - point).squaredNorm(), 0.0f);
         ASSERT_EQ(output.size(), expected_output.size());
@@ -666,7 +759,7 @@ TEST(Feasibility, InputOnlyRepairAvoidsIntermediateNetworkCalls)
         const long previous_calls = profiler::stats().call_count("fp:set");
 
         pair<VectorR, VectorR> result;
-        EXPECT_NO_THROW(result = probe.solve_system(VectorR::Constant(1, 4.0f)));
+        EXPECT_NO_THROW(result = probe.solve(VectorR::Constant(1, 4.0f)));
 
         const long calls = profiler::stats().call_count("fp:set") - previous_calls;
         profiler::set_enabled(profiling_enabled);
@@ -697,14 +790,14 @@ TEST(Feasibility, OutputCoupledRepairReturnsOutputAtTheRepairedPoint)
     probe.calculate_domain();
 
     // Adding the output row between solves must update which expressions need inference.
-    ASSERT_EQ(probe.solve_system(VectorR::Constant(1, 4.0f)).first.size(), 1);
+    ASSERT_EQ(probe.solve(VectorR::Constant(1, 4.0f)).first.size(), 1);
     probe.add_constraint("x1^2 + y", Condition::Equal, {1.0f + target});
     probe.calculate_domain();
 
     for (const float start : {4.0f, 10.0f})
     {
         SCOPED_TRACE(start);
-        const auto [input, output] = probe.solve_system(VectorR::Constant(1, start));
+        const auto [input, output] = probe.solve(VectorR::Constant(1, start));
 
         ASSERT_EQ(input.size(), 1);
         ASSERT_EQ(output.size(), 1);
@@ -737,15 +830,50 @@ TEST(Feasibility, CopiesKeepTheirOwnConstraints)
     {
         SCOPED_TRACE(copy == &copied ? "copy construction" : "copy assignment");
 
-        const auto [input, output] = copy->solve_system(point);
+        const auto [input, output] = copy->solve(point);
         ASSERT_EQ(input.size(), point.size());
         EXPECT_EQ((input - point).squaredNorm(), 0.0f);
         EXPECT_EQ(output.size(), 1);
 
-        const VectorR repaired = copy->solve_system(VectorR::Constant(2, 4.0f)).first;
+        const VectorR repaired = copy->solve(VectorR::Constant(2, 4.0f)).first;
         ASSERT_EQ(repaired.size(), point.size());
         EXPECT_NEAR(repaired.sum(), 5.0f, 1e-4f);
     }
+}
+
+
+TEST(Feasibility, RepeatedRoundedCycleStopsBeforeTheRoundBudget)
+{
+    MinimalApproximation setup({"x1"}, {"y"}, 0.0f, 1.0f);
+    setup.network->set_parameters(VectorR::Zero(setup.network->get_parameters_buffer_size()));
+
+    RepairProbe probe(setup.network.get());
+    probe.add_constraint("x1", Condition::AllowedSet, {0.0f, 1.0f});
+    probe.add_constraint("(x1 - 0.5)^2 + y", Condition::Equal, {-0.35f});
+    probe.calculate_domain();
+    probe.set_feasibility_evaluations(1);
+
+    vector<long> calls;
+    for (const Index rounds : {Index(1), Index(2), Index(100)})
+    {
+        SCOPED_TRACE(rounds);
+        probe.set_feasibility_rounds(rounds);
+        const bool profiling_enabled = profiler::is_enabled();
+        profiler::set_enabled(true);
+        const long previous_calls = profiler::stats().call_count("fp:set");
+
+        pair<VectorR, VectorR> result;
+        EXPECT_NO_THROW(result = probe.solve(VectorR::Zero(1)));
+
+        calls.push_back(profiler::stats().call_count("fp:set") - previous_calls);
+        profiler::set_enabled(profiling_enabled);
+        EXPECT_EQ(result.first.size(), 0);
+        EXPECT_EQ(result.second.size(), 0);
+    }
+
+    // Each short LM step rounds to the other endpoint: 0 -> 1 -> 0.
+    EXPECT_GT(calls[1], calls[0]);
+    EXPECT_EQ(calls[2], calls[1]);
 }
 
 
@@ -790,7 +918,7 @@ TEST(CardinalityRepair, ReturnsOnlyKSparsePoints)
 
                 for (Index draw = 0; draw < 50; draw++)
                 {
-                    const auto [input, output] = probe.solve_system(probe.calculate_random_input(domain));
+                    const auto [input, output] = probe.solve(probe.calculate_random_input(domain));
 
                     if (input.size() == 0) continue;
 
@@ -1119,6 +1247,277 @@ TEST_P(ResponseDriver, FiniteNonlinearConstraintsStillProduceFeasiblePoints)
     EXPECT_TRUE(results.allFinite());
 
     EXPECT_GE(sqrt(results(0, 0)), 1.0f - EPSILON);
+}
+
+
+TEST(ResponseOptimizationSetup, RejectsNonFiniteSettingsAndInvalidInputBounds)
+{
+    MinimalApproximation setup({"x1"}, {"y"});
+    DomainContraction optimization(setup.network.get());
+
+    for (const float value : {numeric_limits<float>::quiet_NaN(),
+                              numeric_limits<float>::infinity(),
+                              -numeric_limits<float>::infinity()})
+    {
+        EXPECT_THROW(optimization.add_objective("x1", Sense::Fixed, value), runtime_error);
+        EXPECT_THROW(optimization.set_feasibility_margin_factor(value), runtime_error);
+        EXPECT_THROW(optimization.set_contraction_factor(value), runtime_error);
+    }
+
+    RepairProbe probe(setup.network.get());
+    for (const auto& [lower, upper] : vector<pair<float, float>>{
+             {numeric_limits<float>::quiet_NaN(), 1.0f},
+             {0.0f, numeric_limits<float>::infinity()}, {2.0f, 1.0f}})
+    {
+        static_cast<Scaling*>(setup.network->get_first("Scaling"))
+            ->set_descriptives(make_descriptives(1, lower, upper));
+        EXPECT_THROW(probe.calculate_domain(), runtime_error);
+    }
+}
+
+
+TEST(ResponseOptimizationSetup, RebindingClearsCompiledObjectivesAndConstraints)
+{
+    MinimalApproximation original({"x1", "x2"}, {"y"});
+    MinimalApproximation replacement({"x2"}, {"y"});
+    DomainContraction optimization(original.network.get());
+    optimization.set_points_number(2);
+    optimization.set_iterations_number(1);
+    optimization.add_objective("x2", Sense::Maximize);
+    optimization.add_constraint("x2", Condition::Equal, {7.0f});
+
+    for (const float target : {3.0f, 2.0f})
+    {
+        optimization.set(replacement.network.get());
+        EXPECT_THROW(optimization.perform_response_optimization(), runtime_error);
+        optimization.add_objective("x2", Sense::Minimize);
+        optimization.add_constraint("x2", Condition::Equal, {target});
+        const MatrixR results = optimization.perform_response_optimization();
+        ASSERT_EQ(results.rows(), 1);
+        EXPECT_FLOAT_EQ(results(0, 0), target);
+    }
+
+    optimization.set();
+    EXPECT_THROW(optimization.perform_response_optimization(), runtime_error);
+}
+
+
+TEST(ResponseOptimizationSetup, RejectsCategoricalBoundsWithoutAOneHotAssignment)
+{
+    CategoricalApproximation setup({}, "material", {"first", "second", "third"});
+
+    for (const Index scenario : {Index(0), Index(1), Index(2), Index(3)})
+    {
+        SCOPED_TRACE(scenario);
+        RepairProbe probe(setup.network.get());
+        if (scenario == 0)
+            for (const string& category : {"first", "second", "third"})
+                probe.add_constraint(category, Condition::LessEqual, {0.0f});
+        else if (scenario == 1)
+            for (const string& category : {"first", "second"})
+                probe.add_constraint(category, Condition::GreaterEqual, {0.5f});
+        else if (scenario == 2)
+            probe.add_constraint("first", Condition::Between, {0.25f, 0.75f});
+        else
+            probe.add_constraint("first", Condition::AllowedSet, {0.2f, 0.8f});
+
+        EXPECT_THROW(probe.calculate_domain(), runtime_error);
+    }
+
+    RepairProbe probe(setup.network.get());
+    probe.add_constraint("first", Condition::AllowedSet, {0.0f, 0.2f, 1.0f});
+    probe.calculate_domain();
+    for (const Index category : {Index(0), Index(1)})
+    {
+        VectorR point = VectorR::Zero(3);
+        point(category) = 0.8f;
+        const VectorR repaired = probe.solve(point).first;
+        ASSERT_EQ(repaired.size(), 3);
+        EXPECT_FLOAT_EQ(repaired(category), 1.0f);
+        EXPECT_FLOAT_EQ(repaired.sum(), 1.0f);
+        EXPECT_TRUE(((repaired.array() == 0.0f) || (repaired.array() == 1.0f)).all());
+    }
+}
+
+
+TEST_P(ResponseDriver, RejectsOverflowingSamplingBudgetBeforeAllocation)
+{
+    MinimalApproximation setup({"x1"}, {"y"});
+    const auto optimization = make_driver(GetParam(), setup.network.get());
+    optimization->add_objective("x1", Sense::Minimize);
+    optimization->set_points_number(numeric_limits<Index>::max());
+    optimization->set_sampling_budget_multiplier(2);
+    EXPECT_THROW(optimization->perform_response_optimization(), runtime_error);
+}
+
+
+TEST_P(ResponseDriver, RejectsObjectivesThatAreNeverFinite)
+{
+    MinimalApproximation setup({"x1"}, {"y"});
+    for (const string& expression : {"sqrt(-x1 - 1)", "exp(100*x1 + 100)"})
+        for (const bool multiple : {false, true})
+        {
+            SCOPED_TRACE(expression);
+            SCOPED_TRACE(multiple);
+            const auto optimization = make_driver(GetParam(), setup.network.get());
+            optimization->add_objective(expression, Sense::Maximize);
+            if (multiple) optimization->add_objective("x1", Sense::Minimize);
+            optimization->set_points_number(2);
+            optimization->set_iterations_number(1);
+            EXPECT_THROW(optimization->perform_response_optimization(), runtime_error);
+        }
+}
+
+
+TEST_P(ResponseDriver, ResamplesCandidatesWithNonFiniteObjectives)
+{
+    MinimalApproximation setup({"x1"}, {"y"});
+    for (const bool multiple : {false, true})
+    {
+        SCOPED_TRACE(multiple);
+        const auto optimization = make_driver(GetParam(), setup.network.get());
+        optimization->add_objective("sqrt(x1 - 5)", Sense::Maximize);
+        if (multiple) optimization->add_objective("x1", Sense::Minimize);
+        optimization->set_points_number(4);
+        optimization->set_iterations_number(2);
+        optimization->set_sampling_budget_multiplier(20);
+        const MatrixR results = optimization->perform_response_optimization();
+        ASSERT_GT(results.rows(), 0);
+        EXPECT_TRUE(results.allFinite());
+        EXPECT_TRUE((results.col(0).array() >= 5.0f).all());
+    }
+}
+
+
+TEST(Feasibility, RejectsNonFiniteNetworkOutputsWithoutOutputConstraints)
+{
+    MinimalApproximation setup({"x1"}, {"y"});
+    setup.network->set_parameters(VectorR::Constant(setup.network->get_parameters_buffer_size(),
+                                                   numeric_limits<float>::quiet_NaN()));
+    RepairProbe probe(setup.network.get());
+    probe.add_objective("x1", Sense::Maximize);
+    probe.calculate_domain();
+    EXPECT_EQ(probe.solve(VectorR::Constant(1, 5.0f)).first.size(), 0);
+}
+
+
+TEST(Feasibility, AllowedExpressionsUseDistanceToTheNearestValue)
+{
+    for (const bool fixed : {false, true})
+        for (const bool coupled : {false, true})
+        {
+            SCOPED_TRACE(fixed);
+            SCOPED_TRACE(coupled);
+            MinimalApproximation setup({"x1", "x2"}, {"y"}, fixed ? 0.25f : 0.0f, fixed ? 0.25f : 10.0f);
+            setup.network->set_parameters(VectorR::Zero(setup.network->get_parameters_buffer_size()));
+            RepairProbe probe(setup.network.get());
+            probe.add_constraint(coupled ? "x1 + x2 + y" : "x1 + x2",
+                                 Condition::AllowedSet, {0.0f, 1.0f, 10000000.0f});
+            probe.calculate_domain();
+            const auto [input, output] = probe.solve(VectorR::Constant(2, 0.25f));
+            if (fixed)
+                EXPECT_EQ(input.size(), 0);
+            else
+            {
+                ASSERT_EQ(input.size(), 2);
+                const float value = input.sum() + (coupled ? output(0) : 0.0f);
+                EXPECT_LE(min(abs(value), abs(value - 1.0f)), 1.01e-3f);
+            }
+        }
+}
+
+
+TEST(Feasibility, LargeIntegersRemainFeasibleAfterRounding)
+{
+    MinimalApproximation setup({"x1"}, {"y"}, 1000000.0f, 1000010.0f);
+    RepairProbe probe(setup.network.get());
+    probe.add_constraint("x1", Condition::Integer);
+    probe.calculate_domain();
+    const VectorR repaired = probe.solve(VectorR::Constant(1, 1000003.25f)).first;
+    ASSERT_EQ(repaired.size(), 1);
+    EXPECT_FLOAT_EQ(repaired(0), 1000003.0f);
+}
+
+
+TEST(Feasibility, AnalyticGradientRepairsANarrowInputRange)
+{
+    MinimalApproximation setup({"x1"}, {"y"}, 0.0f, 1e-4f);
+    RepairProbe probe(setup.network.get());
+    probe.add_constraint("(10000*x1)^2", Condition::Equal, {0.25f});
+    probe.calculate_domain();
+    const VectorR repaired = probe.solve(VectorR::Constant(1, 9e-5f)).first;
+    ASSERT_EQ(repaired.size(), 1);
+    EXPECT_NEAR(repaired(0), 5e-5f, 1e-8f);
+}
+
+
+TEST(Feasibility, NumericalGradientFitsInsideAnOffsetInputRange)
+{
+    MinimalApproximation setup({"x1"}, {"y"}, 1000.0f, 1001.0f);
+    setup.network->set_parameters(VectorR::Zero(setup.network->get_parameters_buffer_size()));
+    RepairProbe probe(setup.network.get());
+    probe.add_constraint("x1 + y", Condition::Equal, {1000.25f});
+    probe.calculate_domain();
+    const VectorR repaired = probe.solve(VectorR::Constant(1, 1000.5f)).first;
+    ASSERT_EQ(repaired.size(), 1);
+    EXPECT_NEAR(repaired(0), 1000.25f, 2e-3f);
+}
+
+
+TEST(Feasibility, NumericalProbesHandleExpressionsUndefinedInOneDirection)
+{
+    MinimalApproximation setup({"x1"}, {"y"}, -1.0f, 1.0f);
+    setup.network->set_parameters(VectorR::Zero(setup.network->get_parameters_buffer_size()));
+    for (const bool coupled : {false, true})
+    {
+        SCOPED_TRACE(coupled);
+        RepairProbe probe(setup.network.get());
+        if (coupled)
+            probe.add_constraint("sqrt(0.0005 - x1) + y", Condition::Equal, {0.5f});
+        else
+        {
+            probe.add_constraint("x1 + y", Condition::Equal, {-0.25f});
+            probe.add_constraint("sqrt(0.0005 - x1)", Condition::Between, {0.0f, 2.0f});
+        }
+        probe.calculate_domain();
+        const VectorR repaired = probe.solve(VectorR::Zero(1)).first;
+        ASSERT_EQ(repaired.size(), 1);
+        EXPECT_NEAR(repaired(0), coupled ? -0.2495f : -0.25f, 1e-4f);
+    }
+}
+
+
+TEST(DomainContraction, KeepsPreviousResultsWhenALaterBatchHasNoFeasiblePoint)
+{
+    CategoricalApproximation setup({}, "material", {"accepted", "rejected"});
+    setup.network->set_parameters(VectorR::Zero(setup.network->get_parameters_buffer_size()));
+    RepairProbe probe(setup.network.get());
+    const auto domain = probe.calculate_domain();
+    unsigned seed = 0;
+    for (; seed < 1024; seed++)
+    {
+        set_seed(seed);
+        const bool first_accepted = probe.calculate_random_input(domain)(0) == 1.0f;
+        if (probe.calculate_random_input(domain)(1) == 1.0f && first_accepted) break;
+    }
+    ASSERT_LT(seed, 1024u);
+
+    for (const bool multiple : {false, true})
+    {
+        SCOPED_TRACE(multiple);
+        DomainContraction optimization(setup.network.get());
+        optimization.add_objective("accepted", Sense::Maximize);
+        if (multiple) optimization.add_objective("accepted", Sense::Minimize);
+        optimization.add_constraint("accepted + y1", Condition::Equal, {1.0f});
+        optimization.set_points_number(1);
+        optimization.set_iterations_number(2);
+        optimization.set_sampling_budget_multiplier(4);
+        optimization.set_maximum_consecutive_failures(1);
+        set_seed(seed);
+        const MatrixR results = optimization.perform_response_optimization();
+        ASSERT_EQ(results.rows(), 1);
+        EXPECT_EQ(read_category(results, 0, 0, 2), 0);
+    }
 }
 
 

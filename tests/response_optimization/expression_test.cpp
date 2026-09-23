@@ -571,7 +571,7 @@ TEST(ConstraintCompilation, AnIntervalConditionBecomesOneEquationAndItsBand)
 }
 
 
-TEST(ConstraintCompilation, ADiscreteConditionAddsAMeasureThatVanishesOnItsValues)
+TEST(ConstraintCompilation, DiscreteConditionsKeepTheirOriginalExpression)
 {
     MinimalApproximation setup({"x1", "x2"}, {"y"});
 
@@ -590,18 +590,10 @@ TEST(ConstraintCompilation, ADiscreteConditionAddsAMeasureThatVanishesOnItsValue
     EXPECT_EQ(listed.values, vector<float>({1.0f, 5.0f, 9.0f})) << "allowed values are kept sorted and unique";
 
     VectorR point(2);
-    point << 3.0f, 0.0f;
+    point << 3.5f, 0.0f;
 
-    EXPECT_NEAR(whole.equation.evaluate(point, {}), 0.0f, 1e-6f);
-    EXPECT_GT(abs(listed.equation.evaluate(point, {})), 1e-3f);
-
-    point(0) = 3.5f;
-
-    EXPECT_GT(abs(whole.equation.evaluate(point, {})), 0.1f);
-
-    point(0) = 5.0f;
-
-    EXPECT_NEAR(listed.equation.evaluate(point, {}), 0.0f, 1e-6f);
+    EXPECT_FLOAT_EQ(whole.equation.evaluate(point, {}), point(0));
+    EXPECT_FLOAT_EQ(listed.equation.evaluate(point, {}), point(0));
 }
 
 

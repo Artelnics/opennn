@@ -55,15 +55,18 @@ DomainContraction::DomainContraction(Network* new_network)
 
 void DomainContraction::set_contraction_factor(const float new_contraction_factor)
 {
+    throw_if(!isfinite(new_contraction_factor), "The contraction factor must be finite.");
+
     contraction_factor = clamp(new_contraction_factor, EPSILON, 1.0f);
 }
 
 
 void DomainContraction::contract_categories(pair<VectorR, VectorR>& domain,
+                                            const vector<pair<Index, Index>>& blocks,
                                             const VectorR& category_scores,
                                             const Index iteration) const
 {
-    for (const pair<Index, Index>& block : get_categorical_blocks(network->get_input_variables()))
+    for (const pair<Index, Index>& block : blocks)
     {
         vector<Index> live_columns;
 
@@ -84,8 +87,9 @@ void DomainContraction::contract_categories(pair<VectorR, VectorR>& domain,
 
 
 pair<MatrixR, MatrixR> DomainContraction::sample_local_domains(
-    const vector<pair<VectorR, VectorR>>& local_domains)
+    const vector<pair<VectorR, VectorR>>& local_domains, const bool require_points)
 {
+    const Index rounds = sampling_budget_multiplier > 0 ? sampling_budget_multiplier : iterations_number;
     const Index sample_size = max(Index(1), points_number/Index(local_domains.size()));
     const Index capacity = sample_size*Index(local_domains.size());
 
@@ -94,24 +98,38 @@ pair<MatrixR, MatrixR> DomainContraction::sample_local_domains(
 
     Index total_sampled = 0;
     Index starved_domains = 0;
+    Index attempts = 0;
+    bool failure_limit_reached = false;
 
     for (const pair<VectorR, VectorR>& domain : local_domains)
     {
         input_bounds = domain;
 
         Index sampled = 0;
+        Index consecutive_failures = 0;
+        bool stop_domain = false;
 
         for (Index attempt_feasibility = 0;
-             attempt_feasibility < iterations_number && sampled < sample_size;
+             attempt_feasibility < rounds && sampled < sample_size && !stop_domain;
              attempt_feasibility++)
         {
             const Index batch = sample_size - sampled;
 
             for (Index i = 0; i < batch; i++)
             {
-                const auto [input, output] = solve_system(calculate_random_input(domain));
+                attempts++;
+                const auto [input, output] = solve(calculate_random_input(domain));
 
-                if (input.size() == 0) continue;
+                if (input.size() == 0)
+                {
+                    consecutive_failures++;
+                    stop_domain = maximum_consecutive_failures > 0
+                               && consecutive_failures >= maximum_consecutive_failures;
+                    if (stop_domain) break;
+                    continue;
+                }
+
+                consecutive_failures = 0;
 
                 points.first.row(total_sampled) = input.transpose();
                 points.second.row(total_sampled) = output.transpose();
@@ -122,11 +140,19 @@ pair<MatrixR, MatrixR> DomainContraction::sample_local_domains(
         }
 
         if (sampled < sample_size) starved_domains++;
+        failure_limit_reached = failure_limit_reached || stop_domain;
     }
 
-    throw_if(total_sampled == 0,
-             "No feasible point could be drawn in " + to_string(iterations_number)
-             + " attempts. The constraints may be impossible to satisfy.");
+    if (total_sampled == 0)
+    {
+        const string message = get_sampling_failure() + "Sampling stopped after "
+            + to_string(attempts) + " candidate attempts. "
+            + (failure_limit_reached ? "Consecutive failure limit reached." : "Sampling budget exhausted.");
+
+        throw_if(require_points, message);
+        logging::warning() << "Warning: " << message << " Keeping previously found points.\n";
+        return {};
+    }
 
     if (starved_domains > 0)
         logging::warning() << "Warning: " << starved_domains << " of " << local_domains.size()
@@ -155,17 +181,15 @@ MatrixR DomainContraction::single_optimization()
     VectorR best_input;
     VectorR best_output;
 
-    float best_value = -MAX;
-
-    bool finite_value_seen = false;
+    float best_value = -numeric_limits<float>::infinity();
 
     for (Index iteration = 0; iteration < iterations_number; iteration++)
     {
-        const auto [feasible_inputs, feasible_outputs] = sample_local_domains({domain});
+        const auto [feasible_inputs, feasible_outputs] = sample_local_domains({domain}, best_input.size() == 0);
+
+        if (feasible_inputs.rows() == 0) break;
 
         const VectorR values = evaluate_objectives(feasible_inputs, feasible_outputs).col(0);
-
-        finite_value_seen = finite_value_seen || values.array().isFinite().any();
 
         for (Index row = 0; row < feasible_inputs.rows(); row++)
             for (const pair<Index, Index>& block : blocks)
@@ -191,17 +215,10 @@ MatrixR DomainContraction::single_optimization()
 
         half_interval *= contraction_factor;
 
-        contract_categories(allowed_domain, category_scores, iteration);
+        contract_categories(allowed_domain, blocks, category_scores, iteration);
 
         domain = local_domain(best_input, half_interval, allowed_domain);
     }
-
-    // Feasible points were drawn (sample_local_domains throws otherwise), so an
-    // empty result means the objective itself never produced a usable value.
-    throw_if(best_input.size() == 0 && !finite_value_seen,
-             "Objective '" + objectives.front().expression.text + "' has no finite value at any feasible "
-             "point. Check the expression for divisions by zero, logarithms or square roots of negative "
-             "values, and exponents that overflow.");
 
     throw_if(best_input.size() == 0, "No feasible point was found.");
 
@@ -226,7 +243,11 @@ MatrixR DomainContraction::multi_optimization()
 
     for (Index iteration = 0; iteration < iterations_number; iteration++)
     {
-        candidates = append_rows(candidates, sample_local_domains(local_domains));
+        const auto points = sample_local_domains(local_domains, candidates.first.rows() == 0);
+
+        if (points.first.rows() == 0) return append_columns(candidates);
+
+        candidates = append_rows(candidates, points);
 
         candidates = slice_rows(candidates,
                                 clean_front(candidates.first, candidates.second));
@@ -244,9 +265,10 @@ MatrixR DomainContraction::multi_optimization()
 
         half_interval *= contraction_factor;
 
-        contract_categories(allowed_domain, category_scores, iteration);
+        contract_categories(allowed_domain, blocks, category_scores, iteration);
 
-        local_domains = local_domains_around(candidates.first, half_interval, allowed_domain);
+        if (iteration + 1 < iterations_number)
+            local_domains = local_domains_around(candidates.first, half_interval, allowed_domain);
     }
 
     vector<Index> front = clean_front(candidates.first, candidates.second);
@@ -263,7 +285,11 @@ MatrixR DomainContraction::multi_optimization()
 
         local_domains = local_domains_around(candidates.first, half_interval, allowed_domain);
 
-        candidates = append_rows(candidates, sample_local_domains(local_domains));
+        const auto points = sample_local_domains(local_domains, false);
+
+        if (points.first.rows() == 0) return append_columns(candidates);
+
+        candidates = append_rows(candidates, points);
 
         front = clean_front(candidates.first, candidates.second);
     }

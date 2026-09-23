@@ -11,9 +11,9 @@ remaining limitations.
 ### Reconciliation and release preparation
 
 - Collect response feasibility repair in the private `FeasibilityRepairSystem`,
-  created locally by `ResponseOptimization::solve_system()`. Remove the public
+  created locally by `ResponseOptimization::solve()`. Remove the public
   nested `FeasibilitySystem` and its stored owner pointer. Derived
-  optimizers now use protected `solve_system()` and `input_bounds` directly.
+  optimizers now use protected `solve()` and `input_bounds` directly.
   Initialize bounds with `calculate_domain()`. Rebuild consumers; code accessing
   `feasibility_system` must migrate to these members. Constraint evaluation,
   discrete rounding, Jacobians and solver callbacks stay inside the repair type.
@@ -25,6 +25,26 @@ remaining limitations.
   evaluation setting controls Eigen's per-round `maxfev` budget, not a strict
   total network-call limit: Jacobian probes add work outside that counter. The fixed
   numerical step sizes and box weight remain internal to the repair type.
+- Add optional `set_sampling_budget_multiplier()` and `set_maximum_consecutive_failures()`
+  controls. Zero preserves the iteration-based sampling budget or disables the
+  failure limit, respectively. Failure streaks reset on success and for each
+  local domain or genetic sampling phase. Domain contraction retains partial
+  samples; genetic initialization still requires a full population. Exhaustion reports
+  actual candidate attempts and the stopping reason, not proven infeasibility.
+  Repair also detects exact two-round cycles after discrete projection.
+  Genetic crossover now respects odd candidate-attempt budgets exactly.
+- Preserve the best result or front when a later sampling phase exhausts its
+  budget; initialization without usable points still fails. Candidates must have
+  finite outputs and objective scores. Reject nonfinite numerical settings,
+  overflowing sampling budgets and categorical domains without a valid category.
+- Response repair checks Integer and AllowedSet constraints using distance to
+  the nearest permitted value, avoiding sine phase loss and polynomial false
+  acceptance. `Constraint::equation` retains the original compiled expression.
+  Keep analytic derivatives on narrow domains and use bounded numerical probes
+  with per-row fallback when an expression is undefined in one direction.
+- `ResponseOptimization::set()` clears configured objectives, constraints and
+  cached bounds while retaining tuning settings. Configure expressions again
+  after rebinding the network so old column indices cannot be reused.
 - Response optimization expressions accept original variable names in backticks,
   including spaces, units and punctuation (for example, `` `Flow rate (m3/s)` ``).
   Double a backtick inside a name to escape it. Existing unquoted expressions

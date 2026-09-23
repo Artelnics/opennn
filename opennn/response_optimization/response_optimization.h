@@ -15,6 +15,7 @@ class ResponseOptimization
 {
 public:
 
+    // Rebinding clears objectives, constraints and cached bounds.
     void set(Network* = nullptr);
 
     struct Objective
@@ -52,6 +53,11 @@ public:
     void set_iterations_number(Index);
     void set_points_number(Index);
 
+    // Zero inherits the optimization iteration count.
+    void set_sampling_budget_multiplier(Index);
+    // Zero disables the consecutive-failure limit.
+    void set_maximum_consecutive_failures(Index);
+
     void set_feasibility_rounds(Index);
     // Eigen's per-round evaluation budget; excludes finite-difference probes.
     void set_feasibility_evaluations(Index);
@@ -74,7 +80,9 @@ protected:
 
     pair<VectorR, VectorR> calculate_domain();
 
-    pair<VectorR, VectorR> solve_system(VectorR) const;
+    pair<VectorR, VectorR> solve(VectorR) const;
+
+    string get_sampling_failure() const;
 
     VectorR calculate_random_input(const pair<VectorR, VectorR>&) const;
 
@@ -88,6 +96,8 @@ protected:
 
     Index iterations_number = 20;
     Index points_number = 1000;
+    Index sampling_budget_multiplier = 0;
+    Index maximum_consecutive_failures = 0;
 
     Index requested_front_size = 100;
 
@@ -103,19 +113,17 @@ private:
 
     pair<float, float> get_constraint_bounds(const Constraint&) const;
 
-    pair<VectorR, VectorR> narrow_domain(pair<VectorR, VectorR>) const;
-
     float numeric_tolerance = 1e-6f;
 
     float constraint_tolerance = 1e-3f;
 
     float feasibility_margin_factor = 0.1f;
 
+    mutable Index invalid_objective = -1;
+
     Index feasibility_rounds = 3;
 
     Index feasibility_evaluations = 50;
-
-    size_t discrete_values_warning = 8;
 
     float diversity_factor = 0.2f;
 };
