@@ -13,6 +13,7 @@
 #ifdef __APPLE__
 #include <cstdlib>
 #include <cerrno>
+#include <cmath>
 #include <type_traits>
 #endif
 
@@ -40,7 +41,9 @@ namespace opennn
 
             const size_t consumed = static_cast<size_t>(parse_end - buffer.c_str());
 
-            if (errno == ERANGE)
+            // strtof also flags ERANGE for a subnormal it did represent; std::from_chars only
+            // refuses a value that overflows to infinity or underflows all the way to zero.
+            if (errno == ERANGE && (value == T(0) || !isfinite(value)))
                 return {first + consumed, errc::result_out_of_range};
 
             return {first + consumed, errc{}};
