@@ -92,14 +92,14 @@ pair<MatrixR, MatrixR> GeneticResponse::initialize_population(const pair<VectorR
     MatrixR outputs(points_number, network->get_outputs_number());
 
     Index feasible_number = 0;
-    Index attempts_number = 0;
+    Index i = 0;
     Index consecutive_failures = 0;
 
-    while (attempts_number < attempts_limit && feasible_number < points_number
+    while (i < attempts_limit && feasible_number < points_number
         && (maximum_consecutive_failures == 0 || consecutive_failures < maximum_consecutive_failures))
     {
         const auto [input, output] = solve(calculate_random_input(domain));
-        attempts_number++;
+        i++;
 
         if (input.size() == 0)
         {
@@ -117,7 +117,7 @@ pair<MatrixR, MatrixR> GeneticResponse::initialize_population(const pair<VectorR
 
     throw_if(feasible_number < points_number,
              get_sampling_failure() + "Only " + to_string(feasible_number) + " of " + to_string(points_number)
-             + " individuals could be made feasible with finite objectives in " + to_string(attempts_number)
+             + " individuals could be made feasible with finite objectives in " + to_string(i)
              + " candidate attempts. "
              + (maximum_consecutive_failures > 0 && consecutive_failures >= maximum_consecutive_failures
                 ? "Consecutive failure limit reached." : "Sampling budget exhausted."));
@@ -129,7 +129,7 @@ pair<MatrixR, MatrixR> GeneticResponse::evolve_population(const pair<VectorR, Ve
 {
     pair<MatrixR, MatrixR> population = initialize_population(domain);
 
-    for (Index generation = 0; generation < iterations_number; generation++)
+    for (Index i = 0; i < iterations_number; i++)
     {
         const vector<Index> fitness_ranking = calculate_fitness(population.first, population.second);
         const MatrixR children = recombinate_population(population.first, fitness_ranking, domain);
@@ -236,10 +236,10 @@ MatrixR GeneticResponse::recombinate_population(const MatrixR& parent_inputs,
     MatrixR inputs(points_number, parent_inputs.cols());
 
     Index feasible_number = 0;
-    Index attempts_number = 0;
+    Index i = 0;
     Index consecutive_failures = 0;
 
-    while (attempts_number < attempts_limit && feasible_number < points_number
+    while (i < attempts_limit && feasible_number < points_number
         && (maximum_consecutive_failures == 0 || consecutive_failures < maximum_consecutive_failures))
     {
         VectorR first_child = parent_inputs.row(select_parent(ranking)).transpose();
@@ -250,12 +250,12 @@ MatrixR GeneticResponse::recombinate_population(const MatrixR& parent_inputs,
 
         for (VectorR* child : {&first_child, &second_child})
         {
-            if (attempts_number == attempts_limit || feasible_number == points_number
+            if (i == attempts_limit || feasible_number == points_number
              || (maximum_consecutive_failures > 0 && consecutive_failures >= maximum_consecutive_failures))
                 break;
 
             const VectorR input = solve(move(*child)).first;
-            attempts_number++;
+            i++;
 
             if (input.size() == 0)
             {
@@ -273,7 +273,7 @@ MatrixR GeneticResponse::recombinate_population(const MatrixR& parent_inputs,
     if (feasible_number < points_number)
     {
         logging::warning() << "Warning: only " << feasible_number << " of " << points_number
-            << " children could be recombined into feasible points with finite objectives in " << attempts_number
+            << " children could be recombined into feasible points with finite objectives in " << i
             << " candidate attempts. "
             << (maximum_consecutive_failures > 0 && consecutive_failures >= maximum_consecutive_failures
                 ? "Consecutive failure limit reached." : "Sampling budget exhausted.")
@@ -294,18 +294,18 @@ pair<MatrixR, MatrixR> GeneticResponse::mutate_population(const MatrixR& offspri
     MatrixR outputs(points_number, network->get_outputs_number());
 
     Index feasible_number = 0;
-    Index attempts_number = 0;
+    Index i = 0;
     Index consecutive_failures = 0;
 
-    while (attempts_number < attempts_limit && feasible_number < points_number
+    while (i < attempts_limit && feasible_number < points_number
         && (maximum_consecutive_failures == 0 || consecutive_failures < maximum_consecutive_failures))
     {
-        VectorR child = offspring_inputs.row(attempts_number % offspring_inputs.rows()).transpose();
+        VectorR child = offspring_inputs.row(i % offspring_inputs.rows()).transpose();
 
         mutate_individual(child, domain);
 
         const auto [input, output] = solve(move(child));
-        attempts_number++;
+        i++;
 
         if (input.size() == 0)
         {
@@ -324,7 +324,7 @@ pair<MatrixR, MatrixR> GeneticResponse::mutate_population(const MatrixR& offspri
     if (feasible_number < points_number)
     {
         logging::warning() << "Warning: only " << feasible_number << " of " << points_number
-            << " children survived mutation feasibly with finite objectives in " << attempts_number
+            << " children survived mutation feasibly with finite objectives in " << i
             << " candidate attempts. "
             << (maximum_consecutive_failures > 0 && consecutive_failures >= maximum_consecutive_failures
                 ? "Consecutive failure limit reached." : "Sampling budget exhausted.")

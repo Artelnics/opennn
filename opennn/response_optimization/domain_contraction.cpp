@@ -109,13 +109,11 @@ pair<MatrixR, MatrixR> DomainContraction::sample_local_domains(
         Index consecutive_failures = 0;
         bool stop_domain = false;
 
-        for (Index attempt_feasibility = 0;
-             attempt_feasibility < rounds && sampled < sample_size && !stop_domain;
-             attempt_feasibility++)
+        for (Index i = 0; i < rounds && sampled < sample_size && !stop_domain; i++)
         {
             const Index batch = sample_size - sampled;
 
-            for (Index i = 0; i < batch; i++)
+            for (Index j = 0; j < batch; j++)
             {
                 attempts++;
                 const auto [input, output] = solve(calculate_random_input(domain));
@@ -183,7 +181,7 @@ MatrixR DomainContraction::single_optimization()
 
     float best_value = -numeric_limits<float>::infinity();
 
-    for (Index iteration = 0; iteration < iterations_number; iteration++)
+    for (Index i = 0; i < iterations_number; i++)
     {
         const auto [feasible_inputs, feasible_outputs] = sample_local_domains({domain}, best_input.size() == 0);
 
@@ -215,7 +213,7 @@ MatrixR DomainContraction::single_optimization()
 
         half_interval *= contraction_factor;
 
-        contract_categories(allowed_domain, blocks, category_scores, iteration);
+        contract_categories(allowed_domain, blocks, category_scores, i);
 
         domain = local_domain(best_input, half_interval, allowed_domain);
     }
@@ -241,7 +239,7 @@ MatrixR DomainContraction::multi_optimization()
 
     pair<MatrixR, MatrixR> candidates;
 
-    for (Index iteration = 0; iteration < iterations_number; iteration++)
+    for (Index i = 0; i < iterations_number; i++)
     {
         const auto points = sample_local_domains(local_domains, candidates.first.rows() == 0);
 
@@ -265,17 +263,15 @@ MatrixR DomainContraction::multi_optimization()
 
         half_interval *= contraction_factor;
 
-        contract_categories(allowed_domain, blocks, category_scores, iteration);
+        contract_categories(allowed_domain, blocks, category_scores, i);
 
-        if (iteration + 1 < iterations_number)
+        if (i + 1 < iterations_number)
             local_domains = local_domains_around(candidates.first, half_interval, allowed_domain);
     }
 
     vector<Index> front = clean_front(candidates.first, candidates.second);
 
-    for (Index attempt_front = 0;
-         attempt_front < iterations_number && Index(front.size()) < requested_front_size;
-         attempt_front++)
+    for (Index i = 0; i < iterations_number && Index(front.size()) < requested_front_size; i++)
     {
         candidates = slice_rows(candidates, front);
 
