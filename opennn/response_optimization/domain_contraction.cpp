@@ -78,7 +78,7 @@ void DomainContraction::contract_categories(pair<VectorR, VectorR>& domain,
                      [&category_scores](const Index column) { return category_scores(column); });
 
         const Index survivors_number =
-            max(Index(1), Index(ceil(pow(contraction_factor, float(iteration + 1))*float(block.second))));
+            max(Index(1), Index(ceil(pow(contraction_factor, 0.5f*float(iteration + 1))*float(block.second))));
 
         for (Index i = 0; i < Index(live_columns.size()) - survivors_number; i++)
             domain.second(live_columns[size_t(i)]) = 0.0f;

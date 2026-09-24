@@ -11,7 +11,7 @@
 // test may ask where the response goes but never what value it takes.
 //
 // Shared so that the expression tests and the condition tests state a network the same
-// way. The trained network lives in concrete_fixture.h instead.
+// way. The trained network lives in concrete_scenarios_test.cpp instead.
 
 #pragma once
 

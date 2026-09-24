@@ -222,28 +222,6 @@ TEST(ResponseOptimizationSetup, CardinalityOverAVariableThatCannotReachZeroThrow
 }
 
 
-TEST(ResponseOptimizationSetup, NonFiniteConstraintValueThrows)
-{
-    MinimalApproximation setup({"x1", "x2"}, {"y"});
-
-    DomainContraction optimization(setup.network.get());
-
-    EXPECT_THROW(optimization.add_constraint("x1", Condition::LessEqual,
-                                             {numeric_limits<float>::infinity()}),
-                 runtime_error);
-}
-
-
-TEST(ResponseOptimizationSetup, AllowedSetNeedsAtLeastOneValue)
-{
-    MinimalApproximation setup({"x1", "x2"}, {"y"});
-
-    DomainContraction optimization(setup.network.get());
-
-    EXPECT_THROW(optimization.add_constraint("x1", Condition::AllowedSet, {}), runtime_error);
-}
-
-
 TEST(ResponseOptimizationSetup, DiscreteConditionsTakeAnInputOrAnExpressionOfSeveral)
 {
     MinimalApproximation setup({"x1", "x2"}, {"y"});
@@ -309,7 +287,7 @@ TEST(ResponseOptimizationSetup, AnAllowedSetWithNoValueInItsRangeThrows)
 }
 
 
-TEST(ResponseOptimizationSetup, MissingConditionValuesThrow)
+TEST(ResponseOptimizationSetup, InvalidConstraintValuesThrow)
 {
     MinimalApproximation setup({"x1", "x2"}, {"y"});
 
@@ -317,15 +295,7 @@ TEST(ResponseOptimizationSetup, MissingConditionValuesThrow)
 
     EXPECT_THROW(optimization.add_constraint("x1", Condition::Between, {5.0f}), runtime_error);
     EXPECT_THROW(optimization.add_constraint("x1", Condition::LessEqual, {}), runtime_error);
-}
-
-
-TEST(ResponseOptimizationSetup, EmptyBetweenIntervalThrows)
-{
-    MinimalApproximation setup({"x1", "x2"}, {"y"});
-
-    DomainContraction optimization(setup.network.get());
-
+    EXPECT_THROW(optimization.add_constraint("x1", Condition::AllowedSet, {}), runtime_error);
     EXPECT_THROW(optimization.add_constraint("x1", Condition::Between, {5.0f, 2.0f}), runtime_error);
 }
 
@@ -1081,25 +1051,6 @@ TEST(CategoricalBlocks, ReportsOneBlockPerCategoricalVariable)
 }
 
 
-TEST_P(ResponseDriver, CategoricalResultsAreOneHot)
-{
-    CategoricalApproximation setup({"x1", "x2"}, "material", {"steel", "copper", "brass"});
-
-    const unique_ptr<ResponseOptimization> optimization = make_driver(GetParam(), setup.network.get());
-
-    optimization->add_objective("y1", Sense::Minimize);
-
-    const MatrixR results = optimization->perform_response_optimization();
-
-    ASSERT_GT(results.rows(), 0);
-
-    for (Index i = 0; i < results.rows(); i++)
-        EXPECT_GE(read_category(results, i, 2, 3), 0)
-            << "row " << i << " holds "
-            << results(i, 2) << ", " << results(i, 3) << ", " << results(i, 4);
-}
-
-
 TEST_P(ResponseDriver, CategoricalResultsSurviveAConstraint)
 {
     CategoricalApproximation setup({"x1", "x2"}, "material", {"steel", "copper", "brass"});
@@ -1124,40 +1075,24 @@ TEST_P(ResponseDriver, CategoricalResultsSurviveAConstraint)
 
 TEST_P(ResponseDriver, CategoricalConstraintSelectsRequestedCategory)
 {
-    CategoricalApproximation setup({"x1", "x2"}, "material", {"steel", "copper", "brass"});
+    for (const string& name : {"copper", "material.copper"})
+    {
+        SCOPED_TRACE(name);
+        set_seed(1234);
+        CategoricalApproximation setup({"x1", "x2"}, "material", {"steel", "copper", "brass"});
 
-    const unique_ptr<ResponseOptimization> optimization = make_driver(GetParam(), setup.network.get());
+        const auto optimization = make_driver(GetParam(), setup.network.get());
 
-    optimization->add_objective("y1", Sense::Minimize);
-    optimization->add_constraint("copper", Condition::Equal, {1.0f});
+        optimization->add_objective("y1", Sense::Minimize);
+        optimization->add_constraint(name, Condition::Equal, {1.0f});
 
-    const MatrixR results = optimization->perform_response_optimization();
+        const MatrixR results = optimization->perform_response_optimization();
 
-    ASSERT_GT(results.rows(), 0);
+        ASSERT_GT(results.rows(), 0);
 
-    for (Index i = 0; i < results.rows(); i++)
-        EXPECT_EQ(read_category(results, i, 2, 3), 1) << "row " << i;
-}
-
-
-// The same level, named through the block it belongs to. Two blocks may share a level name,
-// and only the qualified form says which of them was meant.
-
-TEST_P(ResponseDriver, QualifiedCategoricalConstraintSelectsRequestedCategory)
-{
-    CategoricalApproximation setup({"x1", "x2"}, "material", {"steel", "copper", "brass"});
-
-    const unique_ptr<ResponseOptimization> optimization = make_driver(GetParam(), setup.network.get());
-
-    optimization->add_objective("y1", Sense::Minimize);
-    optimization->add_constraint("material.copper", Condition::Equal, {1.0f});
-
-    const MatrixR results = optimization->perform_response_optimization();
-
-    ASSERT_GT(results.rows(), 0);
-
-    for (Index i = 0; i < results.rows(); i++)
-        EXPECT_EQ(read_category(results, i, 2, 3), 1) << "row " << i;
+        for (Index i = 0; i < results.rows(); i++)
+            EXPECT_EQ(read_category(results, i, 2, 3), 1) << "row " << i;
+    }
 }
 
 
@@ -1259,6 +1194,8 @@ TEST(ResponseOptimizationSetup, RejectsNonFiniteSettingsAndInvalidInputBounds)
                               numeric_limits<float>::infinity(),
                               -numeric_limits<float>::infinity()})
     {
+        SCOPED_TRACE(value);
+        EXPECT_THROW(optimization.add_constraint("x1", Condition::LessEqual, {value}), runtime_error);
         EXPECT_THROW(optimization.add_objective("x1", Sense::Fixed, value), runtime_error);
         EXPECT_THROW(optimization.set_feasibility_margin_factor(value), runtime_error);
         EXPECT_THROW(optimization.set_contraction_factor(value), runtime_error);

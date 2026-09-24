@@ -18,33 +18,15 @@ endif()
 file(GLOB_RECURSE TEST_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
 list(FILTER TEST_SOURCES EXCLUDE REGEX "-DESKTOP-[^/\\\\]*\\.cpp$")
 
-# The concrete response scenarios drive a real trained network through both solvers, so
-# they are far slower than a unit test and report on the results as much as they assert.
+# The concrete optimizer and repair scenarios use a trained network and take longer
+# than the unit tests.
 # They stay in a separate executable and CTest integration label; full verification
 # runs both executables. They can also be selected directly:
 #
 #     build-ninja/bin/opennn_response_tests --gtest_filter=ConcreteScenario.*
 
 set(RESPONSE_SCENARIO_SOURCES
-    "${CMAKE_CURRENT_SOURCE_DIR}/response_optimization/concrete_scenarios_test.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/response_optimization/feasibility_test.cpp")
-
-# The demo is the same problems written as a user writes them: a plain main, no test
-# framework. It has its own main(), so it cannot live in either gtest binary:
-#
-#     build-ninja/bin/opennn_response_demo
-
-set(RESPONSE_DEMO_SOURCES
-    "${CMAKE_CURRENT_SOURCE_DIR}/response_optimization/concrete_demo.cpp")
-
-# The Levenberg Marquardt probe is a study, not a test: it solves two systems of equations
-# with Eigen's own solver to see whether that is a shape the feasibility system could be
-# written in. It has its own main() as well:
-#
-#     build-ninja/bin/opennn_lm_probe
-
-set(RESPONSE_PROBE_SOURCES
-    "${CMAKE_CURRENT_SOURCE_DIR}/response_optimization/levenberg_marquardt_probe.cpp")
+    "${CMAKE_CURRENT_SOURCE_DIR}/response_optimization/concrete_scenarios_test.cpp")
 
 # toy_nonlinear.cpp is one concrete scenario cut down to two variables and a formula in
 # place of the network. It needs no trained network and runs in milliseconds, so unlike the
@@ -52,8 +34,7 @@ set(RESPONSE_PROBE_SOURCES
 #
 #     build-ninja/bin/opennn_tests --gtest_filter=ToyNonlinearSystem.*
 
-list(REMOVE_ITEM TEST_SOURCES
-    ${RESPONSE_SCENARIO_SOURCES} ${RESPONSE_DEMO_SOURCES} ${RESPONSE_PROBE_SOURCES})
+list(REMOVE_ITEM TEST_SOURCES ${RESPONSE_SCENARIO_SOURCES})
 
 add_executable(opennn_tests ${TEST_SOURCES})
 
@@ -73,20 +54,6 @@ target_precompile_headers(opennn_response_tests PRIVATE pch.h)
 # that shares it. Loading the .json needs its .bin sibling, so both are given at once.
 
 target_compile_definitions(opennn_response_tests PRIVATE
-    CONCRETE_NETWORK_DIR="${PROJECT_SOURCE_DIR}/examples/concrete")
-
-add_executable(opennn_response_demo ${RESPONSE_DEMO_SOURCES})
-
-target_link_libraries(opennn_response_demo opennn)
-
-target_compile_definitions(opennn_response_demo PRIVATE
-    CONCRETE_NETWORK_DIR="${PROJECT_SOURCE_DIR}/examples/concrete")
-
-add_executable(opennn_lm_probe ${RESPONSE_PROBE_SOURCES})
-
-target_link_libraries(opennn_lm_probe opennn)
-
-target_compile_definitions(opennn_lm_probe PRIVATE
     CONCRETE_NETWORK_DIR="${PROJECT_SOURCE_DIR}/examples/concrete")
 
 # OpenNN_ONEDNN_FOUND, not OpenNN_ENABLE_ONEDNN: the latter is a tri-state

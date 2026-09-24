@@ -6,35 +6,61 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-// These scenarios run the response optimizers against the trained UCI concrete network
-// that the concrete example ships, so the numbers they report mean something: a mix, its
-// water to cement ratio, and the strength the network predicts for it.
-//
-// Every check below re-derives its quantity from the returned columns with plain
-// arithmetic, never by asking the optimizer for the residual it just used. A fault in
-// the residual would otherwise agree with itself and pass.
-//
-// What the repair returns on its own, before any search runs over it, is studied
-// separately in feasibility_test.cpp.
+// Optimizer and repair checks against the trained UCI concrete network.
+// Constraint assertions use independent arithmetic on the returned columns.
 
 #include "tests/pch.h"
 
-#include <iomanip>
+#include <filesystem>
 
-#include "tests/response_optimization/concrete_fixture.h"
-
+#include "opennn/core/configuration.h"
+#include "opennn/core/random_utilities.h"
+#include "opennn/network/network.h"
+#include "opennn/network/layers/scaling_layer.h"
 #include "opennn/registry.h"
 #include "opennn/response_optimization/domain_contraction.h"
 #include "opennn/response_optimization/genetic_response.h"
-#include "opennn/network/layers/scaling_layer.h"
-#include "opennn/core/random_utilities.h"
+
+using namespace opennn;
 
 namespace
 {
 
-// Reads a bound with the slack the fixture defines, under the name the scenarios use.
+using Sense = ResponseOptimization::Objective::Sense;
+using Condition = ResponseOptimization::Constraint::Condition;
 
-float slack(const float bound) { return bound_slack(bound); }
+// Result columns: the eight mix variables the network takes, then the response it gives.
+
+enum Column { Cement, Slag, FlyAsh, Water, Sp, CoarseAgg, FineAgg, Age, Strength, ColumnsNumber };
+
+const char* const column_names[ColumnsNumber] =
+    {"cement", "slag", "fly_ash", "water", "sp", "coarse_agg", "fine_agg", "age", "strength"};
+
+// The mass of one cubic metre of mix, used by every case that closes the batch.
+
+constexpr float mix_mass = 2325.012558f;
+
+// Constraints are met to a relative slack inside the optimizer, and a repaired point is
+// placed a little inside the bound rather than on it. These checks only have to catch a
+// point that is actually outside, so they read the bound with a wider tolerance.
+
+float slack(const float bound) { return max(1e-2f, abs(bound)*1e-3f); }
+
+
+// One shared network for every test in the binary. Nothing writes to it.
+
+Network& concrete_network()
+{
+    static Network network = []
+    {
+        // These scenarios exercise the optimizers with a small 8-52-1 model.
+        // Pin it to CPU so their runtime does not depend on GPU launch overhead.
+        Configuration::instance().set(Device::CPU, Type::FP32);
+        return Network(std::filesystem::path(CONCRETE_NETWORK_DIR) / "nn" / "concrete_uci.json");
+    }();
+
+    return network;
+}
 
 
 enum class Driver { Contraction, Genetic };
@@ -52,28 +78,6 @@ unique_ptr<ResponseOptimization> make_driver(const Driver driver)
         return make_unique<GeneticResponse>(&concrete_network());
 
     return make_unique<DomainContraction>(&concrete_network());
-}
-
-
-// What the run produced, printed rather than asserted. Reading these side by side is how
-// a scenario tells you whether the front spread out, collapsed, or hugged a bound.
-
-void report(const string& scenario, const Driver driver, const MatrixR& results)
-{
-    cout << "\n[ " << scenario << " | " << driver_name(driver) << " ] "
-         << results.rows() << " point(s)\n";
-
-    cout << left << setw(12) << "column" << right
-         << setw(12) << "min" << setw(12) << "max" << setw(12) << "spread" << "\n";
-
-    for (Index j = 0; j < ColumnsNumber; j++)
-    {
-        const float smallest = results.col(j).minCoeff();
-        const float largest = results.col(j).maxCoeff();
-
-        cout << left << setw(12) << column_names[j] << right << fixed << setprecision(3)
-             << setw(12) << smallest << setw(12) << largest << setw(12) << (largest - smallest) << "\n";
-    }
 }
 
 
@@ -129,6 +133,8 @@ MatrixR run(const string& scenario,
             const Driver driver,
             const function<void(ResponseOptimization&)>& set_problem)
 {
+    SCOPED_TRACE(scenario);
+    SCOPED_TRACE(driver_name(driver));
     set_seed(1234);
 
     const unique_ptr<ResponseOptimization> optimization = make_driver(driver);
@@ -141,19 +147,242 @@ MatrixR run(const string& scenario,
     expect_inside_the_box(results);
     expect_response_matches_the_mix(results);
 
-    report(scenario, driver, results);
-
     return results;
 }
 
 
 float best_strength(const MatrixR& results) { return results.col(Strength).maxCoeff(); }
 
+
+constexpr Index draws_number = 200;
+
+
+struct ConstraintSpec
+{
+    string expression;
+
+    Condition condition = Condition::Equal;
+
+    vector<float> values;
+};
+
+
+struct FeasibilityCase
+{
+    string name;
+
+    vector<ConstraintSpec> constraints;
+
+    // The fewest variables the repaired set is expected to move in. A case whose
+    // constraints pin most of the mix cannot spread over as many as an open one.
+
+    Index least_variables_moved = 0;
+};
+
+
+// Cases progress from an open input box to a constrained mix design.
+
+vector<FeasibilityCase> feasibility_cases()
+{
+    return
+    {
+        {
+            "open box",
+            {},
+            0
+        },
+        {
+            "cement band",
+            {{"cement", Condition::Between, {200.0f, 400.0f}}},
+            6
+        },
+        {
+            "standard test ages",
+            {{"age", Condition::AllowedSet, {7.0f, 28.0f, 90.0f}}},
+            6
+        },
+        {
+            "closed batch",
+            {{"cement + slag + fly_ash + water + sp + coarse_agg + fine_agg",
+              Condition::Equal, {mix_mass}}},
+            6
+        },
+        {
+            "two ratio bands",
+            {{"water / (cement + slag + fly_ash)", Condition::Between, {0.35f, 0.50f}},
+             {"fine_agg / (coarse_agg + fine_agg)", Condition::Between, {0.35f, 0.45f}}},
+            4
+        },
+        {
+            "water binder floor",
+            {{"water / (cement + slag + fly_ash)", Condition::GreaterEqual, {0.45f}}},
+            4
+        },
+        {
+            "strength floor",
+            {{"strength", Condition::GreaterEqual, {50.0f}}},
+            4
+        },
+        {
+            "binder efficiency",
+            {{"strength / (cement + slag + fly_ash)", Condition::GreaterEqual, {0.10f}}},
+            4
+        },
+        {
+            "durability class",
+            {{"water / (cement + slag + fly_ash)", Condition::LessEqual, {0.45f}},
+             {"cement + slag + fly_ash", Condition::GreaterEqual, {320.0f}},
+             {"strength", Condition::GreaterEqual, {40.0f}}},
+            4
+        },
+        {
+            "low carbon binder",
+            {{"(slag + fly_ash) / (cement + slag + fly_ash)", Condition::GreaterEqual, {0.50f}},
+             {"strength", Condition::GreaterEqual, {30.0f}},
+             {"age", Condition::Equal, {28.0f}}},
+            4
+        },
+        {
+            "cost ceiling",
+            {{"0.10 * cement + 0.05 * slag + 0.04 * fly_ash + 1.20 * sp"
+              " + 0.02 * coarse_agg + 0.02 * fine_agg", Condition::LessEqual, {80.0f}},
+             {"strength", Condition::GreaterEqual, {40.0f}}},
+            4
+        },
+        {
+            "mix design",
+            {{"cement + slag + fly_ash + water + sp + coarse_agg + fine_agg",
+              Condition::Equal, {mix_mass}},
+             {"water / (cement + slag + fly_ash)", Condition::Between, {0.35f, 0.50f}},
+             {"(slag + fly_ash) / (cement + slag + fly_ash)", Condition::Between, {0.20f, 0.50f}},
+             {"fine_agg / (coarse_agg + fine_agg)", Condition::Between, {0.35f, 0.45f}},
+             {"strength / (cement + slag + fly_ash)", Condition::GreaterEqual, {0.10f}},
+             {"age", Condition::Equal, {28.0f}}},
+            4
+        }
+    };
 }
 
 
-// The scenarios below were carried over from the concrete example, where each one lived
-// as a commented out main that had to be uncommented to be run.
+// Reaches the repair without a solver around it.
+
+class FeasibleSetProbe : public ResponseOptimization
+{
+public:
+
+    explicit FeasibleSetProbe(const FeasibilityCase& feasibility_case)
+        : ResponseOptimization(&concrete_network())
+    {
+        for (const ConstraintSpec& constraint : feasibility_case.constraints)
+            add_constraint(constraint.expression, constraint.condition, constraint.values);
+    }
+
+    using ResponseOptimization::calculate_domain;
+    using ResponseOptimization::calculate_random_input;
+    using ResponseOptimization::solve;
+
+private:
+
+    MatrixR single_optimization() override { return {}; }
+    MatrixR multi_optimization() override { return {}; }
+};
+
+
+// What a run of repairs produced. Starting points that were already feasible are counted
+// apart from the rest: they come back untouched, so they say nothing about the repair and
+// would flatter any measure of spread they were mixed into.
+
+struct RepairedCloud
+{
+    MatrixR points;
+    Index already_feasible = 0;
+
+    Index repaired() const { return points.rows(); }
+};
+
+
+RepairedCloud repair_from_random_starts(FeasibleSetProbe& probe,
+                                        const pair<VectorR, VectorR>& domain,
+                                        const Index draws)
+{
+    RepairedCloud cloud;
+
+    cloud.points = MatrixR(draws, domain.first.size());
+
+    Index kept = 0;
+
+    for (Index i = 0; i < draws; i++)
+    {
+        const VectorR start = probe.calculate_random_input(domain);
+
+        const VectorR input = probe.solve(start).first;
+
+        if (input.size() == 0) continue;
+
+        // An untouched return is the early out: the draw already satisfied everything.
+
+        if ((input - start).cwiseAbs().maxCoeff() <= 0.0f)
+        {
+            cloud.already_feasible++;
+            continue;
+        }
+
+        cloud.points.row(kept) = input.transpose();
+
+        kept++;
+    }
+
+    // Preserve retained rows before shrinking: assigning an unevaluated view
+    // of the same matrix can read storage invalidated by the resize.
+    cloud.points.conservativeResize(kept, Eigen::NoChange);
+
+    return cloud;
+}
+
+
+// Two points count as one when every variable agrees to a thousandth of its own range,
+// far below anything a search would treat as a different mix.
+
+Index count_distinct(const MatrixR& points, const VectorR& span)
+{
+    const VectorR guarded_span = span.cwiseMax(EPSILON);
+
+    Index distinct = 0;
+
+    for (Index i = 0; i < points.rows(); i++)
+    {
+        bool seen = false;
+
+        for (Index j = 0; j < i && !seen; j++)
+            seen = ((points.row(i) - points.row(j)).cwiseAbs().array()
+                    / guarded_span.transpose().array() < 1e-3f).all();
+
+        if (!seen) distinct++;
+    }
+
+    return distinct;
+}
+
+
+// How many variables the set actually moves in. A repair that always walked to the same
+// corner would score one, or none.
+
+Index count_variables_moved(const MatrixR& points, const VectorR& span)
+{
+    Index variables_moved = 0;
+
+    for (Index j = 0; j < points.cols(); j++)
+    {
+        if (span(j) <= EPSILON) continue;
+
+        if ((points.col(j).maxCoeff() - points.col(j).minCoeff())/span(j) > 0.05f)
+            variables_moved++;
+    }
+
+    return variables_moved;
+}
+
+}
 
 
 TEST(ConcreteScenario, MaximizeStrengthWithoutConstraints)
@@ -165,13 +394,8 @@ TEST(ConcreteScenario, MaximizeStrengthWithoutConstraints)
 
     for (const Driver driver : {Driver::Contraction, Driver::Genetic})
     {
+        SCOPED_TRACE(driver_name(driver));
         const MatrixR results = run("unconstrained strength", driver, set_problem);
-
-        // Worth reading the report for this one: with nothing to hold it back the search
-        // walks every variable to a corner of the training box and reports around 94 MPa,
-        // above the 82.6 MPa the network was trained against. The optimizer is doing its
-        // job; the network is extrapolating. It is the reason the scenarios that follow
-        // constrain the mix rather than trusting an unconstrained optimum.
 
         EXPECT_GT(best_strength(results), 60.0f);
     }
@@ -191,6 +415,7 @@ TEST(ConcreteScenario, WaterCementBandAndFixedAge)
 
     for (const Driver driver : {Driver::Contraction, Driver::Genetic})
     {
+        SCOPED_TRACE(driver_name(driver));
         const MatrixR results = run("water/cement band, age 28", driver, set_problem);
 
         for (Index i = 0; i < results.rows(); i++)
@@ -220,6 +445,7 @@ TEST(ConcreteScenario, MixMassIsClosed)
 
     for (const Driver driver : {Driver::Contraction, Driver::Genetic})
     {
+        SCOPED_TRACE(driver_name(driver));
         const MatrixR results = run("closed mix mass", driver, set_problem);
 
         for (Index i = 0; i < results.rows(); i++)
@@ -242,6 +468,7 @@ TEST(ConcreteScenario, StrengthAgainstCementFront)
 
     for (const Driver driver : {Driver::Contraction, Driver::Genetic})
     {
+        SCOPED_TRACE(driver_name(driver));
         const MatrixR results = run("strength against cement", driver, set_problem);
 
         // Two objectives that genuinely conflict should return a front, not a point, and
@@ -268,12 +495,43 @@ TEST(ConcreteScenario, ConstrainedStrengthAgainstCementFront)
 
     for (const Driver driver : {Driver::Contraction, Driver::Genetic})
     {
+        SCOPED_TRACE(driver_name(driver));
         const MatrixR results = run("constrained front", driver, set_problem);
 
         for (Index i = 0; i < results.rows(); i++)
         {
             EXPECT_NEAR(results(i, Age), 28.0f, slack(28.0f)) << "row " << i;
 
+            EXPECT_LE(results(i, Water), 0.70f*results(i, Cement) + slack(results(i, Water)))
+                << "row " << i;
+        }
+    }
+}
+
+
+TEST(ConcreteScenario, ConstrainedFrontKeepsAllowedAges)
+{
+    const auto set_problem = [](ResponseOptimization& optimization)
+    {
+        optimization.set_points_number(32);
+        optimization.set_iterations_number(3);
+        optimization.add_objective("strength", Sense::Maximize);
+        optimization.add_objective("cement", Sense::Minimize);
+        optimization.add_constraint("age", Condition::AllowedSet, {7.0f, 28.0f, 90.0f});
+        optimization.add_constraint("water - 0.70 * cement", Condition::LessEqual, {0.0f});
+    };
+
+    for (const Driver driver : {Driver::Contraction, Driver::Genetic})
+    {
+        SCOPED_TRACE(driver_name(driver));
+        const MatrixR results = run("constrained front with allowed ages", driver, set_problem);
+
+        EXPECT_GT(results.rows(), 1);
+
+        for (Index i = 0; i < results.rows(); i++)
+        {
+            const float age = results(i, Age);
+            EXPECT_TRUE(age == 7.0f || age == 28.0f || age == 90.0f) << "row " << i;
             EXPECT_LE(results(i, Water), 0.70f*results(i, Cement) + slack(results(i, Water)))
                 << "row " << i;
         }
@@ -293,6 +551,7 @@ TEST(ConcreteScenario, FixedStrengthTargetIsReached)
 
     for (const Driver driver : {Driver::Contraction, Driver::Genetic})
     {
+        SCOPED_TRACE(driver_name(driver));
         const MatrixR results = run("fixed strength 50", driver, set_problem);
 
         EXPECT_NEAR(results(0, Strength), target, 2.0f)
@@ -328,6 +587,7 @@ TEST(ConcreteScenario, TightMultiobjectiveMixStaysFeasible)
 
     for (const Driver driver : {Driver::Contraction, Driver::Genetic})
     {
+        SCOPED_TRACE(driver_name(driver));
         const MatrixR results = run("tight multiobjective", driver, set_problem);
 
         for (Index i = 0; i < results.rows(); i++)
@@ -387,6 +647,7 @@ TEST(ConcreteScenario, NonlinearOutputConstraintsHold)
 
     for (const Driver driver : {Driver::Contraction, Driver::Genetic})
     {
+        SCOPED_TRACE(driver_name(driver));
         const MatrixR results = run("nonlinear output constraints", driver, set_problem);
 
         for (Index i = 0; i < results.rows(); i++)
@@ -461,14 +722,8 @@ TEST(ConcreteScenario, MixDesignRatiosOnAClosedBatch)
 
     for (const Driver driver : {Driver::Contraction, Driver::Genetic})
     {
+        SCOPED_TRACE(driver_name(driver));
         const MatrixR results = run("mix design ratios", driver, set_problem);
-
-        // The ratios are what the constraints are written in, and none of them is a
-        // column, so print them next to their bounds. Reading which ones come back sitting
-        // on a bound is reading which ones actually shaped the mix.
-
-        cout << left << setw(14) << "ratio" << right
-             << setw(10) << "value" << setw(10) << "lower" << setw(10) << "upper" << "\n";
 
         for (Index i = 0; i < results.rows(); i++)
         {
@@ -482,17 +737,6 @@ TEST(ConcreteScenario, MixDesignRatiosOnAClosedBatch)
             const float replacement = (results(i, Slag) + results(i, FlyAsh))/binder;
             const float sand_ratio = results(i, FineAgg)/aggregate;
             const float efficiency = results(i, Strength)/binder;
-
-            if (i == 0)
-                cout << fixed << setprecision(4)
-                     << left << setw(14) << "water/binder" << right
-                     << setw(10) << water_binder << setw(10) << 0.35f << setw(10) << 0.50f << "\n"
-                     << left << setw(14) << "scm share" << right
-                     << setw(10) << replacement << setw(10) << 0.20f << setw(10) << 0.50f << "\n"
-                     << left << setw(14) << "sand ratio" << right
-                     << setw(10) << sand_ratio << setw(10) << 0.35f << setw(10) << 0.45f << "\n"
-                     << left << setw(14) << "MPa per kg" << right
-                     << setw(10) << efficiency << setw(10) << 0.10f << setw(10) << 0.0f << "\n";
 
             EXPECT_NEAR(mass, mix_mass, slack(mix_mass)) << "row " << i;
 
@@ -527,10 +771,6 @@ TEST(ConcreteScenario, BothDriversAgreeOnTheBestStrength)
 
     const float contraction_best = best_strength(run("agreement", Driver::Contraction, set_problem));
     const float genetic_best = best_strength(run("agreement", Driver::Genetic, set_problem));
-
-    cout << "\ncontraction " << contraction_best << " vs genetic " << genetic_best
-         << " (" << 100.0f*abs(contraction_best - genetic_best)/max(contraction_best, genetic_best)
-         << "% apart)\n";
 
     // The two searches share nothing but the problem, and on this surface they land
     // within a few hundredths of a percent of each other. The bound is set far wider than
@@ -571,6 +811,7 @@ TEST(ConcreteScenario, ImpossibleStrengthIsReportedNotReturned)
 
     for (const Driver driver : {Driver::Contraction, Driver::Genetic})
     {
+        SCOPED_TRACE(driver_name(driver));
         set_seed(1234);
 
         const unique_ptr<ResponseOptimization> optimization = make_driver(driver);
@@ -596,6 +837,7 @@ TEST(ConcreteScenario, TheSameSeedGivesTheSameResult)
 
     for (const Driver driver : {Driver::Contraction, Driver::Genetic})
     {
+        SCOPED_TRACE(driver_name(driver));
         const MatrixR first = run("repeatability", driver, set_problem);
         const MatrixR second = run("repeatability", driver, set_problem);
 
@@ -604,6 +846,102 @@ TEST(ConcreteScenario, TheSameSeedGivesTheSameResult)
         EXPECT_LE((first - second).cwiseAbs().maxCoeff(), 1e-3f)
             << driver_name(driver) << " is not repeatable under a fixed seed";
     }
+}
+
+
+class FeasibilityStudy : public testing::TestWithParam<FeasibilityCase> {};
+
+
+// The one thing every case has to show: different starting points must give different
+// feasible points. If they do not, the repair has thrown away the spread the solvers
+// depend on, whatever else it got right.
+
+TEST_P(FeasibilityStudy, DifferentStartsGiveDifferentPoints)
+{
+    set_seed(1234);
+
+    const FeasibilityCase feasibility_case = GetParam();
+
+    FeasibleSetProbe probe(feasibility_case);
+
+    const pair<VectorR, VectorR> domain = probe.calculate_domain();
+
+    const VectorR span = domain.second - domain.first;
+
+    const RepairedCloud cloud = repair_from_random_starts(probe, domain, draws_number);
+
+    // A case has to leave something behind, whether the repair placed it or the draw
+    // already satisfied everything.
+
+    ASSERT_GT(cloud.already_feasible + cloud.repaired(), 0)
+        << "no starting point survived, so the case says nothing about the repair";
+
+    if (cloud.repaired() == 0) return;
+
+    EXPECT_EQ(count_distinct(cloud.points, span), cloud.repaired())
+        << "different starting points collapsed onto shared repaired points";
+
+    EXPECT_GE(count_variables_moved(cloud.points, span), feasibility_case.least_variables_moved)
+        << "the repaired set moves in too few variables to be a set rather than a point";
+}
+
+
+INSTANTIATE_TEST_SUITE_P(
+    Cases,
+    FeasibilityStudy,
+    testing::ValuesIn(feasibility_cases()),
+    [](const testing::TestParamInfo<FeasibilityCase>& info)
+    {
+        string name = info.param.name;
+
+        for (char& character : name)
+            if (character == ' ') character = '_';
+
+        return name;
+    });
+
+
+// One bound, crossed by every point that needed repair, so where they land is visible.
+// Solving the violation to zero would leave them all on the surface; the repair aims past
+// it by a share of the violation instead.
+
+TEST(Feasibility, RepairedPointsDoNotPileOntoTheBound)
+{
+    set_seed(1234);
+
+    const FeasibilityCase feasibility_case =
+    {
+        "water binder floor",
+        {{"water / (cement + slag + fly_ash)", Condition::GreaterEqual, {0.45f}}},
+        4
+    };
+
+    FeasibleSetProbe probe(feasibility_case);
+
+    const pair<VectorR, VectorR> domain = probe.calculate_domain();
+
+    const RepairedCloud cloud = repair_from_random_starts(probe, domain, draws_number);
+
+    ASSERT_GT(cloud.repaired(), 0);
+
+    Index on_the_bound = 0;
+
+    for (Index i = 0; i < cloud.repaired(); i++)
+    {
+        const float binder = cloud.points(i, Cement) + cloud.points(i, Slag) + cloud.points(i, FlyAsh);
+
+        const float water_binder = cloud.points(i, Water)/binder;
+
+        EXPECT_GE(water_binder, 0.45f - slack(0.45f)) << "row " << i;
+
+        if (water_binder <= 0.45f + 1e-4f) on_the_bound++;
+    }
+
+    // Almost all of them land clear of the surface, so a majority is a wide bound. It
+    // catches the repair reverting to solving the violation to exactly zero.
+
+    EXPECT_LT(on_the_bound, cloud.repaired()/2)
+        << "the repaired points piled onto the constraint surface";
 }
 
 

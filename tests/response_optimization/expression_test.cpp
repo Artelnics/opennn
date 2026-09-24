@@ -187,12 +187,15 @@ TEST(Expression, DivisionByConstantIsLinear)
 }
 
 
-TEST(Expression, ProductOfVariablesIsNonlinear)
+TEST(Expression, NonlinearOperationsAreClassified)
 {
-    const CompiledExpression expression =
-        compile_expression("x1 * x2", make_named_columns({"x1", "x2"}), {});
+    const auto inputs = make_named_columns({"x1", "x2"});
 
-    EXPECT_EQ(expression.linearity, ExpressionLinearity::Nonlinear);
+    for (const string& text : {"x1 * x2", "x1 / x2", "sqrt(x1) + 1", "x1 ^ 2"})
+    {
+        SCOPED_TRACE(text);
+        EXPECT_EQ(compile_expression(text, inputs, {}).linearity, ExpressionLinearity::Nonlinear);
+    }
 }
 
 
@@ -226,31 +229,6 @@ TEST(ConstraintCompilation, CardinalityAcceptsQuotedNamesAndEmbeddedSeparators)
     EXPECT_EQ(problem.constraints[0].equation.input_indices, vector<Index>({0, 1, 2}));
     EXPECT_THROW(problem.add_constraint("`a;b`; `a;b`", Condition::Cardinality, {1.0f}), runtime_error);
     EXPECT_THROW(problem.add_constraint("`a;b`;", Condition::Cardinality, {1.0f}), runtime_error);
-}
-
-
-TEST(Expression, DivisionByVariableIsNonlinear)
-{
-    const CompiledExpression expression =
-        compile_expression("x1 / x2", make_named_columns({"x1", "x2"}), {});
-
-    EXPECT_EQ(expression.linearity, ExpressionLinearity::Nonlinear);
-}
-
-
-TEST(Expression, SqrtIsNonlinear)
-{
-    const CompiledExpression expression = compile_expression("sqrt(x1) + 1", make_named_columns({"x1"}), {});
-
-    EXPECT_EQ(expression.linearity, ExpressionLinearity::Nonlinear);
-}
-
-
-TEST(Expression, PowerWithNonUnitExponentIsNonlinear)
-{
-    const CompiledExpression expression = compile_expression("x1 ^ 2", make_named_columns({"x1"}), {});
-
-    EXPECT_EQ(expression.linearity, ExpressionLinearity::Nonlinear);
 }
 
 
@@ -435,42 +413,16 @@ TEST(Expression, PowerCallIsTheSameAsThePowerOperator)
 }
 
 
-TEST(Expression, UnknownIdentifierThrows)
+TEST(Expression, InvalidExpressionsThrow)
 {
-    EXPECT_THROW(compile_expression("x1 + z9", make_named_columns({"x1"}), {}), runtime_error);
-}
+    const auto inputs = make_named_columns({"x1", "x2"});
 
-
-TEST(Expression, UnknownFunctionThrows)
-{
-    EXPECT_THROW(compile_expression("bogus(x1)", make_named_columns({"x1"}), {}), runtime_error);
-}
-
-
-TEST(Expression, EmptyExpressionThrows)
-{
-    EXPECT_THROW(compile_expression("", {}, {}), runtime_error);
-}
-
-
-TEST(Expression, ExpressionWithoutVariablesThrows)
-{
-    EXPECT_THROW(compile_expression("1 + 2", make_named_columns({"x1"}), {}), runtime_error);
-}
-
-
-TEST(Expression, WrongFunctionArityThrows)
-{
-    const vector<pair<string, Index>> inputs = make_named_columns({"x1", "x2"});
-
-    EXPECT_THROW(compile_expression("sqrt(x1, x2)", inputs, {}), runtime_error);
-    EXPECT_THROW(compile_expression("min(x1)", inputs, {}), runtime_error);
-}
-
-
-TEST(Expression, MismatchedParenthesesThrow)
-{
-    EXPECT_THROW(compile_expression("(x1 + 1", make_named_columns({"x1"}), {}), runtime_error);
+    for (const string& text : {"x1 + z9", "bogus(x1)", "", "1 + 2",
+                               "sqrt(x1, x2)", "min(x1)", "(x1 + 1"})
+    {
+        SCOPED_TRACE(text);
+        EXPECT_THROW(compile_expression(text, inputs, {}), runtime_error);
+    }
 }
 
 
