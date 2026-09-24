@@ -294,6 +294,8 @@ void ImageDataset::from_JSON(const JsonDocument& data_set_document)
     }
 
     read_images();
+
+    read_json_blocks(image_dataset_element);
 }
 
 VectorI ImageDataset::calculate_target_distribution() const
