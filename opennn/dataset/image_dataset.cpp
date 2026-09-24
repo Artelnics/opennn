@@ -315,6 +315,13 @@ void ImageDataset::read_images()
     data.resize(0, 0);
     cache_reader.close();
 
+    if (data_path.empty())
+    {
+        sample_labels.clear();
+        sample_roles.clear();
+        return;
+    }
+
     const vector<filesystem::path> candidate_folders =
         list_directories(data_path, [](const filesystem::path& folder)
                          { return !folder.filename().string().starts_with('.'); });
