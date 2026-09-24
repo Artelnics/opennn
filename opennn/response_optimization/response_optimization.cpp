@@ -244,11 +244,9 @@ struct ResponseOptimization::FeasibilityRepairSystem : Eigen::DenseFunctor<float
         {
             if (!point.allFinite()) return {};
 
-            point = round_discrete(point);
+            if (!round_discrete(point) || !point.allFinite()) return {};
 
-            if (point.size() == 0 || !point.allFinite()) return {};
-
-            const VectorR output = evaluate_constraints(point, row_values, row_residuals);
+            const VectorR& output = evaluate_constraints(point, row_values, row_residuals);
 
             if (!row_values.allFinite() || !row_residuals.allFinite()) return {};
 
@@ -301,11 +299,9 @@ struct ResponseOptimization::FeasibilityRepairSystem : Eigen::DenseFunctor<float
     }
 
 
-    VectorR round_discrete(const VectorR& point) const
+    bool round_discrete(VectorR& point) const
     {
         const auto& [lower_bounds, upper_bounds] = problem.input_bounds;
-
-        VectorR forced = point;
 
         for (const Constraint& constraint : problem.constraints)
         {
@@ -313,13 +309,13 @@ struct ResponseOptimization::FeasibilityRepairSystem : Eigen::DenseFunctor<float
 
             vector<Index> counted = constraint.equation.input_indices;
 
-            ranges::stable_sort(counted, {}, [&](const Index column) { return -abs(forced(column)); });
+            ranges::stable_sort(counted, {}, [&](const Index column) { return -abs(point(column)); });
 
             for (size_t j = size_t(constraint.values[0]); j < counted.size(); j++)
-                forced(counted[j]) = 0.0f;
+                point(counted[j]) = 0.0f;
         }
 
-        forced = forced.cwiseMax(lower_bounds).cwiseMin(upper_bounds);
+        point = point.cwiseMax(lower_bounds).cwiseMin(upper_bounds);
 
         for (const auto& [first_column, categories_number] : categorical_blocks)
         {
@@ -327,41 +323,41 @@ struct ResponseOptimization::FeasibilityRepairSystem : Eigen::DenseFunctor<float
 
             const bool none_open =
                 (upper_bounds.segment(first_column, categories_number).array() > 0.0f)
-                .select(forced.segment(first_column, categories_number).array(), -MAX).maxCoeff(&category) == -MAX;
+                .select(point.segment(first_column, categories_number).array(), -MAX).maxCoeff(&category) == -MAX;
 
-            if (none_open) return {};
+            if (none_open) return false;
 
-            forced.segment(first_column, categories_number).setZero();
+            point.segment(first_column, categories_number).setZero();
 
-            forced(first_column + category) = 1.0f;
+            point(first_column + category) = 1.0f;
         }
 
         for (const Constraint& constraint : problem.constraints)
             if (const Index column = get_discrete_column(constraint); column >= 0)
             {
-                const float value = forced(column);
+                const float value = point(column);
 
                 const float lower = lower_bounds(column);
                 const float upper = upper_bounds(column);
 
-                if (constraint.condition == Condition::Integer && ceil(lower) > floor(upper)) return {};
+                if (constraint.condition == Condition::Integer && ceil(lower) > floor(upper)) return false;
 
-                forced(column) = (constraint.condition == Condition::Integer)
-                               ? clamp(round(value), ceil(lower), floor(upper))
-                               : *ranges::min_element(constraint.values, {}, [&](const float allowed)
-                                     { return (allowed < lower || allowed > upper)
-                                            ? numeric_limits<double>::infinity() : abs(double(allowed) - value); });
+                point(column) = (constraint.condition == Condition::Integer)
+                              ? clamp(round(value), ceil(lower), floor(upper))
+                              : *ranges::min_element(constraint.values, {}, [&](const float allowed)
+                                    { return (allowed < lower || allowed > upper)
+                                           ? numeric_limits<double>::infinity() : abs(double(allowed) - value); });
             }
 
-        if ((forced.array() < lower_bounds.array()).any() || (forced.array() > upper_bounds.array()).any()) return {};
+        if ((point.array() < lower_bounds.array()).any() || (point.array() > upper_bounds.array()).any()) return false;
 
         for (const auto& [first, size] : categorical_blocks)
         {
-            const auto block = forced.segment(first, size).array();
-            if (!(block == 0.0f || block == 1.0f).all() || block.sum() != 1.0f) return {};
+            const auto block = point.segment(first, size).array();
+            if (!(block == 0.0f || block == 1.0f).all() || block.sum() != 1.0f) return false;
         }
 
-        return forced;
+        return true;
     }
 
 
@@ -378,12 +374,11 @@ struct ResponseOptimization::FeasibilityRepairSystem : Eigen::DenseFunctor<float
     }
 
 
-    VectorR evaluate_constraints(const VectorR& point,
-                                 VectorR& values,
-                                 VectorR& residuals,
-                                 const VectorR& output = {}) const
+    const VectorR& evaluate_constraints(const VectorR& point,
+                                        VectorR& values,
+                                        VectorR& residuals) const
     {
-        const VectorR response = output.size() == 0 && constraints_read_output ? evaluate_outputs(point) : output;
+        if (constraints_read_output) evaluate_outputs(point);
 
         const Index rows_number = Index(problem.constraints.size());
 
@@ -394,7 +389,7 @@ struct ResponseOptimization::FeasibilityRepairSystem : Eigen::DenseFunctor<float
         {
             const Constraint& constraint = problem.constraints[size_t(i)];
 
-            values(i) = constraint.equation.evaluate(point, response);
+            values(i) = constraint.equation.evaluate(point, evaluated_output);
 
             float value = values(i);
             if (constraint.condition == Condition::Integer)
@@ -406,7 +401,7 @@ struct ResponseOptimization::FeasibilityRepairSystem : Eigen::DenseFunctor<float
             residuals(i) = calculate_constraint_residual(constraint_bounds[size_t(i)], value);
         }
 
-        return response;
+        return evaluated_output;
     }
 
 
@@ -573,7 +568,7 @@ struct ResponseOptimization::FeasibilityRepairSystem : Eigen::DenseFunctor<float
 
     int df(const VectorR& point, JacobianType& jacobian) const
     {
-        const VectorR output = evaluate_constraints(point, row_values, row_residuals);
+        const VectorR& output = evaluate_constraints(point, row_values, row_residuals);
 
         const MatrixR value_jacobian =
             calculate_jacobian(point, row_values, output, row_residuals);

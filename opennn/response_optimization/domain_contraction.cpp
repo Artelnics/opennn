@@ -66,6 +66,8 @@ void DomainContraction::contract_categories(pair<VectorR, VectorR>& domain,
                                             const VectorR& category_scores,
                                             const Index iteration) const
 {
+    const float retained_fraction = pow(contraction_factor, 0.5f*float(iteration + 1));
+
     for (const pair<Index, Index>& block : blocks)
     {
         vector<Index> live_columns;
@@ -74,11 +76,13 @@ void DomainContraction::contract_categories(pair<VectorR, VectorR>& domain,
             if (domain.second(block.first + j) > 0.0f)
                 live_columns.push_back(block.first + j);
 
+        const Index survivors_number =
+            max(Index(1), Index(ceil(retained_fraction*float(block.second))));
+
+        if (Index(live_columns.size()) <= survivors_number) continue;
+
         ranges::sort(live_columns, {},
                      [&category_scores](const Index column) { return category_scores(column); });
-
-        const Index survivors_number =
-            max(Index(1), Index(ceil(pow(contraction_factor, 0.5f*float(iteration + 1))*float(block.second))));
 
         for (Index i = 0; i < Index(live_columns.size()) - survivors_number; i++)
             domain.second(live_columns[size_t(i)]) = 0.0f;

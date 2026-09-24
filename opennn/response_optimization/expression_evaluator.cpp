@@ -503,22 +503,14 @@ struct Parser
     {
         const Token& next_token = lexer.peek();
 
-        if (next_token.kind == Token::Kind::Operator && next_token.text == "-")
+        if (next_token.kind == Token::Kind::Operator
+         && (next_token.text == "-" || next_token.text == "+"))
         {
             lexer.consume();
 
             const NestingGuard guard(nesting);
 
-            return make_neg(parse_unary());
-        }
-
-        if (next_token.kind == Token::Kind::Operator && next_token.text == "+")
-        {
-            lexer.consume();
-
-            const NestingGuard guard(nesting);
-
-            return parse_unary();
+            return next_token.text == "-" ? make_neg(parse_unary()) : parse_unary();
         }
 
         return parse_primary();
@@ -941,6 +933,9 @@ ExpressionOp::Kind binary_operation(const ExpressionNode::Kind kind)
 
 void emit_operations(const ExpressionNode& node, vector<ExpressionOp>& operations)
 {
+    for (const ExpressionNodePtr& child : node.children)
+        emit_operations(*child, operations);
+
     switch (node.kind)
     {
         using enum ExpressionNode::Kind;
@@ -957,7 +952,6 @@ void emit_operations(const ExpressionNode& node, vector<ExpressionOp>& operation
         return;
 
     case UnaryNeg:
-        emit_operations(*node.children[0], operations);
         operations.push_back({ExpressionOp::Kind::Neg, 0, 0.0f});
         return;
 
@@ -966,15 +960,10 @@ void emit_operations(const ExpressionNode& node, vector<ExpressionOp>& operation
     case Mul:
     case Div:
     case Pow:
-        emit_operations(*node.children[0], operations);
-        emit_operations(*node.children[1], operations);
         operations.push_back({binary_operation(node.kind), 0, 0.0f});
         return;
 
     case Func:
-        for (const ExpressionNodePtr& child : node.children)
-            emit_operations(*child, operations);
-
         operations.push_back({node.function, 0, 0.0f});
         return;
     }
@@ -1087,16 +1076,15 @@ void collect_significant_terms(const unordered_map<Index, float>& terms,
 {
     kept_terms.clear();
     kept_terms.reserve(terms.size());
+    columns.clear();
+    columns.reserve(terms.size());
 
     for (const auto& [column, coefficient] : terms)
         if (abs(coefficient) > EPSILON)
+        {
             kept_terms.emplace_back(column, coefficient);
-
-    columns.clear();
-    columns.reserve(kept_terms.size());
-
-    for (const auto& [column, coefficient] : kept_terms)
-        columns.push_back(column);
+            columns.push_back(column);
+        }
 }
 
 
@@ -1110,9 +1098,6 @@ CompiledExpression compile_ast(const ExpressionNode& ast)
 
     throw_if(input_references.empty() && output_references.empty(),
              "ExpressionParser: expression references no input or output variables");
-
-    result.input_indices.assign(input_references.begin(), input_references.end());
-    result.output_indices.assign(output_references.begin(), output_references.end());
 
     const LinearForm linear_form = analyze_linear(ast);
 
@@ -1132,6 +1117,8 @@ CompiledExpression compile_ast(const ExpressionNode& ast)
     }
 
     result.linearity = ExpressionLinearity::Nonlinear;
+    result.input_indices.assign(input_references.begin(), input_references.end());
+    result.output_indices.assign(output_references.begin(), output_references.end());
     result.program = build_program(ast);
 
     result.input_gradient.reserve(result.input_indices.size());

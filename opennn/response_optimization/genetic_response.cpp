@@ -217,10 +217,8 @@ vector<Index> GeneticResponse::calculate_fitness(const MatrixR& inputs, const Ma
         for (const Index extreme : extreme_indices(front_values))
             crowding_distances(extreme) = MAX;
 
-        const VectorI positions = maximal_indices(crowding_distances, Index(front.size()));
-
-        for (Index i = 0; i < positions.size(); i++)
-            ranking.push_back(front[size_t(positions(i))]);
+        for (const Index position : ranked_indices(crowding_distances))
+            ranking.push_back(front[size_t(position)]);
     }
 
     return ranking;
