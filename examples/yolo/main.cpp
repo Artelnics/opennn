@@ -360,6 +360,8 @@ int main(int argc, char* argv[])
         const bool use_voc     = (experiment.find("voc") != std::string::npos);
         const bool use_raccoon = false;
         const bool use_coco    = false;
+        const bool use_bccd    = (experiment.find("bccd") != std::string::npos);
+        const bool use_cosine_lr = use_bccd;
 
         // ── MODE SELECT ──────────────────────────────────────────────────────
         // YOLOv3 (anchor-based FPN):  use_v8=false, use_c11=false, use_csp=false
@@ -407,7 +409,8 @@ int main(int argc, char* argv[])
 
         const filesystem::path data_dir = use_voc     ? "yolo_voc_data"
                                              : use_raccoon ? "yolo_raccoon_data"
-                                             : use_coco   ? "yolo_coco_data"
+                                             : use_coco    ? "yolo_coco_data"
+                                             : use_bccd    ? "yolo_bccd_data"
                                              :               ("yolo_data_" + experiment);
         std::filesystem::create_directories(data_dir);
 
@@ -597,6 +600,22 @@ int main(int argc, char* argv[])
 
             anchors = {{0.334f, 0.476f}, {0.519f, 0.818f}, {0.807f, 0.852f}};
         }
+        else if (use_bccd)
+        {
+            images_dir = resolve_data_path("BCCD_IMAGES",
+                {"/home/alvaromartin/Documents/BCCD_yolo/images",
+                 "BCCD_yolo/images"});
+            labels_dir = resolve_data_path("BCCD_LABELS",
+                {"/home/alvaromartin/Documents/BCCD_yolo/labels",
+                 "BCCD_yolo/labels"});
+
+            grid_size      = 20;
+            boxes_per_cell = 3;
+            input_shape    = use_v8 ? Shape{640, 640, 3} : Shape{416, 416, 3};
+
+            // Anchor-based fallback anchors for v3; v8 is anchor-free so these are unused.
+            anchors = {{0.05f, 0.05f}, {0.12f, 0.12f}, {0.22f, 0.22f}};
+        }
         else
         {
             // External synthetic dataset: 416×416 JPGs, 3 classes (circle/square/triangle).
@@ -710,7 +729,7 @@ int main(int argc, char* argv[])
         }
 
         YoloDataset::AugmentationPolicy augmentation_policy;
-        if (use_voc || use_raccoon || use_coco)
+        if (use_voc || use_raccoon || use_coco || use_bccd)
         {
 
             augmentation_policy.jitter      = 0.2f;
@@ -720,7 +739,7 @@ int main(int argc, char* argv[])
             augmentation_policy.hue         = 0.1f;
             augmentation_policy.enabled     = true;
 
-            augmentation_policy.mosaic      = use_voc || use_coco;
+            augmentation_policy.mosaic      = use_voc || use_coco || use_bccd;
         }
         else
         {
@@ -735,8 +754,8 @@ int main(int argc, char* argv[])
         dataset.set_augmentation_policy(augmentation_policy);
         dataset.set_storage_mode(Dataset::StorageMode::Matrix);
 
-        const float train_frac = use_raccoon ? 0.8f : (use_voc ? 0.85f : 0.7f);
-        const float val_frac   = use_raccoon ? 0.2f : (use_voc ? 0.15f : 0.3f);
+        const float train_frac = use_raccoon ? 0.8f : (use_voc ? 0.85f : use_bccd ? 0.8f : 0.7f);
+        const float val_frac   = use_raccoon ? 0.2f : (use_voc ? 0.15f : use_bccd ? 0.2f : 0.3f);
         dataset.split_samples_random(train_frac, val_frac, 0.0f);
 
         const vector<std::array<float, 2>>& network_anchors = is_v8_head
@@ -800,9 +819,9 @@ int main(int argc, char* argv[])
 
         training.get_loss()->set_regularization("L2");
 
-        if (is_csp53v11 && use_voc)
+        if (is_csp53v11 && (use_voc || use_bccd))
             training.get_loss()->set_regularization_weight(0.0005f);
-        if (use_voc || use_coco || use_raccoon)
+        if (use_voc || use_coco || use_raccoon || use_bccd)
         {
             // YOLOv8 reference tuning — only for real-image datasets.
             training.get_loss()->set_yolo_lambda_noobj(0.5f);
@@ -820,17 +839,17 @@ int main(int argc, char* argv[])
         // Darknet53 is 7x larger than TinyV3 — batch 4 keeps it within 7.7 GB VRAM.
         // c11 s-size at 640×640: ~8GB activations at batch=16 — exceeds RTX 2080/5060 budget.
         // batch=8 halves activation memory to ~4GB (fits in 7.7GB with model+gradients).
-        const int batch_size = is_csp53v11 ? 8 : (is_large_backbone ? 4 : (use_voc || use_coco || use_raccoon) ? 16 : 4);
+        const int batch_size = is_csp53v11 ? 8 : (is_large_backbone ? 4 : (use_voc || use_coco || use_raccoon || use_bccd) ? 16 : 4);
         adam->set_batch_size(batch_size);
         adam->set_display_period(5);
         // VOC/COCO: YOLOv8 ref clip=10.0 (pretrained backbone keeps gradients bounded).
         // Synthetic: train from scratch → exp(tw) can explode; clip at 1.0 to stabilize.
-        adam->set_gradient_clip_norm((use_voc || use_coco || use_raccoon) ? 10.0f : 1.0f);
-        adam->set_maximum_validation_failures(use_coco ? 50 : (use_voc && is_large_backbone) ? 60 : use_voc ? 25 : use_raccoon ? 25 : 15);
+        adam->set_gradient_clip_norm((use_voc || use_coco || use_raccoon || use_bccd) ? 10.0f : 1.0f);
+        adam->set_maximum_validation_failures(use_coco ? 50 : (use_voc && is_large_backbone) ? 60 : use_voc ? 25 : (use_raccoon || use_bccd) ? 30 : 15);
 
         const bool resume_training = true;
 
-        const string dataset_tag  = use_voc ? "voc" : use_raccoon ? "raccoon" : use_coco ? "coco" : "synth";
+        const string dataset_tag  = use_voc ? "voc" : use_raccoon ? "raccoon" : use_coco ? "coco" : use_bccd ? "bccd" : "synth";
         const string filter_tag   = voc_class_filter.empty() ? "" :
             "_" + to_string(voc_class_filter.size()) + "cls";
         const string weights_filename = string("yolo_weights_") + dataset_tag + "_" +
@@ -870,72 +889,89 @@ int main(int argc, char* argv[])
             cout << "\nLoaded weights from \"" << weights_path.string() << "\".\n";
         }
 
-        const bool needs_darknet_backbone =
+        const bool needs_pretrained_backbone =
             !from_scratch &&
             (backbone == Yolo::Backbone::DarknetTinyV3 ||
              backbone == Yolo::Backbone::Darknet53 ||
              backbone == Yolo::Backbone::CSPDarknet53 ||
              backbone == Yolo::Backbone::CSPDarknet53v11) && !weights_exist;
         bool backbone_pretrained_loaded = false;
-        if (needs_darknet_backbone)
+        if (needs_pretrained_backbone)
         {
             const bool is53    = (backbone == Yolo::Backbone::Darknet53);
             const bool iscsp   = (backbone == Yolo::Backbone::CSPDarknet53);
             const bool isv11   = (backbone == Yolo::Backbone::CSPDarknet53v11);
 
-            const string darknet_filename = is53 ? "darknet53.conv.74"
-                                               : (iscsp || isv11) ? "yolov4.conv.137"
-                                               : "yolov3-tiny.weights";
-            // Look in data_dir first, then in yolo_voc_data (where it was originally downloaded).
-            std::filesystem::path darknet_weights = data_dir / darknet_filename;
-            if (!std::filesystem::exists(darknet_weights))
-                darknet_weights = std::filesystem::path("yolo_voc_data") / darknet_filename;
-            if (!std::filesystem::exists(darknet_weights))
-                darknet_weights = home_directory() / ".neuraldesigner/weights" / darknet_filename;
-            if (std::filesystem::exists(darknet_weights))
+            // For CSPDarknet53v11 (YOLOv8), prefer yolov8s.onnx (full backbone+neck).
+            // Fall back to yolov4.conv.137 (5 layers only) if ONNX is not available.
+            if (isv11)
             {
-                Index loaded = 0;
-                if (isv11)
+                std::filesystem::path onnx_path = "yolov8s.onnx";
+                if (!std::filesystem::exists(onnx_path))
+                    onnx_path = data_dir / "yolov8s.onnx";
+                if (std::filesystem::exists(onnx_path))
                 {
-
-                    loaded = load_darknet_backbone_v11(yolo, darknet_weights);
+                    const Index loaded = load_yolov8s_onnx(yolo, onnx_path,
+                                                            dataset.get_classes_number());
+                    cout << "Loaded " << loaded << " layers from " << onnx_path << "\n";
+                    // Save immediately so the binary loader picks it up next time.
+                    yolo.save_parameters_binary(weights_path);
+                    yolo.save_states_binary(states_path);
+                    filesystem::path ep = weights_path;
+                    ep.replace_filename(weights_path.stem().string() + "_epochs.txt");
+                    { ofstream ef(ep); ef << 0 << "\n"; }
+                    backbone_pretrained_loaded = (loaded > 0);
                 }
                 else
                 {
-                    const Index n_backbone_convs = is53 ? 52 : iscsp ? 72 : 8;
-                    loaded = load_darknet_backbone(
-                        yolo, darknet_weights, n_backbone_convs);
+                    cout << "yolov8s.onnx not found. To use pretrained COCO weights:\n"
+                         << "  yolo export model=yolov8s.pt format=onnx\n"
+                         << "  mv yolov8s.onnx " << onnx_path.parent_path().string() << "/\n"
+                         << "Training from scratch instead.\n";
                 }
-                cout << "Loaded " << loaded
-                          << " backbone layers from " << darknet_weights << "\n";
-                backbone_pretrained_loaded = (loaded > 0);
             }
             else
             {
-                cout << "Darknet pretrained weights not found at " << darknet_weights << ".\n";
-                if (is53)
-                    cout << "Download darknet53.conv.74 from "
-                              << "https://pjreddie.com/media/files/darknet53.conv.74 "
-                              << "and place it in " << data_dir << "\n";
+                const string darknet_filename = is53 ? "darknet53.conv.74"
+                                                   : iscsp ? "yolov4.conv.137"
+                                                   : "yolov3-tiny.weights";
+                std::filesystem::path darknet_weights = data_dir / darknet_filename;
+                if (!std::filesystem::exists(darknet_weights))
+                    darknet_weights = std::filesystem::path("yolo_voc_data") / darknet_filename;
+                if (!std::filesystem::exists(darknet_weights))
+                    darknet_weights = home_directory() / ".neuraldesigner/weights" / darknet_filename;
+                if (std::filesystem::exists(darknet_weights))
+                {
+                    const Index n_backbone_convs = is53 ? 52 : iscsp ? 72 : 8;
+                    const Index loaded = load_darknet_backbone(yolo, darknet_weights, n_backbone_convs);
+                    cout << "Loaded " << loaded << " backbone layers from " << darknet_weights << "\n";
+                    backbone_pretrained_loaded = (loaded > 0);
+                }
                 else
-                    cout << "Download yolov4.conv.137 from "
-                              << "https://github.com/AlexeyAB/darknet/releases/download/darknet_yolo_v3_optimal/yolov4.conv.137 "
-                              << "and place it in " << data_dir << "\n";
-                cout << "Training from scratch instead.\n";
+                {
+                    cout << "Darknet pretrained weights not found at " << darknet_weights << ".\n"
+                         << "Training from scratch instead.\n";
+                }
             }
         }
 
         bool backbone_frozen = false;
         auto set_backbone_trainable = [&](bool trainable) {
-            const string prefix = (backbone == Yolo::Backbone::Darknet53)      ? "dn53_"  :
-                                       (backbone == Yolo::Backbone::CSPDarknet53)   ? "csp53_" :
-                                       (backbone == Yolo::Backbone::CSPDarknet53v11)? "c11_"   :
-                                       (backbone == Yolo::Backbone::DarknetTinyV3)  ? "dntv3_" : "";
-            if (prefix.empty()) return;
+            // CSPDarknet53v11 backbone layers all start with c8_s* (stem, s1–s4, sppf)
+            // but detection heads also start with c8_small_ / c8_medium_ / c8_large_,
+            // so we can't use a single string prefix — enumerate backbone prefixes instead.
+            vector<string> prefixes;
+            if      (backbone == Yolo::Backbone::Darknet53)       prefixes = {"dn53_"};
+            else if (backbone == Yolo::Backbone::CSPDarknet53)    prefixes = {"csp53_"};
+            else if (backbone == Yolo::Backbone::DarknetTinyV3)   prefixes = {"dntv3_"};
+            else if (backbone == Yolo::Backbone::CSPDarknet53v11) prefixes = {"c8_stem", "c8_s1_", "c8_s2_", "c8_s3_", "c8_s4_", "c8_sppf_"};
+            if (prefixes.empty()) return;
             for (auto& layer : yolo.get_layers())
-                if (layer && layer->get_label().rfind(prefix, 0) == 0)
-                    layer->set_is_trainable(trainable);
-            cout << (trainable ? "Unfreezing" : "Freezing") << " backbone layers (" << prefix << "*).\n";
+                if (layer)
+                    for (const auto& p : prefixes)
+                        if (layer->get_label().rfind(p, 0) == 0)
+                            { layer->set_is_trainable(trainable); break; }
+            cout << (trainable ? "Unfreezing" : "Freezing") << " backbone layers (c8_stem, c8_s1..s4, c8_sppf).\n";
         };
 
         struct TrainingRound { float lr; int epochs; };
@@ -947,6 +983,7 @@ int main(int argc, char* argv[])
             (use_voc && is_darknet53)     ? vector<TrainingRound>{{1.25e-4f, 150}, {2.5e-5f, 150}, {1e-5f, 100}} :
             use_voc                       ? vector<TrainingRound>{{5e-4f, 150}, {1e-4f, 150}, {3e-5f, 100}}      :
             use_raccoon                   ? vector<TrainingRound>{{5e-4f, 400}, {1e-4f, 300}}                     :
+            use_bccd                      ? vector<TrainingRound>{{1e-4f, 200}}                                     :
                                             vector<TrainingRound>{{1e-3f, 200}};
 
         const filesystem::path epochs_file =
@@ -1012,20 +1049,36 @@ int main(int argc, char* argv[])
 
         // Per-epoch CSV log: epoch,train_error,val_error
         const auto csv_path = data_dir / "training_errors.csv";
-        
+
         std::ofstream csv_log(csv_path, std::ios::app);
-        
+
         csv_log << "epoch,train_error,val_error\n";
+
+        // Cosine LR parameters (active when use_cosine_lr=true).
+        // Peak is set at the start of each training round; cosine decays to lr_cosine_min
+        // over cosine_total_epochs from epoch 0 (backbone-freeze warmup counts too).
+        const float cosine_lr_peak        = 1e-4f;
+        const float cosine_lr_min         = 1e-6f;
+        const int   cosine_total_epochs   = 205;  // 5 warmup + 200 cosine
 
         adam->post_epoch_callback = [&](Index epoch, float train_err, float val_err, Network*)
         {
             csv_log << (epochs_done + static_cast<int>(epoch)) << ","
                     << train_err << "," << val_err << "\n";
             csv_log.flush();
+
+            if (use_cosine_lr)
+            {
+                const int global_epoch = epochs_done + static_cast<int>(epoch) + 1;
+                const float t = float(global_epoch) / float(cosine_total_epochs);
+                const float cosine_lr = cosine_lr_min + 0.5f * (cosine_lr_peak - cosine_lr_min)
+                    * (1.0f + std::cos(float(M_PI) * std::min(t, 1.0f)));
+                adam->set_learning_rate(std::max(cosine_lr, cosine_lr_min));
+            }
         };
 
         // Short cap for quick experiments; effectively unlimited for large datasets.
-        adam->set_maximum_time((use_voc || use_coco || use_raccoon) ? float(1e9) : 600.0f);
+        adam->set_maximum_time((use_voc || use_coco || use_raccoon || use_bccd) ? float(1e9) : 600.0f);
 
         if (!eval_only && (resume_training || !std::filesystem::exists(weights_path)))
         {
@@ -1140,7 +1193,7 @@ int main(int argc, char* argv[])
         const vector<Index> selection_indices = dataset.get_sample_indices("Validation");
         const Index num_classes = dataset.get_classes_number();
         vector<Index> vis_indices;
-        const bool is_synthetic = !use_voc && !use_raccoon && !use_coco;
+        const bool is_synthetic = !use_voc && !use_raccoon && !use_coco && !use_bccd;
         const Index max_vis = is_synthetic ? num_classes : Index(9);
         if (is_synthetic)
         {

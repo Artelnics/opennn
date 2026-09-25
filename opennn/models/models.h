@@ -309,6 +309,7 @@ public:
 #ifndef OPENNN_NO_VISION
 Index load_darknet_backbone(Network&, const filesystem::path&, Index);
 Index load_darknet_backbone_v11(Network&, const filesystem::path&);
+Index load_yolov8s_onnx(Network&, const filesystem::path& onnx_path, Index n_classes);
 #endif
 
 }

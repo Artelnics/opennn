@@ -103,6 +103,14 @@ public:
 
     void load_darknet_weights(FILE*);
 
+    // ONNX weight loaders — kernels are expected in NCHW layout (Ultralytics/PyTorch).
+    // Ultralytics ONNX export folds BN into conv: folded_conv_bn takes the BN-folded
+    // kernel and bias (no separate BN tensors) and stores them with identity BN so
+    // inference is mathematically equivalent.
+    void load_onnx_folded_conv_bn(const float* kernel_nchw, const float* folded_bias);
+    void load_onnx_conv_bias(const float* bias, const float* kernel_nchw);
+    void reinit_onnx_cls_out(float prior_bias);
+
     void read_JSON_body(const Json*) override;
     void write_JSON_body(JsonWriter&) const override;
     void on_loaded() override { update_convolution_operator(); }

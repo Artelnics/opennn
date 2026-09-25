@@ -3,6 +3,7 @@
 
 #include "opennn/network/operators/batch_norm_operator.h"
 
+#include <iostream>
 #include "opennn/core/cuda/cudnn_frontend_utilities.h"
 #ifdef OPENNN_HAS_CUDA
 #include "opennn/core/cuda/kernel_cast.cuh"
@@ -236,6 +237,21 @@ void BatchNormalizationOperator::back_propagate(ForwardPropagation& forward_prop
 
     if (!delta.is_cuda())
     {
+        if (delta.empty())
+        {
+            // Output delta not allocated for this layer's slot. This happens when
+            // a backbone layer's input (from the data pipeline) is outside the trainable
+            // range so no input-delta entry was created in build_delta_layout. With an
+            // empty delta there is no gradient to back-propagate through BN.
+            const auto& s = input.get_shape();
+            std::cout << "[BN_DEBUG] empty output-delta at layer=" << layer
+                      << " input_shape=(" << (s.get_rank()>0?int(s[0]):-1) << ","
+                      << (s.get_rank()>1?int(s[1]):-1) << ","
+                      << (s.get_rank()>2?int(s[2]):-1) << ","
+                      << (s.get_rank()>3?int(s[3]):-1) << ")"
+                      << " input_cuda=" << input.is_cuda() << std::endl;
+            return;
+        }
         if (!residual_delta.empty()) copy(delta, residual_delta);
         return apply_delta_cpu(input, mean, inverse_variance, delta);
     }
@@ -794,6 +810,33 @@ void BatchNormalizationOperator::apply_delta_gpu(
             store_as_bfloat16(*staging, dx_fp32, delta.get_data());
     }))
         return;
+
+    // On SM 8.0+ (Ampere / Ada / Hopper / Blackwell) cudnnBatchNormalizationBackward
+    // is deprecated and returns CUDNN_STATUS_INTERNAL_ERROR (5003).  The cuDNN
+    // Frontend path above is the preferred route; when it gets disabled (e.g. after
+    // a first-call plan failure) fall to the own CUDA kernel rather than crashing.
+    if (cudnn_frontend::device_sm_version() >= 800)
+    {
+        const Index rows = input.size() / features;
+        float* partials = ensure_bf16_to_fp32_workspace(
+            2 * batchnorm_partial_rows(rows) * features);
+        const bool xhat_from_y = fuse_relu && !fuse_add && !bf16;
+        input.dispatch([&]<typename T>()
+        {
+            batchnorm_backward_fused_cuda<T>(
+                rows, features,
+                input.as<T>(), delta.as<T>(),
+                fuse_relu ? output.as<T>() : nullptr,
+                nullptr,
+                gamma.as<float>(), beta.as<float>(),
+                mean.as<float>(), inverse_variance.as<float>(),
+                xhat_from_y,
+                has_residual ? residual_delta.as<T>() : nullptr,
+                gamma_gradient.as<float>(), beta_gradient.as<float>(),
+                partials);
+        });
+        return;
+    }
 
     if (fuse_relu)
         activation_backward(output, delta, ActivationFunction::ReLU);
