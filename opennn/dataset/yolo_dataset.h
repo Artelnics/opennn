@@ -98,6 +98,7 @@ public:
     static constexpr Index MAX_GT_BOXES = 100;
 
     void set_v8_mode(bool enabled);
+    bool get_v8_mode() const { return v8_mode; }
 
     void set(const filesystem::path&,
              const filesystem::path&,
@@ -134,6 +135,8 @@ public:
         bool flip = true;
         bool enabled = true;
         bool mosaic = false;
+        int   cutout_count          = 0;     // 0 = disabled; TODO: wire editor UI
+        float cutout_max_size_ratio = 0.04f; // max patch side = max(H,W) * ratio
     };
 
     void set_augmentation_policy(const AugmentationPolicy&);

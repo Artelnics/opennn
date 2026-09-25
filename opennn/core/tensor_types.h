@@ -6,6 +6,8 @@
 #include "opennn/core/opennn_types.h"
 #include "opennn/core/configuration.h"
 #include "opennn/core/device_backend.h"
+#include <execinfo.h>
+#include <cstdio>
 
 namespace opennn
 {
@@ -697,8 +699,23 @@ struct TensorView
 private:
     void require_host_fp32(string_view accessor) const
     {
-        throw_if(device != Device::CPU || type != Type::FP32,
-                 "{} requires CPU FP32 storage.", accessor);
+        if (device != Device::CPU || type != Type::FP32)
+        {
+            const char* dev_str = (device == Device::CUDA) ? "CUDA" : "CPU";
+            const char* typ_str = (type == Type::BF16) ? "BF16" : (type == Type::FP32 ? "FP32" : "other");
+            void* bt[32];
+            int n = backtrace(bt, 32);
+            char** syms = backtrace_symbols(bt, n);
+            std::cout << "[TENSOR_DEBUG] accessor=" << string(accessor)
+                      << " device=" << dev_str << " type=" << typ_str
+                      << " rank=" << int(shape.get_rank()) << "\n";
+            for (int i = 0; i < n; ++i)
+                std::cout << "  [" << i << "] " << (syms ? syms[i] : "?") << "\n";
+            std::cout << std::flush;
+            std::free(syms);
+            throw_if(true, "{} requires CPU FP32 storage. [device={} type={} rank={}]",
+                     accessor, dev_str, typ_str, int(shape.get_rank()));
+        }
     }
 
     void require_host_fp32_data(string_view accessor) const

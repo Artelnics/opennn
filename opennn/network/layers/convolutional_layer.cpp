@@ -381,6 +381,73 @@ void Convolutional::load_darknet_weights(FILE* f)
 #endif
 }
 
+void Convolutional::load_onnx_folded_conv_bn(const float* kernel_nchw,
+                                             const float* folded_bias)
+{
+    const Index O  = convolution.kernels_number;
+    const Index kH = convolution.kernel_height;
+    const Index kW = convolution.kernel_width;
+    const Index I  = convolution.kernel_channels;
+
+    // ONNX NCHW [O,I,kH,kW] → OpenNN OHWI [O,kH,kW,I]
+    float* dst = convolution.weights.as<float>();
+    for (Index o = 0; o < O; ++o)
+        for (Index h = 0; h < kH; ++h)
+            for (Index w = 0; w < kW; ++w)
+                for (Index i = 0; i < I; ++i)
+                    dst[o*kH*kW*I + h*kW*I + w*I + i] =
+                        kernel_nchw[o*I*kH*kW + i*kH*kW + h*kW + w];
+
+    // BN is folded into the ONNX conv.bias.  Set BN to identity so the combined
+    // computation stays equivalent: BN(x) = 1*(x-0)/sqrt(1+eps) + folded_bias ≈ x + folded_bias.
+    std::fill(batch_norm.gamma.as<float>(),            batch_norm.gamma.as<float>()            + O, 1.0f);
+    std::copy(folded_bias,                             folded_bias                             + O, batch_norm.beta.as<float>());
+    std::fill(batch_norm.running_mean.as<float>(),     batch_norm.running_mean.as<float>()     + O, 0.0f);
+    std::fill(batch_norm.running_variance.as<float>(), batch_norm.running_variance.as<float>() + O, 1.0f);
+    batch_norm.invalidate_inference_cache();
+
+#ifdef OPENNN_HAS_CUDA
+    folded_dirty = true;
+#endif
+}
+
+void Convolutional::load_onnx_conv_bias(const float* bias, const float* kernel_nchw)
+{
+    const Index O  = convolution.kernels_number;
+    const Index kH = convolution.kernel_height;
+    const Index kW = convolution.kernel_width;
+    const Index I  = convolution.kernel_channels;
+
+    std::copy(bias, bias + O, convolution.bias.as<float>());
+
+    float* dst = convolution.weights.as<float>();
+    for (Index o = 0; o < O; ++o)
+        for (Index h = 0; h < kH; ++h)
+            for (Index w = 0; w < kW; ++w)
+                for (Index i = 0; i < I; ++i)
+                    dst[o*kH*kW*I + h*kW*I + w*I + i] =
+                        kernel_nchw[o*I*kH*kW + i*kH*kW + h*kW + w];
+
+#ifdef OPENNN_HAS_CUDA
+    folded_dirty = true;
+#endif
+}
+
+void Convolutional::reinit_onnx_cls_out(float prior_bias)
+{
+    const Index O  = convolution.kernels_number;
+    const Index kH = convolution.kernel_height;
+    const Index kW = convolution.kernel_width;
+    const Index I  = convolution.kernel_channels;
+
+    std::fill(convolution.bias.as<float>(),    convolution.bias.as<float>()    + O,            prior_bias);
+    std::fill(convolution.weights.as<float>(), convolution.weights.as<float>() + O*kH*kW*I,   0.0f);
+
+#ifdef OPENNN_HAS_CUDA
+    folded_dirty = true;
+#endif
+}
+
 void Convolutional::forward_propagate(ForwardPropagation& forward_propagation, size_t layer, ForwardPropagationMode pass)
 {
 #ifdef OPENNN_HAS_CUDA

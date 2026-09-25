@@ -50,6 +50,23 @@ public:
     void add_objective(const string&, Objective::Sense, float value = 0.0f);
     void add_constraint(const string&, Constraint::Condition, const vector<float>& values = {});
 
+    void clear_objectives() { objectives.clear(); }
+    Index get_objectives_number() const { return static_cast<Index>(objectives.size()); }
+    bool is_objective(const string& name) const;
+
+    struct Objectives
+    {
+        const ResponseOptimization& problem;
+        VectorR utopian;
+
+        explicit Objectives(const ResponseOptimization& p);
+        MatrixR extract(const MatrixR& inputs, const MatrixR& outputs) const;
+        float utopian_and_sense(Index row, Index col) const;
+        void update_utopian_from_points(const MatrixR& values);
+    };
+
+    pair<Index, VectorR> get_advised_point(const MatrixR& results) const;
+
     void set_iterations_number(Index);
     void set_points_number(Index);
 
