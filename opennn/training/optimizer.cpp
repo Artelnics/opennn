@@ -128,6 +128,7 @@ InferenceShapePolicy loss_inference_policy(const Loss& loss)
 {
     InferenceShapePolicy policy;
     policy.retained_output_layers = loss.get_output_delta_layer_indices();
+    policy.capture_binary_logits = loss.get_error() == Loss::Error::CrossEntropy;
     return policy;
 }
 

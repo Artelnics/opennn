@@ -213,21 +213,15 @@ Tensor3 Evaluation::calculate_error_data() const
 
     Tensor3 error_data(testing_samples_number, 3, outputs_number);
 
-    const MatrixR absolute_errors = (targets - outputs).array().abs();
-
 #pragma omp parallel for
-    for (Index i = 0; i < outputs_number; ++i)
+    for (Index sample = 0; sample < testing_samples_number; ++sample)
     {
-        const float range = ranges(i);
-
-        for (Index j = 0; j < testing_samples_number; ++j)
-        {
-            const float abs_err = absolute_errors(j, i);
-            const float scaled = abs_err / range;
-            error_data(j, 0, i) = abs_err;
-            error_data(j, 1, i) = scaled;
-            error_data(j, 2, i) = scaled * 100.0f;
-        }
+        // Each sample owns one contiguous 3-by-outputs block of the row-major tensor.
+        Eigen::Map<MatrixR> channels(error_data.data() + sample * 3 * outputs_number,
+                                     3, outputs_number);
+        channels.row(0) = (targets.row(sample) - outputs.row(sample)).cwiseAbs();
+        channels.row(1) = channels.row(0).array() / ranges.transpose().array();
+        channels.row(2) = channels.row(1) * 100.0f;
     }
 
     return error_data;

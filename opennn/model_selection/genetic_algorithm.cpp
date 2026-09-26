@@ -8,6 +8,7 @@
 #include "opennn/dataset/dataset.h"
 #include "opennn/model_selection/cross_validation.h"
 #include "opennn/model_selection/selection_utilities.h"
+#include "opennn/model_selection/weighted_selection.h"
 #include "opennn/training/training.h"
 
 namespace opennn
@@ -275,8 +276,6 @@ void GeneticAlgorithm::perform_selection()
 {
     const Index individuals_number = get_individuals_number();
 
-    const float fitness_sum = fitness.sum();
-
     selected.setConstant(false);
 
     const Index individuals_to_be_selected = individuals_number/2;
@@ -284,23 +283,8 @@ void GeneticAlgorithm::perform_selection()
     if (elitism_size != 0)
         selected = (fitness.array() > float(individuals_number - elitism_size)).matrix();
 
-    VectorR fitness_cumsum(individuals_number);
-    partial_sum(fitness.data(), fitness.data() + individuals_number, fitness_cumsum.data());
-
-    Index selected_count = selected.count();
-
-    while (selected_count < individuals_to_be_selected)
-    {
-        const float arrow = random_uniform(0.0f, fitness_sum);
-
-        const Index i = min(static_cast<Index>(upper_bound(fitness_cumsum.data(), fitness_cumsum.data() + individuals_number, arrow) - fitness_cumsum.data()), individuals_number - 1);
-
-        if (!selected(i))
-        {
-            selected(i) = true;
-            ++selected_count;
-        }
-    }
+    detail::fill_weighted_selection(fitness, individuals_to_be_selected, selected,
+                                    [] { return random_uniform(0.0f, 1.0f); });
 }
 
 vector<Index> GeneticAlgorithm::get_selected_indices() const

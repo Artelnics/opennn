@@ -149,6 +149,11 @@ reported duration measures completed GPU work rather than command submission.
 
 For footprint startup measurements, the process lifetime is itself the work;
 do not amortize startup by placing several questions in one process.
+`run.py --family footprint --rounds N` starts a fresh process for each of the
+three questions in every round, records the round number, and reverses engine
+order on even rounds. It does not reuse a startup process for memory or export.
+`--footprint-questions export` selects only export for a targeted repeat; the
+default is `memory,startup,export`.
 
 Footprint memory/startup run on CPU FP32. Record internal prediction timers
 with their scope: OpenNN starts at main entry, after dynamic loading; PyTorch
@@ -158,6 +163,15 @@ monotonic `process_lifetime_seconds` spans process creation, execution,
 teardown and output collection, excluding monitor shutdown. It is the common
 external metric, not first-response latency. `wall_seconds` is its rounded
 legacy alias.
+
+Footprint export creates a fresh seeded 3 → 64 → 1 Tanh model in each engine
+and serializes it without training. The parent process lifetime includes
+runtime startup, model construction and serialization; it is not an isolated
+serialization timer. OpenNN writes C and Python source, while PyTorch writes
+TorchScript, so report their times and byte counts with the artifact formats
+and runtime requirements rather than treating unequal formats as a direct
+export-speed ratio. Generated Python source imports NumPy and pandas; file
+sizes exclude those dependencies.
 
 Footprint's typed `baseline_ram_mib` is a point-in-time resident-set reading:
 Linux RSS or Windows working set, including file-backed resident pages. Do not
@@ -571,15 +585,61 @@ manifest and shared binary tensors. Input identity is checked before training.
   rows only and scores in original target units. The prepared source retains the
   existing `prepare.py` missing-value interpolation; this is not a new raw-data
   cleaning study. The model uses a plain LSTM and head on prepared tensors.
-- CNN splits each class 80/20 with a fixed seed, rejects identical image content
-  across splits, and performs one shared RGB/bilinear resize. Both models divide
-  the same uint8 inputs by 255. All classes remain present; no augmentation is used.
+- CNN keeps the first sorted class/path for byte-identical images before splitting
+  each class 80/20 with a fixed seed. It checks that no content hash crosses the
+  split, mixes the rows of each split deterministically, and performs one shared
+  RGB/bilinear resize. Both models divide the same uint8 inputs by 255. OpenNN's
+  optimizer skips the leading image-scaling layer for training batches, so its
+  quality-data loader divides training pixels by 255 before that skip; normal
+  inference feeds raw uint8 values through the scaling layer. Class-grouped rows
+  and unscaled training pixels are separate defects: mixing rows alone does not
+  correct a train/inference input-scale mismatch. All
+  classes remain present; no augmentation is used.
 - Transformer deduplicates normalized pairs before a fixed 90/10 split. One
   vocabulary is fitted on training text and used by both engines. PAD/BOS/EOS
   handling, shifted decoder inputs and reference text are shared. Training uses
   causal decoder attention, dropout zero and cross-entropy averaged over non-PAD
-  tokens. Scoring uses greedy autoregressive predictions through EOS or the
+  tokens. The OpenNN quality driver applies `set_parameters_pytorch` to its
+  trainable operators and initializes token embeddings from N(0, 1) like
+  PyTorch. The seeded parameter tensors are independent across engines.
+  Scoring uses greedy autoregressive
+  predictions through EOS or the
   fixed length, not teacher-forced token guesses. The SacreBLEU signature is saved.
+  The prepared WMT14 pair file is already tokenized and has lost some non-ASCII
+  characters. Its BLEU is a paired diagnostic, not comparable to standard
+  untokenized WMT14 leaderboard scores.
+
+For an intact-text translation diagnostic, prepare the News Commentary v9
+English–German archive already downloaded under `wmt14/raw` with
+`--transformer-tokenizer sentencepiece --transformer-text-source
+news_commentary_v9_raw`. This fits a shared 20,000-piece SentencePiece BPE
+vocabulary on training sentences only, retains original Unicode and case, and
+stores the tokenizer model and exact reference sentences with the tensor hashes.
+The held-out corpus remains a News Commentary split, not the official WMT14
+newstest evaluation set. Full greedy decoding is costly; a predeclared random
+subset can be prepared with `--transformer-test-samples 1000`. The manifest
+records its size, source test size, sampling seed and sampled-index hash, and
+both frameworks score exactly those rows. A perfect target-token replay should
+score close to 100 BLEU before using any trained predictions.
+For budget selection, use seed `20260915` as a pilot subset. Prepare the locked
+final subset with `--transformer-test-seed 20260916
+--transformer-exclude-test-seed 20260915` and the same size. The exclusion and
+selected-index hashes are recorded, giving zero overlap while retaining the
+same training tensors and tokenizer. Do not use the pilot's generated BLEU as
+the final parity result.
+After selecting a longer budget on the pilot, retain both trained checkpoints
+with `OPENNN_QUALITY_SAVE_CHECKPOINT=yes`. Evaluate those same checkpoints on
+the locked subset using `--checkpoint-run-dir /path/to/pilot/run`; this skips
+retraining and scores only the excluded test rows. The runner requires identical
+training tensors, vocabulary, profile, budget, batch, device, precision,
+threads and driver hashes, and verifies the final subset's exclusion hash
+against the pilot's selected-index hash. Record checkpoint file hashes in the
+final result. The pilot serves as a budget-selection set; the locked subset
+remains the independent held-out quality result.
+
+`--cnn-dataset cifar10` supplies a second, official 50,000/10,000 split for
+diagnosing ResNet-50 quality and training/inference consistency. It is reported
+separately from the ImageNet subset row.
 
 These splits and preprocessing rules differ from speed-only datasets that were
 used entirely for timing. Existing published speed figures are not relabeled as
@@ -611,17 +671,74 @@ Python wheel's cuDNN library.
 
 Adam uses beta1 .9, beta2 .999 and float32 epsilon in both engines. The default
 learning rate is .001, or .0001 for Transformer. There is no regularization,
-gradient clipping, early stopping, best-checkpoint restoration, training warm-up
-or CUDA graph replay. The prepared order is fixed and both engines train every
+gradient clipping, early stopping, best-checkpoint restoration or CUDA graph
+replay. OpenNN's CUDA trainer performs setup warm-up on full and tail batches,
+then restores parameters, model states and optimizer state before the counted
+epochs. The prepared order is fixed and both engines train every
 tail sample. Use a batch that avoids singleton CNN training batches because
 training batch normalization needs more than one value per channel.
+The one-output LSTM training loss is half the mean squared error in both
+engines, matching OpenNN's `sum_squared_error / (2 * batch)` convention.
+Held-out RMSE retains its ordinary definition. Earlier PyTorch quality runs
+used ordinary MSE; their doubled gradients are part of the historical record
+and are not retroactively corrected by this benchmark change.
 
-Initial weights are independently seeded, **not identical tensors**. Dense
+By default, initial weights are independently seeded, **not identical tensors**. Dense
 uses Glorot initialization, LSTM follows each implementation's PyTorch-style
-initialization, and CNN/Transformer retain their engine initialization policies.
+initialization, and OpenNN's CNN and Transformer drivers apply the
+operator-level PyTorch-style initializer instead of their generic fixed-range
+defaults. Transformer token embeddings start from normal(0, 1) in both engines.
+These policies match broad parameter scales but do not assert identical random
+tensors or every per-layer initializer rule.
 Backend rounding and mixed-precision policies can also differ. These are
 framework training-outcome comparisons, not a claim of identical optimization
 trajectories. Review those differences before explaining a score gap.
+
+Tensor dtype alone does not establish every kernel's arithmetic precision.
+The quality runners set `NVIDIA_TF32_OVERRIDE=0`, but this is distinct from
+OpenNN's `OPENNN_ALLOW_TF32` policy and from cuDNN RNN math types. Before calling
+a run strict FP32, inspect the actual recurrent descriptors at the training
+and tail batch sizes, convolution engine numerical properties, and attention
+dispatch. Native fused SDPA can explicitly pack FP32 inputs into BF16;
+ordinary quality profiles are below its default activation threshold, but
+longer sequences or inherited overrides can change that choice. Preserve
+effective controls and runtime evidence with the result. A precision-policy
+change requires a new result set and does not revalidate older speed figures.
+
+For a controlled comparison, add `--initialization shared`. Before either
+engine starts, the runner generates one named FP32 tensor artifact per model
+and seed using a NumPy PCG64 stream. Both engines load the same logical weights,
+biases, normalization state and positional encodings; the native importer
+explicitly converts matrix, convolution and LSTM gate layouts. The policy is
+recorded in the artifact and is distinct from either framework's defaults.
+The runner retains tensor hashes, initial predictions, an immutable trial plan,
+and all failures. A shared-initialization result describes this controlled
+policy; it does not establish equivalence of the frameworks' default workflows.
+
+Investigate numerical agreement before interpreting a training-quality gap:
+
+```bash
+python benchmarks/tools/quality_numerics.py \
+  --manifest "$OPENNN_BENCH_DATA/quality-smoke/dense/manifest.json" \
+  --opennn-binary /path/to/cpu/bin/quality_opennn \
+  --device cpu --precision fp32 --batch 4 --steps 3 --seed 42
+```
+
+This separate diagnostic repeats a fixed first training batch and compares
+initial predictions, losses, gradients and updated parameters in a common tensor
+layout. It reports absolute and relative differences without certifying quality
+parity. Translation comparisons report active and padded positions separately;
+padding logits do not enter the training loss. Repeat with the other families
+and the actual CPU/CUDA and FP32/BF16 settings under investigation. Synthetic
+fixtures establish neither achieved task quality nor a performance advantage.
+Parameter diagnostics compare FP32 optimizer master weights in both engines;
+BF16 compute mirrors must not be compared against FP32 masters as if they
+represented optimizer error. The CUDA BF16 LSTM driver explicitly casts recurrent
+operands to BF16 while retaining FP32 masters and moments. Its recurrent
+precision policy is recorded in driver metadata: the tested PyTorch autocast
+implementation otherwise selected FP16 for the recurrence. Use a cuDNN runtime
+supporting BF16 LSTM in both processes and retain unsupported configurations as
+failures. This controlled precision policy differs from default autocast.
 
 ### Results and smoke checks
 
@@ -631,11 +748,28 @@ plus an aggregate JSON, CSV and a Markdown table. Failed runs are retained and
 make the command return nonzero. The scorer reports means and sample standard
 deviations; one seed has no estimated standard deviation. Metrics are compared
 within a model, never averaged across different tasks.
+Paired analyses additionally report the OpenNN-minus-PyTorch difference and an
+oriented advantage (positive always favors OpenNN), with Student-t intervals
+across complete seed blocks. Missing, failed, duplicate and unplanned pairs
+remain visible. These intervals are conditional on the fixed held-out dataset.
+Matching seed labels in historical native-initialization runs does not imply
+that those engines received identical initial tensors.
+Set `OPENNN_QUALITY_PROBE=yes` to save matching eight-sample train/test
+teacher-forced Transformer diagnostics from both engines. Set
+`OPENNN_QUALITY_SAVE_CHECKPOINT=yes` to retain each trained model's parameters
+outside the checkout for later audits; the two checkpoint formats differ.
 
 The quality gate is deliberately **unassessed**. Similar averages, overlapping
 spread or successful execution alone do not establish equivalence. Review
 achieved task quality and declare acceptable differences before a parity claim.
 Full training runs have not been substituted by synthetic checks.
+Equivalence, noninferiority and superiority are distinct questions. The
+statistics helper never invents a quality tolerance or treats a historical
+analysis as confirmation. A final claim requires a frozen protocol, scientifically
+justified task-specific tolerances where applicable, adequate achieved quality,
+and complete independent confirmation. A negative observed difference is
+retained even when its interval includes zero. A zero loss tolerance must not
+be silently replaced with a more permissive margin.
 
 For a quick end-to-end check of all model paths, including a test tail batch:
 

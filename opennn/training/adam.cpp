@@ -92,6 +92,14 @@ void Adam::set_beta_2(const float new_beta_2)
     beta_2 = new_beta_2;
 }
 
+void Adam::set_epsilon(const float new_epsilon)
+{
+    throw_if(!std::isfinite(new_epsilon) || new_epsilon <= 0.0f,
+             "Adam::set_epsilon: epsilon must be finite and positive.");
+
+    epsilon = new_epsilon;
+}
+
 void Adam::configure_for_task(NetworkTask task)
 {
     static constexpr float language_model_learning_rate = 0.0001f;
@@ -182,7 +190,7 @@ void Adam::update_parameters(BackPropagation& back_propagation,
                 adam_update_cuda(
                     slice.values.size(), parameters + offset, moment, first_moment_bf16,
                     second_moment + offset, slice.values.as<float>(), beta_1, beta_2,
-                    learning_rate, EPSILON, correction_1, correction_2, slice_mirror);
+                    learning_rate, epsilon, correction_1, correction_2, slice_mirror);
         }
     };
 #endif
@@ -201,7 +209,7 @@ void Adam::update_parameters(BackPropagation& back_propagation,
 
         DeviceStream stream = device::get_compute_stream();
         adam_prepare_capturable_cuda(
-            beta_1, beta_2, graph_base_learning_rate, EPSILON,
+            beta_1, beta_2, graph_base_learning_rate, epsilon,
             graph_step, graph_learning_rate, graph_epsilon, stream);
 
         update_gpu(graph_scalars, stream);
@@ -243,7 +251,7 @@ void Adam::update_parameters(BackPropagation& back_propagation,
 
     const float sqrt_bias_correction_2 = sqrt(bias_correction_2);
     const float effective_learning_rate = learning_rate * sqrt_bias_correction_2 / bias_correction_1;
-    const float effective_epsilon = EPSILON * sqrt_bias_correction_2;
+    const float effective_epsilon = epsilon * sqrt_bias_correction_2;
 
     for (const BackPropagation::GradientSlice& slice : gradient_slices)
     {
@@ -277,6 +285,7 @@ void Adam::to_JSON(JsonWriter& printer) const
     add_json_field(printer, "LearningRate", learning_rate);
     add_json_field(printer, "Beta1", beta_1);
     add_json_field(printer, "Beta2", beta_2);
+    add_json_field(printer, "Epsilon", epsilon);
     add_json_field(printer, "BF16FirstMoment", bf16_first_moment);
     write_common_json(printer);
 
@@ -291,6 +300,7 @@ void Adam::from_JSON(const JsonDocument& document)
     set_learning_rate(read_json_float(root_element, "LearningRate", learning_rate));
     set_beta_1(read_json_float(root_element, "Beta1", beta_1));
     set_beta_2(read_json_float(root_element, "Beta2", beta_2));
+    set_epsilon(read_json_float(root_element, "Epsilon", epsilon));
     set_bf16_first_moment(read_json_bool(root_element, "BF16FirstMoment", bf16_first_moment));
     read_common_json(root_element);
 }

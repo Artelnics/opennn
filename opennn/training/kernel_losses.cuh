@@ -22,6 +22,12 @@ template<typename T>
 void binary_cross_entropy_cuda(const Index, float*, const float*, const T*, const float);
 
 template<typename T>
+void binary_cross_entropy_logits_cuda(const Index, float*, const float*, const T*);
+
+template<typename TIn, typename TOut>
+void binary_cross_entropy_logits_gradient_cuda(const Index, const TIn*, const float*, float, TOut*);
+
+template<typename T>
 void binary_cross_entropy_gradient_cuda(const Index, T*, const float*, const T*, const float, const float);
 
 template<typename T>

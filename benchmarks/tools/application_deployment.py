@@ -37,6 +37,10 @@ DRIVER_STEMS = (
 
 
 def included(path):
+    if (path.name == "sitecustomize.py"
+            and re.fullmatch(r"python\d+(?:\.\d+)?", path.parent.name)
+            and path.parent.parent == Path("/etc")):
+        return False  # Optional distribution hook, not part of the app bundle.
     return not path.name.startswith(OS_STEMS + DRIVER_STEMS) and "/wsl/" not in str(
         path
     )

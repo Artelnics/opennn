@@ -377,6 +377,8 @@ def main() -> int:
     parser.add_argument("--epochs", type=int, default=5, help="timed epochs per launch")
     parser.add_argument("--repeats", type=int, default=5, help="timed passes, infer")
     parser.add_argument("--rounds", type=int, default=3, help="launches per engine, order rotated")
+    parser.add_argument("--footprint-questions", default="memory,startup,export",
+                        help="footprint only: comma-separated memory,startup,export questions")
     parser.add_argument("--hidden", type=int, default=1024, help="dense")
     parser.add_argument("--layers", type=int, default=2, help="dense")
     parser.add_argument("--activation", default="relu", choices=("relu", "tanh"))
@@ -394,6 +396,16 @@ def main() -> int:
     parser.add_argument("--no-wait", action="store_true",
                         help="skip the cooldown between launches")
     args = parser.parse_args()
+    if args.rounds < 1:
+        parser.error("--rounds must be at least one")
+    footprint_questions = [item.strip() for item in args.footprint_questions.split(",")]
+    if args.family == "footprint":
+        allowed = FAMILIES["footprint"]["modes"]
+        if (not footprint_questions or any(item not in allowed for item in footprint_questions)
+                or len(footprint_questions) != len(set(footprint_questions))):
+            parser.error("--footprint-questions must list distinct memory,startup,export questions")
+    elif args.footprint_questions != "memory,startup,export":
+        parser.error("--footprint-questions applies only to the footprint family")
 
     data = FAMILIES[args.family]["data"](BENCH_DATA)
     missing = [str(p) for p in data.values() if not Path(p).exists()]
@@ -421,24 +433,27 @@ def main() -> int:
     if "modes" in FAMILIES[args.family]:
         # One process per question, because a startup cost is already paid by
         # anything sharing a process with it.
-        for question in FAMILIES[args.family]["modes"]:
-            for engine in engines:
-                outcome = launch(engine_command(args.family, engine) + [question],
-                                 not args.no_wait, "cpu", watched_cores=watched_cores)
-                outcome.update(engine=engine, batch=0, round=1, question=question)
-                outcome["footprint"] = footprint_metrics(outcome)
-                if not sys.platform.startswith("linux"):
-                    # The common anonymous-RSS peak sampler uses Linux procfs.
-                    outcome["instruments"].update(peak_mib=None, workload_mib=None,
-                        peak_file_mib=None, memory_metric=None,
-                        workload_note="anonymous_peak_sampler_unavailable; use footprint baseline_ram_mib")
-                launches.append(outcome)
-                reported = {k: v for k, v in outcome["fields"].items()
-                            if k not in ("engine", "mode", "RESULT")}
-                print(f"  {question:<8} {engine:<8} {reported}")
-                if question == "startup":
-                    print(f"    process lifetime (including teardown): {outcome['process_lifetime_seconds']:.6f} s")
-                note_activity(outcome)
+        for round_number in range(1, args.rounds + 1):
+            ordered_engines = engines if round_number % 2 else engines[::-1]
+            for question in footprint_questions:
+                for engine in ordered_engines:
+                    outcome = launch(engine_command(args.family, engine) + [question],
+                                     not args.no_wait, "cpu", watched_cores=watched_cores)
+                    outcome.update(engine=engine, batch=0, round=round_number,
+                                   question=question)
+                    outcome["footprint"] = footprint_metrics(outcome)
+                    if not sys.platform.startswith("linux"):
+                        # The common anonymous-RSS peak sampler uses Linux procfs.
+                        outcome["instruments"].update(peak_mib=None, workload_mib=None,
+                            peak_file_mib=None, memory_metric=None,
+                            workload_note="anonymous_peak_sampler_unavailable; use footprint baseline_ram_mib")
+                    launches.append(outcome)
+                    reported = {k: v for k, v in outcome["fields"].items()
+                                if k not in ("engine", "mode", "RESULT")}
+                    print(f"  round {round_number:>2} {question:<8} {engine:<8} {reported}")
+                    if question == "startup":
+                        print(f"    process lifetime (including teardown): {outcome['process_lifetime_seconds']:.6f} s")
+                    note_activity(outcome)
 
         busy_after = cpu_busy_fraction(cores=watched_cores)
         busy_during, busy_during_at = busiest_second(launches)

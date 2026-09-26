@@ -25,6 +25,8 @@ public:
     float get_learning_rate() const { return learning_rate; }
     void set_beta_1(const float);
     void set_beta_2(const float);
+    void set_epsilon(float);
+    float get_epsilon() const noexcept { return epsilon; }
 
     void set_bf16_first_moment(const bool enabled) { bf16_first_moment = enabled; }
     bool get_bf16_first_moment() const noexcept { return bf16_first_moment; }
@@ -49,6 +51,8 @@ private:
     float beta_1 = 0.9f;
 
     float beta_2 = 0.999f;
+
+    float epsilon = EPSILON;
 
     // Storage precision of the device first-moment slot: BF16 halves it to 2 bytes
     // per parameter, taking Adam's resident state from 8 to 6 bytes per parameter.

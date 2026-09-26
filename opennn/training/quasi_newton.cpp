@@ -2,6 +2,7 @@
 // Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
 
 #include "opennn/training/quasi_newton.h"
+#include "opennn/training/quasi_newton_update.h"
 
 #include "opennn/dataset/batch.h"
 #include "opennn/dataset/dataset.h"
@@ -23,45 +24,12 @@ QuasiNewton::QuasiNewton(Loss* new_loss)
 
 void QuasiNewton::calculate_inverse_hessian(OptimizerData& optimization_data) const
 {
-    VectorMap parameter_differences = optimization_data.views[ParameterDifferences].as_vector();
-    VectorMap gradient_difference = optimization_data.views[GradientDifference].as_vector();
-
-    VectorMap old_inverse_hessian_dot_gradient_difference =
-        optimization_data.views[OldInverseHessianDotGradientDifference].as_vector();
-
-    MatrixMap old_inverse_hessian = optimization_data.views[OldInverseHessian].as_matrix();
-    MatrixMap inverse_hessian     = optimization_data.views[InverseHessian].as_matrix();
-
-    VectorMap bfgs = optimization_data.views[BFGS].as_vector();
-
-    const float parameters_difference_dot_gradient_difference = parameter_differences.dot(gradient_difference);
-
-    old_inverse_hessian_dot_gradient_difference.noalias() = old_inverse_hessian * gradient_difference;
-
-    const float gradient_dot_hessian_dot_gradient = gradient_difference.dot(old_inverse_hessian_dot_gradient_difference);
-
-    if (parameters_difference_dot_gradient_difference <= EPSILON
-        || gradient_dot_hessian_dot_gradient <= EPSILON)
-    {
-        inverse_hessian = old_inverse_hessian;
-        return;
-    }
-
-    bfgs = (parameter_differences / parameters_difference_dot_gradient_difference)
-           - (old_inverse_hessian_dot_gradient_difference / gradient_dot_hessian_dot_gradient);
-
-    inverse_hessian = old_inverse_hessian;
-
-    inverse_hessian.selfadjointView<Lower>().rankUpdate(
-        parameter_differences, 1.0f / parameters_difference_dot_gradient_difference);
-
-    inverse_hessian.selfadjointView<Lower>().rankUpdate(
-        old_inverse_hessian_dot_gradient_difference, -1.0f / gradient_dot_hessian_dot_gradient);
-
-    inverse_hessian.selfadjointView<Lower>().rankUpdate(
-        bfgs, gradient_dot_hessian_dot_gradient);
-
-    inverse_hessian.triangularView<Upper>() = inverse_hessian.triangularView<Lower>().transpose();
+    detail::bfgs_inverse_update(
+        optimization_data.views[OldInverseHessian].as_matrix(),
+        optimization_data.views[ParameterDifferences].as_vector(),
+        optimization_data.views[GradientDifference].as_vector(),
+        optimization_data.views[InverseHessian].as_matrix(),
+        optimization_data.views[OldInverseHessianDotGradientDifference].as_vector());
 }
 
 void QuasiNewton::update_full_batch_parameters(const Batch& batch,

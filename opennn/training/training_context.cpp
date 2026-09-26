@@ -30,6 +30,9 @@ TrainingContext::TrainingContext(const Index batch_size, Loss& loss,
     forward.set(batch_size, network,
                 share_memory_with ? &share_memory_with->forward.arena : nullptr,
                 inputs_pre_scaled, arena_plan);
+    if (loss.get_error() == Loss::Error::CrossEntropy)
+        forward.enable_binary_logits(share_memory_with
+            ? &share_memory_with->forward.binary_logits_storage : nullptr);
 
     throw_if(share_memory_with && forward.arena.owns_memory(),
              "TrainingContext: {} samples did not fit in the arena of the {}-sample "

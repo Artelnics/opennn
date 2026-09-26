@@ -2,6 +2,8 @@
 
 #include "opennn/network/forward_propagation.h"
 #include "opennn/models/models.h"
+#include "opennn/training/loss.h"
+#include "opennn/training/training_context.h"
 
 using namespace opennn;
 
@@ -339,6 +341,94 @@ TEST(Transformer, TrainingArenaReusesResidualBranchOutputs)
     })) << "per-layer transient scratch was appended after the persistent arena "
            "instead of being placed in a non-overlapping lifetime hole";
 }
+
+namespace
+{
+
+void expect_training_scratch_preserves_live_deltas(Device device, Type precision)
+{
+    const auto previous = Configuration::instance().resolve();
+    struct RestoreConfiguration
+    {
+        EffectiveConfig previous;
+        ~RestoreConfiguration() { Configuration::instance().set(previous.device, previous.training_type); }
+    } restore{previous};
+    Configuration::instance().set(device, precision);
+
+    const auto overlaps = [](const TensorView& left, const TensorView& right)
+    {
+        if(left.empty() || right.empty()) return false;
+        const auto first = reinterpret_cast<uintptr_t>(left.get_data());
+        const auto second = reinterpret_cast<uintptr_t>(right.get_data());
+        return first < second + right.byte_size() && second < first + left.byte_size();
+    };
+
+    for(const bool joint_gradient : {false, true})
+    for(const bool fused_attention : {false, true})
+    {
+        SCOPED_TRACE(joint_gradient ? "joint gradient arena" : "separate gradient arena");
+        SCOPED_TRACE(fused_attention ? "fused attention eligible" : "unfused attention");
+        Transformer network(6, 6, 32, 32, 16, 1, 32, 1);
+        if(device == Device::CUDA && !network.is_gpu()) GTEST_SKIP() << "CUDA unavailable";
+        network.set_dropout_rate(0.0f);
+        network.set_attention_sdpa_min_sequence_length(fused_attention ? 1 : 1 << 20);
+        Loss loss(&network, nullptr);
+        loss.set_error(Loss::Error::CrossEntropy3d);
+        TrainingContext context(4, loss, false, nullptr, joint_gradient);
+        const auto& layers = network.get_layers();
+        const auto& sources = network.get_source_layers();
+
+        for(size_t layer = 0; layer < layers.size(); ++layer)
+            for(size_t slot = 1; slot < context.forward.slots[layer].size(); ++slot)
+            {
+                if(layers[layer]->get_forward_slot_kind(slot) != ForwardSlotKind::Transient)
+                    continue;
+                const TensorView& scratch = context.forward.slots[layer][slot];
+                if(scratch.empty()) continue;
+                SCOPED_TRACE(format("layer={} slot={}", layer, slot));
+                EXPECT_FALSE(overlaps(scratch, context.backward.output_deltas[layer]));
+
+                // A branch delta stays live from its consumer's backward call
+                // through its producer's call. Attention scratch is written
+                // at this layer's backward call and must preserve that delta.
+                for(size_t consumer = layer; consumer < layers.size(); ++consumer)
+                    for(size_t input = 0; input < sources[consumer].size(); ++input)
+                    {
+                        const Index producer = sources[consumer][input];
+                        if(producer < 0 || size_t(producer) > layer
+                           || input + 1 >= context.backward.slots[consumer].size())
+                            continue;
+                        EXPECT_FALSE(overlaps(scratch, context.backward.slots[consumer][input + 1]))
+                            << "live branch " << producer << " -> " << consumer;
+                    }
+
+                // Two scratch slots in the same attention layer can be used
+                // together, including the FP32 pack in fused GPU attention.
+                for(size_t other = slot + 1; other < context.forward.slots[layer].size(); ++other)
+                    if(layers[layer]->get_forward_slot_kind(other) == ForwardSlotKind::Transient)
+                        EXPECT_FALSE(overlaps(scratch, context.forward.slots[layer][other]));
+            }
+    }
+}
+
+}
+
+TEST(Transformer, TrainingScratchPreservesLiveBranchDeltasCpu)
+{
+    expect_training_scratch_preserves_live_deltas(Device::CPU, Type::FP32);
+}
+
+#ifdef OPENNN_HAS_CUDA
+TEST(Transformer, TrainingScratchPreservesLiveBranchDeltasGpuFp32)
+{
+    expect_training_scratch_preserves_live_deltas(Device::CUDA, Type::FP32);
+}
+
+TEST(Transformer, TrainingScratchPreservesLiveBranchDeltasGpuBf16)
+{
+    expect_training_scratch_preserves_live_deltas(Device::CUDA, Type::BF16);
+}
+#endif
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2025 Artificial Intelligence Techniques, SL.

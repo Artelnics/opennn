@@ -84,14 +84,12 @@ def measure_startup() -> int:
     return 0
 
 def measure_export() -> int:
-    """PyTorch has no dependency-free source export, and that is the finding.
+    """Export a fresh benchmark model as TorchScript, which needs PyTorch to run.
 
-    OpenNN writes a `.c` and a `.py` that run with no runtime at all.
-    TorchScript and ONNX both produce artifacts that still need a runtime to
-    execute -- libtorch or onnxruntime -- so the sizes below are not
-    comparable to OpenNN's and are reported as what they are. Calling either
-    "standalone source" would be the wrong claim, which is why the
-    `standalone_source` flag is here rather than left implicit.
+    The OpenNN path writes standalone C source and Python source that imports
+    NumPy and pandas. These file sizes describe different artifact formats
+    and exclude the Python dependencies. This PyTorch path does not emit
+    standalone source, so its flag records that scope explicitly.
     """
     import torch
 
@@ -103,7 +101,9 @@ def measure_export() -> int:
     # litters the tree it runs from will eventually have one committed.
     import tempfile
 
-    target = Path(tempfile.mkdtemp(prefix="pytorch_footprint")) / "model.pt"
+    scratch = Path(tempfile.gettempdir()) / "pytorch_footprint"
+    scratch.mkdir(exist_ok=True)
+    target = scratch / "model.pt"
     scripted = torch.jit.script(model)
     scripted.save(str(target))
     size = target.stat().st_size

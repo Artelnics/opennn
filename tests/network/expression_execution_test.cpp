@@ -28,6 +28,7 @@
 #include "opennn/network/layers/scaling_layer.h"
 #include "opennn/network/layers/unscaling_layer.h"
 #include "opennn/core/statistics.h"
+#include "opennn/core/configuration.h"
 
 #include <array>
 #include <chrono>
@@ -436,6 +437,53 @@ void expect_export_matches(Target target, const string& directory_name,
 
 }
 
+TEST(ExpressionExecution, RenamedLayersAndInternalNameCollisionsMatchNetwork)
+{
+    Configuration::instance().set(Device::CPU, Type::FP32);
+    auto network = build_network();
+    network->set_input_names({"opennn_layer_0_output_0", "opennn layer 0 output 1", "third", "fourth"});
+    network->set_output_names({"opennn_layer_1_output_0", "result"});
+    for (const auto& layer : network->get_layers()) layer->set_label("renamed layer");
+    const MatrixR inputs = sample_inputs();
+    const MatrixR expected = network->calculate_outputs(inputs);
+    bool ran = false;
+    for (const Target target : {Target::Python, Target::C, Target::CEmbedded, Target::JavaScript})
+    {
+        if (!target_available(target)) continue;
+        ran = true;
+        SCOPED_TRACE(target_name(target));
+        expect_export_matches(target, "opennn_binding_collision", *network, inputs, expected);
+    }
+    if (!ran) GTEST_SKIP() << "No export runtime available.";
+}
+
+TEST(ExpressionExecution, DenseWithoutBiasMatchesNetwork)
+{
+    Configuration::instance().set(Device::CPU, Type::FP32);
+    Network network;
+    auto dense = make_unique<opennn::Dense>(Shape{2}, Shape{3}, "Tanh");
+    dense->set_use_bias(false);
+    network.add_layer(std::move(dense));
+    network.compile();
+    network.get_parameters_map().setLinSpaced(-0.7f, 0.9f);
+    network.set_input_variables(vector<Variable>(2));
+    network.set_output_variables(vector<Variable>(3));
+    network.set_input_names({"x", "y"});
+    network.set_output_names({"a", "b", "c"});
+    MatrixR inputs(3, 2);
+    inputs << -2, 1, 0, 0, 1, 3;
+    const MatrixR expected = network.calculate_outputs(inputs);
+    bool ran = false;
+    for (const Target target : {Target::Python, Target::C, Target::CEmbedded, Target::JavaScript})
+    {
+        if (!target_available(target)) continue;
+        ran = true;
+        SCOPED_TRACE(target_name(target));
+        expect_export_matches(target, "opennn_dense_without_bias", network, inputs, expected);
+    }
+    if (!ran) GTEST_SKIP() << "No export runtime available.";
+}
+
 TEST(ExpressionExecution, EveryDenseActivationMatchesEveryExecutableTarget)
 {
     constexpr std::array<const char*, 9> activations = {
@@ -492,6 +540,32 @@ TEST(ExpressionExecution, PythonModelMatchesTheNetworkItCameFrom)
 
     expect_export_matches(Target::Python, "opennn_expression_python",
                           *network, inputs, network->calculate_outputs(inputs));
+}
+
+TEST(ExpressionExecution, UnnamedNetworkExportsProducePredictions)
+{
+    Configuration::instance().set(Device::CPU, Type::FP32);
+    Network network;
+    network.add_layer(make_unique<opennn::Dense>(Shape{3}, Shape{1}, "Tanh"));
+    network.compile();
+    network.set_parameters(VectorR::LinSpaced(
+        network.get_parameters_buffer_size(), -0.5f, 0.5f));
+
+    MatrixR inputs(2, 3);
+    inputs << 0.25f, -0.5f, 1.0f,
+              -0.75f, 0.125f, 0.5f;
+    const MatrixR expected = network.calculate_outputs(inputs);
+
+    bool ran_target = false;
+    for (Target target : {Target::C, Target::Python})
+    {
+        if (!target_available(target)) continue;
+        ran_target = true;
+        expect_export_matches(target,
+            string("opennn_unnamed_") + target_name(target),
+            network, inputs, expected);
+    }
+    if (!ran_target) GTEST_SKIP() << "Neither Python nor a C compiler is available.";
 }
 
 TEST(ExpressionExecution, JavaScriptPreservesNumericAndOverlappingFeatureLabels)

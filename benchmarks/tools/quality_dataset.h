@@ -40,8 +40,22 @@ public:
 
     void from_JSON(const JsonDocument&) override { throw runtime_error("Use the quality data manifest"); }
     bool supports_bf16_inputs() const override { return decoder_shape.empty(); }
-    FeatureScaling prepare_training_scaling(VariableRole, const FeatureScaling& requested, Index) override
-    { return requested; } // prepared tensors; retain ResNet's fixed /255 scaling
+    FeatureScaling prepare_training_scaling(VariableRole role,
+                                            const FeatureScaling& requested,
+                                            Index expected_features) override
+    {
+        if (role == VariableRole::Input && input_shape.get_rank() == 3)
+        {
+            throw_if(expected_features != input_shape[2],
+                     "CNN scaling feature count must equal image channels");
+            for (ScalerMethod method : requested.scalers)
+                throw_if(method != ScalerMethod::ImageMinMax,
+                         "CNN quality dataset requires ImageMinMax input scaling");
+            pre_scale_images = true;
+        }
+        return requested;
+    }
+    void clear_training_scaling() noexcept override { pre_scale_images = false; }
 
     vector<float> read(const string& field, const vector<Index>& indices) const
     {
@@ -67,7 +81,13 @@ public:
     }
 
     void fill_inputs(const vector<Index>& indices, const vector<Index>&, float* output,
-                     FillMode, ColumnContiguity) const override { fill("x", indices, output); }
+                     FillMode, ColumnContiguity) const override
+    {
+        fill("x", indices, output);
+        if (pre_scale_images)
+            for (size_t i = 0; i < indices.size() * size_t(input_shape.size()); ++i)
+                output[i] /= 255.0f;
+    }
     void fill_targets(const vector<Index>& indices, const vector<Index>&, float* output,
                       FillMode, ColumnContiguity) const override { fill("y", indices, output); }
     void fill_decoder(const vector<Index>& indices, const vector<Index>&, float* output,
@@ -81,5 +101,6 @@ private:
     }
     filesystem::path root;
     Json specification;
+    bool pre_scale_images = false;
 };
 }

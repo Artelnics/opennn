@@ -15,6 +15,7 @@
 #include "opennn/network/detection_head.h"
 #include "opennn/network/forward_propagation.h"
 #include "opennn/network/network.h"
+#include "opennn/network/operators/activation_operator.h"
 #include "opennn/training/error_functions.h"
 #include "opennn/training/kernel_losses.cuh"
 
@@ -1428,7 +1429,9 @@ Loss::EvaluationResult Loss::calculate_error(const Batch& batch,
         result.error *= get_weighted_coefficient(batch);
         break;
     case CrossEntropy:
-        cross_entropy(input, target, result.error, workspace_device);
+        if (!forward_propagation.binary_logits.empty())
+            binary_cross_entropy_logits(forward_propagation.binary_logits, target, result.error, workspace_device);
+        else cross_entropy(input, target, result.error, workspace_device);
         break;
     case CrossEntropy3d:
     {
@@ -1545,6 +1548,15 @@ bool Loss::calculate_error_device_metrics(const Batch& batch,
         return true;
 
     case CrossEntropy:
+        if (!forward_propagation.binary_logits.empty())
+        {
+            const TensorView logits = forward_propagation.binary_logits;
+            logits.dispatch([&]<typename T>() {
+                binary_cross_entropy_logits_cuda<T>(logits.size(), workspace, target.as<float>(), logits.as<T>());
+            });
+            reduce_and_accumulate(1.0f / static_cast<float>(input.get_shape()[0]));
+            return true;
+        }
         input.dispatch([&]<typename T>()
         {
             if (input.get_shape().back() == 1)
@@ -1715,7 +1727,11 @@ void Loss::calculate_output_deltas(const Batch& batch, const ForwardPropagation&
         weighted_squared_error_gradient(input, target, positives_weight, negatives_weight, get_weighted_coefficient(batch), input_delta);
         break;
     case CrossEntropy:
-        cross_entropy_gradient(input, target, input_delta);
+        // The saved sigmoid head lets the loss differentiate with respect to
+        // logits directly, avoiding division by a saturated probability.
+        if (!forward_propagation.binary_logits.empty())
+            binary_cross_entropy_logits_gradient(forward_propagation.binary_logits, target, input_delta);
+        else cross_entropy_gradient(input, target, input_delta);
         break;
     case CrossEntropy3d:
         cross_entropy_3d_gradient(input, target, input_delta, back_propagation.metrics.active_tokens_count);
@@ -1756,7 +1772,18 @@ void Loss::back_propagate_layers(ForwardPropagation& forward_propagation,
         }
         forward_propagation.recompute_for_backward(i);
         PROFILE_SCOPE("bwd:" + layers[i]->get_name());
-        layers[i]->back_propagate(forward_propagation, back_propagation, i);
+        if (error == Error::CrossEntropy && i == forward_propagation.binary_logits_layer)
+        {
+            // As with softmax cross-entropy, the output delta already includes
+            // the activation derivative. All other head operators run normally.
+            for (Operator* op : views::reverse(layers[i]->get_operators()))
+            {
+                const auto* activation = dynamic_cast<const ActivationOperator*>(op);
+                if (activation && activation->activation_function == ActivationFunction::Sigmoid) continue;
+                op->back_propagate(forward_propagation, back_propagation, i);
+            }
+        }
+        else layers[i]->back_propagate(forward_propagation, back_propagation, i);
     }
 }
 

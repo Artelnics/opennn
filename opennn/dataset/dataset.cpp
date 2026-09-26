@@ -377,39 +377,40 @@ void Dataset::split_samples(const float training_samples_ratio,
 
     if (used_samples_number == 0) return;
 
+    for (const float ratio : {training_samples_ratio, validation_samples_ratio, testing_samples_ratio})
+        throw_if(!isfinite(ratio) || ratio < 0.0f,
+                 "Dataset::split_samples: ratios must be finite and nonnegative.");
+
     const float total_ratio = training_samples_ratio + validation_samples_ratio + testing_samples_ratio;
+    throw_if(!isfinite(total_ratio) || total_ratio <= 0.0f,
+             "Dataset::split_samples: the sum of ratios must be finite and positive.");
 
-    const Index validation_samples_number = Index((validation_samples_ratio * used_samples_number) / total_ratio);
-    const Index testing_samples_number = Index((testing_samples_ratio * used_samples_number) / total_ratio);
-    const Index training_samples_number = used_samples_number - validation_samples_number - testing_samples_number;
+    const auto quota = [=](float ratio)
+    {
+        // Retain FP32 rounding for existing splits; widen only an overflowing product.
+        const float count = (ratio * used_samples_number) / total_ratio;
+        const double bounded = min(double(used_samples_number), isfinite(count)
+            ? double(count) : double(ratio) * double(used_samples_number) / double(total_ratio));
+        return Index(bounded);
+    };
+    const Index validation_count = quota(validation_samples_ratio);
+    const Index testing_count = quota(testing_samples_ratio);
+    throw_if(validation_count > used_samples_number - testing_count,
+             "Dataset::split_samples: rounded quotas exceed the used sample count.");
+    const Index training_end = used_samples_number - validation_count - testing_count;
+    const Index validation_end = used_samples_number - testing_count;
 
-    const Index samples_number = get_samples_number();
-
-    vector<Index> indices(samples_number);
+    vector<Index> indices(get_samples_number());
     iota(indices.begin(), indices.end(), 0);
 
     if (shuffle)
         shuffle_vector(indices);
 
-    const auto assign_role = [this, &indices](SampleRole role, Index count, Index& i)
-    {
-        Index assigned = 0;
-
-        while (assigned < count)
-        {
-            if (const Index idx = indices[i++]; sample_roles[idx] != SampleRole::None)
-            {
-                sample_roles[idx] = role;
-                ++assigned;
-            }
-        }
-    };
-
-    Index index = 0;
-
-    assign_role(SampleRole::Training, training_samples_number, index);
-    assign_role(SampleRole::Validation, validation_samples_number, index);
-    assign_role(SampleRole::Testing, testing_samples_number, index);
+    // Compact after shuffling to preserve the seeded order, including unused rows.
+    erase_if(indices, [this](Index sample) { return sample_roles[sample] == SampleRole::None; });
+    for (Index position = 0; position < ssize(indices); ++position)
+        sample_roles[indices[position]] = position < training_end ? SampleRole::Training
+            : position < validation_end ? SampleRole::Validation : SampleRole::Testing;
 }
 
 void Dataset::split_samples_random(const float training_ratio,

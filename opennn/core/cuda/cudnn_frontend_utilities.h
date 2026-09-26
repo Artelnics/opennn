@@ -59,6 +59,15 @@ inline bool bn_frontend_enabled()
     return frontend_enabled() && device_sm_version() >= 800;
 }
 
+// Reproducibility runs must reject cuDNN engines whose reductions can change
+// between identical launches. Keep this opt-in because deterministic plans
+// can be slower than the normal heuristic choice.
+inline bool deterministic_algorithms_enabled()
+{
+    static const bool enabled = env_flag_enabled("OPENNN_DETERMINISTIC", false);
+    return enabled;
+}
+
 // The convolution autotune's second stage. cuDNN's engines for one shape
 // differ in power the way cuBLASLt's tiles do -- occupancy, split-K, tile
 // shape -- and the frontend's autotune ranks them by time alone. With the
@@ -438,6 +447,7 @@ inline std::filesystem::path plan_cache_file(const graph::Graph& graph)
         selection = selection * 31 + size_t(autotune_candidate_limit(kind));
     for (const HeurMode_t mode : heuristic_modes()) selection = selection * 31 + size_t(mode) + 1;
     for (const NumericalNote_t note : conv_engine_notes()) selection = selection * 31 + size_t(note) + 7;
+    selection = selection * 31 + (deterministic_algorithms_enabled() ? 11u : 0u);
 
     selection = selection * 31 + (sdpa_autotune_enabled() ? 3u : 0u);
 
@@ -690,6 +700,8 @@ inline bool finalize(graph::Graph& graph, int64_t& workspace_bytes, const string
             graph.deselect_numeric_notes({NumericalNote_t::TENSOR_CORE,
                                           NumericalNote_t::DOWN_CONVERT_INPUTS,
                                           NumericalNote_t::REDUCED_PRECISION_REDUCTION});
+        if (deterministic_algorithms_enabled())
+            graph.deselect_numeric_notes({NumericalNote_t::NONDETERMINISTIC});
         if (restrict_notes)
             graph.select_numeric_notes(conv_engine_notes());
     };

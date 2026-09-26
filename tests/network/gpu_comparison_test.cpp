@@ -25,6 +25,8 @@
 #include "opennn/network/network.h"
 #include "opennn/models/models.h"
 #include "opennn/training/loss.h"
+#include "opennn/training/training.h"
+#include "opennn/training/adam.h"
 #include "opennn/network/forward_propagation.h"
 #include "opennn/network/back_propagation.h"
 #include "opennn/dataset/batch.h"
@@ -1805,7 +1807,8 @@ static void write_transformer_gradient_corpus(const string& file_path)
 
 static VectorR transformer_training_gradient(Device device, const string& corpus,
                                              const VectorR* parameters, VectorR* parameters_out,
-                                             VectorR* numerical_out)
+                                             VectorR* numerical_out, Index layers_number = 1,
+                                             Index width = 8, Index heads = 2, Index ff = 16)
 {
     Configuration::instance().set(device, Type::FP32);
     set_seed(7);
@@ -1816,7 +1819,7 @@ static VectorR transformer_training_gradient(Device device, const string& corpus
 
     Transformer transformer(dataset.get_shape("Input")[0], dataset.get_shape("Decoder")[0],
                             dataset.get_vocabulary_size(), dataset.get_vocabulary_size(VariableRole::Target),
-                            8, 2, 16, 1);
+                            width, heads, ff, layers_number);
     transformer.set_dropout_rate(0.0f);
     transformer.set_attention_sdpa_min_sequence_length(1 << 20);   // unfused attention on both devices
     if (parameters) transformer.set_parameters(*parameters);
@@ -1843,6 +1846,140 @@ TEST_F(GpuComparison, TransformerTrainingGradient)
     const VectorR gpu_gradient = transformer_training_gradient(Device::CUDA, corpus, &parameters, nullptr, nullptr);
     ASSERT_EQ(gpu_gradient.size(), cpu_gradient.size());
     EXPECT_LT(relative_difference(cpu_gradient, gpu_gradient), 1.0e-3f);
+
+    filesystem::remove(corpus);
+}
+
+TEST_F(GpuComparison, DeepTransformerTrainingGradientMatchesCpu)
+{
+    const string corpus = (filesystem::temp_directory_path()
+        / "opennn_gpu_deep_transformer_gradient.txt").string();
+    write_transformer_gradient_corpus(corpus);
+
+    VectorR parameters;
+    const VectorR cpu_gradient = transformer_training_gradient(
+        Device::CPU, corpus, nullptr, &parameters, nullptr, 6);
+    const VectorR gpu_gradient = transformer_training_gradient(
+        Device::CUDA, corpus, &parameters, nullptr, nullptr, 6);
+    ASSERT_EQ(gpu_gradient.size(), cpu_gradient.size());
+    EXPECT_LT(relative_difference(cpu_gradient, gpu_gradient), 1.0e-3f);
+
+    filesystem::remove(corpus);
+}
+
+static void write_long_ragged_transformer_corpus(const string& corpus)
+{
+    ofstream out(corpus);
+    for (Index sample = 0; sample < 4; ++sample)
+    {
+        const Index source_length = sample == 0 ? 130 : sample == 1 ? 127 : sample == 2 ? 65 : 3;
+        const Index target_length = sample == 0 ? 129 : sample == 1 ? 70 : sample == 2 ? 5 : 128;
+        for (Index token = 0; token < source_length; ++token)
+            out << "w" << (sample * 3 + token * 5) % 13
+                << (token + 1 < source_length ? " " : "");
+        out << '\t';
+        for (Index token = 0; token < target_length; ++token)
+            out << "t" << (sample * 2 + token * 3) % 11
+                << (token + 1 < target_length ? " " : "");
+        out << '\n';
+    }
+    out.close();
+}
+
+TEST_F(GpuComparison, DeepPaddedTransformerTrainingGradientMatchesCpu)
+{
+    const string corpus = (filesystem::temp_directory_path()
+        / "opennn_gpu_deep_padded_transformer_gradient.txt").string();
+    write_long_ragged_transformer_corpus(corpus);
+
+    VectorR parameters;
+    const VectorR cpu_gradient = transformer_training_gradient(
+        Device::CPU, corpus, nullptr, &parameters, nullptr, 6);
+    const VectorR gpu_gradient = transformer_training_gradient(
+        Device::CUDA, corpus, &parameters, nullptr, nullptr, 6);
+    ASSERT_EQ(gpu_gradient.size(), cpu_gradient.size());
+    EXPECT_LT(relative_difference(cpu_gradient, gpu_gradient), 1.0e-3f);
+
+    filesystem::remove(corpus);
+}
+
+TEST_F(GpuComparison, WidePaddedTransformerTrainingGradientMatchesCpu)
+{
+    const string corpus = (filesystem::temp_directory_path()
+        / "opennn_gpu_wide_padded_transformer_gradient.txt").string();
+    write_long_ragged_transformer_corpus(corpus);
+
+    VectorR parameters;
+    const VectorR cpu_gradient = transformer_training_gradient(
+        Device::CPU, corpus, nullptr, &parameters, nullptr, 1, 128, 8, 256);
+    const VectorR gpu_gradient = transformer_training_gradient(
+        Device::CUDA, corpus, &parameters, nullptr, nullptr, 1, 128, 8, 256);
+    ASSERT_EQ(gpu_gradient.size(), cpu_gradient.size());
+    EXPECT_LT(relative_difference(cpu_gradient, gpu_gradient), 5.0e-3f);
+
+    filesystem::remove(corpus);
+}
+
+static VectorR train_long_ragged_transformer(Device device, const string& corpus,
+                                             const VectorR* parameters, VectorR* initial_parameters)
+{
+    Configuration::instance().set(device, Type::FP32);
+    set_seed(7);
+    TextDataset dataset({.task = TextDataset::Task::SequenceToSequence});
+    dataset.read_txt(corpus);
+    dataset.set_display(false);
+    dataset.split_samples(1.0f, 0.0f, 0.0f);
+
+    Transformer transformer(dataset.get_shape("Input")[0], dataset.get_shape("Decoder")[0],
+                            dataset.get_vocabulary_size(), dataset.get_vocabulary_size(VariableRole::Target),
+                            8, 2, 16, 6);
+    transformer.set_dropout_rate(0.0f);
+    transformer.set_attention_sdpa_min_sequence_length(1 << 20);
+    if (parameters) transformer.set_parameters(*parameters);
+    else transformer.set_parameters_random();
+    if (initial_parameters) *initial_parameters = read_host_parameters(transformer);
+
+    Training training(&transformer, &dataset);
+    training.set_loss("CrossEntropyError3d");
+    training.get_loss()->set_regularization("NoRegularization");
+    training.set_optimization_algorithm("Adam");
+    auto* optimizer = dynamic_cast<Adam*>(training.get_optimization_algorithm());
+    optimizer->set_learning_rate(1.0e-4f);
+    optimizer->set_beta_1(0.9f);
+    optimizer->set_beta_2(0.999f);
+    optimizer->set_bf16_first_moment(false);
+    optimizer->set_batch_size(4);
+    optimizer->set_maximum_epochs(10);
+    optimizer->set_maximum_time(numeric_limits<float>::max());
+    optimizer->set_loss_goal(-numeric_limits<float>::max());
+    optimizer->set_restore_best(false);
+    optimizer->set_gradient_clip_norm(0.0f);
+    optimizer->set_shuffle(false);
+    optimizer->set_cuda_graph(false);
+    optimizer->set_display(false);
+    Index completed = 0;
+    optimizer->post_epoch_callback = [&](Index, float, float, Network*) { ++completed; };
+    training.train();
+    if (completed != 10) throw runtime_error("Padded Transformer Adam stopped before ten epochs");
+    return read_host_parameters(transformer);
+}
+
+TEST_F(GpuComparison, DeepPaddedTransformerAdamMatchesCpu)
+{
+    const string corpus = (filesystem::temp_directory_path()
+        / "opennn_gpu_deep_padded_transformer_adam.txt").string();
+    write_long_ragged_transformer_corpus(corpus);
+
+    VectorR parameters;
+    const VectorR cpu_result = train_long_ragged_transformer(
+        Device::CPU, corpus, nullptr, &parameters);
+    const VectorR gpu_result = train_long_ragged_transformer(
+        Device::CUDA, corpus, &parameters, nullptr);
+    ASSERT_EQ(gpu_result.size(), cpu_result.size());
+    ASSERT_TRUE(cpu_result.allFinite());
+    ASSERT_TRUE(gpu_result.allFinite());
+    EXPECT_GT(relative_difference(parameters, cpu_result), 1.0e-5f);
+    EXPECT_LT(relative_difference(cpu_result, gpu_result), 1.0e-2f);
 
     filesystem::remove(corpus);
 }
@@ -2048,6 +2185,266 @@ TEST_F(GpuComparison, TransformerForward)
     const VectorR cpu_flat = Map<const VectorR>(cpu_outputs.data(), cpu_outputs.size());
     const VectorR gpu_flat = Map<const VectorR>(gpu_outputs.data(), gpu_outputs.size());
     EXPECT_LT(relative_difference(cpu_flat, gpu_flat), 1.0e-3f);
+}
+
+TEST_F(GpuComparison, WideEmbeddingForwardMatchesCpu)
+{
+    constexpr Index batch = 2, sequence = 130, vocabulary = 64;
+    const char* width_env = std::getenv("OPENNN_TEST_WIDE_OPERATOR_WIDTH");
+    const Index width = width_env ? stoll(width_env) : 128;
+    MatrixR tokens(batch, sequence);
+    tokens.setZero();
+    for (Index sample = 0; sample < batch; ++sample)
+        for (Index position = 0; position < (sample == 0 ? sequence : 70); ++position)
+            tokens(sample, position) = float(4 + (sample * 13 + position * 17) % (vocabulary - 4));
+
+    const auto make_network = [&]
+    {
+        auto network = make_unique<Network>();
+        auto embedding = make_unique<Embedding>(Shape{vocabulary, sequence}, width, "embedding");
+        embedding->set_scale_embedding(true);
+        embedding->set_add_positional_encoding(true);
+        embedding->set_export_valid_lengths(true);
+        network->add_layer(std::move(embedding));
+        network->compile();
+        return network;
+    };
+
+    Configuration::instance().set(Device::CPU, Type::FP32);
+    auto cpu = make_network();
+    cpu->set_parameters_random();
+    const VectorR parameters = read_host_parameters(*cpu);
+    const MatrixR cpu_outputs = cpu->calculate_outputs(tokens);
+
+    Configuration::instance().set(Device::CUDA, Type::FP32);
+    auto gpu = make_network();
+    gpu->set_parameters(parameters);
+    const MatrixR gpu_outputs = gpu->calculate_outputs(tokens);
+
+    ASSERT_EQ(cpu_outputs.size(), gpu_outputs.size());
+    const VectorR cpu_flat = Map<const VectorR>(cpu_outputs.data(), cpu_outputs.size());
+    const VectorR gpu_flat = Map<const VectorR>(gpu_outputs.data(), gpu_outputs.size());
+    EXPECT_LT(relative_difference(cpu_flat, gpu_flat), 1.0e-3f);
+}
+
+TEST_F(GpuComparison, WideAttentionForwardMatchesCpu)
+{
+    constexpr Index batch = 2, sequence = 130;
+    const char* width_env = std::getenv("OPENNN_TEST_WIDE_OPERATOR_WIDTH");
+    const Index width = width_env ? stoll(width_env) : 128;
+    const char* scale_env = std::getenv("OPENNN_TEST_ATTENTION_INPUT_SCALE");
+    const float input_scale = scale_env ? stof(scale_env) : 1.0f;
+    const bool quality_init = std::getenv("OPENNN_TEST_QUALITY_INITIALIZATION") != nullptr;
+    Tensor3 inputs(batch, sequence, width);
+    inputs.setZero();
+    for (Index sample = 0; sample < batch; ++sample)
+        for (Index position = 0; position < (sample == 0 ? sequence : 70); ++position)
+            for (Index feature = 0; feature < width; ++feature)
+                inputs(sample, position, feature) =
+                    input_scale * sin(float(sample * 13 + position * 17 + feature * 3) * 0.01f);
+
+    const auto make_network = [&]
+    {
+        auto network = make_unique<Network>();
+        auto attention = make_unique<MultiHeadAttention>(Shape{sequence, width}, 8, "attention");
+        attention->set_dropout_rate(0.0f);
+        attention->set_sdpa_auto(false);
+        network->add_layer(std::move(attention));
+        network->compile();
+        return network;
+    };
+
+    Configuration::instance().set(Device::CPU, Type::FP32);
+    auto cpu = make_network();
+    if (quality_init) cpu->set_parameters_pytorch();
+    else cpu->set_parameters_random();
+    const VectorR parameters = read_host_parameters(*cpu);
+    const MatrixR cpu_outputs = cpu->calculate_outputs(inputs);
+
+    Configuration::instance().set(Device::CUDA, Type::FP32);
+    auto gpu = make_network();
+    gpu->set_parameters(parameters);
+    const MatrixR gpu_outputs = gpu->calculate_outputs(inputs);
+
+    ASSERT_EQ(cpu_outputs.size(), gpu_outputs.size());
+    const VectorR cpu_flat = Map<const VectorR>(cpu_outputs.data(), cpu_outputs.size());
+    const VectorR gpu_flat = Map<const VectorR>(gpu_outputs.data(), gpu_outputs.size());
+    EXPECT_LT(relative_difference(cpu_flat, gpu_flat), 1.0e-3f)
+        << "width=" << width << " input_scale=" << input_scale
+        << " quality_init=" << quality_init;
+}
+
+TEST_F(GpuComparison, WideNormalizationForwardMatchesCpu)
+{
+    constexpr Index batch = 2, sequence = 130;
+    const char* width_env = std::getenv("OPENNN_TEST_WIDE_OPERATOR_WIDTH");
+    const Index width = width_env ? stoll(width_env) : 128;
+    Tensor3 inputs(batch, sequence, width), residual(batch, sequence, width);
+    for (Index i = 0; i < inputs.size(); ++i)
+    {
+        inputs.data()[i] = sin(float(i) * 0.01f);
+        residual.data()[i] = cos(float(i) * 0.013f);
+    }
+    const bool fused_add = std::getenv("OPENNN_TEST_NORM_FUSED_ADD") != nullptr;
+
+    const auto make_network = [&]
+    {
+        auto network = make_unique<Network>();
+        auto norm = make_unique<Normalization3d>(Shape{sequence, width}, "normalization");
+        norm->set_fuse_add(fused_add);
+        network->add_layer(std::move(norm), fused_add ? vector<Index>{-1, -2} : vector<Index>{-1});
+        network->compile();
+        return network;
+    };
+    const auto outputs_for = [&](Network& network)
+    {
+        if (fused_add)
+        {
+            const Tensor3 output = network.calculate_outputs(inputs, residual);
+            return VectorR(Map<const VectorR>(output.data(), output.size()));
+        }
+        const MatrixR output = network.calculate_outputs(inputs);
+        return VectorR(Map<const VectorR>(output.data(), output.size()));
+    };
+
+    Configuration::instance().set(Device::CPU, Type::FP32);
+    auto cpu = make_network();
+    cpu->set_parameters_random();
+    const VectorR parameters = read_host_parameters(*cpu);
+    const VectorR cpu_outputs = outputs_for(*cpu);
+
+    Configuration::instance().set(Device::CUDA, Type::FP32);
+    auto gpu = make_network();
+    gpu->set_parameters(parameters);
+    const VectorR gpu_outputs = outputs_for(*gpu);
+
+    ASSERT_EQ(cpu_outputs.size(), gpu_outputs.size());
+    EXPECT_LT(relative_difference(cpu_outputs, gpu_outputs), 1.0e-3f)
+        << "fused_add=" << fused_add;
+}
+
+static void initialize_transformer_quality_weights(Network& network,
+                                                   initializer_list<const char*> embeddings)
+{
+    network.set_parameters_pytorch();
+    network.mark_parameters_changed();
+    const Network::HostParametersGuard guard(network);
+    for (const char* label : embeddings)
+    {
+        auto* lookup = dynamic_cast<EmbeddingLookupOperator*>(
+            network.get_layer(label)->get_operators().front());
+        if (!lookup) throw runtime_error("Transformer quality embedding lookup missing");
+        lookup->set_parameters_random();
+    }
+}
+
+TEST_F(GpuComparison, WideEncoderBlockForwardMatchesCpu)
+{
+    constexpr Index batch = 2, sequence = 130, vocabulary = 64, width = 512, ff = 2048;
+    const char* stage_env = std::getenv("OPENNN_TEST_ENCODER_STAGE");
+    const Index stage = stage_env ? stoll(stage_env) : 4;
+    const bool no_padding = std::getenv("OPENNN_TEST_ENCODER_NO_PADDING") != nullptr;
+    const bool quality_init = std::getenv("OPENNN_TEST_GENERIC_INITIALIZATION") == nullptr;
+    MatrixR tokens(batch, sequence);
+    tokens.setZero();
+    for (Index sample = 0; sample < batch; ++sample)
+        for (Index position = 0; position < (no_padding || sample == 0 ? sequence : 70); ++position)
+            tokens(sample, position) = float(4 + (sample * 13 + position * 17) % (vocabulary - 4));
+
+    const auto make_network = [&]
+    {
+        auto network = make_unique<Network>();
+        auto embedding = make_unique<Embedding>(Shape{vocabulary, sequence}, width, "embedding");
+        embedding->set_scale_embedding(true);
+        embedding->set_add_positional_encoding(true);
+        embedding->set_export_valid_lengths(true);
+        const Index embed_index = network->add_layer(std::move(embedding), {-1});
+        if (stage >= 2)
+        {
+            auto attention = make_unique<MultiHeadAttention>(Shape{sequence, width}, 8, "attention");
+            attention->set_dropout_rate(0.0f);
+            attention->set_sdpa_auto(false);
+            const Index attention_index = network->add_layer(std::move(attention), {embed_index});
+            if (stage >= 3)
+            {
+                auto norm = make_unique<Normalization3d>(Shape{sequence, width}, "attention_norm");
+                norm->set_fuse_add(true);
+                const Index norm_index = network->add_layer(std::move(norm),
+                                                            {embed_index, attention_index});
+                if (stage >= 4)
+                {
+                    const Index internal = network->add_layer(make_unique<opennn::Dense>(
+                        Shape{sequence, width}, Shape{ff}, "ReLU", BatchNormalization::No, "internal"),
+                        {norm_index});
+                    const Index external = network->add_layer(make_unique<opennn::Dense>(
+                        Shape{sequence, ff}, Shape{width}, "Identity", BatchNormalization::No, "external"),
+                        {internal});
+                    auto dense_norm = make_unique<Normalization3d>(Shape{sequence, width}, "dense_norm");
+                    dense_norm->set_fuse_add(true);
+                    network->add_layer(std::move(dense_norm), {norm_index, external});
+                }
+            }
+        }
+        network->compile();
+        return network;
+    };
+
+    Configuration::instance().set(Device::CPU, Type::FP32);
+    auto cpu = make_network();
+    if (quality_init) initialize_transformer_quality_weights(*cpu, {"embedding"});
+    else cpu->set_parameters_random();
+    const VectorR parameters = read_host_parameters(*cpu);
+    const MatrixR cpu_outputs = cpu->calculate_outputs(tokens);
+
+    Configuration::instance().set(Device::CUDA, Type::FP32);
+    auto gpu = make_network();
+    gpu->set_parameters(parameters);
+    const MatrixR gpu_outputs = gpu->calculate_outputs(tokens);
+
+    ASSERT_EQ(cpu_outputs.size(), gpu_outputs.size());
+    const VectorR cpu_flat = Map<const VectorR>(cpu_outputs.data(), cpu_outputs.size());
+    const VectorR gpu_flat = Map<const VectorR>(gpu_outputs.data(), gpu_outputs.size());
+    EXPECT_LT(relative_difference(cpu_flat, gpu_flat), 1.0e-2f)
+        << "encoder stage=" << stage << " no_padding=" << no_padding
+        << " quality_init=" << quality_init;
+}
+
+TEST_F(GpuComparison, FullSizePaddedTransformerForwardMatchesCpu)
+{
+    constexpr Index batch = 2, sequence = 130, vocabulary = 20000;
+    constexpr Index width = 512, heads = 8, ff = 2048, layers = 6;
+    Tensor3 decoder(batch, sequence, 1), source(batch, sequence, 1);
+    decoder.setZero();
+    source.setZero();
+    for (Index sample = 0; sample < batch; ++sample)
+    {
+        const Index source_length = sample == 0 ? sequence : 70;
+        const Index decoder_length = sample == 0 ? 100 : 33;
+        for (Index position = 0; position < source_length; ++position)
+            source(sample, position, 0) = float(4 + (sample * 13 + position * 17) % 500);
+        decoder(sample, 0, 0) = 2.0f;
+        for (Index position = 1; position < decoder_length; ++position)
+            decoder(sample, position, 0) = float(4 + (sample * 7 + position * 11) % 500);
+    }
+
+    Configuration::instance().set(Device::CPU, Type::FP32);
+    set_seed(42);
+    Transformer cpu(sequence, sequence, vocabulary, vocabulary, width, heads, ff, layers);
+    cpu.set_dropout_rate(0.0f);
+    initialize_transformer_quality_weights(cpu, {"encoder_embedding", "decoder_embedding"});
+    const VectorR parameters = read_host_parameters(cpu);
+    const Tensor3 cpu_outputs = cpu.calculate_outputs(decoder, source);
+
+    Configuration::instance().set(Device::CUDA, Type::FP32);
+    Transformer gpu(sequence, sequence, vocabulary, vocabulary, width, heads, ff, layers);
+    gpu.set_dropout_rate(0.0f);
+    gpu.set_parameters(parameters);
+    const Tensor3 gpu_outputs = gpu.calculate_outputs(decoder, source);
+
+    ASSERT_EQ(cpu_outputs.size(), gpu_outputs.size());
+    const VectorR cpu_flat = Map<const VectorR>(cpu_outputs.data(), cpu_outputs.size());
+    const VectorR gpu_flat = Map<const VectorR>(gpu_outputs.data(), gpu_outputs.size());
+    EXPECT_LT(relative_difference(cpu_flat, gpu_flat), 1.0e-2f);
 }
 
 TEST_F(GpuComparison, SdpaAttentionRefreshesPaddingBetweenBatches)

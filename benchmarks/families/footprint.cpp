@@ -6,7 +6,7 @@
 //
 //   footprint memory    CPU process resident set after empty objects
 //   footprint startup   time to first prediction
-//   footprint export    train a small model, write it as dependency-free source
+//   footprint export    serialize a fresh small model as C and Python source
 //
 // Each mode is one process that does its thing and exits, because that is the
 // only honest way to measure a cost paid at startup: anything sharing a
@@ -45,7 +45,6 @@
 #include "opennn/network/model_expression.h"
 #include "opennn/network/network.h"
 #include "opennn/models/models.h"
-#include "opennn/training/adam.h"
 #include "opennn/training/training.h"
 
 using namespace opennn;
@@ -135,46 +134,18 @@ int main(int argc, char* argv[])
         set_seed(42);
         Configuration::instance().set(Device::CPU, Type::FP32);
 
-        // Its own data, so footprint needs no dataset prepared for it: three
-        // inputs whose sum is the target, which is enough to train something
-        // worth exporting. Everything lands in a temporary directory: these
-        // are run outputs, and a benchmark that litters the tree it is run
-        // from will eventually have one of those files committed.
+        // Both engines serialize a freshly initialized 3 -> 64 -> 1 Tanh
+        // model. Training would make this process lifetime an unequal mixture
+        // of training and export work. The output files live outside the tree.
         const filesystem::path scratch =
             filesystem::temp_directory_path() / "opennn_footprint";
         filesystem::create_directories(scratch);
 
-        const string csv_path = (scratch / "sum.csv").string();
         const string c_path = (scratch / "model.c").string();
         const string python_path = (scratch / "model.py").string();
-
-        {
-            ofstream csv(csv_path);
-            for (int row = 0; row < 512; ++row)
-            {
-                const float a = float(row % 17) / 17.0f;
-                const float b = float(row % 7) / 7.0f;
-                const float c = float(row % 3) / 3.0f;
-                csv << a << ";" << b << ";" << c << ";" << (a + b + c) << "\n";
-            }
-        }
-
-        TabularDataset dataset(csv_path, ";", false, false);
-
-        ApproximationNetwork network(dataset.get_input_shape(), {64},
-                                     dataset.get_target_shape());
-
-        Training training(&network, &dataset);
-        training.set_loss("MeanSquaredError");
-        training.set_optimization_algorithm("Adam");
-
-        auto* adam = dynamic_cast<Adam*>(
-            training.get_optimization_algorithm());
-        adam->set_maximum_epochs(50);
-        adam->set_batch_size(32);
-        adam->set_display(false);
-
-        training.train();
+        ApproximationNetwork network({3}, {64}, {1});
+        network.set_input_names({"x0", "x1", "x2"});
+        network.set_output_names({"y"});
 
         ModelExpression expression(&network);
         expression.save(c_path, ModelExpression::ProgrammingLanguage::C);
@@ -186,8 +157,9 @@ int main(int argc, char* argv[])
             return file ? long(file.tellg()) : -1;
         };
 
-        // The exported file is the deliverable: source with no runtime
-        // dependency, which is the whole claim being measured.
+        // The C export needs only the C standard library. The Python export
+        // is source without an OpenNN runtime, but imports NumPy and pandas.
+        // File sizes here exclude those Python dependencies.
         cout << "export_c_bytes=" << size_of(c_path) << "\n"
              << "export_python_bytes=" << size_of(python_path) << "\n";
     }

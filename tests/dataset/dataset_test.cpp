@@ -7,8 +7,67 @@
 #include "opennn/core/variable.h"
 #include "opennn/dataset/batch.h"
 #include "opennn/core/configuration.h"
+#include "opennn/core/random_utilities.h"
 
 using namespace opennn;
+
+TEST(Dataset, SplitRetainsUnusedRowsAndAssignsRemainderToTraining)
+{
+    TabularDataset dataset(10, {1}, {1});
+    dataset.set_sample_roles("Training");
+    dataset.set_sample_roles({0, 4, 9}, "None");
+    dataset.split_samples_sequential(0.6f, 0.2f, 0.2f);
+    EXPECT_EQ(dataset.get_sample_indices("Training"), (vector<Index>{1, 2, 3, 5, 6}));
+    EXPECT_EQ(dataset.get_sample_indices("Validation"), (vector<Index>{7}));
+    EXPECT_EQ(dataset.get_sample_indices("Testing"), (vector<Index>{8}));
+    EXPECT_EQ(dataset.get_sample_indices("None"), (vector<Index>{0, 4, 9}));
+
+    dataset.set_sample_roles("None");
+    EXPECT_NO_THROW(dataset.split_samples_sequential(0, 0, 0));
+    EXPECT_EQ(dataset.get_used_samples_number(), 0);
+}
+
+TEST(Dataset, SplitPreservesTheSeededPermutationIncludingUnusedRows)
+{
+    TabularDataset dataset(12, {1}, {1});
+    dataset.set_sample_roles("Training");
+    dataset.set_sample_roles({1, 8}, "None");
+    vector<Index> order(12);
+    iota(order.begin(), order.end(), 0);
+    set_seed(4231);
+    shuffle_vector(order);
+    erase_if(order, [](Index i) { return i == 1 || i == 8; });
+    vector<Index> training(order.begin(), order.begin() + 6);
+    vector<Index> validation(order.begin() + 6, order.begin() + 8);
+    vector<Index> testing(order.begin() + 8, order.end());
+    ranges::sort(training);
+    ranges::sort(validation);
+    ranges::sort(testing);
+    set_seed(4231);
+    dataset.split_samples_random(0.6f, 0.2f, 0.2f);
+    EXPECT_EQ(dataset.get_sample_indices("Training"), training);
+    EXPECT_EQ(dataset.get_sample_indices("Validation"), validation);
+    EXPECT_EQ(dataset.get_sample_indices("Testing"), testing);
+}
+
+TEST(Dataset, SplitRejectsInvalidRatiosBeforeChangingRoles)
+{
+    TabularDataset dataset(10, {1}, {1});
+    dataset.set_sample_roles("Testing");
+    for (float invalid : {-1.0f, numeric_limits<float>::infinity(), numeric_limits<float>::quiet_NaN()})
+    {
+        EXPECT_THROW(dataset.split_samples_sequential(invalid, 1, 1), runtime_error);
+        EXPECT_THROW(dataset.split_samples_sequential(1, invalid, 1), runtime_error);
+        EXPECT_THROW(dataset.split_samples_sequential(1, 1, invalid), runtime_error);
+        EXPECT_EQ(dataset.get_samples_number("Testing"), 10);
+    }
+    EXPECT_THROW(dataset.split_samples_sequential(0, 0, 0), runtime_error);
+    EXPECT_EQ(dataset.get_samples_number("Testing"), 10);
+    dataset.split_samples_sequential(0, numeric_limits<float>::max(), 0);
+    EXPECT_EQ(dataset.get_samples_number("Validation"), 10);
+    dataset.split_samples_sequential(0, 0, 1);
+    EXPECT_EQ(dataset.get_samples_number("Testing"), 10);
+}
 
 TEST(Dataset, UnsupportedInputSelectionCapabilitiesThrow)
 {

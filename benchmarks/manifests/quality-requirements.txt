@@ -4,5 +4,6 @@ numpy>=2,<3
 pandas>=2,<4
 Pillow>=10,<13
 sacrebleu==2.5.1
+sentencepiece==0.2.2
 torch==2.13.0
 torchvision==0.28.0

@@ -58,6 +58,24 @@ void binary_cross_entropy_cuda(const Index n, float* term_results, const float* 
 }
 
 template<typename T>
+__global__ void binary_cross_entropy_logits_kernel(const int n, float* __restrict__ terms,
+                                                   const float* __restrict__ targets,
+                                                   const T* __restrict__ logits)
+{
+    for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < n; i += Index(blockDim.x) * gridDim.x)
+    {
+        const float x = static_cast<float>(logits[i]);
+        terms[i] = fmaxf(x, 0.0f) - x * targets[i] + log1pf(expf(-fabsf(x)));
+    }
+}
+
+template<typename T>
+void binary_cross_entropy_logits_cuda(const Index n, float* terms, const float* targets, const T* logits)
+{
+    launch_elementwise(n, binary_cross_entropy_logits_kernel<T>, terms, targets, logits);
+}
+
+template<typename T>
 __global__ void binary_cross_entropy_gradient_kernel(
     const int n,
     T* __restrict__ deltas,
@@ -847,6 +865,7 @@ void yolo_gradient_cuda(const float* output, const float* target, float* delta,
 
 #define INSTANTIATE(T) \
     template void binary_cross_entropy_cuda<T>(const Index, float*, const float*, const T*, const float); \
+    template void binary_cross_entropy_logits_cuda<T>(const Index, float*, const float*, const T*); \
     template void binary_cross_entropy_gradient_cuda<T>(const Index, T*, const float*, const T*, const float, const float); \
     template void categorical_cross_entropy_cuda<T>(const Index, float*, const float*, const T*, const float); \
     template void categorical_cross_entropy_gradient_cuda<T>(const Index, T*, const float*, const T*, const float); \
@@ -874,6 +893,34 @@ __global__ void scaled_diff_kernel(const int n,
         const float d = static_cast<float>(input[i]) - target[i];
         output[i] = static_cast<TOut>(scale * d);
     }
+}
+
+template<typename TIn, typename TOut>
+__global__ void binary_cross_entropy_logits_gradient_kernel(const int n,
+                                                            const TIn* __restrict__ logits,
+                                                            const float* __restrict__ targets,
+                                                            const float scale,
+                                                            TOut* __restrict__ delta)
+{
+    for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < n; i += Index(blockDim.x) * gridDim.x)
+    {
+        const float x = static_cast<float>(logits[i]);
+        const float exponential = expf(-fabsf(x));
+        const float y = targets[i];
+        // Preserve small derivatives even when the sigmoid rounds to one.
+        const float residual = x >= 0.0f
+            ? ((1.0f - y) - y * exponential) / (1.0f + exponential)
+            : ((1.0f - y) * exponential - y) / (1.0f + exponential);
+        delta[i] = static_cast<TOut>(residual * scale);
+    }
+}
+
+template<typename TIn, typename TOut>
+void binary_cross_entropy_logits_gradient_cuda(const Index n, const TIn* logits,
+                                                const float* targets, float scale, TOut* delta)
+{
+    launch_elementwise_strided(n, binary_cross_entropy_logits_gradient_kernel<TIn, TOut>,
+                              logits, targets, scale, delta);
 }
 
 template<typename TIn, typename TOut>
@@ -922,6 +969,7 @@ void mean_squared_error_metrics_gradient_cuda(
 }
 
 #define INSTANTIATE2(TIn, TOut) \
+    template void binary_cross_entropy_logits_gradient_cuda<TIn, TOut>(const Index, const TIn*, const float*, float, TOut*); \
     template void scaled_diff_cuda_typed<TIn, TOut>(const Index, const TIn*, const float*, float, TOut*); \
     template void mean_squared_error_metrics_gradient_cuda<TIn, TOut>(const Index, const Index, const TIn*, const float*, TOut*, float*);
 

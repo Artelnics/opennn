@@ -2,6 +2,7 @@
 
 import json
 from pathlib import Path
+import shutil
 import sys
 import tempfile
 import unittest
@@ -68,6 +69,50 @@ class BenchmarkQualityTest(unittest.TestCase):
         path.write_text(json.dumps(manifest))
         with self.assertRaises(ValueError):
             validate_manifest(path)
+
+    def test_cnn_duplicate_content_across_classes_is_excluded(self):
+        from PIL import Image
+
+        source = self.root / "imagenet_subset/train"
+        first, second = source / "class_a", source / "class_b"
+        first.mkdir(parents=True)
+        second.mkdir(parents=True)
+        for directory, colors in ((first, (10, 20, 30)), (second, (40, 50))):
+            for index, color in enumerate(colors):
+                Image.new("RGB", (8, 8), (color, color, color)).save(
+                    directory / f"{index}.jpg"
+                )
+        shutil.copyfile(first / "0.jpg", second / "duplicate.jpg")
+
+        path = prepare_one("cnn", self.root, self.root / "cnn-real", smoke=False)
+        manifest = validate_manifest(path)
+        self.assertEqual(len(manifest["excluded_duplicate_images"]), 1)
+        self.assertEqual(manifest["excluded_duplicate_images"][0]["path"],
+                         "class_b/duplicate.jpg")
+        identities = json.loads((path.parent / "image-split.json").read_text())
+        self.assertEqual(len(identities), 5)
+        train = {item["sha256"] for item in identities if item["split"] == "train"}
+        test = {item["sha256"] for item in identities if item["split"] == "test"}
+        self.assertFalse(train & test)
+
+    def test_cnn_fixed_training_order_mixes_classes(self):
+        from PIL import Image
+
+        source = self.root / "imagenet_subset/train"
+        for label in range(4):
+            directory = source / f"class_{label}"
+            directory.mkdir(parents=True)
+            for index in range(8):
+                color = label * 32 + index
+                Image.new("RGB", (8, 8), (color, color, color)).save(
+                    directory / f"{index}.png"
+                )
+        path = prepare_one("cnn", self.root, self.root / "cnn-mixed", smoke=False)
+        manifest = validate_manifest(path)
+        labels = np.asarray(read_array(path.parent, manifest["train"]["y"])).argmax(1)
+        self.assertEqual(set(labels), set(range(4)))
+        self.assertGreater(len(set(labels[:8])), 1)
+        self.assertFalse(np.array_equal(labels, np.sort(labels)))
 
     def test_translation_generation_and_padding(self):
         path, manifest = self.fixture("transformer")

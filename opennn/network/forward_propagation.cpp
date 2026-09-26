@@ -5,6 +5,7 @@
 #include "opennn/network/training_arena_plan.h"
 #include "opennn/registry.h"
 #include "opennn/network/network.h"
+#include "opennn/network/layers/dense_layer.h"
 #include "opennn/core/memory_debug.h"
 #include "opennn/core/device_backend.h"
 #include "opennn/core/memory_pool.h"
@@ -413,7 +414,6 @@ static PooledForwardSlots collect_forward_slots(
 
             const Index bytes = get_aligned_bytes(spec);
             pooled.transient.emplace_back(i, j);
-            pooled.lifetimes.push_back({bytes, Index(i), Index(i)});
             pooled.transient_bytes += bytes;
         }
     return pooled;
@@ -427,11 +427,6 @@ static void apply_forward_pool_plan(
     for(size_t i = 0; i < pooled.persistent.size(); ++i)
         layout.slot_offsets[pooled.persistent[i].first][pooled.persistent[i].second]
             = plan.byte_offsets[i];
-
-    const size_t transient_base = pooled.persistent.size();
-    for(size_t i = 0; i < pooled.transient.size(); ++i)
-        layout.transient_slot_offsets[pooled.transient[i].first][pooled.transient[i].second]
-            = plan.byte_offsets[transient_base + i];
 
     layout.activation_bytes = plan.peak_bytes;
     layout.lower_bound_bytes = plan.lower_bound_live_bytes;
@@ -511,24 +506,45 @@ static void plan_training_forward_pool(
                              pooled.transient_bytes,
                              format("batch={},entries={}", batch_size, pooled.transient.size()));
 
-    const Index backward_base = backward_step(Index(specs.size()), 0);
+    // Transient slots are also scratch for backward operators. A forward-only
+    // lifetime can alias a still-live branch delta when the slot is reused in
+    // backward (for example the encoder-memory delta in cross-attention).
+    // Reuse a hole only when it is free at both calls; otherwise the existing
+    // shared scratch suffix supplies storage outside the activation arena.
+    vector<MemoryPoolEntry> overlay_lifetimes = pooled.lifetimes;
+    MemoryPoolPlan overlay_plan = plan;
+    vector<pair<size_t, size_t>> transient_slots = pooled.transient;
     for(size_t i = 0; i < specs.size(); ++i)
+        if(recomputable_slots[i] != SIZE_MAX)
+            transient_slots.emplace_back(i, recomputable_slots[i]);
+
+    const Index backward_base = backward_step(Index(specs.size()), 0);
+    for(const auto& [i, slot] : transient_slots)
     {
-        const size_t slot = recomputable_slots[i];
-        if(slot == SIZE_MAX || specs[i][slot].shape.empty()) continue;
+        if(specs[i][slot].shape.empty()) continue;
         const Index bytes = get_aligned_bytes(specs[i][slot]);
         const Index second_step = backward_base - Index(i);
         const Index offset = find_memory_pool_overlay(
-            pooled.lifetimes, plan, bytes, Index(i), second_step);
+            overlay_lifetimes, overlay_plan, bytes, Index(i), second_step);
         if(offset >= 0)
         {
             layout.transient_slot_offsets[i][slot] = offset;
-            ++layout.overlaid_recompute_slots;
-            layout.overlaid_scratch_bytes += bytes;
+            // Multiple scratch slots of the same layer can be live together.
+            // Reserve both calls so a later slot cannot reuse this hole.
+            overlay_lifetimes.push_back({bytes, Index(i), Index(i)});
+            overlay_plan.byte_offsets.push_back(offset);
+            overlay_lifetimes.push_back({bytes, second_step, second_step});
+            overlay_plan.byte_offsets.push_back(offset);
+            if(recomputable_slots[i] == slot)
+            {
+                ++layout.overlaid_recompute_slots;
+                layout.overlaid_scratch_bytes += bytes;
+            }
         }
-        memory_debug::record("forward.recompute_entry", format("{}:{}", i, slot), bytes,
-                             format("first={},second={},overlaid={}", i, second_step,
-                                    offset >= 0 ? 1 : 0));
+        if(recomputable_slots[i] == slot)
+            memory_debug::record("forward.recompute_entry", format("{}:{}", i, slot), bytes,
+                                 format("first={},second={},overlaid={}", i, second_step,
+                                        offset >= 0 ? 1 : 0));
     }
 
     if(early_release_outputs > 0)
@@ -634,6 +650,35 @@ void ForwardPropagation::stage_position(DeviceStream stream)
 #endif
 }
 
+void ForwardPropagation::enable_binary_logits(Buffer* shared_storage)
+{
+    reset_cuda_graph();
+    binary_logits = {};
+    binary_logits_layer = -1;
+    if (!network || network->get_layers_number() == 0) return;
+    const Index index = network->get_last_trainable_layer_index();
+    if (index < 0) return;
+    auto* dense = dynamic_cast<Dense*>(network->get_layers()[size_t(index)].get());
+    if (!dense || dense->get_output_shape().back() != 1
+        || dense->get_output_activation() != ActivationFunction::Sigmoid
+        || dense->get_gated() || dense->get_batch_normalization()
+        || dense->get_tied_weight().source || dense->get_transposed_inference()) return;
+    for (Operator* op : dense->get_operators())
+        if (const auto* dropout = dynamic_cast<const DropoutOperator*>(op);
+            dropout && dropout->active()) return;
+
+    const Shape shape = Shape{batch_size}.append(dense->get_output_shape());
+    const Type type = network->is_gpu() ? dense->get_compute_dtype() : Type::FP32;
+    const Index bytes = get_aligned_bytes(shape.size(), type);
+    if (shared_storage && shared_storage->get_device() == network->get_device()
+        && shared_storage->byte_size() >= bytes)
+        binary_logits_storage.set_view(shared_storage->data(), bytes, network->get_device());
+    else
+        binary_logits_storage.resize_bytes(bytes, network->get_device());
+    binary_logits = TensorView(binary_logits_storage.data(), shape, type, network->get_device());
+    binary_logits_layer = index;
+}
+
 void ForwardPropagation::set(
     const Index new_batch_size,
     Network* new_network,
@@ -666,6 +711,9 @@ void ForwardPropagation::set(
     network = new_network;
     mode = new_mode;
     past_length = 0;
+    binary_logits = {};
+    binary_logits_layer = -1;
+    binary_logits_storage.resize_bytes(0, network->get_device());
 
     const auto& layers = network->get_layers();
     const size_t layers_number = layers.size();
@@ -827,6 +875,8 @@ void ForwardPropagation::set(
 
     if(new_shape_policy.sequence_capacity > 0)
         set_active_sequence_length(sequence_capacity);
+    if (new_shape_policy.capture_binary_logits)
+        enable_binary_logits();
 }
 
 Index ForwardPropagation::bind_slots(

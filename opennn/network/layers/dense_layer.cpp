@@ -359,7 +359,9 @@ string Dense::write_expression(const vector<string>& input_names,
 {
     const vector<TensorView>& parameter_views = get_parameter_views();
 
-    throw_if(parameter_views.size() < 2 || !parameter_views[0].get_data() || !parameter_views[1].get_data(),
+    const size_t weight_slot = get_use_bias() ? 1 : 0;
+    throw_if(parameter_views.size() <= weight_slot || !parameter_views[weight_slot].get_data()
+             || (get_use_bias() && !parameter_views[0].get_data()),
              "Dense::write_expression: layer not configured.");
 
     throw_if(batch_norm.active(),
@@ -371,29 +373,37 @@ string Dense::write_expression(const vector<string>& input_names,
     const Index inputs_number = get_inputs_number();
     const Index outputs_number = get_outputs_number();
 
-    const float* const bias_data = parameter_views[0].as<float>();
-    const float* const weight_data = parameter_views[1].as<float>();
+    throw_if(ssize(input_names) != inputs_number || ssize(output_names) != outputs_number,
+             "Dense::write_expression: names must match the layer dimensions.");
 
-    const string& activation_function_local = ActivationOperator::to_string(get_activation_function());
+    const auto weights = parameter_views[weight_slot].as_matrix();
+    throw_if(weights.rows() == 0 || weights.cols() == 0
+             || inputs_number % weights.rows() != 0
+             || outputs_number != (inputs_number / weights.rows()) * weights.cols(),
+             "Dense::write_expression: incompatible parameter dimensions.");
 
-    ostringstream buffer;
-    buffer.precision(10);
+    // Assemble affine rows separately from activation and assignment syntax.
+    // Repeated leading dimensions share the same feature weights and biases.
+    vector<vector<string>> terms(size_t(outputs_number), vector<string>{});
+    for (Index output = 0; output < outputs_number; ++output)
+        terms[output].push_back(get_use_bias()
+            ? format("{:.10g}", parameter_views[0].as<float>()[output % weights.cols()]) : "0");
 
-    for (Index j = 0; j < outputs_number; ++j)
+    for (Index input = 0; input < inputs_number; ++input)
     {
-        buffer << output_names[j] << " = " << activation_function_local << "( " << bias_data[j] << " + ";
-
-        for (Index i = 0; i < inputs_number; ++i)
-        {
-            const Index weight_index = i * outputs_number + j;
-            buffer << "(" << weight_data[weight_index] << "*" << input_names[i] << ")";
-            if (i < inputs_number - 1) buffer << " + ";
-        }
-
-        buffer << " );\n";
+        const Index block = input / weights.rows();
+        const Index feature = input % weights.rows();
+        for (Index output = 0; output < weights.cols(); ++output)
+            terms[block * weights.cols() + output].push_back(
+                format("({:.10g}*{})", weights(feature, output), input_names[input]));
     }
 
-    return buffer.str();
+    const string activation = ActivationOperator::to_string(get_activation_function());
+    string expression;
+    for (Index output = 0; output < outputs_number; ++output)
+        expression += format("{} = {}( {} );\n", output_names[output], activation,
+                             join_strings(terms[output], " + "));
+    return expression;
 }
 
 void Dense::read_JSON_body(const Json* dense_layer_element)

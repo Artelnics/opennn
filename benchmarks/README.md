@@ -60,6 +60,11 @@ API**. See [the application procedure](PROTOCOL.md#13-application-startup-and-de
 [the quality procedure](PROTOCOL.md#14-prediction-quality) for the four-model training-quality comparison.
 Their provisional artifacts and generated tables go to `scratch/` inside the
 selected results directory.
+Quality runs accept `--initialization shared` to load one verified set of
+weights into both engines for each seed. The [quality procedure](PROTOCOL.md#14-prediction-quality)
+also describes numerical checks of predictions, gradients and optimizer updates
+before interpreting a difference in trained quality. Numerical agreement and
+training-quality equivalence are recorded separately.
 Presentation directories contain no benchmark code or raw measurements.
 
 ```bash
@@ -91,6 +96,8 @@ In that case `max_batch` is only the largest successful batch observed, or
 `footprint` is the exception: it takes no batch and no dataset, and its modes
 are `memory`, `startup` and `export` — one process each, since a startup cost
 is already paid by anything sharing a process with it.
+Use `--footprint-questions export` when only the export cost needs another
+measurement; the default runs all three questions.
 
 Footprint memory/startup use CPU FP32 in both engines. Its baseline is current
 Linux RSS or Windows working set (MiB), not private commit or a peak. Missing

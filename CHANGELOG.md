@@ -48,6 +48,25 @@ remaining limitations.
 
 ### Reliability and portability
 
+- Plan expression bindings independently of layer labels and avoid collisions
+  with public variable names. Scaling honors explicit output names; its empty
+  output-name shorthand remains available. Dense export handles bias-free
+  layers, including embedded C. Intermediate names and source formatting change;
+  public input/output bindings and serialized models retain their contracts.
+- Assign dataset splits from a compacted sample order while retaining seeded
+  permutations, unused rows and the existing rounding/remainder policy. Invalid
+  ratios now fail before changing roles; an all-unused dataset remains a no-op.
+- Write evaluation error channels directly into per-sample tensor blocks,
+  retaining absolute/scaled/percentage channels and zero-range conventions.
+- Use exponential priorities for genetic weighted selection without replacement.
+  Elites and successive relative-fitness sampling are retained; a seed remains
+  reproducible but generates a different sequence than the former roulette loop.
+
+- Evaluate the QuasiNewton inverse-BFGS update with a symmetric rank-two
+  correction derived from the published product formula. Keep the existing
+  curvature thresholds and retain the previous matrix when nonfinite inputs
+  or an overflowing correction make an update unusable. Floating-point
+  results can differ from the former three-correction evaluation.
 - Consolidate evaluation classification traversal, positive counts and metric
   ratios. Reuse inference batch targets and stream sample indices, preserving
   bounded CPU/CUDA inference, metric formulas and curve tie handling. Group the
