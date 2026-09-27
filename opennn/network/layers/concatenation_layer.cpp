@@ -35,10 +35,13 @@ void ConcatenationOperator::forward_propagate(ForwardPropagation& forward_propag
         Index ch_offset = 0;
         for (size_t i = 0; i < inputs.size(); ++i)
         {
+            const Index slice_channels = input_channels[i];
+            const Index slice_offset = ch_offset;
+            ch_offset += slice_channels;
+
             concat_forward_slice_cuda(to_int(batch_size), to_int(height), to_int(width),
-                                      to_int(input_channels[i]), to_int(total_channels), to_int(ch_offset),
+                                      to_int(slice_channels), to_int(total_channels), to_int(slice_offset),
                                       inputs[i].as<float>(), output.as<float>());
-            ch_offset += input_channels[i];
         }
         return;
     }
@@ -85,11 +88,16 @@ void ConcatenationOperator::back_propagate(ForwardPropagation&, BackPropagation&
         for (size_t i = 0; i < input_channels.size(); ++i)
         {
             TensorView& in_delta = get_input_delta(back_propagation, layer, i);
-            if (!in_delta.empty())
-                concat_backward_slice_cuda(to_int(batch_size), to_int(height), to_int(width),
-                                           to_int(input_channels[i]), to_int(total_channels), to_int(ch_offset),
-                                           output_delta.as<float>(), in_delta.as<float>());
+            const Index slice_offset = ch_offset;
             ch_offset += input_channels[i];
+
+            if (in_delta.empty()) continue;
+
+            const float* delta_source = output_delta.as<float>();
+            float* delta_target = in_delta.as<float>();
+            concat_backward_slice_cuda(to_int(batch_size), to_int(height), to_int(width),
+                                       to_int(input_channels[i]), to_int(total_channels), to_int(slice_offset),
+                                       delta_source, delta_target);
         }
         return;
     }
