@@ -26,24 +26,26 @@ namespace opennn
     {
         if constexpr (is_floating_point_v<T>)
         {
+            // strtof and strtod read up to a NUL, which [first, last) does not have to contain.
+
             const string buffer(first, last);
-            char* parse_end = nullptr;
+            const char* const begin = buffer.c_str();
+            char* end = nullptr;
+
             errno = 0;
 
             if constexpr (is_same_v<T, float>)
-                value = strtof(buffer.c_str(), &parse_end);
+                value = strtof(begin, &end);
             else
-                value = static_cast<T>(strtod(buffer.c_str(), &parse_end));
+                value = static_cast<T>(strtod(begin, &end));
 
-            if (parse_end == buffer.c_str())
+            const bool out_of_range = errno == ERANGE;
+            const ptrdiff_t consumed = end - begin;
+
+            if (consumed == 0)
                 return {first, errc::invalid_argument};
 
-            const size_t consumed = static_cast<size_t>(parse_end - buffer.c_str());
-
-            if (errno == ERANGE)
-                return {first + consumed, errc::result_out_of_range};
-
-            return {first + consumed, errc{}};
+            return {first + consumed, out_of_range ? errc::result_out_of_range : errc{}};
         }
         else
         {
