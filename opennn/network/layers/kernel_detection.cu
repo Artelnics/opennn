@@ -61,8 +61,8 @@ __global__ void detection_forward_kernel(const int n,
 
         dst[base + 0] = sigmoid_f(src[base + 0]);
         dst[base + 1] = sigmoid_f(src[base + 1]);
-        dst[base + 2] = __expf(fminf(fmaxf(src[base + 2], -4.0f), 4.0f)) * aw;
-        dst[base + 3] = __expf(fminf(fmaxf(src[base + 3], -4.0f), 4.0f)) * ah;
+        dst[base + 2] = aw * __expf(fminf(fmaxf(src[base + 2], -4.0f), 4.0f));
+        dst[base + 3] = ah * __expf(fminf(fmaxf(src[base + 3], -4.0f), 4.0f));
         dst[base + 4] = sigmoid_f(src[base + 4]);
 
         if (class_activation == class_activation_sigmoid)

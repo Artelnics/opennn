@@ -32,15 +32,36 @@ inline const auto check_status = [](auto status, const string& what) {
 
 inline int device_sm_version()
 {
-    static const int sm = [] {
-        int device = 0;
-        cudaGetDevice(&device);
-        int major = 0, minor = 0;
-        cudaDeviceGetAttribute(&major, cudaDevAttrComputeCapabilityMajor, device);
-        cudaDeviceGetAttribute(&minor, cudaDevAttrComputeCapabilityMinor, device);
-        return major * 100 + minor * 10;
-    }();
-    return sm;
+    // Encoded as 100 * major + 10 * minor (8.6 -> 860, 12.0 -> 1200); the
+    // plan-cache directory name embeds it, so the encoding must stay fixed.
+    // The device current on the first caller's thread is queried once and the
+    // static serves every later call, since frontend_enabled() sits on hot
+    // paths. A failed query leaves a zero component and disables the frontend.
+    struct QueriedCapability
+    {
+        int encoded = 0;
+
+        static int component_of(const int device_ordinal, const cudaDeviceAttr attribute)
+        {
+            int component = 0;
+            cudaDeviceGetAttribute(&component, attribute, device_ordinal);
+            return component;
+        }
+
+        QueriedCapability()
+        {
+            int device_ordinal = 0;
+            cudaGetDevice(&device_ordinal);
+
+            const int major = component_of(device_ordinal, cudaDevAttrComputeCapabilityMajor);
+            const int minor = component_of(device_ordinal, cudaDevAttrComputeCapabilityMinor);
+
+            encoded = major * 100 + minor * 10;
+        }
+    };
+
+    static const QueriedCapability capability;
+    return capability.encoded;
 }
 
 inline bool frontend_enabled()

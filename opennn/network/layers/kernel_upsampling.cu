@@ -23,9 +23,8 @@ __global__ void upsampling_forward_kernel(
         Index b; int oh, ow, c;
         nhwc_decompose(i, channels, out_w, out_h, b, oh, ow, c);
 
-        const int iw = ow / scale;
-        const int ih = oh / scale;
-        dst[i] = src[((b * in_h + ih) * in_w + iw) * channels + c];
+        const Index source = ((b * in_h + oh / scale) * in_w + ow / scale) * channels + c;
+        dst[i] = src[source];
     }
 }
 
@@ -42,15 +41,18 @@ __global__ void upsampling_backward_kernel(
         Index b; int ih, iw, c;
         nhwc_decompose(i, channels, in_w, in_h, b, ih, iw, c);
 
-        float acc = 0.0f;
-        for (int dh = 0; dh < scale; ++dh)
-            for (int dw = 0; dw < scale; ++dw)
-            {
-                const int oh = ih * scale + dh;
-                const int ow = iw * scale + dw;
-                acc += out_delta[((b * out_h + oh) * out_w + ow) * channels + c];
-            }
-        in_delta[i] = acc;
+        const Index first_row = b * out_h + Index(ih) * scale;
+        const Index first_col = Index(iw) * scale;
+
+        float sum = 0.0f;
+        for (int u = 0; u < scale; ++u)
+        {
+            const Index row_start = ((first_row + u) * out_w + first_col) * channels + c;
+            for (int v = 0; v < scale; ++v)
+                sum += out_delta[row_start + Index(v) * channels];
+        }
+
+        in_delta[i] = sum;
     }
 }
 
