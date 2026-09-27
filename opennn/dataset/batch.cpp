@@ -417,9 +417,7 @@ void Batch::wait_h2d_on_compute_stream()
 ThreadSafeQueue<Batch*>& BatchPools::validation_queue()
 {
 
-    return validation_pool.empty()
-        ? training_empty_queue
-        : validation_empty_queue;
+    return validation_pool.empty() ? training_empty_queue : validation_empty_queue;
 }
 
 BatchPrefetchSession::BatchPrefetchSession(ThreadSafeQueue<Batch*>& queue, const Index batches_number)
