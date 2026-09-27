@@ -25,12 +25,8 @@ TEST(GrowingNeuronsTest, RefusesALastLayerThatCannotTakeANeuronCount)
 
     TabularDataset dataset(samples, {1}, {1});
     MatrixR data(samples, 2);
-    for (Index i = 0; i < samples; i++)
-    {
-        const type x = type(i) / type(samples);
-        data(i, 0) = x;
-        data(i, 1) = x;
-    }
+    for (Index row = 0; row < samples; ++row)
+        data.row(row).setConstant(type(row) / type(samples));
     dataset.set_data(data);
     dataset.split_samples_random();
 
@@ -69,28 +65,11 @@ TEST(GrowingNeuronsTest, GeneralConstructor)
 
 TEST(GrowingNeuronsTest, NeuronsSelection)
 {
+    // Constant-zero target; the input repeats -0.9 and skips -0.8 on purpose.
     MatrixR data(21, 2);
-    data << -1.0f, 0.0f,
-        -0.9f, 0.0f,
-        -0.9f, 0.0f,
-        -0.7f, 0.0f,
-        -0.6f, 0.0f,
-        -0.5f, 0.0f,
-        -0.4f, 0.0f,
-        -0.3f, 0.0f,
-        -0.2f, 0.0f,
-        -0.1f, 0.0f,
-        0.0f, 0.0f,
-        0.1f, 0.0f,
-        0.2f, 0.0f,
-        0.3f, 0.0f,
-        0.4f, 0.0f,
-        0.5f, 0.0f,
-        0.6f, 0.0f,
-        0.7f, 0.0f,
-        0.8f, 0.0f,
-        0.9f, 0.0f,
-        1.0f, 0.0f;
+    data.col(0) << -1.0f, -0.9f, -0.9f, -0.7f, -0.6f, -0.5f, -0.4f, -0.3f, -0.2f, -0.1f,
+                   0.0f, 0.1f, 0.2f, 0.3f, 0.4f, 0.5f, 0.6f, 0.7f, 0.8f, 0.9f, 1.0f;
+    data.col(1).setZero();
 
     TabularDataset dataset(21, {1}, {1});
     dataset.set_data(data);
@@ -111,28 +90,16 @@ TEST(GrowingNeuronsTest, NeuronsSelection)
 }
 TEST(GrowingNeuronsTest, PerformNeuronsSelection)
 {
+    // Identity on a uniform grid over [-1, 1], nudged up on even rows and down
+    // on odd rows so no small network fits it exactly.
     MatrixR data(21, 2);
-    data << -1.0f,  1.0f,
-        -0.9f, -0.9f,
-        -0.9f, -0.8f,
-        -0.7f, -0.7f,
-        -0.6f, -0.6f,
-        -0.5f, -0.5f,
-        -0.4f, -0.4f,
-        -0.3f, -0.3f,
-        -0.2f, -0.2f,
-        -0.1f, -0.1f,
-        0.0f,  0.0f,
-        0.1f,  0.1f,
-        0.2f,  0.2f,
-        0.3f,  0.3f,
-        0.4f,  0.4f,
-        0.5f,  0.5f,
-        0.6f,  0.6f,
-        0.7f,  0.7f,
-        0.8f,  0.8f,
-        0.9f,  0.9f,
-        1.0f,  1.0f;
+    for (Index row = 0; row < data.rows(); ++row)
+    {
+        const type input = type(row - 10) / type(10);
+        const type perturbation = (row % 2 == 0) ? type(0.05) : type(-0.05);
+        data(row, 0) = input;
+        data(row, 1) = input + perturbation;
+    }
 
     TabularDataset dataset(21, {1}, {1});
     dataset.set_data(data);
@@ -156,27 +123,9 @@ TEST(GrowingNeuronsTest, PerformNeuronsSelection)
 TEST(GrowingNeuronsTest, StopByTime)
 {
     MatrixR data(21, 2);
-    data << -1.0f,  1.0f,
-        -0.9f, -0.9f,
-        -0.8f, -0.8f,
-        -0.7f, -0.7f,
-        -0.6f, -0.6f,
-        -0.5f, -0.5f,
-        -0.4f, -0.4f,
-        -0.3f, -0.3f,
-        -0.2f, -0.2f,
-        -0.1f, -0.1f,
-        0.0f,  0.0f,
-        0.1f,  0.1f,
-        0.2f,  0.2f,
-        0.3f,  0.3f,
-        0.4f,  0.4f,
-        0.5f,  0.5f,
-        0.6f,  0.6f,
-        0.7f,  0.7f,
-        0.8f,  0.8f,
-        0.9f,  0.9f,
-        1.0f,  1.0f;
+    for (Index row = 0; row < data.rows(); ++row)
+        data.row(row).setConstant(type(row - 10) / type(10));
+    data(0, 1) = type(1);
 
     TabularDataset dataset(21, {1}, {1});
     dataset.set_data(data);
@@ -199,13 +148,15 @@ TEST(GrowingNeuronsTest, StopByTime)
 TEST(GrowingNeuronsTest, OptimalNeuronsFound)
 {
 
+    // Parabola sampled on [-1, 1) with step 0.05.
     const Index samples = 40;
+
     MatrixR data(samples, 2);
-    for(Index i = 0; i < samples; i++)
+    for (Index row = 0; row < samples; ++row)
     {
-        type x = type(i) / samples * 2 - 1;
-        data(i, 0) = x;
-        data(i, 1) = x * x;
+        const type input = type(-1) + type(row) / type(20);
+        data(row, 0) = input;
+        data(row, 1) = input * input;
     }
 
     TabularDataset dataset(samples, {1}, {1});
@@ -229,12 +180,8 @@ TEST(GrowingNeuronsTest, OptimalNeuronsFound)
 TEST(GrowingNeuronsTest, NeuronsIncrement)
 {
     MatrixR data(21, 2);
-    for(Index i = 0; i < 21; i++)
-    {
-        type x = type(i) / 20 * 2 - 1;
-        data(i, 0) = x;
-        data(i, 1) = x;
-    }
+    for (Index row = 0; row < data.rows(); ++row)
+        data.row(row).setConstant(type(2 * row) / type(20) - type(1));
 
     TabularDataset dataset(21, {1}, {1});
     dataset.set_data(data);
@@ -260,12 +207,8 @@ TEST(GrowingNeuronsTest, CrossValidationKeepsPersistentRoles)
 
     TabularDataset dataset(samples, {1}, {1});
     MatrixR data(samples, 2);
-    for (Index i = 0; i < samples; i++)
-    {
-        const type x = type(i) / type(samples);
-        data(i, 0) = x;
-        data(i, 1) = x;
-    }
+    for (Index row = 0; row < samples; ++row)
+        data.row(row).setConstant(type(row) / type(samples));
     dataset.set_data(data);
     dataset.split_samples_random();
 
