@@ -121,6 +121,9 @@ inline void mark_ignored_anchors(const YoloDataset::Box& box,
     for (Index j = 0; j < ssize(anchors); ++j)
     {
         if (j == skip_anchor) continue;
+        // YOLOv3 ignore rule: only anchors whose shape overlaps the box by at
+        // least 0.5 are masked. Written as "< 0.5 -> skip" so a NaN IoU still
+        // reaches the marking code.
         if (yolo_iou_wh({box.w, box.h}, anchors[size_t(j)]) < 0.5f) continue;
         const Index col = grid_cell(box.x, grid);
         const Index row = grid_cell(box.y, grid);
