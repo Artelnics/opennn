@@ -517,44 +517,46 @@ struct CiouTerms
 
 __device__ __forceinline__ CiouTerms ciou_terms(const float* pred, const float* gt)
 {
+    const float pred_x = pred[0], pred_y = pred[1], pred_w = pred[2], pred_h = pred[3];
+    const float gt_x   = gt[0],   gt_y   = gt[1],   gt_w   = gt[2],   gt_h   = gt[3];
+
     CiouTerms t;
 
-    t.pl = pred[0] - 0.5f * pred[2];
-    t.pr = pred[0] + 0.5f * pred[2];
-    t.pt = pred[1] - 0.5f * pred[3];
-    t.pb = pred[1] + 0.5f * pred[3];
+    // Edges from center and size; y grows downward, so top is the smaller value.
+    t.pl  = pred_x - 0.5f * pred_w;
+    t.pr  = pred_x + 0.5f * pred_w;
+    t.pt  = pred_y - 0.5f * pred_h;
+    t.pb  = pred_y + 0.5f * pred_h;
+    t.gl  = gt_x - 0.5f * gt_w;
+    t.gr  = gt_x + 0.5f * gt_w;
+    t.gt_ = gt_y - 0.5f * gt_h;
+    t.gb  = gt_y + 0.5f * gt_h;
 
-    t.gl  = gt[0] - 0.5f * gt[2];
-    t.gr  = gt[0] + 0.5f * gt[2];
-    t.gt_ = gt[1] - 0.5f * gt[3];
-    t.gb  = gt[1] + 0.5f * gt[3];
-
+    // Signed overlap (negative when disjoint), its clamp, and the enclosing box.
     t.iw_raw = fminf(t.pr, t.gr) - fmaxf(t.pl, t.gl);
     t.ih_raw = fminf(t.pb, t.gb) - fmaxf(t.pt, t.gt_);
-    t.iw = fmaxf(0.0f, t.iw_raw);
-    t.ih = fmaxf(0.0f, t.ih_raw);
-    t.inter = t.iw * t.ih;
-
-    const float pa = pred[2] * pred[3];
-    const float ga = gt[2] * gt[3];
-    t.uni = pa + ga - t.inter;
-
-    t.iou = (t.uni > 0.0f) ? t.inter / t.uni : 0.0f;
-
+    t.iw = fmaxf(t.iw_raw, 0.0f);
+    t.ih = fmaxf(t.ih_raw, 0.0f);
     t.ew = fmaxf(t.pr, t.gr) - fminf(t.pl, t.gl);
     t.eh = fmaxf(t.pb, t.gb) - fminf(t.pt, t.gt_);
-    t.enc = t.ew * t.eh;
 
-    t.giou = (t.enc > 0.0f) ? (t.iou - (t.enc - t.uni) / t.enc) : t.iou;
+    t.inter = t.iw * t.ih;
+    t.enc   = t.ew * t.eh;
+    t.uni   = pred_w * pred_h + gt_w * gt_h - t.inter;
 
-    t.dx   = pred[0] - gt[0];
-    t.dy   = pred[1] - gt[1];
-    t.rho2 = t.dx*t.dx + t.dy*t.dy;
-    t.c2   = t.ew*t.ew + t.eh*t.eh + YOLO_EPSILON;
+    t.iou  = t.uni > 0.0f ? t.inter / t.uni : 0.0f;
+    t.giou = t.enc > 0.0f ? t.iou - (t.enc - t.uni) / t.enc : t.iou;
 
-    t.v_diff = atan2f(gt[2], gt[3]) - atan2f(pred[2], pred[3]);
+    // Normalized center distance.
+    t.dx   = pred_x - gt_x;
+    t.dy   = pred_y - gt_y;
+    t.rho2 = t.dx * t.dx + t.dy * t.dy;
+    t.c2   = t.ew * t.ew + t.eh * t.eh + YOLO_EPSILON;
+
+    // Aspect-ratio consistency; atan2f(w, h) stays defined for h = 0.
+    t.v_diff = atan2f(gt_w, gt_h) - atan2f(pred_w, pred_h);
     t.v      = YOLO_INV_PI2 * t.v_diff * t.v_diff;
-    t.alpha  = (t.uni > 0.0f) ? t.v / (1.0f - t.iou + t.v + YOLO_EPSILON) : 0.0f;
+    t.alpha  = t.uni > 0.0f ? t.v / (1.0f - t.iou + t.v + YOLO_EPSILON) : 0.0f;
 
     return t;
 }
@@ -562,13 +564,16 @@ __device__ __forceinline__ CiouTerms ciou_terms(const float* pred, const float* 
 __device__ __forceinline__ float yolo_ciou_forward(const float* pred, const float* gt, float* out_iou)
 {
     const CiouTerms t = ciou_terms(pred, gt);
+
     *out_iou = t.iou;
 
-    return t.giou - t.rho2/t.c2 - t.alpha*t.v;
+    // CIoU penalties on top of the GIoU base term.
+    return t.giou - t.rho2 / t.c2 - t.alpha * t.v;
 }
 
 __device__ __forceinline__ float corner_max_grad(float a, float b)
 {
+    // Strict comparisons: the closed tie band and NaN inputs fall through to 1/2.
     if (a > b + YOLO_CORNER_EPS) return 1.0f;
     if (a < b - YOLO_CORNER_EPS) return 0.0f;
     return 0.5f;
@@ -576,9 +581,8 @@ __device__ __forceinline__ float corner_max_grad(float a, float b)
 
 __device__ __forceinline__ float corner_min_grad(float a, float b)
 {
-    if (a < b - YOLO_CORNER_EPS) return 1.0f;
-    if (a > b + YOLO_CORNER_EPS) return 0.0f;
-    return 0.5f;
+    // Complement by construction; exact because the max subgradient is 0, 1/2 or 1.
+    return 1.0f - corner_max_grad(a, b);
 }
 
 __device__ __forceinline__ void yolo_ciou_grad(
@@ -587,83 +591,98 @@ __device__ __forceinline__ void yolo_ciou_grad(
     float& cx_grad, float& cy_grad, float& w_grad, float& h_grad)
 {
     const CiouTerms t = ciou_terms(pred, gt);
-    const float pw = pred[2], ph = pred[3];
-    const float pl = t.pl, pr = t.pr, pt = t.pt, pb = t.pb;
-    const float gl = t.gl, gr = t.gr, gt_ = t.gt_, gb = t.gb;
-    const float iw = t.iw, ih = t.ih, ew = t.ew, eh = t.eh;
-    const float inter = t.inter, uni = t.uni, enc = t.enc;
 
-    *out_iou  = t.iou;
+    *out_iou = t.iou;
     *out_giou = t.giou;
 
-    const float alive = (t.iw_raw > 0.0f && t.ih_raw > 0.0f) ? 1.0f : 0.0f;
+    const float width  = pred[2];
+    const float height = pred[3];
 
-    const float d_il = alive * -corner_max_grad(pl, gl) * ih;
-    const float d_ir = alive *  corner_min_grad(pr, gr) * ih;
-    const float d_it = alive * -corner_max_grad(pt, gt_) * iw;
-    const float d_ib = alive *  corner_min_grad(pb, gb) * iw;
+    const float left_max   = corner_max_grad(t.pl, t.gl);
+    const float left_min   = corner_min_grad(t.pl, t.gl);
+    const float right_max  = corner_max_grad(t.pr, t.gr);
+    const float right_min  = corner_min_grad(t.pr, t.gr);
+    const float top_max    = corner_max_grad(t.pt, t.gt_);
+    const float top_min    = corner_min_grad(t.pt, t.gt_);
+    const float bottom_max = corner_max_grad(t.pb, t.gb);
+    const float bottom_min = corner_min_grad(t.pb, t.gb);
 
-    const float d_el = -corner_min_grad(pl, gl) * eh;
-    const float d_er =  corner_max_grad(pr, gr) * eh;
-    const float d_et = -corner_min_grad(pt, gt_) * ew;
-    const float d_eb =  corner_max_grad(pb, gb) * ew;
+    // The intersection follows the edges only while the boxes overlap on both axes.
+    const float overlapping = (t.iw_raw > 0.0f && t.ih_raw > 0.0f) ? 1.0f : 0.0f;
 
-    auto loss_grad_corner = [&](float d_inter, float d_area, float d_enc) -> float
+    // d(1 - GIoU)/d(edge) from the edge derivatives of the intersection, the predicted
+    // area and the enclosure. The union moves with the area minus the intersection.
+    const auto edge_gradient = [&t](const float d_inter, const float d_area, const float d_enc)
     {
-        const float d_uni  = d_area - d_inter;
-        const float d_iou  = (uni > 0.0f) ? ((d_inter * uni - inter * d_uni) / (uni * uni)) : 0.0f;
-        const float d_pen  = (enc > 0.0f) ? ((uni * d_enc - enc * d_uni) / (enc * enc)) : 0.0f;
-        return -d_iou + d_pen;
+        const float d_union = d_area - d_inter;
+        const float d_iou = t.uni > 0.0f
+            ? (d_inter * t.uni - t.inter * d_union) / (t.uni * t.uni)
+            : 0.0f;
+        const float d_penalty = t.enc > 0.0f
+            ? (t.uni * d_enc - t.enc * d_union) / (t.enc * t.enc)
+            : 0.0f;
+        return d_penalty - d_iou;
     };
 
-    const float d_loss_l = loss_grad_corner(d_il, -ph, d_el);
-    const float d_loss_r = loss_grad_corner(d_ir,  ph, d_er);
-    const float d_loss_t = loss_grad_corner(d_it, -pw, d_et);
-    const float d_loss_b = loss_grad_corner(d_ib,  pw, d_eb);
+    const float left_gradient   = edge_gradient(-overlapping * left_max * t.ih,   -height, -left_min * t.eh);
+    const float right_gradient  = edge_gradient( overlapping * right_min * t.ih,   height,  right_max * t.eh);
+    const float top_gradient    = edge_gradient(-overlapping * top_max * t.iw,    -width,  -top_min * t.ew);
+    const float bottom_gradient = edge_gradient( overlapping * bottom_min * t.iw,  width,   bottom_max * t.ew);
 
-    cx_grad = d_loss_l + d_loss_r;
-    cy_grad = d_loss_t + d_loss_b;
-    w_grad  = 0.5f * (d_loss_r - d_loss_l);
-    h_grad  = 0.5f * (d_loss_b - d_loss_t);
+    // Edges to center and size: left = cx - w/2, right = cx + w/2, likewise in y.
+    float x_total = left_gradient + right_gradient;
+    float y_total = top_gradient + bottom_gradient;
+    float w_total = 0.5f * (right_gradient - left_gradient);
+    float h_total = 0.5f * (bottom_gradient - top_gradient);
 
-    const float dx = t.dx, dy = t.dy, rho2 = t.rho2, c2 = t.c2;
-    const float ic4  = 1.0f / (c2 * c2);
+    // Distance penalty rho^2 / c^2, where c^2 depends on the box through the enclosure.
+    const float dew_dcx = right_max - left_min;
+    const float dew_dw  = 0.5f * (right_max + left_min);
+    const float deh_dcy = bottom_max - top_min;
+    const float deh_dh  = 0.5f * (bottom_max + top_min);
+    const float inv_c2_squared = 1.0f / (t.c2 * t.c2);
 
-    const float dew_dcx = corner_max_grad(pr, gr) - corner_min_grad(pl, gl);
-    const float deh_dcy = corner_max_grad(pb, gb) - corner_min_grad(pt, gt_);
-    const float dew_dw  = 0.5f * (corner_max_grad(pr, gr) + corner_min_grad(pl, gl));
-    const float deh_dh  = 0.5f * (corner_max_grad(pb, gb) + corner_min_grad(pt, gt_));
-    cx_grad += (2.0f*dx*c2 - rho2*2.0f*ew*dew_dcx) * ic4;
-    cy_grad += (2.0f*dy*c2 - rho2*2.0f*eh*deh_dcy) * ic4;
-    w_grad  += -rho2 * 2.0f*ew*dew_dw * ic4;
-    h_grad  += -rho2 * 2.0f*eh*deh_dh * ic4;
+    x_total += (2.0f * t.dx * t.c2 - t.rho2 * 2.0f * t.ew * dew_dcx) * inv_c2_squared;
+    y_total += (2.0f * t.dy * t.c2 - t.rho2 * 2.0f * t.eh * deh_dcy) * inv_c2_squared;
+    w_total -= t.rho2 * 2.0f * t.ew * dew_dw * inv_c2_squared;
+    h_total -= t.rho2 * 2.0f * t.eh * deh_dh * inv_c2_squared;
 
-    const float wh2   = pw*pw + ph*ph + YOLO_EPSILON;
-    const float coeff = t.alpha * YOLO_INV_PI2 * 2.0f * t.v_diff;
-    w_grad += coeff * (-ph / wh2);
-    h_grad += coeff * (pw / wh2);
+    // Aspect penalty alpha * v, with alpha held constant as in the CIoU paper.
+    const float diagonal_squared = width * width + height * height + YOLO_EPSILON;
+    const float aspect_factor = t.alpha * YOLO_INV_PI2 * 2.0f * t.v_diff / diagonal_squared;
+
+    w_total -= aspect_factor * height;
+    h_total += aspect_factor * width;
+
+    cx_grad = x_total;
+    cy_grad = y_total;
+    w_grad  = w_total;
+    h_grad  = h_total;
 }
 
 __device__ __forceinline__ float yolo_decode_cell_boxes(const int i, const int boxes_per_cell, const int grid_size,
                                                         const float* pred_raw, const float* gt_raw,
                                                         float* pred, float* gt)
 {
-    const int cell_idx = i / boxes_per_cell;
-    const int col = cell_idx % grid_size;
-    const int row = (cell_idx / grid_size) % grid_size;
-    const float inv_grid = 1.0f / float(grid_size);
+    // Slots are [sample][row][column][box]; the sample drops out through the modulo.
+    const int cell   = i / boxes_per_cell;
+    const int column = cell % grid_size;
+    const int row    = (cell / grid_size) % grid_size;
 
-    pred[0] = (pred_raw[0] + float(col)) * inv_grid;
-    pred[1] = (pred_raw[1] + float(row)) * inv_grid;
-    pred[2] = pred_raw[2];
-    pred[3] = pred_raw[3];
+    const float cells = static_cast<float>(grid_size);
 
-    gt[0] = (gt_raw[0] + float(col)) * inv_grid;
-    gt[1] = (gt_raw[1] + float(row)) * inv_grid;
-    gt[2] = gt_raw[2];
-    gt[3] = gt_raw[3];
+    const auto decode = [&](const float* raw, float* box)
+    {
+        box[0] = (raw[0] + static_cast<float>(column)) / cells;
+        box[1] = (raw[1] + static_cast<float>(row)) / cells;
+        box[2] = raw[2];
+        box[3] = raw[3];
+    };
 
-    return inv_grid;
+    decode(pred_raw, pred);
+    decode(gt_raw, gt);
+
+    return 1.0f / cells;
 }
 
 __global__ void yolo_loss_forward_kernel(
@@ -682,54 +701,66 @@ __global__ void yolo_loss_forward_kernel(
     const float focal_gamma,
     const float obj_focal_gamma)
 {
-    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n_boxes; i += blockDim.x * gridDim.x)
+    float thread_loss = 0.0f;
+
+    for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < n_boxes; i += Index(blockDim.x) * gridDim.x)
     {
-        const int base = i * values_per_box;
+        const float* out = output + i * values_per_box;
+        const float* tgt = target + i * values_per_box;
 
-        if (target[base + 4] >= 0.5f)
+        // Role from the objectness target: a NaN tau fails both tests and is ignored.
+        const float tau = tgt[4];
+
+        if (tau >= 0.5f)
         {
-            const float* pred_raw = output + base;
-            const float* gt_raw   = target + base;
-
             float pred[4], gt[4];
-            yolo_decode_cell_boxes(i, boxes_per_cell, grid_size, pred_raw, gt_raw, pred, gt);
+            yolo_decode_cell_boxes(int(i), boxes_per_cell, grid_size, out, tgt, pred, gt);
 
-            float iou_unused;
-            const float ciou = yolo_ciou_forward(pred, gt, &iou_unused);
+            float iou;
+            const float similarity = yolo_ciou_forward(pred, gt, &iou);
 
-            float contrib = lambda_giou * (1.0f - ciou);
+            const float objectness = out[4];
+            const float objectness_loss = -(tau * logf(objectness + YOLO_EPSILON)
+                                          + (1.0f - tau) * logf(1.0f - objectness + YOLO_EPSILON));
 
-            const float iou_t = target[base + 4];
-            contrib -= iou_t * logf(pred_raw[4] + YOLO_EPSILON) + (1.0f - iou_t) * logf(1.0f - pred_raw[4] + YOLO_EPSILON);
+            float class_loss = 0.0f;
 
-            float class_contrib = 0.0f;
-            if (sigmoid_classes)
+            for (int c = 0; c < classes_number; ++c)
             {
-                for (int c = 0; c < classes_number; ++c)
+                const float probability = out[5 + c];
+                const float label = tgt[5 + c];
+
+                if (sigmoid_classes != 0)
                 {
-                    const float p = pred_raw[5 + c];
-                    const float t = gt_raw[5 + c];
-                    const float p_t   = (t > 0.5f) ? p : (1.0f - p);
-                    const float focal = __powf(1.0f - p_t, focal_gamma);
-                    class_contrib -= focal * (t * logf(p + YOLO_EPSILON) + (1.0f - t) * logf(1.0f - p + YOLO_EPSILON));
+                    const float correct_probability = label > 0.5f ? probability : 1.0f - probability;
+                    const float focal = __powf(1.0f - correct_probability, focal_gamma);
+                    class_loss += focal * -(label * logf(probability + YOLO_EPSILON)
+                                          + (1.0f - label) * logf(1.0f - probability + YOLO_EPSILON));
                 }
-            }
-            else
-            {
-                for (int c = 0; c < classes_number; ++c)
-                    if (gt_raw[5 + c] > 0.0f)
-                        class_contrib -= logf(pred_raw[5 + c] + YOLO_EPSILON);
+                else if (label > 0.0f)
+                    class_loss -= logf(probability + YOLO_EPSILON);
             }
 
-            atomicAdd(error_accum, contrib + lambda_class * class_contrib);
+            thread_loss += lambda_giou * (1.0f - similarity) + objectness_loss + lambda_class * class_loss;
         }
-        else if (target[base + 4] > -0.5f)
+        else if (tau > -0.5f)
         {
-            const float conf  = output[base + 4];
-            const float w_bg  = (obj_focal_gamma > 0.0f) ? __powf(conf, obj_focal_gamma) : 1.0f;
-            atomicAdd(error_accum, -lambda_noobj * w_bg * logf(1.0f - conf + YOLO_EPSILON));
+            const float objectness = out[4];
+            const float weight = obj_focal_gamma > 0.0f ? __powf(objectness, obj_focal_gamma) : 1.0f;
+            thread_loss -= lambda_noobj * weight * logf(1.0f - objectness + YOLO_EPSILON);
         }
     }
+
+    // blockDim.x is uniform across the block, so either every thread reaches the
+    // barriers of the warp-shuffle reduction or none does. Partial warps cannot use
+    // full-mask shuffles, so such launches fall back to one atomic per thread.
+    if (blockDim.x % 32 == 0)
+    {
+        if (block_reduce_sum(thread_loss))
+            atomicAdd(error_accum, thread_loss);
+    }
+    else
+        atomicAdd(error_accum, thread_loss);
 }
 
 __global__ void yolo_loss_gradient_kernel(
@@ -749,64 +780,71 @@ __global__ void yolo_loss_gradient_kernel(
     const float focal_gamma,
     const float obj_focal_gamma)
 {
-    for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n_boxes; i += blockDim.x * gridDim.x)
+    // Clamp to [-clip, clip]; fminf maps a NaN to +clip before the lower bound applies.
+    const auto clip = [](const float z) { return fmaxf(fminf(z, YOLO_GRAD_CLIP), -YOLO_GRAD_CLIP); };
+
+    for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < n_boxes; i += Index(blockDim.x) * gridDim.x)
     {
-        const int base = i * values_per_box;
+        const float* out = output + i * values_per_box;
+        const float* tgt = target + i * values_per_box;
+        float* slot_delta = delta + i * values_per_box;
 
-        if (target[base + 4] >= 0.5f)
+        // Same roles as the forward pass; ignored slots (NaN tau included) are not written.
+        const float tau = tgt[4];
+
+        if (tau >= 0.5f)
         {
-            const float* pred_raw = output + base;
-            const float* gt_raw   = target + base;
-
             float pred[4], gt[4];
-            const float inv_grid = yolo_decode_cell_boxes(i, boxes_per_cell, grid_size, pred_raw, gt_raw, pred, gt);
+            const float center_scale = yolo_decode_cell_boxes(int(i), boxes_per_cell, grid_size, out, tgt, pred, gt);
 
-            float iou, giou;
-            float cx_g, cy_g, w_g, h_g;
-            yolo_ciou_grad(pred, gt, &iou, &giou, cx_g, cy_g, w_g, h_g);
+            float iou, giou, cx_grad, cy_grad, w_grad, h_grad;
+            yolo_ciou_grad(pred, gt, &iou, &giou, cx_grad, cy_grad, w_grad, h_grad);
 
-            const float scale = lambda_giou * inv_batch;
-            delta[base + 0] = scale * inv_grid * fmaxf(-YOLO_GRAD_CLIP, fminf(YOLO_GRAD_CLIP, cx_g));
-            delta[base + 1] = scale * inv_grid * fmaxf(-YOLO_GRAD_CLIP, fminf(YOLO_GRAD_CLIP, cy_g));
-            delta[base + 2] = scale * fmaxf(-YOLO_GRAD_CLIP, fminf(YOLO_GRAD_CLIP, w_g));
-            delta[base + 3] = scale * fmaxf(-YOLO_GRAD_CLIP, fminf(YOLO_GRAD_CLIP, h_g));
+            const float box_scale = lambda_giou * inv_batch;
+
+            slot_delta[0] = box_scale * center_scale * clip(cx_grad);
+            slot_delta[1] = box_scale * center_scale * clip(cy_grad);
+            slot_delta[2] = box_scale * clip(w_grad);
+            slot_delta[3] = box_scale * clip(h_grad);
+
+            // The 1/(p(1-p)+eps) factors cancel the sigmoid derivative applied by the Detection layer.
+            const float objectness = out[4];
+            slot_delta[4] = (objectness - tau) / (objectness * (1.0f - objectness) + YOLO_EPSILON) * inv_batch;
+
+            for (int c = 0; c < classes_number; ++c)
             {
-                const float c4    = pred_raw[4];
-                const float iou_t = target[base + 4];
-                delta[base + 4] = (c4 - iou_t) / (c4 * (1.0f - c4) + YOLO_EPSILON) * inv_batch;
-            }
+                const float probability = out[5 + c];
+                const float label = tgt[5 + c];
 
-            if (sigmoid_classes)
-            {
-                for (int c = 0; c < classes_number; ++c)
+                if (sigmoid_classes != 0)
                 {
-                    const float p = pred_raw[5 + c];
-                    const float t = gt_raw[5 + c];
-                    const float p_t   = (t > 0.5f) ? p : (1.0f - p);
-                    const float focal = __powf(1.0f - p_t, focal_gamma);
-                    delta[base + 5 + c] = lambda_class * focal * (p - t) / (p * (1.0f - p) + YOLO_EPSILON) * inv_batch;
+                    // Focal factor held constant.
+                    const float correct_probability = label > 0.5f ? probability : 1.0f - probability;
+                    const float focal = __powf(1.0f - correct_probability, focal_gamma);
+                    slot_delta[5 + c] = lambda_class * focal * (probability - label)
+                                      / (probability * (1.0f - probability) + YOLO_EPSILON) * inv_batch;
                 }
-            }
-            else
-            {
-                for (int c = 0; c < classes_number; ++c)
-                    if (gt_raw[5 + c] > 0.0f)
-                        delta[base + 5 + c] = lambda_class * (-gt_raw[5 + c] / (pred_raw[5 + c] + YOLO_EPSILON)) * inv_batch;
+                else if (label > 0.0f)
+                    slot_delta[5 + c] = -lambda_class * label / (probability + YOLO_EPSILON) * inv_batch;
             }
         }
-        else if (target[base + 4] > -0.5f)
+        else if (tau > -0.5f)
         {
-            const float c4 = output[base + 4];
-            float d4;
-            if (obj_focal_gamma == 0.0f) {
-                d4 = lambda_noobj * c4 / (c4 * (1.0f - c4) + YOLO_EPSILON);
-            } else {
+            const float objectness = out[4];
+            float objectness_gradient;
 
-                const float omc = fmaxf(1.0f - c4, YOLO_EPSILON);
-                d4 = lambda_noobj * __powf(fmaxf(c4, YOLO_EPSILON), obj_focal_gamma - 1.0f)
-                     * (-obj_focal_gamma * logf(omc) + c4 / omc);
+            if (obj_focal_gamma == 0.0f)
+                objectness_gradient = lambda_noobj * objectness / (objectness * (1.0f - objectness) + YOLO_EPSILON);
+            else
+            {
+                // d/do of -o^gamma * ln(1 - o), both arguments floored at eps.
+                const float complement = fmaxf(1.0f - objectness, YOLO_EPSILON);
+                const float floored = fmaxf(objectness, YOLO_EPSILON);
+                objectness_gradient = lambda_noobj * __powf(floored, obj_focal_gamma - 1.0f)
+                                    * (-obj_focal_gamma * logf(complement) + objectness / complement);
             }
-            delta[base + 4] = d4 * inv_batch;
+
+            slot_delta[4] = objectness_gradient * inv_batch;
         }
     }
 }
@@ -854,10 +892,13 @@ void yolo_gradient_cuda(const float* output, const float* target, float* delta,
                         float lambda_giou, float lambda_noobj, float lambda_class,
                         float focal_gamma, float obj_focal_gamma)
 {
-    const int n_boxes = batch * grid * grid * boxes_per_cell;
-    if (n_boxes == 0) return;
-    opennn::device::set_zero_async(delta, Index(n_boxes) * values_per_box * Index(sizeof(float)),
+    const Index n_boxes = Index(batch) * grid * grid * boxes_per_cell;
+    if (n_boxes <= 0) return;
+
+    // The kernel writes only the entries its slot roles define, so the rest must read as zero.
+    opennn::device::set_zero_async(delta, n_boxes * values_per_box * Index(sizeof(float)),
                                    opennn::device::get_compute_stream());
+
     launch_elementwise(n_boxes, yolo_loss_gradient_kernel,
                        output, target, delta, values_per_box, classes_number, sigmoid_classes, inv_batch,
                        grid, boxes_per_cell, lambda_giou, lambda_noobj, lambda_class, focal_gamma, obj_focal_gamma);
