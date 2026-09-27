@@ -124,26 +124,29 @@ void TabularDataset::set_storage_mode(StorageMode new_storage_mode)
 filesystem::path TabularDataset::cache_file_path() const
 {
 
-    if (!cache_path_override.empty())
-        return cache_path_override;
+    if (!cache_path_override.empty()) return cache_path_override;
 
     return data_path.parent_path() / ".cache" / (data_path.stem().string() + ".bin");
 }
 
 void TabularDataset::set_binary_cache_path(const filesystem::path& new_cache_path)
 {
-    invalidate_data();
     cache_path_override = new_cache_path;
+    invalidate_data();
+
+    // Release the old file before anything else: Windows cannot replace an open file.
     cache_reader.close();
     clear_cache_derived_state();
+
     cache_path = cache_file_path();
 
-    if (storage_mode == StorageMode::BinaryFile && filesystem::exists(cache_path))
-    {
-        cache_reader.open(cache_path);
-        if (cache_columns_number > 0 && get_samples_number() > 0)
-            refresh_cache_statistics();
-    }
+    if (storage_mode != StorageMode::BinaryFile || !filesystem::exists(cache_path))
+        return;
+
+    cache_reader.open(cache_path);
+
+    if (cache_columns_number > 0 && get_samples_number() > 0)
+        refresh_cache_statistics();
 }
 
 void TabularDataset::clear_cache_derived_state()
@@ -159,43 +162,61 @@ void TabularDataset::refresh_cache_statistics()
     cache_feature_descriptives = compute_descriptives_streaming(get_used_sample_indices());
 
     const Index columns_number = cache_columns_number;
-    cache_feature_replacement.assign(static_cast<size_t>(columns_number), 0.0f);
+    vector<float> replacement(size_t(columns_number), 0.0f);
 
-    const vector<vector<Index>> variable_feature_indices = get_feature_indices();
+    const vector<vector<Index>> variable_columns = get_feature_indices();
+    const size_t groups_number = min(variable_columns.size(), variables.size());
 
-    for (Index variable_index = 0; variable_index < ssize(variables); ++variable_index)
+    for (size_t v = 0; v < groups_number; ++v)
     {
-        const vector<Index>& feature_indices = variable_feature_indices[size_t(variable_index)];
+        const vector<Index>& columns = variable_columns[v];
 
-        using enum VariableType;
-        const VariableType type = variables[variable_index].type;
+        if (columns.empty()) continue;
 
-        if (type == Categorical)
+        switch (variables[v].type)
         {
-            Index mode_column = -1;
-            float best_mean = -1.0f;
+        case VariableType::Categorical:
+        {
+            // Most frequent category: the largest non-NaN mean, earliest column on ties.
+            Index winner = -1;
+            float winner_mean = 0.0f;
 
-            for (const Index column : feature_indices)
+            for (const Index column : columns)
             {
-                cache_feature_replacement[size_t(column)] = 0.0f;
                 const float column_mean = cache_feature_descriptives[size_t(column)].mean;
-                if (column_mean > best_mean) { best_mean = column_mean; mode_column = column; }
+
+                if (isnan(column_mean)) continue;
+
+                if (winner < 0 || column_mean > winner_mean)
+                {
+                    winner = column;
+                    winner_mean = column_mean;
+                }
             }
 
-            if (mode_column >= 0) cache_feature_replacement[size_t(mode_column)] = 1.0f;
+            if (winner >= 0)
+                replacement[size_t(winner)] = 1.0f;
         }
-        else if (type == Binary)
-        {
-            for (const Index column : feature_indices)
-                cache_feature_replacement[size_t(column)] =
+        break;
+
+        case VariableType::Binary:
+            for (const Index column : columns)
+                replacement[size_t(column)] =
                     cache_feature_descriptives[size_t(column)].mean >= 0.5f ? 1.0f : 0.0f;
-        }
-        else
-        {
-            for (const Index column : feature_indices)
-                cache_feature_replacement[size_t(column)] = cache_feature_descriptives[size_t(column)].mean;
+            break;
+
+        case VariableType::None:
+        case VariableType::Numeric:
+        case VariableType::Integer:
+        case VariableType::DateTime:
+        case VariableType::Constant:
+            for (const Index column : columns)
+                replacement[size_t(column)] = cache_feature_descriptives[size_t(column)].mean;
+            break;
         }
     }
+
+    cache_feature_replacement = std::move(replacement);
 }
 
 void TabularDataset::on_used_samples_changed()
@@ -262,8 +283,11 @@ void TabularDataset::fill_from_binary_cache(const vector<Index>& sample_indices,
             (uint64_t(row) * uint64_t(columns_number) + uint64_t(first_column)) * sizeof(float);
         cache_reader.read_at(span(dst, size_t(features_number)), offset);
 
+        const float* const column_replacement = cache_feature_replacement.data() + first_column;
+
         for (Index j = 0; j < features_number; ++j)
-            if (isnan(dst[j])) dst[j] = cache_feature_replacement[size_t(first_column + j)];
+            if (isnan(dst[j]))
+                dst[j] = column_replacement[j];
     }
 
     if (cache_feature_transforms.empty()) return;
@@ -581,64 +605,72 @@ vector<string> TabularDataset::unuse_least_correlated_variables(const Index inpu
 
 vector<string> TabularDataset::unuse_collinear_variables(const float maximum_correlation)
 {
-    const Tensor<Correlation, 2> correlations = calculate_input_variable_pearson_correlations();
-    const vector<Index> input_variable_indices = get_variable_indices("Input");
-    const Index input_variables_number = input_variable_indices.size();
-
-    vector<Index> high_corr_counts(input_variables_number, 0);
-    vector<float> mean_abs_corr(input_variables_number, 0.0);
-    vector<bool> to_be_removed(input_variables_number, false);
-
-    for (Index i = 0; i < input_variables_number; ++i)
-    {
-        float sum_of_abs_corr = 0.0;
-        for (Index j = 0; j < input_variables_number; ++j)
-        {
-            if (i == j) continue;
-
-            const float abs_r = abs(correlations(i, j).coefficient);
-            if (isnan(abs_r)) continue;
-
-            if (abs_r >= maximum_correlation)
-                high_corr_counts[i]++;
-
-            sum_of_abs_corr += abs_r;
-        }
-
-        if (input_variables_number > 1)
-            mean_abs_corr[i] = sum_of_abs_corr / (input_variables_number - 1);
-    }
-
-    for (Index i = 0; i < input_variables_number; ++i)
-    {
-        for (Index j = i + 1; j < input_variables_number; ++j)
-        {
-
-            if (to_be_removed[i] || to_be_removed[j])
-                continue;
-
-            const float r = correlations(i, j).coefficient;
-
-            if (isnan(r) || !(abs(r) >= maximum_correlation)) continue;
-
-            const Index index_to_remove =
-                tie(high_corr_counts[i], mean_abs_corr[i])
-                    >= tie(high_corr_counts[j], mean_abs_corr[j]) ? i : j;
-
-            to_be_removed[index_to_remove] = true;
-        }
-    }
-
     vector<string> unused_variables;
-    for (Index i = 0; i < input_variables_number; ++i)
-    {
-        if (!to_be_removed[i]) continue;
 
-        Variable& variable = variables[input_variable_indices[i]];
+    const vector<Index> input_variable_indices = get_variable_indices("Input");
+    const Index inputs_number = ssize(input_variable_indices);
+
+    const Tensor<Correlation, 2> correlations = calculate_input_variable_pearson_correlations();
+
+    // Per input: how many strong partners it has and its mean absolute correlation with the others.
+
+    vector<Index> strong_partners(size_t(inputs_number), 0);
+    vector<float> mean_absolute_correlations(size_t(inputs_number), 0.0f);
+
+    for (Index a = 0; a < inputs_number; ++a)
+    {
+        float absolute_sum = 0.0f;
+
+        for (Index b = 0; b < inputs_number; ++b)
+        {
+            if (b == a) continue;
+
+            const float correlation_value = correlations(a, b).coefficient;
+
+            if (isnan(correlation_value)) continue;
+
+            absolute_sum += abs(correlation_value);
+
+            if (abs(correlation_value) >= maximum_correlation)
+                ++strong_partners[size_t(a)];
+        }
+
+        if (inputs_number > 1)
+            mean_absolute_correlations[size_t(a)] = absolute_sum / float(inputs_number - 1);
+    }
+
+    // Greedy pass: in each strongly correlated pair, drop the more redundant input (the earlier on a tie).
+
+    vector<bool> flagged(size_t(inputs_number), false);
+
+    for (Index a = 0; a < inputs_number; ++a)
+        for (Index b = a + 1; b < inputs_number; ++b)
+        {
+            if (flagged[size_t(a)] || flagged[size_t(b)]) continue;
+
+            const float correlation_value = correlations(a, b).coefficient;
+
+            if (isnan(correlation_value) || abs(correlation_value) < maximum_correlation) continue;
+
+            const Index count_a = strong_partners[size_t(a)];
+            const Index count_b = strong_partners[size_t(b)];
+
+            const bool drop_a = count_a > count_b
+                || (count_a == count_b
+                    && mean_absolute_correlations[size_t(a)] >= mean_absolute_correlations[size_t(b)]);
+
+            flagged[size_t(drop_a ? a : b)] = true;
+        }
+
+    for (Index a = 0; a < inputs_number; ++a)
+    {
+        if (!flagged[size_t(a)]) continue;
+
+        Variable& variable = variables[size_t(input_variable_indices[size_t(a)])];
 
         if (variable.role == VariableRole::None) continue;
 
-        variable.set_role("None");
+        variable.set_role(VariableRole::None);
         unused_variables.push_back(variable.name);
     }
 
@@ -817,27 +849,27 @@ vector<Index> TabularDataset::filter_used_samples_by_column(Index column, bool p
 {
     const vector<Index> used_sample_indices = get_used_sample_indices();
 
-    vector<Index> filtered;
-    filtered.reserve(used_sample_indices.size());
+    vector<Index> selected;
+    selected.reserve(used_sample_indices.size());
 
-    for (const Index sample_index : used_sample_indices)
+    ranges::copy_if(used_sample_indices, back_inserter(selected), [&](const Index sample)
     {
-        const float value = data(sample_index, column);
+        const float value = data(sample, column);
+        return positive ? value > 0.5f : value < 0.5f;
+    });
 
-        if (positive ? (value > 0.5f) : (value < 0.5f))
-            filtered.push_back(sample_index);
-    }
-
-    return filtered;
+    return selected;
 }
 
 vector<Descriptives> TabularDataset::calculate_variable_descriptives_samples(bool positive) const
 {
     const vector<Index> target_feature_indices = get_feature_indices(VariableRole::Target);
-    if (target_feature_indices.empty()) return {};
+
+    if (target_feature_indices.empty())
+        return {};
 
     return descriptives(data,
-                        filter_used_samples_by_column(target_feature_indices[0], positive),
+                        filter_used_samples_by_column(target_feature_indices.front(), positive),
                         get_feature_indices(VariableRole::Input));
 }
 
@@ -1548,8 +1580,8 @@ void TabularDataset::impute_missing_values_statistic(const MissingValuesMethod& 
         ? mean(data, used_sample_indices, used_feature_indices)
         : median(data, used_sample_indices, used_feature_indices);
 
-    for (Index j = 0; j < replacements.size(); ++j)
-        if (!isfinite(replacements(j))) replacements(j) = 0.0f;
+    // A feature missing in every used sample has no statistic; never write NaN or inf into data.
+    replacements = replacements.unaryExpr([](const float value) { return isfinite(value) ? value : 0.0f; });
 
     const Index samples_number = used_sample_indices.size();
     const Index features_number = used_feature_indices.size();
@@ -1577,40 +1609,52 @@ void TabularDataset::impute_missing_values_statistic(const MissingValuesMethod& 
 
 void TabularDataset::reuse_input_incomplete_rows_binary()
 {
+    if (!cache_reader.is_open()
+        || cache_columns_number <= 0
+        || storage_mode != StorageMode::BinaryFile)
+        return;
 
-    if (storage_mode != StorageMode::BinaryFile) return;
-    if (cache_columns_number == 0 || !cache_reader.is_open()) return;
-
-    const vector<Index> target_feature_indices = get_feature_indices(VariableRole::Target);
-
-    const Index columns_number = cache_columns_number;
+    const vector<Index> target_columns = get_feature_indices(VariableRole::Target);
     const Index samples_number = get_samples_number();
+    const uint64_t columns_number = uint64_t(cache_columns_number);
 
-    vector<float> row(static_cast<size_t>(columns_number));
+    // Only the span of cache columns that covers every target is read per row.
+    const Index first_target = target_columns.empty() ? 0 : ranges::min(target_columns);
+    const Index last_target = target_columns.empty() ? -1 : ranges::max(target_columns);
+    vector<float> target_cells(size_t(last_target - first_target + 1));
 
     bool roles_changed = false;
 
-    for (Index sample_index = 0; sample_index < samples_number; ++sample_index)
+    for (Index sample = 0; sample < samples_number; ++sample)
     {
-        cache_reader.read_at(span(row),
-                             uint64_t(sample_index) * uint64_t(columns_number) * sizeof(float));
+        bool target_complete = true;
 
-        const bool target_missing = ranges::any_of(target_feature_indices,
-            [&](const Index target_index) { return isnan(row[size_t(target_index)]); });
+        if (!target_columns.empty())
+        {
+            const uint64_t offset =
+                (uint64_t(sample) * columns_number + uint64_t(first_target)) * sizeof(float);
+            cache_reader.read_at(span(target_cells), offset);
 
-        if (target_missing)
-        {
-            roles_changed |= sample_roles[size_t(sample_index)] != SampleRole::None;
-            sample_roles[size_t(sample_index)] = SampleRole::None;
+            target_complete = ranges::none_of(target_columns, [&](const Index column)
+            {
+                return isnan(target_cells[size_t(column - first_target)]);
+            });
         }
-        else if (sample_roles[size_t(sample_index)] == SampleRole::None)
-        {
-            sample_roles[size_t(sample_index)] = SampleRole::Training;
-            roles_changed = true;
-        }
+
+        SampleRole& role = sample_roles[size_t(sample)];
+
+        const SampleRole new_role = !target_complete ? SampleRole::None
+                                  : role == SampleRole::None ? SampleRole::Training
+                                  : role;
+
+        if (new_role == role) continue;
+
+        role = new_role;
+        roles_changed = true;
     }
 
-    if (roles_changed) on_used_samples_changed();
+    if (roles_changed)
+        on_used_samples_changed();
 }
 
 void TabularDataset::impute_missing_values_interpolate()
