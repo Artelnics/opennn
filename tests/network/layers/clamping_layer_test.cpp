@@ -82,8 +82,8 @@ TEST(ClampingTest, ForwardPropagate)
     const Index rows_number = 2;
 
     MatrixR input_data(rows_number, columns_number);
-    input_data << type(-5.0), type(0.5), type(10.0),
-        type(-1.0), type(0.0), type(1.0);
+    input_data << type(2.5),  type(-1.0), type(0.25),
+                  type(-0.5), type(1.0),  type(-4.0);
 
     Network network;
     network.add_layer(make_unique<Clamping>(Shape{columns_number}));
@@ -107,13 +107,14 @@ TEST(ClampingTest, ForwardPropagate)
     EXPECT_EQ(outputs.rows(), rows_number);
     EXPECT_EQ(outputs.cols(), columns_number);
 
-    MatrixR expected_output(rows_number, columns_number);
-    expected_output << type(-1.0), type(0.5), type(1.0),
-        type(-1.0), type(0.0), type(1.0);
+    MatrixR expected_outputs(rows_number, columns_number);
+    expected_outputs << type(1.0),  type(-1.0), type(0.25),
+                        type(-0.5), type(1.0),  type(-1.0);
 
-    for(Index i = 0; i < rows_number; ++i)
-        for(Index j = 0; j < columns_number; ++j)
-            EXPECT_NEAR(outputs(i, j), expected_output(i, j), tolerance);
+    for (Index i = 0; i < rows_number; ++i)
+        for (Index j = 0; j < columns_number; ++j)
+            EXPECT_NEAR(outputs(i, j), expected_outputs(i, j), tolerance)
+                << "sample " << i << ", feature " << j << ", input " << input_data(i, j);
 
     EXPECT_EQ(layer->get_output_shape(), Shape{ columns_number });
 }
@@ -124,8 +125,8 @@ TEST(ClampingTest, NoClampingModePassThrough)
     const Index rows_number = 2;
 
     MatrixR input_data(rows_number, columns_number);
-    input_data << type(-5.0), type(0.5), type(10.0),
-        type(-1.0), type(0.0), type(1.0);
+    input_data(0, 0) = type(-5.0); input_data(0, 1) = type(0.5); input_data(0, 2) = type(10.0);
+    input_data(1, 0) = type(-1.0); input_data(1, 1) = type(0.0); input_data(1, 2) = type(1.0);
 
     Network network;
     network.add_layer(make_unique<Clamping>(Shape{columns_number}));
@@ -146,7 +147,11 @@ TEST(ClampingTest, NoClampingModePassThrough)
     TensorView output_view = forward_propagation.get_outputs();
     MatrixMap outputs = output_view.as_matrix();
 
-    for(Index i = 0; i < rows_number; ++i)
-        for(Index j = 0; j < columns_number; ++j)
-            EXPECT_NEAR(outputs(i, j), input_data(i, j), tolerance);
+    EXPECT_EQ(outputs.rows(), rows_number);
+    EXPECT_EQ(outputs.cols(), columns_number);
+
+    for (Index row = 0; row < rows_number; ++row)
+        for (Index column = 0; column < columns_number; ++column)
+            EXPECT_NEAR(outputs(row, column), input_data(row, column), tolerance)
+                << "row " << row << ", column " << column;
 }

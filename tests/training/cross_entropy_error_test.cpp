@@ -53,14 +53,9 @@ TEST(CrossEntropyError2d, BackPropagate)
 
     EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(1.0e-3));
 
-    type difference = 0;
-    for (int i = 0; i < gradient.size(); i++)
-    {
-        difference += ((gradient[i] - numerical_gradient[i]) * (gradient[i] - numerical_gradient[i]));
-    }
-    type error = std::sqrt(difference);
+    const type difference_norm = (gradient - numerical_gradient).norm();
 
-    EXPECT_NEAR(error,0, type(1.0e-1));
+    EXPECT_NEAR(difference_norm, type(0), type(1.0e-1));
 
 }
 
