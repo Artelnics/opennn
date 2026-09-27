@@ -223,9 +223,10 @@ TEST(Dataset, BatchFill)
     Dataset& dataset = tabular;
 
     MatrixR data(3, 3);
-    data << type(1),type(4),type(1),
-            type(2),type(-5),type(0),
-            type(-3),type(6),type(1);
+    data << type(3),  type(-2), type(0),
+            type(-7), type(5),  type(1),
+            type(6),  type(9),  type(1);
+
     dataset.set_data(data);
 
     dataset.set_sample_roles("Training");
@@ -241,13 +242,13 @@ TEST(Dataset, BatchFill)
                FeatureSelection{input_variables_indices, {}, target_variables_indices});
 
     MatrixR input_data(3, 2);
-    input_data << type(1),type(4),
-                  type(2),type(-5),
-                  type(-3),type(6);
+    input_data << type(3),  type(-2),
+                  type(-7), type(5),
+                  type(6),  type(9);
 
     MatrixR target_data(3, 1);
-    target_data << type(1),
-                   type(0),
+    target_data << type(0),
+                   type(1),
                    type(1);
 
     MatrixMap inputs = batch.get_inputs()[0].as_matrix();
@@ -255,18 +256,18 @@ TEST(Dataset, BatchFill)
     ASSERT_EQ(inputs.rows(), input_data.rows());
     ASSERT_EQ(inputs.cols(), input_data.cols());
 
-    for(Index i = 0; i < inputs.rows(); ++i)
-        for(Index j = 0; j < inputs.cols(); ++j)
-            EXPECT_NEAR(inputs(i, j), input_data(i, j), 1e-6);
+    for (Index row = 0; row < inputs.rows(); ++row)
+        for (Index column = 0; column < inputs.cols(); ++column)
+            EXPECT_NEAR(inputs(row, column), input_data(row, column), 1e-6);
 
     MatrixMap targets = batch.get_targets().as_matrix();
 
     ASSERT_EQ(targets.rows(), target_data.rows());
     ASSERT_EQ(targets.cols(), target_data.cols());
 
-    for(Index i = 0; i < targets.rows(); ++i)
-        for(Index j = 0; j < targets.cols(); ++j)
-            EXPECT_NEAR(targets(i, j), target_data(i, j), 1e-6);
+    for (Index row = 0; row < targets.rows(); ++row)
+        for (Index column = 0; column < targets.cols(); ++column)
+            EXPECT_NEAR(targets(row, column), target_data(row, column), 1e-6);
 }
 
 TEST(Variable, ConstructorResolvesStrings)

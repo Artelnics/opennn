@@ -142,12 +142,8 @@ TEST(StatisticsTest, Median)
     
     VectorR vector(2);
     vector.setZero();
-    
-    type median;
 
-    vector.resize(2);
-
-    median = opennn::median(vector);
+    type median = opennn::median(vector);
     
     EXPECT_NEAR(median, type(0), EPSILON);
 
@@ -425,27 +421,11 @@ TEST(StatisticsTest, Histogram)
     centers = bins.centers;
     frequencies = bins.frequencies;
 
-    EXPECT_NEAR(abs(centers[0]), type(0.5), type(1.0e-3));
-    EXPECT_NEAR(abs(centers[1]), type(1.5), type(1.0e-3));
-    EXPECT_NEAR(abs(centers[2]), type(2.5), type(1.0e-3));
-    EXPECT_NEAR(abs(centers[3]), type(3.5), type(1.0e-3));
-    EXPECT_NEAR(abs(centers[4]), type(4.5), type(1.0e-3));
-    EXPECT_NEAR(abs(centers[5]), type(5.5), type(1.0e-3));
-    EXPECT_NEAR(abs(centers[6]), type(6.5), type(1.0e-3));
-    EXPECT_NEAR(abs(centers[7]), type(7.5), type(1.0e-3));
-    EXPECT_NEAR(abs(centers[8]), type(8.5), type(1.0e-3));
-    EXPECT_NEAR(abs(centers[9]), type(9.5), type(1.0e-3));
-
-    EXPECT_EQ(frequencies[0], 1);
-    EXPECT_EQ(frequencies[1], 1);
-    EXPECT_EQ(frequencies[2], 1);
-    EXPECT_EQ(frequencies[3], 1);
-    EXPECT_EQ(frequencies[4], 1);
-    EXPECT_EQ(frequencies[5], 1);
-    EXPECT_EQ(frequencies[6], 1);
-    EXPECT_EQ(frequencies[7], 1);
-    EXPECT_EQ(frequencies[8], 1);
-    EXPECT_EQ(frequencies[9], 2);
+    for (Index bin = 0; bin < 10; ++bin)
+    {
+        EXPECT_NEAR(abs(centers[bin]), type(bin) + type(0.5), type(1.0e-3));
+        EXPECT_EQ(frequencies[bin], bin < 9 ? type(1) : type(2));
+    }
 
     type sum_frec_1 = frequencies.sum();
 
@@ -598,8 +578,7 @@ TEST(StatisticsTest, BoxPlot)
     BoxPlot box_plot;
     BoxPlot solution;
 
-    vector.resize(4);
-    vector.setZero();
+    vector.setZero(4);
     
     box_plot = opennn::box_plot(vector);
 
