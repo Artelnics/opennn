@@ -419,76 +419,74 @@ TEST(YoloDataset, RepeatedMosaicBatchesKeepWorkerScratchIndependent)
 
 TEST(YoloDataset, MultiScaleTargetsRouteBoxesToCorrectHead)
 {
-
     TempDir dir("opennn_yolo_test_");
     const filesystem::path images_dir = dir.path / "images";
     const filesystem::path labels_dir = dir.path / "labels";
     filesystem::create_directories(images_dir);
     filesystem::create_directories(labels_dir);
+
     write_classes(labels_dir / "classes.names", {"only"});
+    write_bmp_24(images_dir / "a.bmp", 16, 16, 128, 128, 128);
 
-    constexpr int W = 16;
-    constexpr int H = 16;
-    write_bmp_24(images_dir / "a.bmp", W, H, 128, 128, 128);
-
+    // write_label holds a single box and truncates, so the two-box file is
+    // written here. The scope closes the stream before the dataset reads it.
     {
-        ofstream lf(labels_dir / "a.txt");
-        lf << "0 0.25 0.25 0.6 0.6\n";
-        lf << "0 0.875 0.875 0.1 0.1\n";
+        ofstream label_file(labels_dir / "a.txt");
+        label_file << "0 0.25 0.25 0.6 0.6\n"
+                   << "0 0.875 0.875 0.1 0.1\n";
     }
 
-    const vector<std::array<float, 2>> anchors_large{{0.6f, 0.6f}, {0.7f, 0.7f}};
-    const vector<std::array<float, 2>> anchors_small{{0.1f, 0.1f}, {0.2f, 0.2f}};
+    // The large box matches the coarse set exactly, the small one the fine set.
+    const vector<std::array<float, 2>> coarse_anchors{{0.6f, 0.6f}, {0.7f, 0.7f}};
+    const vector<std::array<float, 2>> fine_anchors{{0.1f, 0.1f}, {0.2f, 0.2f}};
 
-    constexpr Index C = 1;
-    constexpr Index B = 2;
-    constexpr Index values_per_box = 5 + C;
-    constexpr Index head_channels = B * values_per_box;
-    constexpr Index grid0 = 2;
-    constexpr Index grid1 = 4;
-    const Index head0_floats = grid0 * grid0 * head_channels;
-    const Index head1_floats = grid1 * grid1 * head_channels;
-    const Index total_floats = head0_floats + head1_floats;
+    constexpr Index classes_number = 1;
+    constexpr Index anchors_per_head = 2;
+    constexpr Index values_per_anchor = 5 + classes_number;
+    constexpr Index cell_channels = anchors_per_head * values_per_anchor;
+
+    // Heads are concatenated: the 2 x 2 coarse grid (48 floats), then the
+    // 4 x 4 fine grid (192 floats).
+    constexpr Index coarse_grid = 2;
+    constexpr Index fine_grid = 4;
+    constexpr Index coarse_start = 0;
+    constexpr Index fine_start = coarse_start + coarse_grid * coarse_grid * cell_channels;
+    constexpr Index target_floats = fine_start + fine_grid * fine_grid * cell_channels;
 
     YoloDataset dataset;
     dataset.set_display(false);
-    dataset.set(images_dir, labels_dir, Shape{H, W, 3},
-                              grid0,                    B, anchors_large);
-    dataset.set_multi_scale_heads({grid0, grid1}, {anchors_large, anchors_small});
+    dataset.set(images_dir, labels_dir, Shape{16, 16, 3}, coarse_grid, anchors_per_head, coarse_anchors);
+    dataset.set_multi_scale_heads({coarse_grid, fine_grid}, {coarse_anchors, fine_anchors});
 
-    vector<float> target(static_cast<size_t>(total_floats), -99.0f);
-    dataset.fill_targets({0}, {}, target.data(), FillMode::Inference);
+    // The sentinel exposes any float the encoder neither wrote nor cleared.
+    vector<float> targets(size_t(target_floats), -99.0f);
+    dataset.fill_targets({0}, {}, targets.data(), FillMode::Inference);
 
+    const auto anchor_start = [&](Index head_start, Index grid, Index x, Index y, Index anchor)
     {
-        const Index col = 0, row = 0, anchor = 0;
-        const Index base = (row * grid0 + col) * head_channels + anchor * values_per_box;
-        EXPECT_NEAR(target[base + 0], 0.25f * grid0 - float(col), 1e-4f);
-        EXPECT_NEAR(target[base + 1], 0.25f * grid0 - float(row), 1e-4f);
-        EXPECT_NEAR(target[base + 2], 0.6f, 1e-4f);
-        EXPECT_NEAR(target[base + 3], 0.6f, 1e-4f);
-        EXPECT_NEAR(target[base + 4], 1.0f, 1e-4f);
-        EXPECT_NEAR(target[base + 5], 1.0f, 1e-4f);
-    }
+        return head_start + (y * grid + x) * cell_channels + anchor * values_per_anchor;
+    };
 
+    const auto expect_box = [&](Index start, const std::array<float, 6>& expected)
     {
-        const Index col = 3, row = 3, anchor = 0;
-        const Index base_in_head1 = (row * grid1 + col) * head_channels + anchor * values_per_box;
-        const Index base = head0_floats + base_in_head1;
-        EXPECT_NEAR(target[base + 0], 0.875f * grid1 - float(col), 1e-4f);
-        EXPECT_NEAR(target[base + 1], 0.875f * grid1 - float(row), 1e-4f);
-        EXPECT_NEAR(target[base + 2], 0.1f, 1e-4f);
-        EXPECT_NEAR(target[base + 3], 0.1f, 1e-4f);
-        EXPECT_NEAR(target[base + 4], 1.0f, 1e-4f);
-        EXPECT_NEAR(target[base + 5], 1.0f, 1e-4f);
-    }
+        for (size_t k = 0; k < expected.size(); ++k)
+            EXPECT_NEAR(targets[size_t(start) + k], expected[k], 1e-4f)
+                << "component " << k << " of the box written at offset " << start;
+    };
 
-    {
-        const Index col = 1, row = 1;
-        for (Index anchor = 0; anchor < B; ++anchor)
-        {
-            const Index base = (row * grid0 + col) * head_channels + anchor * values_per_box;
-            for (Index k = 0; k < values_per_box; ++k)
-                EXPECT_FLOAT_EQ(target[base + k], 0.0f) << "head0 cell(1,1) should be empty";
-        }
-    }
+    // First box: coarse head, cell (0, 0), anchor 0, an exact anchor match.
+    expect_box(anchor_start(coarse_start, coarse_grid, 0, 0, 0),
+               {0.5f, 0.5f, 0.6f, 0.6f, 1.0f, 1.0f});
+
+    // Second box: fine head, cell (3, 3), anchor 0, which is offset 228.
+    expect_box(anchor_start(fine_start, fine_grid, 3, 3, 0),
+               {0.5f, 0.5f, 0.1f, 0.1f, 1.0f, 1.0f});
+
+    // The second box's centre lies in coarse cell (1, 1), but the box went to
+    // the fine head, so both anchors of that cell must come out zero-filled.
+    const Index empty_cell_start = anchor_start(coarse_start, coarse_grid, 1, 1, 0);
+    for (Index k = 0; k < cell_channels; ++k)
+        EXPECT_FLOAT_EQ(targets[size_t(empty_cell_start + k)], 0.0f)
+            << "head 0 cell (1, 1) was expected to be empty, but offset "
+            << empty_cell_start + k << " holds a value";
 }
