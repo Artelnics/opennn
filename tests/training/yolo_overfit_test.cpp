@@ -26,86 +26,72 @@ using namespace opennn_test;
 TEST(YoloOverfit, SingleImageSingleClassLossDecreases)
 {
 
-    TempDir dir("opennn_yolo_overfit_");
-    const filesystem::path images_dir = dir.path / "images";
-    const filesystem::path labels_dir = dir.path / "labels";
-    filesystem::create_directories(images_dir);
-    filesystem::create_directories(labels_dir);
+    TempDir workspace("opennn_yolo_overfit_");
+    const filesystem::path images_path = workspace.path / "images";
+    const filesystem::path labels_path = workspace.path / "labels";
+    filesystem::create_directories(images_path);
+    filesystem::create_directories(labels_path);
 
-    write_bmp_24(images_dir / "a.bmp", 32, 32, 200, 100,  50);
-    write_bmp_24(images_dir / "b.bmp", 32, 32,  50, 100, 200);
+    write_bmp_24(images_path / "a.bmp", 32, 32, 200, 100,  50);
+    write_bmp_24(images_path / "b.bmp", 32, 32,  50, 100, 200);
+    write_label(labels_path / "a.txt", 0, 0.5f, 0.5f, 0.4f, 0.4f);
+    write_label(labels_path / "b.txt", 0, 0.25f, 0.75f, 0.4f, 0.4f);
+    write_classes(labels_path / "classes.names", {"object"});
 
+    // 32x32x3 input, 4x4 grid, one box per cell and one class: 1 * (5 + 1) = 6 head channels.
+    const Shape input_shape{32, 32, 3};
+    constexpr Index grid_size = 4;
+    constexpr Index boxes_per_cell = 1;
+    const vector<std::array<float, 2>> anchor_list{{0.4f, 0.4f}};
+
+    YoloDataset::AugmentationPolicy fixed_policy;
+    fixed_policy.enabled = false;
+
+    const auto make_network = [&]()
     {
-        ofstream lf(labels_dir / "a.txt");
-        lf << "0 0.5 0.5 0.4 0.4\n";
-    }
-    {
-        ofstream lf(labels_dir / "b.txt");
-        lf << "0 0.25 0.75 0.4 0.4\n";
-    }
-    {
-        ofstream nf(labels_dir / "classes.names");
-        nf << "object\n";
-    }
+        auto network = make_unique<Network>();
 
-    constexpr Index H = 32, W = 32, grid = 4, B = 1, C = 1;
-    constexpr Index channels = B * (5 + C);
-    const vector<std::array<float, 2>> anchors{{0.4f, 0.4f}};
+        network->add_layer(make_unique<Convolutional>(
+            input_shape, Shape{3, 3, 3, 16}, "LeakyReLU", Shape{1, 1}, "Same", BatchNormalization::No, "features"));
+        network->add_layer(make_unique<Convolutional>(
+            Shape{32, 32, 16}, Shape{1, 1, 16, 6}, "Identity", Shape{1, 1}, "Same", BatchNormalization::No, "head_logits"));
+        network->add_layer(make_unique<Detection>(Shape{4, 4, 6}, anchor_list, "head_detection"));
 
-    YoloDataset::AugmentationPolicy no_aug;
-    no_aug.enabled = false;
-
-    auto build_net = [&]() {
-        auto net = make_unique<Network>();
-        net->add_layer(make_unique<Convolutional>(
-            Shape{H, W, 3}, Shape{3, 3, 3, 16}, "LeakyReLU", Shape{1, 1}, "Same", BatchNormalization::No, "conv1"));
-        net->add_layer(make_unique<Convolutional>(
-            Shape{H, W, 16}, Shape{1, 1, 16, channels}, "Identity", Shape{1, 1}, "Same", BatchNormalization::No, "logits"));
-        net->add_layer(make_unique<Detection>(Shape{grid, grid, channels}, anchors, "detection"));
-        net->compile();
-        net->get_parameters_map().setConstant(0.05f);
-        return net;
+        network->compile();
+        network->get_parameters_map().setConstant(0.05f);
+        return network;
     };
 
-    float error_short;
+    // Each run owns its dataset and network, declared before the loss and the optimizer that point to them.
+    const auto training_error_after = [&](Index epochs) -> float
     {
-        YoloDataset ds;
-        ds.set_display(false);
-        ds.set(images_dir, labels_dir, Shape{H, W, 3}, grid, B, anchors);
-        ds.set_augmentation_policy(no_aug);
-        auto net = build_net();
-        Loss loss(net.get(), &ds);
+        YoloDataset dataset;
+        dataset.set_display(false);
+        dataset.set(images_path, labels_path, input_shape, grid_size, boxes_per_cell, anchor_list);
+        dataset.set_augmentation_policy(fixed_policy);
+
+        const unique_ptr<Network> network = make_network();
+
+        Loss loss(network.get(), &dataset);
         loss.set_error(Loss::Error::Yolo);
         loss.set_regularization(Loss::Regularization::NoRegularization);
-        Adam adam(&loss);
-        adam.set_maximum_epochs(2);
-        adam.set_display(false);
-        error_short = adam.train().get_training_error();
-    }
 
-    float error_long;
-    {
-        YoloDataset ds;
-        ds.set_display(false);
-        ds.set(images_dir, labels_dir, Shape{H, W, 3}, grid, B, anchors);
-        ds.set_augmentation_policy(no_aug);
-        auto net = build_net();
-        Loss loss(net.get(), &ds);
-        loss.set_error(Loss::Error::Yolo);
-        loss.set_regularization(Loss::Regularization::NoRegularization);
-        Adam adam(&loss);
-        adam.set_maximum_epochs(200);
-        adam.set_display(false);
-        error_long = adam.train().get_training_error();
-    }
+        Adam optimizer(&loss);
+        optimizer.set_display(false);
+        optimizer.set_maximum_epochs(epochs);
 
-    EXPECT_LT(error_long, error_short)
-        << "Loss did not decrease: short=" << error_short << " long=" << error_long
-        << " — systematic bug in YOLO loss/gradient/optimizer chain.";
+        return optimizer.train().get_training_error();
+    };
 
-    EXPECT_LT(error_long, error_short * 0.95f)
-        << "Loss barely decreased (" << error_short << " → " << error_long
-        << ") after 200 epochs — optimizer or gradient likely broken.";
+    const float brief_error = training_error_after(2);
+    const float extended_error = training_error_after(200);
+
+    EXPECT_LT(extended_error, brief_error)
+        << "Anchor-based YOLO error did not fall with longer training: 2 epochs gave "
+        << brief_error << ", 200 epochs gave " << extended_error;
+    EXPECT_LT(extended_error, 0.95f * brief_error)
+        << "Anchor-based YOLO error fell by less than 5%: 2 epochs gave "
+        << brief_error << ", 200 epochs gave " << extended_error;
 }
 
 TEST(YoloOverfit, SPPFGradientFlowsAndLossDecreases)
@@ -126,7 +112,12 @@ TEST(YoloOverfit, SPPFGradientFlowsAndLossDecreases)
     { ofstream f(labels_dir / "c.txt"); f << "0 0.75 0.5 0.3 0.3\n"; }
     { ofstream f(labels_dir / "d.txt"); f << "0 0.5 0.25 0.4 0.3\n"; }
 
-    constexpr Index H = 32, W = 32, grid = 4, B = 1, C = 1;
+    // Input image size, detection grid and head layout (one box per cell, one class).
+    constexpr Index H = 32;
+    constexpr Index W = 32;
+    constexpr Index grid = 4;
+    constexpr Index B = 1;
+    constexpr Index C = 1;
     const vector<std::array<float, 2>> anchors{{0.4f, 0.4f}};
     constexpr Index ch = 16;
     constexpr Index logit_ch = B * (5 + C);
@@ -186,8 +177,8 @@ TEST(YoloOverfit, SPPFGradientFlowsAndLossDecreases)
     EXPECT_LT(error_long, error_short)
         << "Loss did not decrease through SPPF layers: short=" << error_short << " long=" << error_long;
     EXPECT_LT(error_long, error_short * 0.90f)
-        << "Loss barely decreased (" << error_short << " → " << error_long
-        << ") — backprop through pooling+concat may be broken.";
+        << "SPPF variant (pooling + concatenation) reduced the error by less than 10%: 2 epochs gave "
+        << error_short << ", 150 epochs gave " << error_long;
 }
 
 TEST(YoloOverfit, CSPGradientFlowsAndLossDecreases)
@@ -209,7 +200,9 @@ TEST(YoloOverfit, CSPGradientFlowsAndLossDecreases)
     { ofstream f(labels_dir / "d.txt"); f << "0 0.5 0.25 0.4 0.3\n"; }
     { ofstream f(labels_dir / "classes.names"); f << "object\n"; }
 
-    constexpr Index H = 32, W = 32, grid = 4, B = 1, C = 1;
+    constexpr Index H = 32, W = 32;   // square RGB input
+    constexpr Index grid = 4;         // 4x4 detection grid
+    constexpr Index B = 1, C = 1;     // boxes per cell, classes
     const vector<std::array<float, 2>> anchors{{0.4f, 0.4f}};
     constexpr Index ch = 8;
     constexpr Index half = ch / 2;
@@ -275,8 +268,8 @@ TEST(YoloOverfit, CSPGradientFlowsAndLossDecreases)
     EXPECT_LT(error_long, error_short)
         << "Loss did not decrease through CSP layers: short=" << error_short << " long=" << error_long;
     EXPECT_LT(error_long, error_short * 0.90f)
-        << "Loss barely decreased (" << error_short << " → " << error_long
-        << ") — backprop through CSP split/concat/residual may be broken.";
+        << "CSP variant (split, concatenation and residual) reduced the error by less than 10%: 2 epochs gave "
+        << error_short << ", 150 epochs gave " << error_long;
 }
 
 TEST(YoloOverfit, V8AnchorFreeGradientFlowsAndLossDecreases)
@@ -363,6 +356,6 @@ TEST(YoloOverfit, V8AnchorFreeGradientFlowsAndLossDecreases)
     EXPECT_LT(error_long, error_short)
         << "Loss did not decrease: short=" << error_short << " long=" << error_long;
     EXPECT_LT(error_long, error_short * 0.90f)
-        << "Loss barely decreased (" << error_short << " → " << error_long
-        << ") — TAL/VFL backprop or v8 loss may be broken.";
+        << "Anchor-free YOLOv8 variant (TAL assignment, VFL loss) reduced the error by less than 10%: 2 epochs gave "
+        << error_short << ", 500 epochs gave " << error_long;
 }
