@@ -227,23 +227,35 @@ pair<float, float> QuasiNewton::calculate_directional_point(
     const VectorR& training_direction = line_search.direction;
     VectorR& potential_parameters = line_search.potential;
 
-    for (int i = 0; i < 20; ++i)
+    // Backtracking with the Armijo condition. Each candidate lives only in the
+    // scratch buffer; the explicit-parameter forward pass restores the network.
+
+    constexpr Index maximum_trials = 20;
+
+    potential_parameters.resize(parameters.size());
+
+    const vector<TensorView>& inputs = batch.get_inputs();
+    const float slope = line_search.slope;
+
+    for (Index trial = 0; trial < maximum_trials; ++trial, alpha *= rho)
     {
-        potential_parameters = parameters + training_direction * alpha;
+        potential_parameters.noalias() = parameters + alpha * training_direction;
 
-        network->forward_propagate(batch.get_inputs(), potential_parameters, forward_propagation);
-        const Loss::EvaluationResult evaluation_result = loss->calculate_error(batch, forward_propagation);
-        const float candidate_regularization = loss->calculate_regularization(potential_parameters);
-        const float new_loss = evaluation_result.error + candidate_regularization;
+        network->forward_propagate(inputs, potential_parameters, forward_propagation);
 
-        if (new_loss <= current_loss + armijo_constant * alpha * line_search.slope)
+        const float potential_error = loss->calculate_error(batch, forward_propagation).error;
+        const float potential_regularization = loss->calculate_regularization(potential_parameters);
+        const float potential_loss = potential_error + potential_regularization;
+
+        const float sufficient_decrease_bound = current_loss + (armijo_constant * alpha) * slope;
+
+        if (potential_loss <= sufficient_decrease_bound)
         {
-            back_propagation.metrics.error = evaluation_result.error;
-            back_propagation.metrics.regularization = candidate_regularization;
-            return {alpha, new_loss};
-        }
+            back_propagation.metrics.error = potential_error;
+            back_propagation.metrics.regularization = potential_regularization;
 
-        alpha *= rho;
+            return {alpha, potential_loss};
+        }
     }
 
     back_propagation.metrics.error = previous_error;

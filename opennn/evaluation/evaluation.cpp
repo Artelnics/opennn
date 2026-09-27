@@ -603,37 +603,44 @@ MatrixR Evaluation::calculate_cumulative_gain(const MatrixR& targets, const Matr
     throw_if(total_positives == 0,
              "Number of positive samples ({}) must be greater than zero.\n", total_positives);
 
-    const Index testing_samples_number = targets.rows();
+    const Index samples_number = targets.rows();
 
-    vector<Index> sorted_indices(static_cast<size_t>(testing_samples_number));
-    iota(sorted_indices.begin(), sorted_indices.end(), Index(0));
+    // Ranking: descending score, ascending index on ties, NaN scores last.
+    // The key (is NaN, -score, index) is a strict total order for every input.
 
-    stable_sort_parallel_if_large(
-        sorted_indices.begin(), sorted_indices.end(),
-        [&outputs](Index i, Index j) { return outputs(i, 0) > outputs(j, 0); });
+    vector<Index> ranking(static_cast<size_t>(samples_number));
+    iota(ranking.begin(), ranking.end(), Index(0));
 
-    const Index points_number = 21;
-    const Index buckets_number = points_number - 1;
-
-    MatrixR cumulative_gain(points_number, 2);
-
-    cumulative_gain(0, 0) = 0.0f;
-    cumulative_gain(0, 1) = 0.0f;
-
-    Index positives = 0;
-    Index next_row = 0;
-
-    for (Index i = 0; i < buckets_number; ++i)
+    sort_parallel_if_large(ranking.begin(), ranking.end(), [&outputs](Index a, Index b)
     {
-        const Index maximum_index = min((i + 1) * testing_samples_number / buckets_number,
-                                        testing_samples_number);
+        const float score_a = outputs(a, 0);
+        const float score_b = outputs(b, 0);
+        const bool nan_a = isnan(score_a);
+        const bool nan_b = isnan(score_b);
 
-        for (; next_row < maximum_index; ++next_row)
-            if (targets(sorted_indices[size_t(next_row)], 0) >= 0.5f)
-                ++positives;
+        if (nan_a != nan_b) return nan_b;
+        if (!nan_a && score_a != score_b) return score_a > score_b;
+        return a < b;
+    });
 
-        cumulative_gain(i + 1, 0) = float(i + 1) / float(buckets_number);
-        cumulative_gain(i + 1, 1) = float(positives) / float(total_positives);
+    constexpr Index steps_number = 20;
+
+    MatrixR cumulative_gain(steps_number + 1, 2);
+    cumulative_gain.row(0) << 0.0f, 0.0f;
+
+    Index ranked = 0;
+    Index positives_found = 0;
+
+    for (Index step = 1; step <= steps_number; ++step)
+    {
+        const Index depth = step * samples_number / steps_number;
+
+        for (; ranked < depth; ++ranked)
+            if (targets(ranking[size_t(ranked)], 0) >= 0.5f)
+                ++positives_found;
+
+        cumulative_gain(step, 0) = float(step) / float(steps_number);
+        cumulative_gain(step, 1) = float(positives_found) / float(total_positives);
     }
 
     return cumulative_gain;

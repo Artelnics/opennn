@@ -1587,31 +1587,47 @@ string ModelExpression::get_expression_php() const
     apply_name_mapping(expression, input_names, fixed_input_names);
     apply_name_mapping(expression, output_names, fixed_output_names);
 
-    const vector<string> output_assignments = fix_output_names(expression, output_names, ProgrammingLanguage::PHP);
+    const vector<string> output_assignments =
+        fix_output_names(expression, output_names, ProgrammingLanguage::PHP);
 
-    vector<string> php_vars = fixed_input_names;
-    php_vars.insert(php_vars.end(), fixed_output_names.begin(), fixed_output_names.end());
+    // Every PHP variable gets the '$' sigil. Fixed names keep their repeats;
+    // assignment targets are added once each, in order of first appearance.
 
-    for (string_view line_view : get_token_views(expression, '\n'))
+    vector<string> php_variables = fixed_input_names;
+    php_variables.insert(php_variables.end(), fixed_output_names.begin(), fixed_output_names.end());
+
+    unordered_set<string> known_variables(php_variables.begin(), php_variables.end());
+
+    for (const string_view segment : get_token_views(expression, '\n'))
     {
-        const size_t equal_pos = line_view.find('=');
-        if (equal_pos == string_view::npos) continue;
-        const string lhs(trim_view(line_view.substr(0, equal_pos)));
-        if (!lhs.empty() && ranges::find(php_vars, lhs) == php_vars.end())
-            php_vars.push_back(lhs);
+        const size_t equal_position = segment.find('=');
+        if (equal_position == string_view::npos) continue;
+
+        const string target(trim_view(segment.substr(0, equal_position)));
+        if (target.empty()) continue;
+
+        if (known_variables.insert(target).second)
+            php_variables.push_back(target);
     }
 
-    ranges::sort(php_vars, greater<>{}, [](const string& php_var) { return php_var.length(); });
-    for (const string& var_name : php_vars)
-        replace_all_word_appearances(expression, var_name, "$" + var_name);
+    // Longest names first, so that no name is prefixed inside a longer one.
+
+    ranges::stable_sort(php_variables, [](const string& a, const string& b)
+                        { return a.size() > b.size(); });
+
+    for (const string& variable : php_variables)
+        replace_all_word_appearances(expression, variable, "$" + variable);
 
     vector<string> lines = split_expression_lines(expression);
-    for (string& l : lines)
+
+    for (string& line : lines)
     {
-        replace(l, "[", "_");
-        replace(l, "]", "_");
+        ranges::replace(line, '[', '_');
+        ranges::replace(line, ']', '_');
     }
+
     rename_spaced_var_definitions(lines);
+
     lines.insert(lines.end(), output_assignments.begin(), output_assignments.end());
 
     const bool has_softmax = expression.find("Softmax") != string::npos;

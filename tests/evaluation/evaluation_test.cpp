@@ -495,19 +495,18 @@ TEST(Evaluation, Confusion)
 
     EXPECT_EQ(confusion.rows(), 4);
     EXPECT_EQ(confusion.cols(), 4);
-    EXPECT_EQ(confusion(0,0), 1);
-    EXPECT_EQ(confusion(1,1), 2);
-    EXPECT_EQ(confusion(2,2), 1);
 
-    EXPECT_EQ(confusion(0,3), confusion(0,0) + confusion(0,1) + confusion(0,2));
-    EXPECT_EQ(confusion(1,3), confusion(1,0) + confusion(1,1) + confusion(1,2));
-    EXPECT_EQ(confusion(2,3), confusion(2,0) + confusion(2,1) + confusion(2,2));
+    EXPECT_EQ(confusion(0, 0), 1);
+    EXPECT_EQ(confusion(1, 1), 2);
+    EXPECT_EQ(confusion(2, 2), 1);
 
-    EXPECT_EQ(confusion(3,0), confusion(0,0) + confusion(1,0) + confusion(2,0));
-    EXPECT_EQ(confusion(3,1), confusion(0,1) + confusion(1,1) + confusion(2,1));
-    EXPECT_EQ(confusion(3,2), confusion(0,2) + confusion(1,2) + confusion(2,2));
+    for (Index row = 0; row < 3; ++row)
+        EXPECT_EQ(confusion(row, 3), confusion.row(row).head(3).sum()) << "Row total " << row;
 
-    EXPECT_EQ(confusion(3,3), 4);
+    for (Index column = 0; column < 3; ++column)
+        EXPECT_EQ(confusion(3, column), confusion.col(column).head(3).sum()) << "Column total " << column;
+
+    EXPECT_EQ(confusion(3, 3), 4);
 }
 
 TEST(Evaluation, BinaryClassificationTests)
