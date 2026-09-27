@@ -69,9 +69,9 @@ void GrowingInputs::set_maximum_inputs_number(const Index new_maximum_inputs_num
     const Dataset* dataset = training ? training->get_dataset() : nullptr;
     const Index inputs_number = dataset ? dataset->get_variables_number(VariableRole::Input) : 0;
 
-    maximum_inputs_number = (inputs_number == 0)
-                                ? new_maximum_inputs_number
-                                : clamp(new_maximum_inputs_number, Index(1), inputs_number);
+    maximum_inputs_number = inputs_number > 0
+        ? min(max<Index>(new_maximum_inputs_number, 1), inputs_number)
+        : new_maximum_inputs_number;
 }
 
 InputSelectionResult GrowingInputs::perform_input_selection()
@@ -169,8 +169,11 @@ InputSelectionResult GrowingInputs::perform_input_selection()
         const string& candidate_name = variable_names[current_variable_index];
 
         if (display)
-            logging::info() << "\nTrying to add \"" << candidate_name << "\"  ->  "
-                 << input_variables_number << " inputs\n";
+            logging::info() << format("\nCandidate '{}' ({} of {} by correlation), {} input variables\n",
+                                      candidate_name,
+                                      variable_index + 1,
+                                      Index(correlations_rank_descending.size()),
+                                      input_variables_number);
 
         const vector<Index> warm_row_map = warm_start && !warm_snapshot.empty() && folds_number == 1
             ? map_feature_rows(warm_feature_ids, input_feature_ids(dataset))
@@ -194,9 +197,15 @@ InputSelectionResult GrowingInputs::perform_input_selection()
                 }
 
                 if (display)
-                    logging::info() << (trials_number > 1 ? "   Trial " + to_string(trial + 1) + ": " : "   ")
-                         << "training error " << training_error
-                         << ", validation error " << validation_error << "\n";
+                {
+                    string report_prefix = "   ";
+
+                    if (trials_number > 1)
+                        report_prefix += format("run {} of {}: ", trial + 1, trials_number);
+
+                    logging::info() << report_prefix << "error on validation samples " << validation_error
+                                    << ", on training samples " << training_error << "\n";
+                }
             },
             [&](Index trial)
             {
@@ -229,10 +238,11 @@ InputSelectionResult GrowingInputs::perform_input_selection()
             ++validation_failures;
 
             if (display)
-                logging::info() << "   Rejected: validation error " << minimum_validation_error
-                     << " did not beat the best so far (" << previous_validation_error
-                     << "). Removing \"" << candidate_name << "\". Validation failures: "
-                     << validation_failures << "/" << maximum_validation_failures << "\n";
+                logging::info() << "   Discarded '" << candidate_name
+                                << "': validation error " << minimum_validation_error
+                                << " does not improve " << previous_validation_error
+                                << " (failures " << validation_failures
+                                << " of " << maximum_validation_failures << ")\n";
 
             dataset->set_variable_role(current_variable_index,
                 dataset->get_variables()[current_variable_index].role == VariableRole::InputTarget ? "Target" : "None");
@@ -257,9 +267,20 @@ InputSelectionResult GrowingInputs::perform_input_selection()
             ++epoch;
 
             if (display)
-                logging::info() << "   Accepted. Epoch " << epoch << ": " << input_variables_number
-                     << " inputs kept, best validation error " << minimum_validation_error << "\n"
-                     << "   Inputs: " << dataset->get_variable_names(VariableRole::Input);
+            {
+                string selected_names;
+
+                for (const string& input_name : dataset->get_variable_names(VariableRole::Input))
+                {
+                    if (!selected_names.empty()) selected_names += ", ";
+                    selected_names += input_name;
+                }
+
+                logging::info() << "   Kept '" << candidate_name << "' at step " << epoch
+                                << ": " << input_variables_number << " input variables, validation error "
+                                << minimum_validation_error << "\n"
+                                << "   Inputs: " << selected_names << "\n";
+            }
         }
 
         ++variable_index;
