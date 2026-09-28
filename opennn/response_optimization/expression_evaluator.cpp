@@ -510,7 +510,12 @@ struct Parser
 
             const NestingGuard guard(nesting);
 
-            return next_token.text == "-" ? make_neg(parse_unary()) : parse_unary();
+            ExpressionNodePtr operand = parse_unary();
+
+            if (next_token.text == "-")
+                return make_neg(move(operand));
+
+            return operand;
         }
 
         return parse_primary();

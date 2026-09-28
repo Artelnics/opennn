@@ -136,15 +136,20 @@ void hsv_to_rgb(float h, float s, float v, float& r, float& g, float& b)
 
 // TODO(cutout-ui): expose cutout_count and cutout_max_size_ratio in the editor
 // augmentation panel and wire through neural_engine.cpp before enabling.
-static void apply_cutout(uint8_t* img, int h, int w, int ch,
-                         int count, float max_ratio, uint64_t seed)
+static const uint8_t* apply_cutout(uint8_t* img, const Shape& shape,
+                                   const YoloDataset::AugmentationPolicy& policy,
+                                   uint64_t epoch_seed, Index sample_index)
 {
     auto rng = [](uint64_t& s) -> float {
         s = splitmix64(s);
         return float(s >> 40) / float(1u << 24);
     };
-    const int max_side = std::max(1, int(std::max(h, w) * max_ratio));
-    for (int n = 0; n < count; ++n)
+    const int h = int(shape[0]);
+    const int w = int(shape[1]);
+    const int ch = int(shape[2]);
+    uint64_t seed = splitmix64(epoch_seed * 0xBF58476D1CE4E5B9ull + uint64_t(sample_index));
+    const int max_side = std::max(1, int(std::max(h, w) * policy.cutout_max_size_ratio));
+    for (int n = 0; n < policy.cutout_count; ++n)
     {
         const int pw = 1 + int(rng(seed) * max_side);
         const int ph = 1 + int(rng(seed) * max_side);
@@ -155,6 +160,7 @@ static void apply_cutout(uint8_t* img, int h, int w, int ch,
                 for (int c = 0; c < ch; ++c)
                     img[(y0 + dy) * w * ch + (x0 + dx) * ch + c] = 0;
     }
+    return img;
 }
 
 void apply_color_jitter(uint8_t* rgb, Index height, Index width, Index channels,
@@ -771,13 +777,6 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
                                              augmented.data(), W,
                                              q.dst_x, q.dst_y, q.qw, q.qh, C);
                     }
-                    if (policy.cutout_count > 0)
-                        apply_cutout(augmented.data(),
-                                     int(cache_input_shape[0]), int(cache_input_shape[1]),
-                                     int(cache_input_shape[2]),
-                                     policy.cutout_count, policy.cutout_max_size_ratio,
-                                     splitmix64(epoch_seed * 0xBF58476D1CE4E5B9ull + uint64_t(sample_index)));
-                    image_bytes = augmented.data();
                 }
                 else if (augment)
                 {
@@ -790,14 +789,10 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
                     apply_color_jitter(augmented.data(),
                                        cache_input_shape[0], cache_input_shape[1],
                                        cache_input_shape[2], transform);
-                    if (policy.cutout_count > 0)
-                        apply_cutout(augmented.data(),
-                                     int(cache_input_shape[0]), int(cache_input_shape[1]),
-                                     int(cache_input_shape[2]),
-                                     policy.cutout_count, policy.cutout_max_size_ratio,
-                                     splitmix64(epoch_seed * 0xBF58476D1CE4E5B9ull + uint64_t(sample_index)));
-                    image_bytes = augmented.data();
                 }
+
+                if (mosaic || augment)
+                    image_bytes = apply_cutout(augmented.data(), cache_input_shape, policy, epoch_seed, sample_index);
 
                 if (resize_needed)
                 {

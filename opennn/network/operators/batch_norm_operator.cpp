@@ -3,7 +3,6 @@
 
 #include "opennn/network/operators/batch_norm_operator.h"
 
-#include <iostream>
 #include "opennn/core/cuda/cudnn_frontend_utilities.h"
 #ifdef OPENNN_HAS_CUDA
 #include "opennn/core/cuda/kernel_cast.cuh"
@@ -243,13 +242,6 @@ void BatchNormalizationOperator::back_propagate(ForwardPropagation& forward_prop
             // a backbone layer's input (from the data pipeline) is outside the trainable
             // range so no input-delta entry was created in build_delta_layout. With an
             // empty delta there is no gradient to back-propagate through BN.
-            const auto& s = input.get_shape();
-            std::cout << "[BN_DEBUG] empty output-delta at layer=" << layer
-                      << " input_shape=(" << (s.get_rank()>0?int(s[0]):-1) << ","
-                      << (s.get_rank()>1?int(s[1]):-1) << ","
-                      << (s.get_rank()>2?int(s[2]):-1) << ","
-                      << (s.get_rank()>3?int(s[3]):-1) << ")"
-                      << " input_cuda=" << input.is_cuda() << std::endl;
             return;
         }
         if (!residual_delta.empty()) copy(delta, residual_delta);
@@ -621,6 +613,39 @@ void BatchNormalizationOperator::apply_training_gpu(const TensorView& input,
     }
 }
 
+void BatchNormalizationOperator::apply_delta_own_kernel_gpu(
+    const TensorView& input,
+    const TensorView& output,
+    const TensorView& mean,
+    const TensorView& inverse_variance,
+    const uint8_t* mask_bits,
+    TensorView& delta,
+    TensorView& residual_delta) const
+{
+    const Index rows = input.size() / features;
+
+    float* partials = ensure_bf16_to_fp32_workspace(
+        2 * batchnorm_partial_rows(rows) * features);
+
+    const bool has_residual = fuse_add && !residual_delta.empty();
+    const bool xhat_from_y = fuse_relu && !fuse_add && !input.is_bf16();
+
+    input.dispatch([&]<typename T>()
+    {
+        batchnorm_backward_fused_cuda<T>(
+            rows, features,
+            input.as<T>(), delta.as<T>(),
+            fuse_relu ? output.as<T>() : nullptr,
+            mask_bits,
+            gamma.as<float>(), beta.as<float>(),
+            mean.as<float>(), inverse_variance.as<float>(),
+            xhat_from_y,
+            has_residual ? residual_delta.as<T>() : nullptr,
+            gamma_gradient.as<float>(), beta_gradient.as<float>(),
+            partials);
+    });
+}
+
 void BatchNormalizationOperator::apply_delta_gpu(
     const TensorView& input,
     const TensorView& output,
@@ -729,34 +754,13 @@ void BatchNormalizationOperator::apply_delta_gpu(
 
         if (chosen.own_kernel)
         {
-            const Index rows = input.size() / features;
-
-            float* partials = ensure_bf16_to_fp32_workspace(
-                2 * batchnorm_partial_rows(rows) * features);
-
             const uint8_t* mask_bits =
                 fuse_relu && own_forward_kernel(mask) && !mask.empty()
                     ? mask.as<uint8_t>()
                     : nullptr;
 
-            const bool xhat_from_y = fuse_relu && !fuse_add && !bf16;
-
-            input.dispatch([&]<typename T>()
-            {
-                batchnorm_backward_fused_cuda<T>(
-                    rows, features,
-                    input.as<T>(), delta.as<T>(),
-                    fuse_relu ? output.as<T>() : nullptr,
-                    mask_bits,
-                    gamma.as<float>(), beta.as<float>(),
-                    mean.as<float>(), inverse_variance.as<float>(),
-                    xhat_from_y,
-                    has_residual ? residual_delta.as<T>() : nullptr,
-                    gamma_gradient.as<float>(), beta_gradient.as<float>(),
-                    partials);
-            });
-
-            return;
+            return apply_delta_own_kernel_gpu(input, output, mean, inverse_variance, mask_bits,
+                                              delta, residual_delta);
         }
 
         if (fuse_relu && !chosen.fuse_relu)
@@ -816,27 +820,8 @@ void BatchNormalizationOperator::apply_delta_gpu(
     // Frontend path above is the preferred route; when it gets disabled (e.g. after
     // a first-call plan failure) fall to the own CUDA kernel rather than crashing.
     if (cudnn_frontend::device_sm_version() >= 800)
-    {
-        const Index rows = input.size() / features;
-        float* partials = ensure_bf16_to_fp32_workspace(
-            2 * batchnorm_partial_rows(rows) * features);
-        const bool xhat_from_y = fuse_relu && !fuse_add && !bf16;
-        input.dispatch([&]<typename T>()
-        {
-            batchnorm_backward_fused_cuda<T>(
-                rows, features,
-                input.as<T>(), delta.as<T>(),
-                fuse_relu ? output.as<T>() : nullptr,
-                nullptr,
-                gamma.as<float>(), beta.as<float>(),
-                mean.as<float>(), inverse_variance.as<float>(),
-                xhat_from_y,
-                has_residual ? residual_delta.as<T>() : nullptr,
-                gamma_gradient.as<float>(), beta_gradient.as<float>(),
-                partials);
-        });
-        return;
-    }
+        return apply_delta_own_kernel_gpu(input, output, mean, inverse_variance, nullptr,
+                                          delta, residual_delta);
 
     if (fuse_relu)
         activation_backward(output, delta, ActivationFunction::ReLU);
@@ -867,6 +852,9 @@ void BatchNormalizationOperator::apply_training_gpu (const TensorView&, TensorVi
 void BatchNormalizationOperator::apply_delta_gpu    (const TensorView&, const TensorView&,
                                                      const TensorView&, const TensorView&, const TensorView&,
                                                      TensorView&, TensorView&) const                            OPENNN_CUDA_STUB_BODY(apply_delta_gpu)
+void BatchNormalizationOperator::apply_delta_own_kernel_gpu(const TensorView&, const TensorView&,
+                                                            const TensorView&, const TensorView&, const uint8_t*,
+                                                            TensorView&, TensorView&) const              OPENNN_CUDA_STUB_BODY(apply_delta_own_kernel_gpu)
 
 #endif
 

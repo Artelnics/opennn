@@ -100,6 +100,13 @@ private:
                          const TensorView&,
                          TensorView&,
                          TensorView&) const;
+    void apply_delta_own_kernel_gpu(const TensorView&,
+                                    const TensorView&,
+                                    const TensorView&,
+                                    const TensorView&,
+                                    const uint8_t*,
+                                    TensorView&,
+                                    TensorView&) const;
 
     bool own_forward_kernel(const TensorView& mask) const noexcept;
 
