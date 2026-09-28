@@ -66,6 +66,7 @@ public:
 
     using ResponseOptimization::calculate_domain;
     using ResponseOptimization::calculate_random_input;
+    using ResponseOptimization::input_bounds;
     using ResponseOptimization::solve;
 
 private:
@@ -904,6 +905,91 @@ TEST(CardinalityRepair, ReturnsOnlyKSparsePoints)
 
                 EXPECT_GT(repaired, 0) << "n=" << variables_number << " k=" << kept << " budget=" << budget;
             }
+}
+
+
+// The row measures each member as a share of its range, so the cut must too. Ranked by raw
+// value instead, a narrow-range member near the top of its range loses to a wide-range member
+// near the bottom of its own, and the members a narrow range holds are the ones discarded.
+
+TEST(CardinalityRepair, CutRanksMembersByTheirShareOfTheirRange)
+{
+    MinimalApproximation setup({"x1", "x2", "x3", "x4"}, {"y"});
+
+    vector<Descriptives> ranges = make_descriptives(4, 0.0f, 100.0f);
+    ranges[2] = ranges[3] = Descriptives(0.0f, 1.0f, 0.5f, 0.25f);
+    static_cast<Scaling*>(setup.network->get_first("Scaling"))->set_descriptives(ranges);
+
+    RepairProbe probe(setup.network.get());
+    probe.add_constraint("x1; x2; x3; x4", Condition::Cardinality, {2.0f});
+    probe.calculate_domain();
+
+    VectorR point(4);
+    point << 10.0f, 10.0f, 0.9f, 0.9f;
+
+    const auto [input, output] = probe.solve(point);
+
+    ASSERT_EQ(input.size(), 4);
+    EXPECT_EQ(input(0), 0.0f) << "x1 holds 10% of its range and should have been cut";
+    EXPECT_EQ(input(1), 0.0f) << "x2 holds 10% of its range and should have been cut";
+    EXPECT_GT(input(2), 0.0f) << "x3 holds 90% of its range and should have been kept";
+    EXPECT_GT(input(3), 0.0f) << "x4 holds 90% of its range and should have been kept";
+}
+
+
+// A search that contracts its box around an incumbent can leave a counted member with a range
+// that excludes zero. Cutting that member then does nothing, because the box puts it straight
+// back. On a small group the row notices, but the row averages over every subset one larger than
+// the budget, C(18, 5) = 8568 of them here, so a single member put back at a tenth of its range
+// sits inside the band. Four members at half their range and x18 at 1 give
+// sqrt((0.5^4 * 0.1)^2 / 8568) / 1e-3, about 0.07. The count has to hold at the cut itself.
+
+TEST(CardinalityRepair, CutKeepsMembersTheBoxCannotSwitchOff)
+{
+    vector<string> names;
+    for (Index i = 1; i <= 18; i++) names.push_back("x" + to_string(i));
+
+    MinimalApproximation setup(names, {"y"});
+
+    string list;
+    for (const string& name : names) list += (list.empty() ? "" : "; ") + name;
+
+    RepairProbe probe(setup.network.get());
+    probe.add_constraint(list, Condition::Cardinality, {4.0f});
+    probe.calculate_domain();
+
+    probe.input_bounds.first(17) = 1.0f;
+
+    VectorR point = VectorR::Zero(18);
+    point.head(4).setConstant(5.0f);
+    point(17) = 1.0f;
+
+    const auto [input, output] = probe.solve(point);
+
+    ASSERT_EQ(input.size(), 18) << "keeping x18 and three others is feasible, so a point is expected";
+    EXPECT_LE((input.array() != 0.0f).count(), 4) << "more than the budget in play: " << input.transpose();
+    EXPECT_GE(input(17), 1.0f) << "x18 cannot leave [1, 10], so it has to be one of the four kept";
+}
+
+
+// When more members than the budget cannot be switched off, no rounding can satisfy the count,
+// and the honest answer is no point rather than one with too many in play.
+
+TEST(CardinalityRepair, TooManyMembersTheBoxCannotSwitchOffIsInfeasible)
+{
+    MinimalApproximation setup({"x1", "x2", "x3"}, {"y"});
+
+    RepairProbe probe(setup.network.get());
+    probe.add_constraint("x1; x2; x3", Condition::Cardinality, {1.0f});
+    probe.calculate_domain();
+
+    probe.input_bounds.first(1) = 1.0f;
+    probe.input_bounds.first(2) = 1.0f;
+
+    VectorR point(3);
+    point << 5.0f, 4.0f, 2.0f;
+
+    EXPECT_EQ(probe.solve(point).first.size(), 0) << "two members cannot be off and the budget is one";
 }
 
 

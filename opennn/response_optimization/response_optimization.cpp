@@ -303,16 +303,31 @@ struct ResponseOptimization::FeasibilityRepairSystem : Eigen::DenseFunctor<float
     {
         const auto& [lower_bounds, upper_bounds] = problem.input_bounds;
 
+        const auto always_on = [&](const Index column)
+            { return lower_bounds(column) > 0.0f || upper_bounds(column) < 0.0f; };
+
+        // Members are ranked as the row measures them, by their share of their range; ranked by
+        // raw value, a narrow-range member near its top would lose to a wide-range member near
+        // its bottom. A member the current box cannot switch off, as after a search contracts
+        // the box around an incumbent, is kept first: cutting it would only let the clamp below
+        // put it back with more than the budget in play, and the row, averaged over every
+        // subset one larger than the budget, need not notice.
+
         for (const Constraint& constraint : problem.constraints)
         {
             if (constraint.condition != Condition::Cardinality) continue;
 
-            vector<Index> counted = constraint.equation.input_indices;
+            vector<pair<Index, double>> members = constraint.equation.symmetric_terms;
 
-            ranges::stable_sort(counted, {}, [&](const Index column) { return -abs(point(column)); });
+            ranges::stable_sort(members, {}, [&](const pair<Index, double>& member)
+                { return pair(!always_on(member.first), -abs(double(point(member.first)))*member.second); });
 
-            for (size_t j = size_t(constraint.values[0]); j < counted.size(); j++)
-                point(counted[j]) = 0.0f;
+            const size_t budget = size_t(constraint.values[0]);
+
+            if (budget < members.size() && always_on(members[budget].first)) return false;
+
+            for (size_t j = budget; j < members.size(); j++)
+                point(members[j].first) = 0.0f;
         }
 
         point = point.cwiseMax(lower_bounds).cwiseMin(upper_bounds);
