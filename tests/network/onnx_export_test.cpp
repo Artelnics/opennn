@@ -18,6 +18,7 @@
 #include "opennn/network/layers/unscaling_layer.h"
 #include "opennn/core/statistics.h"
 
+#include <array>
 #include <cstdlib>
 #include <fstream>
 #include <filesystem>
@@ -153,7 +154,7 @@ unique_ptr<ApproximationNetwork> build_scaled_network(const string& activation)
 unique_ptr<Yolo> build_small_yolo_v8(Index classes_number)
 {
     auto network = make_unique<Yolo>(Shape{64, 64, 3}, classes_number,
-                                     vector<array<float, 2>>(9, {0.1f, 0.1f}), 2,
+                                     vector<std::array<float, 2>>(9, {0.1f, 0.1f}), 2,
                                      Yolo::Backbone::CSPDarknet53v11, Yolo::ClassActivation::Sigmoid,
                                      Yolo::HeadStyle::FPNv8, Yolo::BodyActivation::SiLU, true, 16,
                                      Yolo::ModelSize::n);

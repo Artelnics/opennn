@@ -10,6 +10,7 @@
 #include "opennn/network/layers/convolutional_layer.h"
 #include "opennn/network/layers/detection_v8_layer.h"
 
+#include <array>
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
@@ -158,7 +159,7 @@ void write_ultralytics_onnx(const Network& network, const filesystem::path& path
 
 unique_ptr<Yolo> build_yolov8s(unsigned seed)
 {
-    auto network = make_unique<Yolo>(Shape{64, 64, 3}, 2, vector<array<float, 2>>(9, {0.1f, 0.1f}), 2,
+    auto network = make_unique<Yolo>(Shape{64, 64, 3}, 2, vector<std::array<float, 2>>(9, {0.1f, 0.1f}), 2,
                                      Yolo::Backbone::CSPDarknet53v11, Yolo::ClassActivation::Sigmoid,
                                      Yolo::HeadStyle::FPNv8, Yolo::BodyActivation::SiLU, true, 16,
                                      Yolo::ModelSize::s);
