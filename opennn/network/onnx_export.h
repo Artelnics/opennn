@@ -26,8 +26,8 @@ struct OnnxModel
 
 // Supports sequential networks of Scaling, Dense, Unscaling and Clamping layers
 // with FP32 parameters, and throws naming the first layer it cannot represent.
-OnnxModel build_onnx_model(const Network&);
+OnnxModel build_onnx_model(const Network&, const vector<string>& class_names = {});
 
-void save_onnx_model(const Network&, const filesystem::path&);
+void save_onnx_model(const Network&, const filesystem::path&, const vector<string>& class_names = {});
 
 }

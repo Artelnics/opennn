@@ -47,6 +47,8 @@ public:
 
     bool get_batch_normalization() const { return batch_norm.active(); }
 
+    void get_folded_parameters(vector<float>& kernel_oihw, vector<float>& bias) const;
+
     bool get_residual() const noexcept { return residual; }
     Index get_sources_number() const noexcept override { return residual ? 2 : 1; }
     void set_residual(bool new_residual);

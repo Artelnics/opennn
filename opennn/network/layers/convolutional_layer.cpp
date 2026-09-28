@@ -66,6 +66,21 @@ void validate_convolution_configuration(const Shape& input_shape,
              label);
 }
 
+template<typename Visit>
+void for_each_kernel_weight(const ConvolutionOperator& convolution, Visit&& visit)
+{
+    const Index O  = convolution.kernels_number;
+    const Index kH = convolution.kernel_height;
+    const Index kW = convolution.kernel_width;
+    const Index I  = convolution.kernel_channels;
+
+    for (Index o = 0; o < O; ++o)
+        for (Index h = 0; h < kH; ++h)
+            for (Index w = 0; w < kW; ++w)
+                for (Index i = 0; i < I; ++i)
+                    visit(o*kH*kW*I + h*kW*I + w*I + i, o*I*kH*kW + i*kH*kW + h*kW + w, o);
+}
+
 }
 
 Convolutional::Convolutional(const Shape& new_input_shape,
@@ -366,12 +381,8 @@ void Convolutional::load_darknet_weights(FILE* f)
              "load_darknet_weights: short read on conv weights.");
 
     float* const dst = convolution.weights.as<float>();
-    for (Index o = 0; o < O; ++o)
-        for (Index h = 0; h < kH; ++h)
-            for (Index w = 0; w < kW; ++w)
-                for (Index ic = 0; ic < I; ++ic)
-                    dst[o*kH*kW*I + h*kW*I + w*I + ic] =
-                        tmp[static_cast<size_t>(o*I*kH*kW + ic*kH*kW + h*kW + w)];
+    for_each_kernel_weight(convolution, [&](Index ohwi, Index oihw, Index)
+                           { dst[ohwi] = tmp[static_cast<size_t>(oihw)]; });
 
     if (batch_norm.active())
         batch_norm.invalidate_inference_cache();
@@ -384,19 +395,10 @@ void Convolutional::load_darknet_weights(FILE* f)
 void Convolutional::load_onnx_folded_conv_bn(const float* kernel_nchw,
                                              const float* folded_bias)
 {
-    const Index O  = convolution.kernels_number;
-    const Index kH = convolution.kernel_height;
-    const Index kW = convolution.kernel_width;
-    const Index I  = convolution.kernel_channels;
+    const Index O = convolution.kernels_number;
 
-    // ONNX NCHW [O,I,kH,kW] → OpenNN OHWI [O,kH,kW,I]
     float* dst = convolution.weights.as<float>();
-    for (Index o = 0; o < O; ++o)
-        for (Index h = 0; h < kH; ++h)
-            for (Index w = 0; w < kW; ++w)
-                for (Index i = 0; i < I; ++i)
-                    dst[o*kH*kW*I + h*kW*I + w*I + i] =
-                        kernel_nchw[o*I*kH*kW + i*kH*kW + h*kW + w];
+    for_each_kernel_weight(convolution, [&](Index ohwi, Index oihw, Index) { dst[ohwi] = kernel_nchw[oihw]; });
 
     // BN is folded into the ONNX conv.bias.  Set BN to identity so the combined
     // computation stays equivalent: BN(x) = 1*(x-0)/sqrt(1+eps) + folded_bias ≈ x + folded_bias.
@@ -411,22 +413,60 @@ void Convolutional::load_onnx_folded_conv_bn(const float* kernel_nchw,
 #endif
 }
 
-void Convolutional::load_onnx_conv_bias(const float* bias, const float* kernel_nchw)
+void Convolutional::get_folded_parameters(vector<float>& kernel_oihw, vector<float>& bias) const
 {
     const Index O  = convolution.kernels_number;
     const Index kH = convolution.kernel_height;
     const Index kW = convolution.kernel_width;
     const Index I  = convolution.kernel_channels;
 
-    std::copy(bias, bias + O, convolution.bias.as<float>());
+    const auto check_view = [&](const TensorView& view, Index expected_size)
+    {
+        throw_if(!view.get_data() || view.get_type() != Type::FP32 || view.is_cuda()
+                 || view.size() != expected_size,
+                 "Convolutional layer '{}': parameters must be FP32 and on the host.", label);
+    };
+
+    check_view(convolution.weights, O * kH * kW * I);
+
+    vector<float> scale(size_t(O), 1.0f);
+    bias.assign(size_t(O), 0.0f);
+
+    if (batch_norm.active())
+    {
+        for (const TensorView* view : {&batch_norm.gamma, &batch_norm.beta,
+                                       &batch_norm.running_mean, &batch_norm.running_variance})
+            check_view(*view, O);
+
+        const float* gamma    = batch_norm.gamma.as<float>();
+        const float* beta     = batch_norm.beta.as<float>();
+        const float* mean     = batch_norm.running_mean.as<float>();
+        const float* variance = batch_norm.running_variance.as<float>();
+
+        for (Index o = 0; o < O; ++o)
+        {
+            scale[size_t(o)] = gamma[o] / sqrt(max(variance[o], 0.0f) + BN_EPSILON);
+            bias[size_t(o)]  = beta[o] - mean[o] * scale[size_t(o)];
+        }
+    }
+    else if (convolution.use_bias)
+    {
+        check_view(convolution.bias, O);
+        copy(convolution.bias.as<float>(), convolution.bias.as<float>() + O, bias.begin());
+    }
+
+    const float* src = convolution.weights.as<float>();
+    kernel_oihw.resize(size_t(O * I * kH * kW));
+    for_each_kernel_weight(convolution, [&](Index ohwi, Index oihw, Index o)
+                           { kernel_oihw[size_t(oihw)] = src[ohwi] * scale[size_t(o)]; });
+}
+
+void Convolutional::load_onnx_conv_bias(const float* bias, const float* kernel_nchw)
+{
+    std::copy(bias, bias + convolution.kernels_number, convolution.bias.as<float>());
 
     float* dst = convolution.weights.as<float>();
-    for (Index o = 0; o < O; ++o)
-        for (Index h = 0; h < kH; ++h)
-            for (Index w = 0; w < kW; ++w)
-                for (Index i = 0; i < I; ++i)
-                    dst[o*kH*kW*I + h*kW*I + w*I + i] =
-                        kernel_nchw[o*I*kH*kW + i*kH*kW + h*kW + w];
+    for_each_kernel_weight(convolution, [&](Index ohwi, Index oihw, Index) { dst[ohwi] = kernel_nchw[oihw]; });
 
 #ifdef OPENNN_HAS_CUDA
     folded_dirty = true;

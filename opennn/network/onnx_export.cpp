@@ -5,12 +5,20 @@
 
 #include <cstdint>
 #include <cstring>
+#include <numeric>
 
 #include "opennn/registry.h"
 #include "opennn/network/network.h"
 #include "opennn/network/layers/clamping_layer.h"
 #include "opennn/network/layers/dense_layer.h"
 #include "opennn/network/layers/scaling_layer.h"
+
+#ifndef OPENNN_NO_VISION
+#include "opennn/network/layers/convolutional_layer.h"
+#include "opennn/network/layers/detection_v8_layer.h"
+#include "opennn/network/layers/pooling_layer.h"
+#include "opennn/network/layers/upsampling_layer.h"
+#endif
 #include "opennn/core/tensor_operations.h"
 
 namespace opennn
@@ -69,8 +77,8 @@ private:
 
 // Field numbers and enum values from onnx.proto.
 
-enum TensorElementType { ElementFloat = 1, ElementBool = 9 };
-enum AttributeType { AttributeFloat = 1, AttributeInt = 2 };
+enum TensorElementType { ElementFloat = 1, ElementInt64 = 7, ElementBool = 9 };
+enum AttributeType { AttributeFloat = 1, AttributeInt = 2, AttributeString = 3, AttributeInts = 7 };
 
 constexpr int64_t IR_VERSION = 7;
 constexpr int64_t OPSET_VERSION = 13;
@@ -78,13 +86,23 @@ constexpr int64_t OPSET_VERSION = 13;
 struct Attribute
 {
     string name;
-    bool is_float = false;
+    AttributeType type = AttributeInt;
     float f = 0.0f;
     int64_t i = 0;
+    string s;
+    vector<int64_t> ints;
 };
 
-Attribute int_attribute(const string& name, int64_t value) { return {name, false, 0.0f, value}; }
-Attribute float_attribute(const string& name, float value) { return {name, true, value, 0}; }
+Attribute int_attribute(const string& name, int64_t value) { return {name, AttributeInt, 0.0f, value, {}, {}}; }
+Attribute float_attribute(const string& name, float value) { return {name, AttributeFloat, value, 0, {}, {}}; }
+Attribute string_attribute(const string& name, const string& value) { return {name, AttributeString, 0.0f, 0, value, {}}; }
+Attribute ints_attribute(const string& name, const vector<int64_t>& values) { return {name, AttributeInts, 0.0f, 0, {}, values}; }
+
+struct Dimension
+{
+    string symbol;
+    int64_t value = 0;
+};
 
 class GraphBuilder
 {
@@ -111,6 +129,20 @@ public:
     }
 
     string add_scalar(const string& hint, float value) { return add_initializer(hint, {1}, &value, 1); }
+
+    string add_int64_initializer(const string& hint, const vector<int64_t>& values)
+    {
+        const string name = unique_name(hint);
+
+        Message tensor;
+        tensor.add_int(1, int64_t(values.size()));
+        tensor.add_int(2, ElementInt64);
+        tensor.add_bytes(8, name);
+        tensor.add_bytes(9, string(reinterpret_cast<const char*>(values.data()), values.size() * sizeof(int64_t)));
+
+        initializers.push_back(tensor);
+        return name;
+    }
 
     string add_mask(const string& hint, const vector<bool>& mask)
     {
@@ -144,9 +176,14 @@ public:
         {
             Message encoded;
             encoded.add_bytes(1, attribute.name);
-            if (attribute.is_float) encoded.add_float(2, attribute.f);
-            else                    encoded.add_int(3, attribute.i);
-            encoded.add_int(20, attribute.is_float ? AttributeFloat : AttributeInt);
+            switch (attribute.type)
+            {
+            case AttributeFloat:  encoded.add_float(2, attribute.f); break;
+            case AttributeInt:    encoded.add_int(3, attribute.i); break;
+            case AttributeString: encoded.add_bytes(4, attribute.s); break;
+            case AttributeInts:   for (const int64_t value : attribute.ints) encoded.add_int(8, value); break;
+            }
+            encoded.add_int(20, attribute.type);
             node.add_message(5, encoded);
         }
 
@@ -154,32 +191,29 @@ public:
         return output_name;
     }
 
-    Message build(const string& input, Index inputs_number, const string& output, Index outputs_number) const
+    Message build(const Message& input, const Message& output) const
     {
         Message graph;
         for (const Message& node : nodes) graph.add_message(1, node);
         graph.add_bytes(2, "opennn_network");
         for (const Message& initializer : initializers) graph.add_message(5, initializer);
-        graph.add_message(11, value_info(input, inputs_number));
-        graph.add_message(12, value_info(output, outputs_number));
+        graph.add_message(11, input);
+        graph.add_message(12, output);
         return graph;
     }
 
     Index nodes_number() const { return Index(nodes.size()); }
 
-private:
-
-    static Message value_info(const string& name, Index features)
+    static Message value_info(const string& name, const vector<Dimension>& dimensions)
     {
-        Message batch;
-        batch.add_bytes(2, "batch_size");
-
-        Message width;
-        width.add_int(1, features);
-
         Message shape;
-        shape.add_message(1, batch);
-        shape.add_message(1, width);
+        for (const Dimension& dimension : dimensions)
+        {
+            Message encoded;
+            if (dimension.symbol.empty()) encoded.add_int(1, dimension.value);
+            else                          encoded.add_bytes(2, dimension.symbol);
+            shape.add_message(1, encoded);
+        }
 
         Message tensor_type;
         tensor_type.add_int(1, ElementFloat);
@@ -193,6 +227,8 @@ private:
         info.add_message(2, type);
         return info;
     }
+
+private:
 
     string unique_name(const string& hint) { return hint + "_" + to_string(counter++); }
 
@@ -262,7 +298,8 @@ string add_scaling(GraphBuilder& graph, const Scaling& layer, const string& inpu
     return output;
 }
 
-string add_activation(GraphBuilder& graph, ActivationFunction activation, const string& input)
+string add_activation(GraphBuilder& graph, ActivationFunction activation, const string& input,
+                      int64_t softmax_axis = -1)
 {
     switch (activation)
     {
@@ -270,7 +307,7 @@ string add_activation(GraphBuilder& graph, ActivationFunction activation, const 
     case ActivationFunction::Sigmoid:   return graph.add_node("Sigmoid", {input});
     case ActivationFunction::Tanh:      return graph.add_node("Tanh", {input});
     case ActivationFunction::ReLU:      return graph.add_node("Relu", {input});
-    case ActivationFunction::Softmax:   return graph.add_node("Softmax", {input}, {int_attribute("axis", -1)});
+    case ActivationFunction::Softmax:   return graph.add_node("Softmax", {input}, {int_attribute("axis", softmax_axis)});
     case ActivationFunction::LeakyReLU:
         return graph.add_node("LeakyRelu", {input}, {float_attribute("alpha", LEAKY_RELU_SLOPE)});
     case ActivationFunction::SiLU:
@@ -348,11 +385,159 @@ string add_clamping(GraphBuilder& graph, const Clamping& layer, const string& in
     return graph.add_node("Min", {graph.add_node("Max", {input, lower}), upper});
 }
 
+
+#ifndef OPENNN_NO_VISION
+
+string add_slice(GraphBuilder& graph, const string& input, int64_t axis, int64_t start, int64_t end)
+{
+    return graph.add_node("Slice", {input,
+                                    graph.add_int64_initializer("starts", {start}),
+                                    graph.add_int64_initializer("ends", {end}),
+                                    graph.add_int64_initializer("axes", {axis})});
+}
+
+string add_reshape(GraphBuilder& graph, const string& input, const vector<int64_t>& shape)
+{
+    return graph.add_node("Reshape", {input, graph.add_int64_initializer("shape", shape)});
+}
+
+string add_convolution(GraphBuilder& graph, const Convolutional& layer, const string& input)
+{
+    const string& label = layer.get_label();
+
+    throw_if(layer.get_residual(),
+             "ONNX export: layer '{}' has a residual input, which is not supported yet.", label);
+
+    const Shape input_shape = layer.get_input_shape();
+    const Index kernel_height = layer.get_kernel_height();
+    const Index kernel_width = layer.get_kernel_width();
+    const Index row_stride = layer.get_row_stride();
+    const Index column_stride = layer.get_column_stride();
+    const Index padding_height = layer.get_padding_height();
+    const Index padding_width = layer.get_padding_width();
+
+    throw_if((input_shape[0] + 2 * padding_height - kernel_height) / row_stride + 1 != layer.get_output_height()
+             || (input_shape[1] + 2 * padding_width - kernel_width) / column_stride + 1 != layer.get_output_width(),
+             "ONNX export: the padding of layer '{}' cannot be represented.", label);
+
+    vector<float> kernel;
+    vector<float> bias;
+    layer.get_folded_parameters(kernel, bias);
+
+    const string convolution = graph.add_node("Conv",
+        {input,
+         graph.add_initializer(label + "_kernel",
+                               {layer.get_kernels_number(), layer.get_kernel_channels(), kernel_height, kernel_width},
+                               kernel.data(), ssize(kernel)),
+         graph.add_initializer(label + "_bias", bias)},
+        {ints_attribute("kernel_shape", {kernel_height, kernel_width}),
+         ints_attribute("strides", {row_stride, column_stride}),
+         ints_attribute("pads", {padding_height, padding_width, padding_height, padding_width})});
+
+    return add_activation(graph, layer.get_activation_function(), convolution, 1);
+}
+
+string add_pooling(GraphBuilder& graph, const Pooling& layer, const string& input)
+{
+    throw_if(layer.get_pooling_method() != PoolingMethod::MaxPooling,
+             "ONNX export: layer '{}' uses average pooling, which is not supported yet.", layer.get_label());
+
+    const Index padding_height = layer.get_padding_height();
+    const Index padding_width = layer.get_padding_width();
+
+    return graph.add_node("MaxPool", {input},
+        {ints_attribute("kernel_shape", {layer.get_pool_height(), layer.get_pool_width()}),
+         ints_attribute("strides", {layer.get_row_stride(), layer.get_column_stride()}),
+         ints_attribute("pads", {padding_height, padding_width, padding_height, padding_width})});
+}
+
+string add_upsampling(GraphBuilder& graph, const Upsampling& layer, const string& input)
+{
+    const float scale = float(layer.get_output_shape()[0]) / float(layer.get_input_shape()[0]);
+
+    return graph.add_node("Resize",
+        {input, "", graph.add_initializer(layer.get_label() + "_scales", {1.0f, 1.0f, scale, scale})},
+        {string_attribute("mode", "nearest"),
+         string_attribute("coordinate_transformation_mode", "asymmetric"),
+         string_attribute("nearest_mode", "floor")});
+}
+
+string add_detection_v8(GraphBuilder& graph, const DetectionV8& layer, const string& input, const Shape& image_shape)
+{
+    const string& label = layer.get_label();
+    const DetectionHeadMetadata metadata = layer.get_detection_head_metadata();
+    const Index regression_bins = metadata.regression_bins;
+    const Index classes_number = metadata.classes_number;
+    const Index grid_height = layer.get_input_shape()[0];
+    const Index grid_width = layer.get_input_shape()[1];
+    const Index box_channels = 4 * regression_bins;
+
+    throw_if(regression_bins <= 1,
+             "ONNX export: layer '{}' does not regress box distributions (reg_max <= 1), which is not supported.",
+             label);
+
+    vector<float> bins(static_cast<size_t>(regression_bins));
+    iota(bins.begin(), bins.end(), 0.0f);
+
+    const string distribution = graph.add_node("Softmax",
+        {add_reshape(graph, add_slice(graph, input, 1, 0, box_channels), {0, 4, regression_bins, -1})},
+        {int_attribute("axis", 2)});
+
+    const string distances = graph.add_node("ReduceSum",
+        {graph.add_node("Mul", {distribution,
+                                graph.add_initializer(label + "_bins", {1, 1, regression_bins, 1},
+                                                      bins.data(), regression_bins)}),
+         graph.add_int64_initializer("axes", {2})},
+        {int_attribute("keepdims", 0)});
+
+    const string left_top = add_slice(graph, distances, 1, 0, 2);
+    const string right_bottom = add_slice(graph, distances, 1, 2, 4);
+
+    const Index cells = grid_height * grid_width;
+    vector<float> centres(size_t(2 * cells));
+    for (Index row = 0; row < grid_height; ++row)
+        for (Index column = 0; column < grid_width; ++column)
+        {
+            centres[size_t(row * grid_width + column)] = float(column) + 0.5f;
+            centres[size_t(cells + row * grid_width + column)] = float(row) + 0.5f;
+        }
+
+    const string centre = graph.add_node("Add",
+        {graph.add_initializer(label + "_centres", {1, 2, cells}, centres.data(), 2 * cells),
+         graph.add_node("Mul", {graph.add_node("Sub", {right_bottom, left_top}), graph.add_scalar("half", 0.5f)})});
+
+    const string size = graph.add_node("Add", {left_top, right_bottom});
+
+    const float stride_x = float(image_shape[1]) / float(grid_width);
+    const float stride_y = float(image_shape[0]) / float(grid_height);
+    const vector<float> strides = {stride_x, stride_y, stride_x, stride_y};
+
+    const string boxes = graph.add_node("Mul",
+        {graph.add_node("Concat", {centre, size}, {int_attribute("axis", 1)}),
+         graph.add_initializer(label + "_strides", {1, 4, 1}, strides.data(), 4)});
+
+    const string classes = graph.add_node("Sigmoid",
+        {add_reshape(graph, add_slice(graph, input, 1, box_channels, box_channels + classes_number),
+                     {0, classes_number, -1})});
+
+    return graph.add_node("Concat", {boxes, classes}, {int_attribute("axis", 1)});
+}
+
+#endif
+
 runtime_error unsupported_layer(const Layer& layer)
 {
     return runtime_error(format("ONNX export: layer '{}' ({}) cannot be exported to ONNX yet. "
                                 "Supported layers: Scaling, Dense, Unscaling and Clamping.",
                                 layer.get_label(), layer_type_to_string(layer.get_type())));
+}
+
+Message metadata_entry(const string& key, const string& value)
+{
+    Message entry;
+    entry.add_bytes(1, key);
+    entry.add_bytes(2, value);
+    return entry;
 }
 
 Message string_entry(const string& key, const vector<string>& values)
@@ -361,20 +546,154 @@ Message string_entry(const string& key, const vector<string>& values)
     for (size_t i = 0; i < values.size(); ++i)
         joined += (i ? "," : "") + values[i];
 
-    Message entry;
-    entry.add_bytes(1, key);
-    entry.add_bytes(2, joined);
-    return entry;
+    return metadata_entry(key, joined);
 }
+
+Message encode_model(const GraphBuilder& graph, const Message& input, const Message& output,
+                     const vector<Message>& metadata)
+{
+    Message opset;
+    opset.add_bytes(1, "");
+    opset.add_int(2, OPSET_VERSION);
+
+    Message encoded;
+    encoded.add_int(1, IR_VERSION);
+    encoded.add_bytes(2, "OpenNN");
+    encoded.add_message(7, graph.build(input, output));
+    encoded.add_message(8, opset);
+    for (const Message& entry : metadata)
+        encoded.add_message(14, entry);
+
+    return encoded;
+}
+
+#ifndef OPENNN_NO_VISION
+
+runtime_error unsupported_detection_layer(const Layer& layer)
+{
+    return runtime_error(format("ONNX export: layer '{}' ({}) cannot be exported to ONNX yet. "
+                                "Object detection networks support Convolutional, Activation, Addition, "
+                                "Concatenation, Upsampling, max Pooling and DetectionV8 layers.",
+                                layer.get_label(), layer_type_to_string(layer.get_type())));
+}
+
+string python_names(const vector<string>& names)
+{
+    string text = "{";
+    for (size_t i = 0; i < names.size(); ++i)
+    {
+        text += (i ? ", " : "") + to_string(i) + ": '";
+        for (const char character : names[i])
+        {
+            if (character == '\\' || character == '\'') text += '\\';
+            text += character;
+        }
+        text += "'";
+    }
+    return text + "}";
+}
+
+OnnxModel build_onnx_detection_model(const Network& network, const vector<string>& class_names)
+{
+    const vector<unique_ptr<Layer>>& layers = network.get_layers();
+    const vector<vector<Index>>& source_layers = network.get_source_layers();
+    const Shape image_shape = network.get_input_shape();
+
+    throw_if(image_shape.get_rank() != 3, "ONNX export: object detection networks take images as inputs.");
+
+    GraphBuilder graph;
+    OnnxModel model;
+
+    const string input = "images";
+    vector<string> outputs(layers.size());
+    vector<string> heads;
+    Index classes_number = 0;
+    Index anchors_number = 0;
+    Index largest_stride = 0;
+
+    for (size_t i = 0; i < layers.size(); ++i)
+    {
+        const Layer& layer = *layers[i];
+
+        vector<string> inputs;
+        for (const Index source : source_layers[i])
+            inputs.push_back(source < 0 ? input : outputs[size_t(source)]);
+
+        switch (layer.get_type())
+        {
+        case LayerType::Convolutional:
+            outputs[i] = add_convolution(graph, static_cast<const Convolutional&>(layer), inputs[0]);
+            break;
+        case LayerType::Activation:
+            outputs[i] = add_activation(graph, layer.get_output_activation(), inputs[0], 1);
+            break;
+        case LayerType::Addition:
+            outputs[i] = graph.add_node("Sum", inputs);
+            break;
+        case LayerType::Concatenation:
+            outputs[i] = graph.add_node("Concat", inputs, {int_attribute("axis", 1)});
+            break;
+        case LayerType::Upsampling:
+            outputs[i] = add_upsampling(graph, static_cast<const Upsampling&>(layer), inputs[0]);
+            break;
+        case LayerType::Pooling:
+            outputs[i] = add_pooling(graph, static_cast<const Pooling&>(layer), inputs[0]);
+            break;
+        case LayerType::DetectionV8:
+        {
+            const DetectionV8& head = static_cast<const DetectionV8&>(layer);
+            const Shape grid = head.get_input_shape();
+            heads.push_back(add_detection_v8(graph, head, inputs[0], image_shape));
+            classes_number = head.get_classes_number();
+            anchors_number += grid[0] * grid[1];
+            largest_stride = max(largest_stride, image_shape[0] / grid[0]);
+            break;
+        }
+        default:
+            throw unsupported_detection_layer(layer);
+        }
+
+        model.layers.push_back(layer.get_label() + " (" + layer_type_to_string(layer.get_type()) + ")");
+    }
+
+    const string output = graph.add_node("Concat", heads, {int_attribute("axis", 2)}, "output0");
+
+    vector<Message> metadata = {
+        metadata_entry("task", "detect"),
+        metadata_entry("stride", to_string(largest_stride)),
+        metadata_entry("batch", "1"),
+        metadata_entry("imgsz", format("[{}, {}]", image_shape[0], image_shape[1]))};
+
+    if (ssize(class_names) == classes_number)
+        metadata.push_back(metadata_entry("names", python_names(class_names)));
+
+    const Message encoded = encode_model(graph,
+        GraphBuilder::value_info(input, {{"batch"}, {"", image_shape[2]}, {"", image_shape[0]}, {"", image_shape[1]}}),
+        GraphBuilder::value_info(output, {{"batch"}, {"", 4 + classes_number}, {"", anchors_number}}),
+        metadata);
+
+    model.bytes = encoded.bytes();
+    model.nodes_number = graph.nodes_number();
+    return model;
+}
+
+#endif
 
 }
 
-OnnxModel build_onnx_model(const Network& network)
+OnnxModel build_onnx_model(const Network& network, const vector<string>& class_names)
 {
     const vector<unique_ptr<Layer>>& layers = network.get_layers();
     const vector<vector<Index>>& source_layers = network.get_source_layers();
 
     throw_if(layers.empty(), "ONNX export: the neural network has no layers.");
+
+#ifndef OPENNN_NO_VISION
+    if (network.get_first(LayerType::DetectionV8))
+        return build_onnx_detection_model(network, class_names);
+#else
+    (void)class_names;
+#endif
 
     for (const unique_ptr<Layer>& layer : layers)
         if (!is_one_of(layer->get_type(), LayerType::Scaling, LayerType::Unscaling,
@@ -421,26 +740,20 @@ OnnxModel build_onnx_model(const Network& network)
 
     const string output = graph.add_node("Identity", {current}, {}, "output");
 
-    Message opset;
-    opset.add_bytes(1, "");
-    opset.add_int(2, OPSET_VERSION);
-
-    Message encoded;
-    encoded.add_int(1, IR_VERSION);
-    encoded.add_bytes(2, "OpenNN");
-    encoded.add_message(7, graph.build(input, network.get_inputs_number(), output, network.get_outputs_number()));
-    encoded.add_message(8, opset);
-    encoded.add_message(14, string_entry("input_names", network.get_input_feature_names()));
-    encoded.add_message(14, string_entry("output_names", network.get_output_feature_names()));
+    const Message encoded = encode_model(graph,
+        GraphBuilder::value_info(input, {{"batch_size"}, {"", network.get_inputs_number()}}),
+        GraphBuilder::value_info(output, {{"batch_size"}, {"", network.get_outputs_number()}}),
+        {string_entry("input_names", network.get_input_feature_names()),
+         string_entry("output_names", network.get_output_feature_names())});
 
     model.bytes = encoded.bytes();
     model.nodes_number = graph.nodes_number();
     return model;
 }
 
-void save_onnx_model(const Network& network, const filesystem::path& file_path)
+void save_onnx_model(const Network& network, const filesystem::path& file_path, const vector<string>& class_names)
 {
-    const OnnxModel model = build_onnx_model(network);
+    const OnnxModel model = build_onnx_model(network, class_names);
 
     ofstream file(file_path, ios::binary | ios::trunc);
     throw_if(!file, "ONNX export: cannot open {} for writing.", file_path.string());

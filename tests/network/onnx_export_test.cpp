@@ -8,10 +8,12 @@
 #include "tests/pch.h"
 
 #include "opennn/network/onnx_export.h"
+#include "opennn/network/forward_propagation.h"
 #include "opennn/network/network.h"
 #include "opennn/models/models.h"
 #include "opennn/network/layers/clamping_layer.h"
 #include "opennn/network/layers/dense_layer.h"
+#include "opennn/network/layers/detection_v8_layer.h"
 #include "opennn/network/layers/scaling_layer.h"
 #include "opennn/network/layers/unscaling_layer.h"
 #include "opennn/core/statistics.h"
@@ -148,6 +150,69 @@ unique_ptr<ApproximationNetwork> build_scaled_network(const string& activation)
     return network;
 }
 
+unique_ptr<Yolo> build_small_yolo_v8(Index classes_number)
+{
+    auto network = make_unique<Yolo>(Shape{64, 64, 3}, classes_number,
+                                     vector<array<float, 2>>(9, {0.1f, 0.1f}), 2,
+                                     Yolo::Backbone::CSPDarknet53v11, Yolo::ClassActivation::Sigmoid,
+                                     Yolo::HeadStyle::FPNv8, Yolo::BodyActivation::SiLU, true, 16,
+                                     Yolo::ModelSize::n);
+
+    mt19937 generator(7);
+    uniform_real_distribution<float> statistics(0.5f, 1.5f);
+    float* states = network->get_states_data();
+    for (Index i = 0; i < network->get_states_buffer_size(); ++i)
+        states[i] = statistics(generator);
+
+    return network;
+}
+
+MatrixR decode_v8_heads(Network& network, const vector<float>& image, Index height, Index width)
+{
+    ForwardPropagation forward_propagation(1, &network);
+    const vector<TensorView> inputs = {TensorView(const_cast<float*>(image.data()), {1, height, width, 3}, Type::FP32)};
+    network.forward_propagate(inputs, forward_propagation, ForwardPropagationMode::Inference);
+
+    vector<vector<float>> columns;
+    Index classes_number = 0;
+
+    for (size_t layer = 0; layer < network.get_layers().size(); ++layer)
+    {
+        const auto* head = dynamic_cast<const DetectionV8*>(network.get_layer(Index(layer)).get());
+        if (!head) continue;
+
+        const Index reg_max = head->get_detection_head_metadata().regression_bins;
+        classes_number = head->get_classes_number();
+        const Index grid = head->get_input_shape()[0];
+        const Index channels = 4 * reg_max + classes_number;
+        const float stride = float(height) / float(grid);
+        const float* output = forward_propagation.slots[layer].back().as<float>();
+
+        for (Index cell = 0; cell < grid * grid; ++cell)
+        {
+            const float* values = output + cell * channels;
+            const float left = dfl_decode(values, reg_max);
+            const float top = dfl_decode(values + reg_max, reg_max);
+            const float right = dfl_decode(values + 2 * reg_max, reg_max);
+            const float bottom = dfl_decode(values + 3 * reg_max, reg_max);
+
+            vector<float> column = {(float(cell % grid) + 0.5f + (right - left) * 0.5f) * stride,
+                                    (float(cell / grid) + 0.5f + (bottom - top) * 0.5f) * stride,
+                                    (left + right) * stride,
+                                    (top + bottom) * stride};
+            column.insert(column.end(), values + 4 * reg_max, values + channels);
+            columns.push_back(column);
+        }
+    }
+
+    MatrixR decoded(4 + classes_number, ssize(columns));
+    for (Index anchor = 0; anchor < ssize(columns); ++anchor)
+        for (Index row = 0; row < decoded.rows(); ++row)
+            decoded(row, anchor) = columns[size_t(anchor)][size_t(row)];
+
+    return decoded;
+}
+
 MatrixR scaled_inputs()
 {
     MatrixR inputs(3, 3);
@@ -219,4 +284,73 @@ TEST(OnnxExport, ClampingAndSoftmaxMatchOnnxruntime)
     classification.set_output_variables(vector<Variable>(3));
     classification.set_parameters_random();
     expect_onnxruntime_matches(classification, scaled_inputs(), "softmax");
+}
+
+TEST(OnnxExport, WritesYoloV8AsAnUltralyticsDetector)
+{
+    const unique_ptr<Yolo> network = build_small_yolo_v8(2);
+
+    const OnnxModel model = build_onnx_model(*network, {"cat", "dog's"});
+
+    EXPECT_EQ(ssize(model.layers), network->get_layers_number());
+    EXPECT_NE(model.bytes.find("output0"), string::npos);
+    EXPECT_NE(model.bytes.find("{0: 'cat', 1: 'dog\\'s'}"), string::npos);
+    EXPECT_NE(model.bytes.find("[64, 64]"), string::npos);
+}
+
+TEST(OnnxExport, YoloV8DetectionsMatchOnnxruntime)
+{
+    if (!onnxruntime_is_available()) GTEST_SKIP() << "python with numpy and onnxruntime is not on PATH.";
+
+    const Index height = 64;
+    const Index width = 64;
+    const unique_ptr<Yolo> network = build_small_yolo_v8(2);
+
+    mt19937 generator(11);
+    uniform_real_distribution<float> pixel(0.0f, 1.0f);
+    vector<float> image(size_t(height * width * 3));
+    for (float& value : image) value = pixel(generator);
+
+    const MatrixR expected = decode_v8_heads(*network, image, height, width);
+
+    const filesystem::path directory = temporary_directory("opennn_onnx_yolo");
+    const filesystem::path model_path = directory / "model.onnx";
+    const filesystem::path image_path = directory / "image.txt";
+    const filesystem::path values_path = directory / "values.txt";
+    save_onnx_model(*network, model_path);
+
+    {
+        ofstream file(image_path);
+        file.precision(9);
+        for (const float value : image) file << value << "\n";
+    }
+
+    ostringstream script;
+    script << "import numpy as np, onnxruntime as ort\n"
+           << "x = np.loadtxt(r'" << image_path.string() << "', dtype=np.float32)"
+           << ".reshape(1, " << height << ", " << width << ", 3).transpose(0, 3, 1, 2).copy()\n"
+           << "ort.set_default_logger_severity(3)\n"
+           << "y = ort.InferenceSession(r'" << model_path.string() << "').run(None, {'images': x})[0]\n"
+           << "np.savetxt(r'" << values_path.string() << "', y[0], fmt='%.9g')\n";
+
+    const filesystem::path script_path = directory / "run.py";
+    ofstream(script_path, ios::binary) << script.str();
+
+    const filesystem::path output_path = directory / "output.txt";
+    const bool ran = run("python " + quoted_path(script_path), output_path);
+    ASSERT_TRUE(ran) << read_file(output_path);
+
+    istringstream lines(read_file(values_path));
+    for (Index row = 0; row < expected.rows(); ++row)
+        for (Index anchor = 0; anchor < expected.cols(); ++anchor)
+        {
+            double value = 0.0;
+            ASSERT_TRUE(lines >> value) << "onnxruntime returned too few values.";
+            const float reference = expected(row, anchor);
+            EXPECT_NEAR(reference, float(value), 1e-3f * max(1.0f, abs(reference)))
+                << "row " << row << ", anchor " << anchor;
+        }
+
+    error_code error;
+    filesystem::remove_all(directory, error);
 }
