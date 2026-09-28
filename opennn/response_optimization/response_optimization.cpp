@@ -301,11 +301,10 @@ struct ResponseOptimization::FeasibilityRepairSystem : Eigen::DenseFunctor<float
 
     bool round_discrete(VectorR& point) const
     {
-        const VectorR& lower_bounds = problem.input_bounds.first;
-        const VectorR& upper_bounds = problem.input_bounds.second;
+        const auto& [lower_bounds, upper_bounds] = problem.input_bounds;
 
-        const auto always_on = [&](const Index column)
-            { return lower_bounds(column) > 0.0f || upper_bounds(column) < 0.0f; };
+        const auto always_on = [&bounds = problem.input_bounds](const Index column)
+            { return bounds.first(column) > 0.0f || bounds.second(column) < 0.0f; };
 
         // Members are ranked as the row measures them, by their share of their range; ranked by
         // raw value, a narrow-range member near its top would lose to a wide-range member near
