@@ -301,7 +301,8 @@ struct ResponseOptimization::FeasibilityRepairSystem : Eigen::DenseFunctor<float
 
     bool round_discrete(VectorR& point) const
     {
-        const auto& [lower_bounds, upper_bounds] = problem.input_bounds;
+        const VectorR& lower_bounds = problem.input_bounds.first;
+        const VectorR& upper_bounds = problem.input_bounds.second;
 
         const auto always_on = [&](const Index column)
             { return lower_bounds(column) > 0.0f || upper_bounds(column) < 0.0f; };
