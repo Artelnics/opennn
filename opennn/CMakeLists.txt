@@ -536,7 +536,6 @@ if(OpenNN_INSTALL)
         ${PROJECT_SOURCE_DIR}/LICENSE.txt
         ${PROJECT_SOURCE_DIR}/THIRD_PARTY_NOTICES.txt
         ${PROJECT_SOURCE_DIR}/README.md
-        ${PROJECT_SOURCE_DIR}/RELEASE_SCOPE.json
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/OpenNN)
     ExternalProject_Get_Property(opennn_libjpeg_turbo_ep SOURCE_DIR)
     install(FILES ${SOURCE_DIR}/LICENSE.md ${SOURCE_DIR}/README.ijg

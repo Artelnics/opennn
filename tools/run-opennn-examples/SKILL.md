@@ -50,8 +50,8 @@ Set the configuration before constructing a dataset, network, model or session.
 For an example that already calls `Configuration::set`, temporarily replace
 that complete call. For an example without a call, temporarily add the direct
 `opennn/core/configuration.h` include and one call at the start of its `try`
-block. The `blank` target now performs real dense-network inference with fixed
-parameters. Include it in the requested matrix; its default is CPU FP32.
+block. The `blank` target is an empty template that only prints two lines; do
+not edit it, and report it as `N/A` in every cell.
 
 Before editing, save the exact original contents outside the repository. Restore
 them in a `finally`-style cleanup path after every example, including build
@@ -75,8 +75,8 @@ Every target must have a result for every matrix column:
 - `UNSUPPORTED`: the code explicitly rejects that device/type combination.
 - `BLOCKED`: required hardware, data, model assets or external tooling is
   unavailable.
-- `N/A`: the target does not instantiate OpenNN. All current example targets,
-  including `blank`, use OpenNN and require a result for each requested cell.
+- `N/A`: the target does not instantiate OpenNN. Currently only `blank`; every
+  other example target requires a result for each requested cell.
 
 Do not silently convert failures to unsupported results. Record the command,
 exit code, elapsed time and a short diagnostic for every non-pass cell. Capture

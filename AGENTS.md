@@ -47,7 +47,6 @@ The root JSON files are maintained inputs, not scratch results:
 | `CMakePresets.json` | Repeatable configure/build/test settings. |
 | `CODE_QUALITY.json` | Reviewed maintainability limits (ratchet). |
 | `datasets.manifest.json` | Hashes and clearance state of the example asset groups. |
-| `RELEASE_SCOPE.json` | What the current candidate may claim and distribute. |
 
 `LICENSE.txt` (LGPL 2.1, matching the `LGPL-2.1-or-later` SPDX headers) and
 `THIRD_PARTY_NOTICES.txt` are installed with every package.
@@ -88,13 +87,12 @@ Choose one of the four concrete classes:
 
 | Task | Entry point |
 | --- | --- |
-| Incremental CPU/CUDA verification | `tools/verify.ps1`, `tools/verify.sh`; shared logic in `tools/verify.cmake` |
+| Incremental CPU/CUDA verification | `tools/verify.sh`; shared logic in `tools/verify.cmake` |
 | Size, complexity and dependency checks | `tools/check_code_quality.py`, `tools/check_architecture.py` |
 | Coverage and public-header checks | `tools/check_coverage.py`, `tools/check_headers.sh` |
-| CUDA memory errors and JSON fuzzing | `tools/check_cuda_memory.sh`, `tools/fuzz/` |
+| JSON fuzzing | `tools/fuzz/` |
 | Installed-package checks and C++ consumer | `tools/check_installed_package.py`, `tools/package_smoke/` |
-| Dataset inventory and release scope | `tools/check_dataset_manifest.py`, `tools/check_release_scope.py`; archive reading in `tools/example_assets.py` |
-| Reconstruct data and train reference models | `tools/reproduce_datasets.py`, `tools/reproduce_models/` |
+| Dataset inventory | `tools/check_dataset_manifest.py`; archive reading in `tools/example_assets.py` |
 | Full example/device matrix | `tools/run-opennn-examples/SKILL.md` |
 | Benchmark preparation and execution | `benchmarks/prepare.py`, `benchmarks/run.py`, `benchmarks/compare.py` |
 
@@ -163,14 +161,9 @@ reads these variables before `main`, so OpenNN cannot set them for you.
 
 ## Build and verify
 
-Use the repository wrappers for routine verification. They create persistent
-build trees outside the checkout and support focused GoogleTest filters:
-
-```powershell
-.\tools\verify.ps1 quick -Filter 'Dense.*:DenseNoBiasTest.*'
-.\tools\verify.ps1 quick -Backend cuda -Filter '*Gpu*:*CUDA*'
-.\tools\verify.ps1 full
-```
+Use the repository wrapper for routine verification on Linux or WSL. It creates
+persistent build trees outside the checkout and supports focused GoogleTest
+filters:
 
 ```bash
 ./tools/verify.sh quick --filter 'Dense.*:DenseNoBiasTest.*'
@@ -182,17 +175,18 @@ Use focused checks while editing and `full` as the final gate for a completed
 batch. `full` builds and runs the unit tests and the response-optimization
 scenarios on CPU and CUDA. A library change is not complete until the relevant
 CPU and CUDA suites pass, or an unavailable backend is reported clearly; a CPU
-fallback never counts as a CUDA pass. Run either wrapper with its help option for
-CUDA selection, cache locations and compiler-cache support.
+fallback never counts as a CUDA pass. Run the wrapper with `--help` for CUDA
+selection, cache locations and compiler-cache support.
 
-For non-standard CUDA installations, configure the wrappers through
+For non-standard CUDA installations, configure the wrapper through
 `OPENNN_CUDA_ARCHITECTURES`, `OPENNN_CUDNN_INCLUDE_DIR` and
 `OPENNN_CUDNN_LIBRARY`. On Linux (including WSL), put the intended CUDA
 toolkit's `bin` directory on `PATH`; the wrapper checks that `nvcc` and its host
 compiler support C++20.
 
-The CMake presets `verify-cpu`, `verify-cuda` and `verify-sanitizers` (Linux
-Clang) require Ninja and build into `../opennn-build/<preset>`. Passing another
+On Windows, use the CMake presets from a Visual Studio developer prompt. The
+presets `verify-cpu`, `verify-cuda` and `verify-sanitizers` (Linux Clang)
+require Ninja and build into `../opennn-build/<preset>`. Passing another
 directory with `-B` requires the same directory in later `cmake --build` and
 `ctest --test-dir` commands.
 
@@ -216,7 +210,7 @@ Python and ONNX models, and Node.js on `PATH` for JavaScript (CI uses Node 24);
 they report a skip when a runtime is missing. Use `python -B` so maintenance
 checks leave no caches.
 
-### Sanitizers and CUDA memory
+### Sanitizers
 
 ```bash
 CXX=clang++-17 cmake --preset verify-sanitizers -B ../opennn-sanitizers
@@ -224,10 +218,6 @@ cmake --build ../opennn-sanitizers --target opennn_tests opennn_response_tests -
 ASAN_OPTIONS=detect_leaks=1:halt_on_error=1:allocator_may_return_null=1 UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1 \
   OPENNN_THREADS=4 ctest --test-dir ../opennn-sanitizers --output-on-failure
 ```
-
-After a CUDA verification build, `bash tools/check_cuda_memory.sh /path/to/cuda-build`
-runs NVIDIA Compute Sanitizer and fails on memory errors or leaks. It skips the
-process-exit death test, which hangs under instrumentation on WSL.
 
 For longer JSON fuzzing than CI runs:
 
@@ -265,16 +255,14 @@ interfaces may not expose CUDA vendor types; `.cuh` implementation headers may.
 
 `ci.yml` runs on hosted machines: Linux and Windows CPU builds, CUDA compilation
 on Linux, package consumers (static and shared on Linux, portable AppleClang on
-macOS, static GCC, Clang and MSVC), ASan/UBSan, 20,000 JSON fuzzing mutations,
-the source checkers and the release-scope check. It also runs:
+macOS, static GCC, Clang and MSVC), ASan/UBSan, 20,000 JSON fuzzing mutations
+and the source checkers. It also runs:
 
 - Static analysis that treats selected Clang analyzer ownership and
   use-after-move findings in the persistence, dataset and device modules as errors.
 - Coverage of the CPU unit suite: at least 70% line and 35% branch coverage of
   non-CUDA sources, plus the per-module floors in `tools/check_coverage.py`.
   Raise thresholds as tests are added.
-- Iris/concrete data reconstruction and reference-model verification against a
-  freshly installed package (Linux GCC).
 
 `python benchmarks/compare.py baseline.json candidate.json` gates performance
 changes: it allows 5% throughput/memory variation and rejects lower confirmed
@@ -352,35 +340,6 @@ Cleared groups: `airfoil_self_noise`, `breast_cancer`, `mnist` and
 
 The owner has been asked for the missing records. GitHub's automatic source
 archives include every tracked file, so a tag publishes these assets.
-
-### Reproduction
-
-These tools write outside the checkout and use pinned SHA-256 downloads:
-
-```sh
-python -m pip install -r tools/reproduction-requirements.txt
-python tools/reproduce_datasets.py --cache ../dataset-downloads --output ../reproduced-data
-```
-
-`reproduce_datasets.py` rebuilds airfoil, breast cancer, Iris, concrete, Amazon,
-MNIST and ECG from their upstream sources and compares them with the Git index
-(numeric cells with absolute tolerance 1e-12; MNIST by decoded pixels).
-`--datasets iris concrete` selects a subset, and `reproduction.json` records the
-sources and hashes. Reproducing a transformation does not grant redistribution
-permission.
-
-To train the Iris and concrete reference models against an installed package:
-
-```sh
-cmake -S tools/reproduce_models -B ../model-generator -DCMAKE_PREFIX_PATH=/absolute/path/to/opennn-prefix
-cmake --build ../model-generator --config Release
-python tools/reproduce_models/verify.py --executable ../model-generator/opennn_reproduce_models --data-root ../reproduced-data --output ../reference-models
-```
-
-Verification requires at least 85% held-out Iris accuracy and 0.70 concrete R²,
-identical model bytes across two runs, native save/reload and Python export
-agreement. These are new reference models, not provenance for the bundled ones
-or evidence of 8.x model migration.
 
 ## 9.0 release notes and migration
 
@@ -556,12 +515,12 @@ table above; its parameter file stays paired and unchanged.
 
 ## Release
 
-`RELEASE_SCOPE.json` records what the candidate may claim: binary packages are
-publishable and exclude example assets; the full source archive is blocked while
-asset groups are unresolved (CI fails if that check unexpectedly passes);
-historical 8.x model compatibility is not claimed; Neural Designer compatibility
-was not evaluated, at the owner's request. Engineering verification, data
-clearance and the release decision are separate statuses.
+Installation packages exclude example data and can be published. GitHub's
+source archives include every tracked file, so publishing them requires the
+example data to be cleared first. Historical 8.x model compatibility is not
+claimed, and Neural Designer compatibility was not evaluated, at the owner's
+request. Engineering verification, data clearance and the release decision are
+separate statuses.
 
 Before promotion:
 
@@ -570,8 +529,6 @@ Before promotion:
   certify a new candidate.
 - Run `python tools/check_dataset_manifest.py` and, before distributing all
   tracked data, `--release`.
-- Run `python tools/check_release_scope.py --package-kind binary` for an
-  installation archive.
 - If a complete production 8.x model becomes available, follow the
   [migration procedure](#models-and-parameters) and compare its reference predictions.
 - Check the [release notes](#whats-new-in-90) and the benchmark publication
@@ -594,9 +551,8 @@ cpack --config /absolute/path/to/build/CPackConfig.cmake -C Release -G TGZ -B ..
 The archive name records the version, system, processor, CPU target and backend,
 and each archive gets a SHA-256 file. `share/doc/OpenNN/build-info.json` records
 the compiler, configuration, CUDA, shared-library and LTO settings. The package
-installs `README.md`, `LICENSE.txt`, `THIRD_PARTY_NOTICES.txt`,
-`RELEASE_SCOPE.json` and the libjpeg-turbo, zlib, Eigen, cuDNN frontend and
-FlashAttention notices that apply. Extract it into a new directory and check it:
+installs `README.md`, `LICENSE.txt`, `THIRD_PARTY_NOTICES.txt` and the
+libjpeg-turbo, zlib, Eigen, cuDNN frontend and FlashAttention notices that apply. Extract it into a new directory and check it:
 
 ```sh
 python tools/check_installed_package.py /absolute/path/to/extracted-prefix
