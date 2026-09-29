@@ -6,7 +6,6 @@
 //   Artificial Intelligence Techniques SL (Artelnics)
 //   artelnics@artelnics.com
 
-#include <fstream>
 #include <iostream>
 
 #include "opennn/core/configuration.h"
@@ -21,7 +20,7 @@ using namespace opennn;
 namespace
 {
 
-void export_tinyml_artifacts(ClassificationNetwork& network)
+void export_model(ClassificationNetwork& network)
 {
     network.save("iris_model.json");
 
@@ -30,32 +29,7 @@ void export_tinyml_artifacts(ClassificationNetwork& network)
     model_expression.save("iris_model_tables.c", ModelExpression::ProgrammingLanguage::CEmbedded);
     model_expression.save("iris_model.py", ModelExpression::ProgrammingLanguage::Python);
 
-    MatrixR inputs(9, 4);
-    inputs << 5.1, 3.5, 1.4, 0.2,
-              4.9, 3.0, 1.4, 0.2,
-              5.0, 3.4, 1.5, 0.2,
-              6.4, 3.2, 4.5, 1.5,
-              5.7, 2.8, 4.1, 1.3,
-              6.0, 2.9, 4.5, 1.5,
-              6.3, 3.3, 6.0, 2.5,
-              5.8, 2.7, 5.1, 1.9,
-              7.7, 3.8, 6.7, 2.2;
-
-    const MatrixR outputs = network.calculate_outputs(inputs);
-
-    ofstream reference_file("iris_reference.csv");
-    reference_file.precision(9);
-
-    for (Index i = 0; i < inputs.rows(); ++i)
-    {
-        for (Index j = 0; j < inputs.cols(); ++j)
-            reference_file << inputs(i, j) << ";";
-
-        for (Index j = 0; j < outputs.cols(); ++j)
-            reference_file << outputs(i, j) << (j + 1 < outputs.cols() ? ";" : "\n");
-    }
-
-    cout << "Exported TinyML artifacts." << endl;
+    cout << "Exported the model as JSON, C and Python." << endl;
 }
 
 }
@@ -78,7 +52,7 @@ int main()
         Evaluation evaluation(&network, &dataset);
         evaluation.print_multiple_classification_tests();
 
-        export_tinyml_artifacts(network);
+        export_model(network);
 
         return 0;
     }

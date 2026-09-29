@@ -9,4 +9,4 @@ Preserve the attribution, source and licence link when redistributing.
 
 OpenNN adaptation: column header added and whitespace separators changed to
 semicolons. All 1,503 numeric rows match the upstream data in order, verified
-2026-09-08. See the repository's DATASETS.md for download checksums and review.
+2026-09-08.

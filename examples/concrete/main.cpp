@@ -6,21 +6,19 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-//   Optimizes a concrete mix with a pretrained response model.
+//   Trains a model of concrete strength and optimizes the mix with it.
 
-#include <filesystem>
 #include <iostream>
 
+#include "opennn/core/random_utilities.h"
+#include "opennn/dataset/tabular_dataset.h"
+#include "opennn/models/models.h"
 #include "opennn/response_optimization/response_optimization.h"
 #include "opennn/response_optimization/domain_contraction.h"
 #include "opennn/response_optimization/genetic_response.h"
-#include "opennn/network/network.h"
+#include "opennn/training/training.h"
 
 using namespace opennn;
-
-#ifndef CONCRETE_EXAMPLE_DIR
-#define CONCRETE_EXAMPLE_DIR "."
-#endif
 
 namespace
 {
@@ -51,8 +49,17 @@ int main()
     {
         cout << "OpenNN. Concrete Response Optimization Example." << endl;
 
-        Network network(
-            filesystem::path(CONCRETE_EXAMPLE_DIR) / "nn" / "concrete_uci.json");
+        set_seed(0);
+
+        TabularDataset dataset("../data/concrete/concrete_uci.csv", ",", true, false);
+
+        ApproximationNetwork network(dataset.get_input_shape(),
+                                     {16},
+                                     dataset.get_target_shape());
+
+        Training training(&network, &dataset);
+
+        training.train();
 
         DomainContraction domain_contraction(&network);
 

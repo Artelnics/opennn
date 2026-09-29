@@ -34,7 +34,7 @@ int main()
 
         set_seed(21);
 
-        Configuration::instance().set(Device::CPU, Type::FP32);
+        Configuration::instance().set(Device::Auto, Type::FP32);
 
         // Each row holds 140 ECG values and a label: 1 normal, 0 anomalous.
 

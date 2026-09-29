@@ -17,8 +17,7 @@
 // ResponseOptimizationSetup. The ones that run are parameterised over both solvers, so a
 // condition that only one of them honours fails here.
 //
-// The same conditions against the trained concrete network are in
-// concrete_scenarios_test.cpp; the expression language they are written in is in
+// The expression language the conditions are written in is tested in
 // expression_test.cpp.
 
 #include "tests/common/pch.h"

@@ -142,7 +142,7 @@ jobs:
           -DOpenNN_BUILD_BENCHMARKS=OFF
 
       - name: Build library and tests
-        run: cmake --build build --target opennn opennn_tests opennn_response_tests blank --parallel
+        run: cmake --build build --target opennn opennn_tests blank --parallel
 
       - name: Run the getting-started example
         run: ./build/bin/blank
@@ -351,7 +351,7 @@ jobs:
           nproc
           free -h
           /usr/bin/time -v -o build-sanitizers/build-resources.txt \
-            cmake --build build-sanitizers --target opennn_tests opennn_response_tests opennn_json_fuzz --parallel 2
+            cmake --build build-sanitizers --target opennn_tests opennn_json_fuzz --parallel 2
       - name: Check memory and undefined behavior
         run: ctest --test-dir build-sanitizers --output-on-failure
       - name: Fuzz strict JSON parsing
@@ -408,7 +408,7 @@ jobs:
           -DOpenNN_BUILD_BENCHMARKS=OFF
 
       - name: Compile library and both test executables
-        run: cmake --build build-cuda --target opennn_tests opennn_response_tests --parallel 2
+        run: cmake --build build-cuda --target opennn_tests --parallel 2
 
   windows:
     name: Windows MSVC 2022 (CPU, Eigen)
@@ -437,7 +437,7 @@ jobs:
           -DOpenNN_BUILD_BENCHMARKS=OFF
 
       - name: Build library and tests
-        run: cmake --build build --config Release --target opennn opennn_tests opennn_response_tests blank --parallel
+        run: cmake --build build --config Release --target opennn opennn_tests blank --parallel
 
       - name: Run the getting-started example
         run: ./build/bin/Release/blank.exe

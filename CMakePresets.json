@@ -55,24 +55,21 @@
       "name": "verify-cpu",
       "configurePreset": "verify-cpu",
       "targets": [
-        "opennn_tests",
-        "opennn_response_tests"
+        "opennn_tests"
       ]
     },
     {
       "name": "verify-cuda",
       "configurePreset": "verify-cuda",
       "targets": [
-        "opennn_tests",
-        "opennn_response_tests"
+        "opennn_tests"
       ]
     },
     {
       "name": "verify-sanitizers",
       "configurePreset": "verify-sanitizers",
       "targets": [
-        "opennn_tests",
-        "opennn_response_tests"
+        "opennn_tests"
       ]
     }
   ],

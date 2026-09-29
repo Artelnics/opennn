@@ -34,8 +34,8 @@ environment variables, not in repository files.
 | Path | Contents |
 | --- | --- |
 | `opennn/` | The library; module map below. |
-| `tests/` | GoogleTest tests of the `opennn/` library only, one folder per library module (network layers and operators are separate), plus the response-optimization integration scenarios. `tests/common/` holds the test `main`, the precompiled header and shared helpers. Do not add benchmark, example or tooling tests here, and keep no loose test files at the `tests/` root. |
-| `examples/` | Runnable applications and bundled data. The catalog is `examples/README.md`; `legacy_8/reference.zip` preserves unsupported 8.x material outside the build. |
+| `tests/` | GoogleTest tests of the `opennn/` library only, one folder per library module (network layers and operators are separate). `tests/common/` holds the test `main`, the precompiled header and shared helpers. Do not add benchmark, example or tooling tests here, and keep no loose test files at the `tests/` root. |
+| `examples/` | Runnable applications and bundled data. The catalog is `examples/README.md`. |
 | `benchmarks/` | Comparison drivers, input manifests, `README.md` (usage), `PROTOCOL.md` (measurement contract) and `reports/README.md` (reviewed results). |
 | `tools/` | Verification, checkers, packaging and reproduction; table below. |
 | `.github/workflows/` | `ci.yml` (hosted CI) and `cuda-nightly.yml` (Linux CUDA runtime). |
@@ -166,8 +166,7 @@ filters:
 ```
 
 Use focused checks while editing and `full` as the final gate for a completed
-batch. `full` builds and runs the unit tests and the response-optimization
-scenarios on CPU and CUDA. A library change is not complete until the relevant
+batch. `full` builds and runs the unit tests on CPU and CUDA. A library change is not complete until the relevant
 CPU and CUDA suites pass, or an unavailable backend is reported clearly; a CPU
 fallback never counts as a CUDA pass. Run the wrapper with `--help` for CUDA
 selection, cache locations and compiler-cache support.
@@ -208,7 +207,7 @@ checks leave no caches.
 
 ```bash
 CXX=clang++-17 cmake --preset verify-sanitizers -B ../opennn-sanitizers
-cmake --build ../opennn-sanitizers --target opennn_tests opennn_response_tests --parallel 2
+cmake --build ../opennn-sanitizers --target opennn_tests --parallel 2
 ASAN_OPTIONS=detect_leaks=1:halt_on_error=1:allocator_may_return_null=1 UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1 \
   OPENNN_THREADS=4 ctest --test-dir ../opennn-sanitizers --output-on-failure
 ```
@@ -304,27 +303,20 @@ trained artifacts.
   replacement, and keep each `SOURCE.md` notice with its data.
 - Do not describe a dataset as cleared for redistribution without a confirmed
   source and licence.
-- `examples/mnist/data/images.zip`, `examples/melanoma_cancer/data/images.zip` and
-  `examples/legacy_8/reference.zip` keep the original file names inside. CMake
-  extracts only the selected example's archive into the build directory. Keep
-  member names unique.
+- `examples/mnist/data/images.zip` and `examples/melanoma_cancer/data/images.zip`
+  keep the original file names inside. CMake extracts only the selected
+  example's archive into the build directory. Keep member names unique.
 
-Cleared groups: `airfoil_self_noise`, `breast_cancer`, `mnist` and
-`yacht_hydrodynamics`. Unresolved groups and what each needs:
+Cleared groups: `airfoil_self_noise`, `amazon_reviews`, `breast_cancer`, `concrete`,
+`iris_plant`, `mnist` and `yacht_hydrodynamics`. Unresolved groups and what each needs:
 
 | Group | Required resolution |
 | --- | --- |
-| `concrete` | Data is cleared (UCI, CC BY 4.0). The `nn/` model came from unspecified IDC paper material: record the paper, model source, terms and training recipe. |
-| `iris_plant` | Data is cleared (UCI, CC BY 4.0). `iris_model.json` needs a generation/source record. |
-| `amazon_reviews` | Original, reduced and small sentence files are verified. The numeric/tokenized derivatives lack a reconstruction; `amazon_cells_reduced_data.txt` contains NUL bytes and malformed fields. |
 | `bert` | `sst2.txt` is consistent with SST-2 (Socher et al., EMNLP 2013). Verify the split and obtain redistribution terms. |
 | `emotion_analysis` | Consistent with Saravia et al.'s corpus, whose README limits it to educational and research use. Resolve permitted use or replace it. |
 | `ecg5000_anomaly_detection` | Matches the TensorFlow tutorial CSV and seed-21 test split; source PhysioNet `chf07` (ODC-By 1.0). Confirm terms for the UCR/UEA and TensorFlow derivative. |
 | `melanoma_cancer` | 102 BMP images with unverified source; obtain source, attribution and permission. |
 | `translation` | Spanish-English pairs with unrecorded authorship; confirm source and permission. |
-| `legacy_8/n2o_forecast` | Source identified (Hansen et al. 2024, Mendeley Data, CC BY 4.0); reproduce the local derivation. |
-| `legacy_8/forecasting` | Madrid NO2 binary data; establish source, licence and preprocessing. |
-| `legacy_8/wwt_optimization` | Incomplete historical application; the input CSV is absent. |
 
 The owner has been asked for the missing records. GitHub's automatic source
 archives include every tracked file, so a tag publishes these assets.

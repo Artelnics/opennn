@@ -9,8 +9,7 @@ Preserve the attribution, source and licence link when redistributing.
 
 OpenNN adaptation: column header added and whitespace separators changed to
 semicolons; the number text of every cell is unchanged. All 308 numeric rows
-match `yacht_hydrodynamics.data` in order, verified 2026-09-14. See the
-repository's DATASETS.md for the download checksum and review.
+match `yacht_hydrodynamics.data` in order, verified 2026-09-14.
 
 Columns, in the UCI order (all adimensional):
 
