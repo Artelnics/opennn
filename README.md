@@ -5,18 +5,18 @@ It supports tabular data, images, time series and text, with CPU and optional
 CUDA execution. Models can be embedded in C++ applications or exported as
 standalone source code for supported architectures.
 
-**This is the `dev` branch for the unreleased 9.0 candidate.** The published
-8.x line is on `master`. See [migration](CHANGELOG.md#migrating-from-8x-to-90)
-before updating an existing application or saved model.
-
 | I want to… | Start here |
 | --- | --- |
 | Build and run my first network | [Quick start](#quick-start) |
+| Choose CPU/CUDA backends and build options | [Build options](AGENTS.md#build-options) |
 | Use OpenNN in my C++ application | [Install and link](#use-opennn-in-your-application) |
 | Train, evaluate or export a model | [Examples](examples/README.md) |
+| Update an 8.x application or model | [Migration](AGENTS.md#migrating-from-8x-to-90) |
 | Understand the source folders | [Repository contents](#repository-contents) |
 | Run or review performance comparisons | [Benchmarks](benchmarks/README.md) |
-| Contribute, test or prepare a release | [Development](DEVELOPMENT.md) |
+| Contribute or run the tests | [Contributing](#contributing-and-support) |
+
+Tutorials are available on [opennn.net](https://www.opennn.net/).
 
 ## Quick start
 
@@ -25,16 +25,16 @@ GCC 13+, Clang 17+, or Visual Studio 2022 C++ tools. On macOS, install the
 OpenMP runtime (`libomp`). CMake retrieves missing dependencies during the
 first configuration, so that step needs internet access.
 
-Clone the development branch and configure a CPU build:
+Clone the repository and configure a CPU build:
 
 ```sh
-git clone --branch dev https://github.com/Artelnics/opennn.git
+git clone https://github.com/Artelnics/opennn.git
 cd opennn
 cmake -S . -B ../opennn-build -DCMAKE_BUILD_TYPE=Release -DOpenNN_DISABLE_CUDA=ON -DOpenNN_BUILD_TESTS=OFF -DOpenNN_BUILD_EXAMPLES=ON
 cmake --build ../opennn-build --config Release --target blank --parallel
 ```
 
-Run the minimal example on Linux/macOS or with a single-configuration generator:
+Run the blank example on Linux/macOS or with a single-configuration generator:
 
 ```sh
 ../opennn-build/bin/blank
@@ -45,11 +45,6 @@ With Visual Studio on Windows:
 ```powershell
 ../opennn-build/bin/Release/blank.exe
 ```
-
-It prints `Prediction: 2`. The [complete C++ example](examples/blank/main.cpp)
-creates a two-input, one-output dense network, assigns fixed demonstration
-weights and performs inference. It needs no dataset or model download.
-The existing target name `blank` is retained for compatibility.
 
 Next, follow the [Iris example](examples/README.md#train-your-first-model) to train
 a classifier, evaluate it and export predictions as C or Python code.
@@ -65,8 +60,6 @@ cmake --build ../opennn-build/cuda --config Release --target opennn --parallel
 ```
 
 Require CUDA explicitly to make missing GPU build dependencies an error.
-See [build configuration](DEVELOPMENT.md#build-configuration) for CPU backends,
-portable binaries, shared libraries and custom dependency paths.
 
 ## Use OpenNN in your application
 
@@ -88,50 +81,43 @@ target_compile_features(my_application PRIVATE cxx_std_20)
 ```
 
 Configure the application with `-DCMAKE_PREFIX_PATH=/absolute/path/to/opennn-install`.
-The exported target supplies OpenNN's include paths and dependency linkage.
+The exported target supplies OpenNN's include paths and dependency linkage, and
+the package still works after moving the install prefix.
 [The package consumer](tools/package_smoke/) is a complete working example.
-See [packaging](DEVELOPMENT.md#installation-packages) for external runtime
-dependencies and compiler compatibility.
+
+Fetched Eigen and zlib are installed with the library. OpenMP, oneTBB, oneDNN,
+MKL and NVIDIA runtimes are not copied into the installation; supply those
+selected by the build. Use a compiler compatible with the one that built the
+package. Installation packages exclude example datasets and models.
+
+Include the public module headers directly, for example
+`#include "opennn/network/network.h"`. Do not include the private precompiled
+header `pch.h` in an application.
 
 ## Repository contents
 
 | Folder | What it contains |
 | --- | --- |
-| [`opennn/`](opennn/) | The library: public headers, implementations, models and CPU/CUDA backends. See the [module map](DEVELOPMENT.md#source-map). |
+| [`opennn/`](opennn/) | The library: public headers, implementations, models and CPU/CUDA backends. See the [module map](AGENTS.md#library-modules-and-dependencies). |
 | [`examples/`](examples/README.md) | Runnable applications, export checks and bundled data. Unsupported 8.x material is isolated in `legacy_8/reference.zip`. |
 | [`tests/`](tests/) | C++ unit tests, response-optimization scenarios and Python checks for benchmarks and example assets. |
-| [`benchmarks/`](benchmarks/README.md) | Comparison drivers, input manifests, measurement procedures and reviewed results. |
-| [`tools/`](DEVELOPMENT.md#maintenance-tools) | Verification, packaging, asset reproduction and release checks. |
+| [`benchmarks/`](benchmarks/README.md) | Comparison drivers, input manifests, the [measurement protocol](benchmarks/PROTOCOL.md) and [reviewed results](benchmarks/reports/README.md). |
+| [`tools/`](tools/) | Verification, packaging, asset reproduction and release checks; see [AGENTS.md](AGENTS.md#maintenance-tools). |
 | [`.github/workflows/`](.github/workflows/) | Hosted CI and Linux CUDA verification. |
-
-Build directories, dependency downloads, logs and raw benchmark results are
-generated locally outside the checkout. Image datasets are bundled as ZIP files;
-CMake expands them into the build directory when their example is built.
-The [data guide](DATASETS.md) explains sources, attribution and reproduction.
-
-## Documentation
-
-The guides linked above cover examples, development, data and benchmarks.
-[CHANGELOG.md](CHANGELOG.md) records release changes, renamed APIs and saved-model
-migration. Tutorials are available on [opennn.net](https://www.opennn.net/).
-The [benchmark protocol](benchmarks/PROTOCOL.md) defines measurement rules;
-[reviewed results](benchmarks/reports/README.md) identify their models, computers
-and the measurements still required before website publication.
 
 ## Contributing and support
 
-Base contributions on `dev` and follow [the development workflow](DEVELOPMENT.md)
-and [engineering rules](AGENTS.md). For a bug report, include the OpenNN commit,
-operating system, compiler, CPU/CUDA configuration, reproduction command and error.
-Report issues in [GitHub Issues](https://github.com/Artelnics/opennn/issues).
-
-Release promotion to `master` follows the owner's decision and the
-[release checklist](DEVELOPMENT.md#release-checklist).
-[RELEASE_SCOPE.json](RELEASE_SCOPE.json) records the current artifact scope.
+Base contributions on `dev`, include the validation you ran, and describe the
+resulting behavior in the pull request. [AGENTS.md](AGENTS.md) holds the
+engineering rules, verification commands and release procedure. For a bug
+report, include the OpenNN commit, operating system, compiler, CPU/CUDA
+configuration, reproduction command and error, and file it in
+[GitHub Issues](https://github.com/Artelnics/opennn/issues).
 
 ## License
 
-OpenNN is distributed under the GNU Lesser General Public License; see
-[LICENSE.txt](LICENSE.txt) and the per-file notices. Dependencies and example
-assets retain the separate terms recorded in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)
-and [DATASETS.md](DATASETS.md).
+OpenNN is distributed under the GNU Lesser General Public License v3; see
+[LICENSE.txt](LICENSE.txt), [LICENSE-GPL-3.0.txt](LICENSE-GPL-3.0.txt) and the
+per-file notices. Dependencies and downloadable pre-trained weights keep their own
+terms, listed in [THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt). Example data
+terms are listed [above](#example-data-and-licences).

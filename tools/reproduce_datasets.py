@@ -124,7 +124,7 @@ def reconstruct(name, raw, indexed, output):
         write_table("concrete_uci.csv", [sheet.row_values(i) for i in range(1, sheet.nrows)], ",")
     elif name == "amazon":
         rows = [row[:-1] + ["Bad" if row[-1] == "0" else "Good"] for row in table(member(raw, "amazon_cells_labelled.txt"), "\t") if row]
-        rows[0][0] = "'" + rows[0][0]  # Retained local adaptation, documented in DATASETS.md.
+        rows[0][0] = "'" + rows[0][0]  # Retained local adaptation, documented in the README example-data table.
         write_table("amazon_cells_labelled.txt", rows, "\t", header=False)
         reduced = [row.copy() for row in rows[:10]]
         reduced[0][0] = reduced[0][0][1:]
@@ -182,7 +182,7 @@ def main():
         report["datasets"][name] = {"source_url": SOURCES[name][1], "source_sha256": SOURCES[name][2], "files": files}
         print(f"Verified and reconstructed {name}: {len(files)} files", flush=True)
     (args.output / "reproduction.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
-    print("Verified equivalence does not clear unresolved redistribution terms; see DATASETS.md.")
+    print("Verified equivalence does not clear unresolved redistribution terms; see the Example data section of AGENTS.md.")
 
 
 if __name__ == "__main__":

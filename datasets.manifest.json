@@ -11,7 +11,7 @@
         "sha256": "db06bfb5858c64f4a2e8e1e21b917e9119da8129a2d0f66886d02fc1261258b4"
       },
       "redistribution_cleared": true,
-      "review": "See DATASETS.md for source, attribution, transformations and unresolved records."
+      "review": "See the Example data section of AGENTS.md for source, attribution and unresolved records."
     },
     {
       "path": "examples/amazon_reviews",
@@ -21,7 +21,7 @@
         "sha256": "265f5bd684aa1a543084af433035583104070865988a1e657f88b7eaf893989b"
       },
       "redistribution_cleared": false,
-      "review": "See DATASETS.md for source, attribution, transformations and unresolved records."
+      "review": "See the Example data section of AGENTS.md for source, attribution and unresolved records."
     },
     {
       "path": "examples/bert",
@@ -31,7 +31,7 @@
         "sha256": "341695a7e6831f5afad134e1f06ff7771e92d77147cf0d6115852f7885159c58"
       },
       "redistribution_cleared": false,
-      "review": "See DATASETS.md for source, attribution, transformations and unresolved records."
+      "review": "See the Example data section of AGENTS.md for source, attribution and unresolved records."
     },
     {
       "path": "examples/breast_cancer",
@@ -41,7 +41,7 @@
         "sha256": "75de6b74dcd128763b9b08d25b18621e2756ee05ce221fb79861775482bb0849"
       },
       "redistribution_cleared": true,
-      "review": "See DATASETS.md for source, attribution, transformations and unresolved records."
+      "review": "See the Example data section of AGENTS.md for source, attribution and unresolved records."
     },
     {
       "path": "examples/concrete",
@@ -51,7 +51,7 @@
         "sha256": "73681f1073b92bff682834d1006eb00f30ec41c6d20a6e59712c87f75f02f483"
       },
       "redistribution_cleared": false,
-      "review": "See DATASETS.md for source, attribution, transformations and unresolved records."
+      "review": "See the Example data section of AGENTS.md for source, attribution and unresolved records."
     },
     {
       "path": "examples/ecg5000_anomaly_detection",
@@ -61,7 +61,7 @@
         "sha256": "80728bc9e125f12700a0c932dc16e8cc002dc67bb12bedec67751a82cc29fe2c"
       },
       "redistribution_cleared": false,
-      "review": "See DATASETS.md for source, attribution, transformations and unresolved records."
+      "review": "See the Example data section of AGENTS.md for source, attribution and unresolved records."
     },
     {
       "path": "examples/emotion_analysis",
@@ -71,7 +71,7 @@
         "sha256": "b5d7795aa994722521436afd89fc5fe56c62b7ac5699181d6461437feb7bd515"
       },
       "redistribution_cleared": false,
-      "review": "See DATASETS.md for source, attribution, transformations and unresolved records."
+      "review": "See the Example data section of AGENTS.md for source, attribution and unresolved records."
     },
     {
       "path": "examples/iris_plant",
@@ -81,7 +81,7 @@
         "sha256": "68b9d8d59db88b263c2011f88b7a06b7a9646adfce7d1529cfc326c4d1b91b2d"
       },
       "redistribution_cleared": false,
-      "review": "See DATASETS.md for source, attribution, transformations and unresolved records."
+      "review": "See the Example data section of AGENTS.md for source, attribution and unresolved records."
     },
     {
       "path": "examples/legacy_8/forecasting",
@@ -91,7 +91,7 @@
         "sha256": "64607fbea407c2cbef839a80da1e99fc944ec74109be4c10021aeb3bf92a767d"
       },
       "redistribution_cleared": false,
-      "review": "See DATASETS.md for source, attribution, transformations and unresolved records."
+      "review": "See the Example data section of AGENTS.md for source, attribution and unresolved records."
     },
     {
       "path": "examples/legacy_8/n2o_forecast",
@@ -101,7 +101,7 @@
         "sha256": "63adfff58029566fa50d3bd3ebdff8e6905993a9e96d18ee9faf506926ea5ce0"
       },
       "redistribution_cleared": false,
-      "review": "See DATASETS.md for source, attribution, transformations and unresolved records."
+      "review": "See the Example data section of AGENTS.md for source, attribution and unresolved records."
     },
     {
       "path": "examples/legacy_8/wwt_optimization",
@@ -111,7 +111,7 @@
         "sha256": "121f0be43a63dbd80bfe1e65bfd5f5c08f13be465cd0d772486987d9130cf68f"
       },
       "redistribution_cleared": false,
-      "review": "See DATASETS.md for source, attribution, transformations and unresolved records."
+      "review": "See the Example data section of AGENTS.md for source, attribution and unresolved records."
     },
     {
       "path": "examples/melanoma_cancer",
@@ -121,7 +121,7 @@
         "sha256": "caf36ace63fe418725dca8c8d03197b86c3bb3326c7e939768a3f4344851098c"
       },
       "redistribution_cleared": false,
-      "review": "See DATASETS.md for source, attribution, transformations and unresolved records."
+      "review": "See the Example data section of AGENTS.md for source, attribution and unresolved records."
     },
     {
       "path": "examples/mnist",
@@ -131,7 +131,7 @@
         "sha256": "f26f35b2d7c44899bfd272dea8dea2a67519d9b32ba0e55489fcbf6d53b42056"
       },
       "redistribution_cleared": true,
-      "review": "See DATASETS.md for source, attribution, transformations and unresolved records."
+      "review": "See the Example data section of AGENTS.md for source, attribution and unresolved records."
     },
     {
       "path": "examples/translation",
@@ -141,7 +141,7 @@
         "sha256": "005097443cc9796c93edec525c310966887aee688bd486e1b4a644c64e770a5f"
       },
       "redistribution_cleared": false,
-      "review": "See DATASETS.md for source, attribution, transformations and unresolved records."
+      "review": "See the Example data section of AGENTS.md for source, attribution and unresolved records."
     },
     {
       "path": "examples/yacht_hydrodynamics",
@@ -151,7 +151,7 @@
         "sha256": "237625bd961487f448cd4ad484b1c7198aeb882f4287d726ad810e92ae08190c"
       },
       "redistribution_cleared": true,
-      "review": "See DATASETS.md for source, attribution, transformations and unresolved records."
+      "review": "See the Example data section of AGENTS.md for source, attribution and unresolved records."
     }
   ],
   "storage_contract": "ZIP members are expanded under the archive parent directory before applying hash_contract; inventory paths and redistribution records are unchanged."

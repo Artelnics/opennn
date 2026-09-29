@@ -90,7 +90,8 @@ __pycache__/
 .vs/
 .vscode/
 .idea/
-.claude/
+.claude/*
+!.claude/CLAUDE.md
 .DS_Store
 ._*
 *~

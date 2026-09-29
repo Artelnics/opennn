@@ -1,4 +1,4 @@
-option(OpenNN_BUILD_BLANK "Build the minimal OpenNN inference example (blank)" ON)
+option(OpenNN_BUILD_BLANK "Build the blank example template" ON)
 
 function(opennn_example name)
     add_executable(${name} "${name}/main.cpp")

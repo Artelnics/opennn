@@ -1,6 +1,6 @@
 # OpenNN examples
 
-Start with [minimal inference](blank/main.cpp), then
+Start with the [blank template](blank/main.cpp), then
 [Iris training](#train-your-first-model). Build and run one target at a time;
 some language and detection examples require large downloads or a CUDA device.
 
@@ -8,7 +8,7 @@ some language and detection examples require large downloads or a CUDA device.
 
 | Target | What it demonstrates | Inputs and runtime notes |
 | --- | --- | --- |
-| [`blank`](blank/main.cpp) | A two-input dense network and one prediction | CPU FP32; fixed demo weights; no data or downloads |
+| [`blank`](blank/main.cpp) | Empty starting point for a new application; prints two lines | No data or downloads |
 | [`iris_plant`](iris_plant/main.cpp) | Classification, evaluation and C/Python export | Bundled small CSV; explicitly CPU FP32 |
 | [`airfoil_self_noise`](airfoil_self_noise/main.cpp) | Tabular regression | Bundled CSV |
 | [`yacht_hydrodynamics`](yacht_hydrodynamics/main.cpp) | Regression with neuron selection, quasi-Newton training and test-set regression analysis | Bundled CSV; explicitly CPU FP32 with one thread |
@@ -87,8 +87,10 @@ a Python model, and reference predictions beside the executable. The
 
 For complete CPU/CUDA and precision coverage, use the
 [example matrix skill](../tools/run-opennn-examples/SKILL.md).
-[DATASETS.md](../DATASETS.md) records asset sources, reproduction procedures
-and unresolved permissions; keep each dataset's `SOURCE.md` notice with its data.
+The [README data table](../README.md#example-data-and-licences) lists dataset
+attributions, and [AGENTS.md](../AGENTS.md#example-data) records reproduction
+procedures and unresolved permissions; keep each dataset's `SOURCE.md` notice
+with its data.
 
 Further examples: [concrete optimization](#concrete-response-optimization),
 [ECG anomaly detection](#ecg5000-anomaly-detection),
@@ -138,7 +140,7 @@ age = 28
 
 The exact IDC paper, model source and training provenance are still unresolved;
 the source attribution above is the historical description, not clearance of
-the bundled model. See [the data review](../DATASETS.md).
+the bundled model. See [the data review](../AGENTS.md#example-data).
 
 ## ECG5000 anomaly detection
 
@@ -292,4 +294,4 @@ For maintained code, see [`forecasting_tinyml/`](forecasting_tinyml/), the time-
 tests, and the response-optimization integration scenarios. A port of these
 historical applications must explicitly translate window indices and verify
 predictions before transferring their optimization settings. See
-[the migration guide](../CHANGELOG.md#migrating-from-8x-to-90) and [DATASETS.md](../DATASETS.md).
+[the migration guide](../AGENTS.md#migrating-from-8x-to-90) and [the data review](../AGENTS.md#example-data).
