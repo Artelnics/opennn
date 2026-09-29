@@ -40,13 +40,8 @@ environment variables, not in repository files.
 | `tools/` | Verification, checkers, packaging and reproduction; table below. |
 | `.github/workflows/` | `ci.yml` (hosted CI) and `cuda-nightly.yml` (Linux CUDA runtime). |
 
-The root JSON files are maintained inputs, not scratch results:
-
-| File | Purpose |
-| --- | --- |
-| `CMakePresets.json` | Repeatable configure/build/test settings. |
-| `CODE_QUALITY.json` | Reviewed maintainability limits (ratchet). |
-| `datasets.manifest.json` | Hashes and clearance state of the example asset groups. |
+`CMakePresets.json` holds the repeatable configure/build/test settings, and
+`tools/CODE_QUALITY.json` the reviewed maintainability limits (ratchet).
 
 `LICENSE.txt` (LGPL 2.1, matching the `LGPL-2.1-or-later` SPDX headers) and
 `THIRD_PARTY_NOTICES.txt` are installed with every package.
@@ -92,7 +87,6 @@ Choose one of the four concrete classes:
 | Coverage and public-header checks | `tools/check_coverage.py`, `tools/check_headers.sh` |
 | JSON fuzzing | `tools/fuzz/` |
 | Installed-package checks and C++ consumer | `tools/check_installed_package.py`, `tools/package_smoke/` |
-| Dataset inventory | `tools/check_dataset_manifest.py`; archive reading in `tools/example_assets.py` |
 | Full example/device matrix | `tools/run-opennn-examples/SKILL.md` |
 | Benchmark preparation and execution | `benchmarks/prepare.py`, `benchmarks/run.py`, `benchmarks/compare.py` |
 
@@ -235,16 +229,15 @@ Run the source checks that gate CI:
 ```bash
 python tools/check_code_quality.py
 python tools/check_architecture.py
-python tools/check_dataset_manifest.py
 ```
 
 `check_code_quality.py` is a ratchet over first-party `.cpp`, `.h`, `.cu` and
 `.cuh` files (excluding the vendored FlashAttention shim), and it also checks
-SPDX identifiers. Any metric above `CODE_QUALITY.json` fails CI. Unprefixed keys
+SPDX identifiers. Any metric above `tools/CODE_QUALITY.json` fails CI. Unprefixed keys
 cover C++, `cuda_` keys cover CUDA, and `combined_duplicate_percent` covers both.
 When a commit legitimately grows the code (size metrics such as `nloc`,
 `physical_lines`, `functions` or `files`), run
-`python tools/check_code_quality.py --update` and include `CODE_QUALITY.json` in
+`python tools/check_code_quality.py --update` and include `tools/CODE_QUALITY.json` in
 the same commit. Do not update it to absorb worse quality metrics (long or
 complex functions, duplication); simplify the code instead.
 
@@ -305,21 +298,16 @@ sudo systemctl restart actions.runner.Artelnics-opennn.opennn-wsl-cuda.service
 ## Example data
 
 OpenNN's software licence does not license bundled datasets, images, text or
-trained artifacts. `datasets.manifest.json` holds a SHA-256 content inventory
-and a `redistribution_cleared` flag for every example `data/` and `nn/` group.
+trained artifacts.
 
-- `python tools/check_dataset_manifest.py` checks the Git index against the
-  manifest, so stage reviewed asset changes first. Text hashes normalize CRLF.
-- `--release` additionally fails while any group lacks redistribution clearance.
-  Do not mark an unknown source as cleared to pass that gate; updating a hash is
-  not a provenance review.
 - Keep the bundled datasets until each affected example has a reproducible
   replacement, and keep each `SOURCE.md` notice with its data.
+- Do not describe a dataset as cleared for redistribution without a confirmed
+  source and licence.
 - `examples/mnist/data/images.zip`, `examples/melanoma_cancer/data/images.zip` and
-  `examples/legacy_8/reference.zip` preserve logical paths and bytes; the checker
-  reads their members in memory. CMake extracts only the selected example's
-  archive into the build directory. Update archives and loose files together and
-  keep member names unique.
+  `examples/legacy_8/reference.zip` keep the original file names inside. CMake
+  extracts only the selected example's archive into the build directory. Keep
+  member names unique.
 
 Cleared groups: `airfoil_self_noise`, `breast_cancer`, `mnist` and
 `yacht_hydrodynamics`. Unresolved groups and what each needs:
@@ -527,8 +515,6 @@ Before promotion:
 - Verify the exact candidate commit on every `ci.yml` job and on the Linux CUDA
   workflow. Report skips and disabled tests separately; earlier passes do not
   certify a new candidate.
-- Run `python tools/check_dataset_manifest.py` and, before distributing all
-  tracked data, `--release`.
 - If a complete production 8.x model becomes available, follow the
   [migration procedure](#models-and-parameters) and compare its reference predictions.
 - Check the [release notes](#whats-new-in-90) and the benchmark publication

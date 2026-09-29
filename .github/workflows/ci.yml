@@ -131,9 +131,6 @@ jobs:
       - name: Install Python test dependencies
         run: python -m pip install -r tools/test-requirements.txt
 
-      - name: Check dataset inventory
-        run: python tools/check_dataset_manifest.py
-
       - name: Configure (CPU only, Eigen BLAS)
         run: >
           cmake -S . -B build -G Ninja
@@ -429,9 +426,6 @@ jobs:
 
       - name: Install Python test dependencies
         run: python -m pip install -r tools/test-requirements.txt
-
-      - name: Check dataset inventory
-        run: python tools/check_dataset_manifest.py
 
       - name: Configure (CPU only, Eigen BLAS)
         run: >

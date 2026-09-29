@@ -11,7 +11,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "opennn"
-BASELINE = ROOT / "CODE_QUALITY.json"
+BASELINE = Path(__file__).resolve().parent / "CODE_QUALITY.json"
 CPP_SUFFIXES = {".cpp", ".h"}
 CUDA_SUFFIXES = {".cu", ".cuh"}
 VENDOR_DIRECTORY = ("core", "cuda", "flash_attention_shim")

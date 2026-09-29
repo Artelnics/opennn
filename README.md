@@ -1,4 +1,6 @@
-# OpenNN
+<div align="center">
+  <img src="https://www.opennn.net/images/opennn_git_logo.svg" alt="OpenNN">
+</div>
 
 OpenNN is a C++20 library for building, training and running neural networks.
 It supports tabular data, images, time series and text, with CPU and optional
