@@ -1,4 +1,4 @@
-#include "tests/pch.h"
+#include "tests/common/pch.h"
 
 #include "opennn/core/json.h"
 

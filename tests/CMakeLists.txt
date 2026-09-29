@@ -48,7 +48,7 @@ add_executable(opennn_response_tests ${RESPONSE_SCENARIO_SOURCES})
 
 target_link_libraries(opennn_response_tests PRIVATE GTest::gtest_main opennn)
 
-target_precompile_headers(opennn_response_tests PRIVATE pch.h)
+target_precompile_headers(opennn_response_tests PRIVATE common/pch.h)
 
 # The scenarios read the pre-trained network from the source tree, next to the example
 # that shares it. Loading the .json needs its .bin sibling, so both are given at once.
@@ -64,7 +64,7 @@ if(OpenNN_ONEDNN_FOUND)
   target_compile_definitions(opennn_tests PRIVATE OPENNN_TEST_HAS_ONEDNN)
 endif()
 
-target_precompile_headers(opennn_tests PRIVATE pch.h)
+target_precompile_headers(opennn_tests PRIVATE common/pch.h)
 
 add_test(NAME run_tests COMMAND opennn_tests)
 set(OpenNN_UNIT_TEST_TIMEOUT 600 CACHE STRING "Unit-suite timeout in seconds")

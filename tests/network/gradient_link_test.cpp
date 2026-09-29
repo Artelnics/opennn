@@ -16,7 +16,7 @@
 // Without that, the pass below writes into whichever BackPropagation happened to
 // be constructed last, and the caller's own buffer comes back untouched.
 
-#include "tests/pch.h"
+#include "tests/common/pch.h"
 
 #include "opennn/dataset/batch.h"
 #include "opennn/dataset/dataset.h"

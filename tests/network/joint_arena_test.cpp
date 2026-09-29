@@ -7,7 +7,7 @@
 //   identical numbers, so nothing else in the suite notices if the joint plan
 //   silently stops engaging -- only the footprint changes.
 
-#include "tests/pch.h"
+#include "tests/common/pch.h"
 
 #include "opennn/network/back_propagation.h"
 #include "opennn/core/configuration.h"

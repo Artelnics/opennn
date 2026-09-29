@@ -22,7 +22,7 @@
 // width that is not a multiple of 64 - and cuBLASLt must then give the same
 // answer, which the last tests check.
 
-#include "tests/pch.h"
+#include "tests/common/pch.h"
 
 #include "opennn/core/configuration.h"
 #include "opennn/core/device_backend.h"

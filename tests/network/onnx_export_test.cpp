@@ -5,7 +5,7 @@
 // model run by onnxruntime against Network::calculate_outputs - wherever Python
 // has onnxruntime installed.
 
-#include "tests/pch.h"
+#include "tests/common/pch.h"
 
 #include "opennn/network/onnx_export.h"
 #include "opennn/network/forward_propagation.h"

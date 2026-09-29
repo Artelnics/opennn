@@ -1,4 +1,4 @@
-#include "tests/pch.h"
+#include "tests/common/pch.h"
 
 #include "opennn/network/layers/dense_layer.h"
 #include "opennn/models/models.h"
@@ -7,6 +7,7 @@
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/training/adam.h"
 #include "opennn/training/levenberg_marquardt.h"
+#include "opennn/training/optimizer.h"
 #include "opennn/training/quasi_newton.h"
 #include "opennn/training/sgd.h"
 #include "opennn/training/training.h"
@@ -269,6 +270,14 @@ TEST(Training, TransfersTranslationVocabularies)
 
     error_code error;
     filesystem::remove(path, error);
+}
+
+TEST(OptimizerFactoryTest, EveryNameConstructs)
+{
+    for (const char* name : {"Adam", "LevenbergMarquardt", "QuasiNewton", "SGD"})
+        EXPECT_NE(create_optimizer(name), nullptr) << name;
+
+    EXPECT_THROW(create_optimizer("Unknown"), runtime_error);
 }
 
 // OpenNN: Open Neural Networks Library.

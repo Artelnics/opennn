@@ -12,7 +12,7 @@
 // and drops it entirely when use_bias is off, and the tied-projection rule that
 // decides whether the operator owns weights worth initialising.
 
-#include "tests/pch.h"
+#include "tests/common/pch.h"
 
 #include "opennn/core/tensor_types.h"
 #include "opennn/network/operators/combination_operator.h"

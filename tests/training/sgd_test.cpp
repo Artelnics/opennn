@@ -1,4 +1,4 @@
-#include "tests/pch.h"
+#include "tests/common/pch.h"
 #include "opennn/core/configuration.h"
 #include "opennn/dataset/text_dataset.h"
 #include "opennn/core/random_utilities.h"
@@ -11,7 +11,7 @@
 #include "opennn/training/loss.h"
 #include "opennn/core/device_backend.h"
 
-#include "tests/test_helpers.h"
+#include "tests/common/test_helpers.h"
 #include "gtest/gtest.h"
 
 using namespace opennn;

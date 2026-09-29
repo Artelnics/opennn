@@ -1,4 +1,4 @@
-#include "tests/pch.h"
+#include "tests/common/pch.h"
 
 #ifndef OPENNN_NO_VISION
 

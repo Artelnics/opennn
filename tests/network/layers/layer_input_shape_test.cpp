@@ -15,7 +15,7 @@
 // the same way. These tests cover the ones that used to stay quiet, since those
 // are the cases the change exists for.
 
-#include "tests/pch.h"
+#include "tests/common/pch.h"
 
 #include "opennn/network/layers/layer.h"
 #include "opennn/network/layers/dense_layer.h"

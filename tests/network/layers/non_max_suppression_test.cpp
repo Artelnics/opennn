@@ -1,4 +1,4 @@
-﻿#include "tests/pch.h"
+﻿#include "tests/common/pch.h"
 
 #include "opennn/network/layers/non_max_suppression_layer.h"
 #include "opennn/network/network.h"

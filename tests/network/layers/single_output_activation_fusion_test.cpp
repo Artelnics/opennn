@@ -29,7 +29,7 @@
 // which for a Glorot-initialised head is values around zero where a sigmoid
 // gives values around a half: loud, not subtle.
 
-#include "tests/pch.h"
+#include "tests/common/pch.h"
 
 #include "opennn/core/configuration.h"
 #include "opennn/core/device_backend.h"

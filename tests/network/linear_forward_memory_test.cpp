@@ -1,5 +1,5 @@
 
-#include "tests/pch.h"
+#include "tests/common/pch.h"
 
 // Before any OpenNN header: those pull "using namespace std" into scope, and
 // windows.h declares its own global `byte`, which std::byte would then clash

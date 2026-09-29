@@ -1,5 +1,5 @@
-#include "tests/pch.h"
-#include "tests/numerical_derivatives.h"
+#include "tests/common/pch.h"
+#include "tests/common/numerical_derivatives.h"
 
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/dataset/yolo_dataset.h"
@@ -11,7 +11,7 @@
 #include "opennn/network/network.h"
 #include "opennn/training/loss.h"
 
-#include "tests/test_helpers.h"
+#include "tests/common/test_helpers.h"
 
 #include <cstdint>
 #include <filesystem>

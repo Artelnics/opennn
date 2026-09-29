@@ -34,7 +34,7 @@ environment variables, not in repository files.
 | Path | Contents |
 | --- | --- |
 | `opennn/` | The library; module map below. |
-| `tests/` | GoogleTest unit tests mirroring the library modules (network layers and operators are separate; helpers at the test root are shared), response-optimization integration scenarios, and Python checks (`tests/*_test.py`) for benchmarks, example assets and the checkers. |
+| `tests/` | GoogleTest tests of the `opennn/` library only, one folder per library module (network layers and operators are separate), plus the response-optimization integration scenarios. `tests/common/` holds the test `main`, the precompiled header and shared helpers. Do not add benchmark, example or tooling tests here, and keep no loose test files at the `tests/` root. |
 | `examples/` | Runnable applications and bundled data. The catalog is `examples/README.md`; `legacy_8/reference.zip` preserves unsupported 8.x material outside the build. |
 | `benchmarks/` | Comparison drivers, input manifests, `README.md` (usage), `PROTOCOL.md` (measurement contract) and `reports/README.md` (reviewed results). |
 | `tools/` | Verification, checkers, packaging and reproduction; table below. |
@@ -202,19 +202,19 @@ cmake --build --preset verify-cpu --parallel
 ctest --preset verify-cpu
 ```
 
-### Python checks
+### Python for checks and export tests
 
 Use Python 3.12, the CI version; older interpreters cannot run the checkers.
 In an isolated environment:
 
 ```sh
 python -m pip install -r tools/test-requirements.txt -r tools/code-quality-requirements.txt
-python -B -m unittest discover -s tests -p '*_test.py'
 ```
 
-Export execution tests need NumPy and pandas for generated Python models and
-Node.js on `PATH` for JavaScript (CI uses Node 24); they report a skip when a
-runtime is missing. Use `python -B` so maintenance checks leave no caches.
+The C++ export execution tests need NumPy, pandas and onnxruntime for generated
+Python and ONNX models, and Node.js on `PATH` for JavaScript (CI uses Node 24);
+they report a skip when a runtime is missing. Use `python -B` so maintenance
+checks leave no caches.
 
 ### Sanitizers and CUDA memory
 
@@ -266,7 +266,7 @@ interfaces may not expose CUDA vendor types; `.cuh` implementation headers may.
 `ci.yml` runs on hosted machines: Linux and Windows CPU builds, CUDA compilation
 on Linux, package consumers (static and shared on Linux, portable AppleClang on
 macOS, static GCC, Clang and MSVC), ASan/UBSan, 20,000 JSON fuzzing mutations,
-the Python checks and the release-scope check. It also runs:
+the source checkers and the release-scope check. It also runs:
 
 - Static analysis that treats selected Clang analyzer ownership and
   use-after-move findings in the persistence, dataset and device modules as errors.

@@ -52,10 +52,9 @@ jobs:
 
       - name: Enforce code size and architecture
         run: |
-          python -m pip install -r tools/code-quality-requirements.txt -r tools/test-requirements.txt
+          python -m pip install -r tools/code-quality-requirements.txt
           python tools/check_code_quality.py
           python tools/check_architecture.py
-          python -B -m unittest discover -s tests -p '*_test.py'
 
       - name: Reject a toolchain without OpenMP
         run: |

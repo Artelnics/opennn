@@ -12,7 +12,7 @@
 // silently allocates anyway is refused rather than tolerated. That last one is
 // the steady-state allocation guard, and none of the three had a test.
 
-#include "tests/pch.h"
+#include "tests/common/pch.h"
 
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/models/models.h"

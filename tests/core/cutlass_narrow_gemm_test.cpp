@@ -25,7 +25,7 @@
 // calls the kernel once per chunk. The 20,000-row case crosses that gate, so it
 // exercises a whole chunk, a partial one, and the offsets between them.
 
-#include "tests/pch.h"
+#include "tests/common/pch.h"
 
 #include "opennn/core/configuration.h"
 #include "opennn/core/device_backend.h"

@@ -644,7 +644,6 @@ python benchmarks/prepare.py quality --smoke --out "$OPENNN_BENCH_DATA/quality-s
 python benchmarks/run.py --family quality --manifest "$OPENNN_BENCH_DATA/quality-smoke" \
   --epochs 1 --batch 2 --seeds 42,43 --device cpu \
   --opennn-binary /path/to/cpu/bin/quality_opennn
-python -m unittest discover -s tests -p 'benchmark*_test.py'
 ```
 
 Smoke fixtures use small topologies and synthetic data. Their numbers are

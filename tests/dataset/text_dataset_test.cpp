@@ -1,7 +1,7 @@
-#include "tests/pch.h"
+#include "tests/common/pch.h"
 #include "opennn/dataset/text_dataset.h"
 #include "opennn/dataset/dataset.h"
-#include "tests/numerical_derivatives.h"
+#include "tests/common/numerical_derivatives.h"
 #include <cmath>
 #include "opennn/models/models.h"
 #include "opennn/network/network.h"

@@ -1,4 +1,4 @@
-#include "tests/pch.h"
+#include "tests/common/pch.h"
 
 #include "opennn/core/random_utilities.h"
 #include "opennn/model_selection/growing_inputs.h"

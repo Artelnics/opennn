@@ -1,4 +1,4 @@
-#include "tests/pch.h"
+#include "tests/common/pch.h"
 
 #include "opennn/dataset/image_dataset.h"
 #include "opennn/dataset/dataset.h"
@@ -7,7 +7,7 @@
 #include "opennn/core/variable.h"
 #include "opennn/core/statistics.h"
 
-#include "tests/test_helpers.h"
+#include "tests/common/test_helpers.h"
 
 #include <filesystem>
 #include <fstream>

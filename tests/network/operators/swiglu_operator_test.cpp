@@ -12,7 +12,7 @@
 // against an independent implementation and the analytic gradient against a
 // central difference, plus the two optional-output paths the operator supports.
 
-#include "tests/pch.h"
+#include "tests/common/pch.h"
 
 #include "opennn/core/tensor_types.h"
 #include "opennn/network/operators/swiglu_operator.h"

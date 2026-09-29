@@ -15,7 +15,7 @@
 // C2PSA.GpuGradientMatchesNumerical covers the maths on the GPU. These cover
 // the parameter contract, which is CPU-side and was untested.
 
-#include "tests/pch.h"
+#include "tests/common/pch.h"
 
 #include "opennn/core/tensor_types.h"
 #include "opennn/network/operators/c2psa_operator.h"

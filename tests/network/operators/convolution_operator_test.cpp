@@ -16,8 +16,8 @@
 // A wrong kernel axis order still links, still runs, and still trains -- to a
 // different model.
 
-#include "tests/pch.h"
-#include "tests/numerical_derivatives.h"
+#include "tests/common/pch.h"
+#include "tests/common/numerical_derivatives.h"
 
 #include "opennn/core/configuration.h"
 #include "opennn/core/tensor_types.h"

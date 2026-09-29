@@ -1,5 +1,5 @@
-#include "tests/pch.h"
-#include "tests/numerical_derivatives.h"
+#include "tests/common/pch.h"
+#include "tests/common/numerical_derivatives.h"
 
 #include "opennn/network/layers/upsampling_layer.h"
 #include "opennn/network/layers/convolutional_layer.h"

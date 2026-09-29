@@ -21,7 +21,7 @@
 // concrete_scenarios_test.cpp; the expression language they are written in is in
 // expression_test.cpp.
 
-#include "tests/pch.h"
+#include "tests/common/pch.h"
 
 #include "tests/response_optimization/synthetic_fixture.h"
 

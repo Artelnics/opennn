@@ -12,7 +12,7 @@
 // positional term compose in that order. All of them are silent when wrong --
 // a padded row that picks up an embedding still trains, just worse.
 
-#include "tests/pch.h"
+#include "tests/common/pch.h"
 
 #include "opennn/core/tensor_types.h"
 #include "opennn/network/operators/embedding_lookup_operator.h"

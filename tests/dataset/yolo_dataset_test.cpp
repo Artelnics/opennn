@@ -1,10 +1,10 @@
-#include "tests/pch.h"
+#include "tests/common/pch.h"
 #include "opennn/core/json.h"
 
 #include "opennn/dataset/yolo_dataset.h"
 #include "opennn/core/device_backend.h"
 
-#include "tests/test_helpers.h"
+#include "tests/common/test_helpers.h"
 
 #include <array>
 #include <cstdint>

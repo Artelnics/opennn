@@ -19,7 +19,7 @@
 // precision, so the exported model carries about six significant digits. The
 // target is a structurally wrong formula, not the last ulp.
 
-#include "tests/pch.h"
+#include "tests/common/pch.h"
 
 #include "opennn/network/model_expression.h"
 #include "opennn/network/network.h"

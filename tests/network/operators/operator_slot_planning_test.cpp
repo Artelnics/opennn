@@ -1,4 +1,4 @@
-#include "tests/pch.h"
+#include "tests/common/pch.h"
 
 #include "opennn/network/forward_propagation.h"
 #include "opennn/network/operators/activation_operator.h"

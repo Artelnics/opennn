@@ -22,7 +22,7 @@
 // offsets, and 20,000 rows of 64 features reaches the second and the partial
 // third chunk for the cost of 82 MFLOP.
 
-#include "tests/pch.h"
+#include "tests/common/pch.h"
 
 #include "opennn/core/configuration.h"
 #include "opennn/core/device_backend.h"

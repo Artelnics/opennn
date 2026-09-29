@@ -1,4 +1,4 @@
-#include "tests/pch.h"
+#include "tests/common/pch.h"
 #include "opennn/dataset/image_processing.h"
 
 using namespace opennn;

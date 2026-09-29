@@ -1,4 +1,4 @@
-#include "tests/pch.h"
+#include "tests/common/pch.h"
 
 #include "opennn/dataset/yolo_dataset.h"
 #include "opennn/network/layers/detection_layer.h"
@@ -12,7 +12,7 @@
 #include "opennn/training/loss.h"
 #include "opennn/training/adam.h"
 
-#include "tests/test_helpers.h"
+#include "tests/common/test_helpers.h"
 
 #include <cstdint>
 #include <filesystem>

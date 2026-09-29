@@ -1,4 +1,4 @@
-#include "tests/pch.h"
+#include "tests/common/pch.h"
 
 #include "opennn/core/json.h"
 #include "opennn/network/layers/layer_registry.h"
@@ -26,8 +26,6 @@
 #include "opennn/network/layers/tokenizer_layer.h"
 #include "opennn/network/layers/unscaling_layer.h"
 #include "opennn/network/layers/upsampling_layer.h"
-#include "opennn/training/optimizer.h"
-#include "opennn/model_selection/input_selection.h"
 
 using namespace opennn;
 
@@ -247,20 +245,8 @@ void expect_nondefault_fields(const LayerType type, const JsonDocument& document
 
 }
 
-TEST(RegistryTest, AllComponentNamesConstruct)
+TEST(LayerRegistryTest, AllComponentNamesConstruct)
 {
-    const vector<string> optimizer_names = {
-        "Adam",
-        "LevenbergMarquardt",
-        "QuasiNewton",
-        "SGD"
-    };
-
-    const vector<string> input_selection_names = {
-        "GeneticAlgorithm",
-        "GrowingInputs"
-    };
-
     const auto& layer_entries = layer_type_map().get_entries();
     ASSERT_EQ(layer_entries.size(), static_cast<size_t>(LayerType::Count));
 
@@ -276,15 +262,9 @@ TEST(RegistryTest, AllComponentNamesConstruct)
         EXPECT_EQ(layer->get_name(), name) << name;
         EXPECT_EQ(layer_type_to_string(type), name) << name;
     }
-
-    for (const string& name : optimizer_names)
-        EXPECT_NE(create_optimizer(name), nullptr) << name;
-
-    for (const string& name : input_selection_names)
-        EXPECT_NE(create_input_selection(name), nullptr) << name;
 }
 
-TEST(RegistryTest, AliasesConstructConfiguredComponents)
+TEST(LayerRegistryTest, AliasesConstructConfiguredComponents)
 {
     EXPECT_TRUE(ranges::none_of(layer_type_map().get_entries(),
                                [](const auto& entry) { return entry.second == "Concatenate"; }));
@@ -370,7 +350,7 @@ TEST(RegistryTest, AliasesConstructConfiguredComponents)
     EXPECT_EQ(legacy_normalization->get_method(), NormalizationMethod::RMS);
 }
 
-TEST(RegistryTest, EveryLayerKeepsItsStateAcrossAnInputShapeChange)
+TEST(LayerRegistryTest, EveryLayerKeepsItsStateAcrossAnInputShapeChange)
 {
     for (const auto& [type, name] : layer_type_map().get_entries())
     {
@@ -388,7 +368,7 @@ TEST(RegistryTest, EveryLayerKeepsItsStateAcrossAnInputShapeChange)
     }
 }
 
-TEST(RegistryTest, EveryLayerStateRoundTripsThroughJSONAndTheFactory)
+TEST(LayerRegistryTest, EveryLayerStateRoundTripsThroughJSONAndTheFactory)
 {
     for (const auto& [type, name] : layer_type_map().get_entries())
     {
@@ -417,13 +397,11 @@ TEST(RegistryTest, EveryLayerStateRoundTripsThroughJSONAndTheFactory)
     }
 }
 
-TEST(RegistryTest, UnknownComponentThrows)
+TEST(LayerRegistryTest, UnknownComponentThrows)
 {
     EXPECT_THROW(layer_type_to_string(LayerType::Count), runtime_error);
     EXPECT_THROW(string_to_layer_type("Unknown"), runtime_error);
     EXPECT_THROW(create_layer("Unknown"), runtime_error);
     EXPECT_THROW(create_layer("LongShortTermMemory"), runtime_error);
     EXPECT_THROW(string_to_layer_type("LongShortTermMemory"), runtime_error);
-    EXPECT_THROW(create_optimizer("Unknown"), runtime_error);
-    EXPECT_THROW(create_input_selection("Unknown"), runtime_error);
 }

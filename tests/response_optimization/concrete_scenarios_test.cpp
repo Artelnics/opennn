@@ -9,7 +9,7 @@
 // Optimizer and repair checks against the trained UCI concrete network.
 // Constraint assertions use independent arithmetic on the returned columns.
 
-#include "tests/pch.h"
+#include "tests/common/pch.h"
 
 #include <filesystem>
 

@@ -1,4 +1,4 @@
-#include "tests/pch.h"
+#include "tests/common/pch.h"
 
 #include "opennn/core/json.h"
 #include "opennn/core/configuration.h"
@@ -13,6 +13,7 @@
 #include "opennn/model_selection/growing_neurons.h"
 #include "opennn/model_selection/growing_inputs.h"
 #include "opennn/model_selection/genetic_algorithm.h"
+#include "opennn/model_selection/input_selection.h"
 #include "opennn/training/sgd.h"
 
 using namespace opennn;
@@ -352,4 +353,12 @@ TEST(ModelSelectionTest, AppliesInputScalingThroughEndpointContract)
     EXPECT_FLOAT_EQ(actual.descriptives[1].maximum, 6.0f);
     EXPECT_FLOAT_EQ(actual.min_range, -2.0f);
     EXPECT_FLOAT_EQ(actual.max_range, 2.0f);
+}
+
+TEST(InputSelectionFactoryTest, EveryNameConstructs)
+{
+    for (const char* name : {"GeneticAlgorithm", "GrowingInputs"})
+        EXPECT_NE(create_input_selection(name), nullptr) << name;
+
+    EXPECT_THROW(create_input_selection("Unknown"), runtime_error);
 }

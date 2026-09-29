@@ -1,4 +1,4 @@
-#include "tests/pch.h"
+#include "tests/common/pch.h"
 #include "opennn/network/model_expression.h"
 #include "opennn/network/network.h"
 #include "opennn/models/models.h"

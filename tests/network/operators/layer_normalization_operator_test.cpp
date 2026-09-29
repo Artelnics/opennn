@@ -12,7 +12,7 @@
 // backward pass valid -- a normalized row has zero mean and unit variance for
 // LayerNorm, and unit mean-square for RMS -- against an independent reference.
 
-#include "tests/pch.h"
+#include "tests/common/pch.h"
 
 #include "opennn/core/tensor_types.h"
 #include "opennn/network/operators/layer_normalization_operator.h"

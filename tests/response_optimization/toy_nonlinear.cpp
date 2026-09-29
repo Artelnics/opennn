@@ -6,7 +6,7 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "tests/pch.h"
+#include "tests/common/pch.h"
 
 #include <cmath>
 

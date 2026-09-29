@@ -17,7 +17,7 @@
 // including the padded rows where the two implementations disagree about how
 // the zero gets there - CPU skips those rows, GPU multiplies by a zero mask.
 
-#include "tests/pch.h"
+#include "tests/common/pch.h"
 
 #include "opennn/core/tensor_types.h"
 #include "opennn/core/tensor_operations.h"

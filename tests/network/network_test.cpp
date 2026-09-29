@@ -1,4 +1,4 @@
-#include "tests/pch.h"
+#include "tests/common/pch.h"
 
 #include "opennn/core/json.h"
 #include "opennn/network/network.h"
@@ -12,7 +12,7 @@
 #include "opennn/network/layers/scaling_layer.h"
 #include "opennn/network/layers/tokenizer_layer.h"
 #include "opennn/dataset/dataset.h"
-#include "tests/test_helpers.h"
+#include "tests/common/test_helpers.h"
 
 using namespace opennn;
 

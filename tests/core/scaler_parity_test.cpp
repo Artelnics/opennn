@@ -12,7 +12,7 @@
 // directions - including features with no spread, where the guards live - and
 // asserts the two paths produce the same numbers.
 
-#include "tests/pch.h"
+#include "tests/common/pch.h"
 
 #include "opennn/core/tensor_types.h"
 #include "opennn/core/tensor_operations.h"

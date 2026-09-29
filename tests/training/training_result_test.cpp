@@ -1,4 +1,4 @@
-#include "tests/pch.h"
+#include "tests/common/pch.h"
 
 #include "opennn/training/training_result.h"
 #include "opennn/dataset/tabular_dataset.h"

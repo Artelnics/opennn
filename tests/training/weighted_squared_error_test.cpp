@@ -1,6 +1,6 @@
-#include "tests/pch.h"
+#include "tests/common/pch.h"
 #include "opennn/core/random_utilities.h"
-#include "tests/numerical_derivatives.h"
+#include "tests/common/numerical_derivatives.h"
 
 #include "opennn/dataset/dataset.h"
 #include "opennn/models/models.h"

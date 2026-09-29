@@ -12,7 +12,7 @@
 // thing that stays plausible while being wrong: a transposed head layout still
 // produces finite outputs and a network that trains, just to the wrong answer.
 
-#include "tests/pch.h"
+#include "tests/common/pch.h"
 
 #include "opennn/core/tensor_types.h"
 #include "opennn/network/operators/multihead_projection_operator.h"

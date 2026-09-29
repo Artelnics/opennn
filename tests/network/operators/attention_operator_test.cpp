@@ -18,7 +18,7 @@
 // see and is wrong in a way that still trains if the triangle is the wrong way
 // round.
 
-#include "tests/pch.h"
+#include "tests/common/pch.h"
 
 #include "opennn/core/tensor_types.h"
 #include "opennn/network/operators/attention_operator.h"

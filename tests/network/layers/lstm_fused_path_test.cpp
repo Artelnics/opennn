@@ -1,6 +1,6 @@
-#include "tests/pch.h"
-#include "tests/numerical_derivatives.h"
-#include "tests/test_helpers.h"
+#include "tests/common/pch.h"
+#include "tests/common/numerical_derivatives.h"
+#include "tests/common/test_helpers.h"
 
 #include <utility>
 
@@ -14,7 +14,6 @@
 #include "opennn/network/forward_propagation.h"
 #include "opennn/network/back_propagation.h"
 
-#include <chrono>
 #include <cmath>
 #include <cstring>
 #include <cstdio>
@@ -362,67 +361,6 @@ TEST(LstmFusedPath, OneDnnInferenceCacheTracksParameters)
     check_onednn_inference_cache(false);
     check_onednn_inference_cache(true);
 #endif
-}
-
-TEST(LstmFusedPath, DISABLED_BenchmarkBoundary)
-{
-    const Index samples_number = 32;
-    const Index time_steps     = 24;
-    const Index features       = 8;
-    const int   warmup         = 5;
-    const int   iterations     = 50;
-
-    printf("batch=%lld T=%lld F=%lld iterations=%d\n",
-                (long long)samples_number, (long long)time_steps,
-                (long long)features, iterations);
-    printf("%6s  %-6s  %10s  %10s\n", "H", "path", "fwd_us", "bwd_us");
-
-    for (const Index neurons : {8, 16, 32, 48, 64, 96, 128})
-    {
-        TabularDataset dataset(samples_number, {time_steps, features}, {neurons});
-        dataset.set_data_random();
-        dataset.set_sample_roles("Training");
-
-        Network network;
-        network.add_layer(make_unique<LSTM>(
-            Shape{time_steps, features}, Shape{neurons}));
-        network.compile();
-        network.set_parameters_glorot();
-
-        Loss loss(&network, &dataset);
-        loss.set_error(Loss::Error::MeanSquaredError);
-
-        Batch batch(samples_number, &dataset, network.get_config());
-        batch.fill(dataset.get_sample_indices("Training"), dataset.get_feature_selection());
-
-        ForwardPropagation forward_propagation(samples_number, &network);
-        BackPropagation back_propagation(samples_number, loss);
-
-        for (int i = 0; i < warmup; ++i)
-        {
-            network.forward_propagate(batch.get_inputs(), forward_propagation, ForwardPropagationMode::Training);
-            loss.back_propagate(batch, forward_propagation, back_propagation);
-        }
-
-        const auto t0 = chrono::steady_clock::now();
-        for (int i = 0; i < iterations; ++i)
-            network.forward_propagate(batch.get_inputs(), forward_propagation, ForwardPropagationMode::Training);
-        const auto t1 = chrono::steady_clock::now();
-        for (int i = 0; i < iterations; ++i)
-            loss.back_propagate(batch, forward_propagation, back_propagation);
-        const auto t2 = chrono::steady_clock::now();
-
-        const double forward_us =
-            chrono::duration<double, micro>(t1 - t0).count() / iterations;
-        const double backward_us =
-            chrono::duration<double, micro>(t2 - t1).count() / iterations;
-
-        printf("%6lld  %-6s  %10.1f  %10.1f\n",
-                    (long long)neurons, neurons < 96 ? "scalar" : "fused",
-                    forward_us, backward_us);
-    }
-
-    fflush(stdout);
 }
 
 // OpenNN: Open Neural Networks Library.

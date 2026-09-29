@@ -16,7 +16,7 @@
 //
 // What the optimizers then do with those expressions is checked in conditions_test.cpp.
 
-#include "tests/pch.h"
+#include "tests/common/pch.h"
 
 #include <bit>
 #include <random>

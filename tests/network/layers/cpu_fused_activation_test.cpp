@@ -14,7 +14,7 @@
 // is the number. Every case below feeds inputs whose pre-activation is negative,
 // which is the only place the missing activation shows.
 
-#include "tests/pch.h"
+#include "tests/common/pch.h"
 
 #include "opennn/core/tensor_types.h"
 #include "opennn/core/tensor_operations.h"
