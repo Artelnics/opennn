@@ -2,7 +2,7 @@
 
 [README.md](README.md) is the user guide: first build, installed package and
 example-data licences. This file covers where things are, build options, how to
-verify changes, CI, example-data records, the 9.0 release notes and migration,
+verify changes, CI, example data, the 9.0 release notes and migration,
 and releases. Keep rules here repository-wide; workstation paths belong in
 environment variables, not in repository files.
 
@@ -300,30 +300,13 @@ sudo systemctl restart actions.runner.Artelnics-opennn.opennn-wsl-cuda.service
 
 ## Example data
 
-OpenNN's software licence does not license bundled datasets, images, text or
-trained artifacts.
+Each example keeps its data next to it. Where a dataset comes from a public
+source, its `data/SOURCE.md` gives the attribution and licence; keep each
+notice with its data.
 
-- Keep the bundled datasets until each affected example has a reproducible
-  replacement, and keep each `SOURCE.md` notice with its data.
-- Do not describe a dataset as cleared for redistribution without a confirmed
-  source and licence.
 - `examples/mnist/data/images.zip` and `examples/melanoma_cancer/data/images.zip`
   keep the original file names inside. CMake extracts only the selected
   example's archive into the build directory. Keep member names unique.
-
-Cleared groups: `airfoil_self_noise`, `amazon_reviews`, `breast_cancer`, `concrete`,
-`iris_plant`, `mnist` and `yacht_hydrodynamics`. Unresolved groups and what each needs:
-
-| Group | Required resolution |
-| --- | --- |
-| `bert` | `sst2.txt` is consistent with SST-2 (Socher et al., EMNLP 2013). Verify the split and obtain redistribution terms. |
-| `emotion_analysis` | Consistent with Saravia et al.'s corpus, whose README limits it to educational and research use. Resolve permitted use or replace it. |
-| `ecg5000_anomaly_detection` | Matches the TensorFlow tutorial CSV and seed-21 test split; source PhysioNet `chf07` (ODC-By 1.0). Confirm terms for the UCR/UEA and TensorFlow derivative. |
-| `melanoma_cancer` | 102 BMP images with unverified source; obtain source, attribution and permission. |
-| `translation` | Spanish-English pairs with unrecorded authorship; confirm source and permission. |
-
-The owner has been asked for the missing records. GitHub's automatic source
-archives include every tracked file, so a tag publishes these assets.
 
 ## 9.0 release notes and migration
 
@@ -499,12 +482,10 @@ table above; its parameter file stays paired and unchanged.
 
 ## Release
 
-Installation packages exclude example data and can be published. GitHub's
-source archives include every tracked file, so publishing them requires the
-example data to be cleared first. Historical 8.x model compatibility is not
-claimed, and Neural Designer compatibility was not evaluated, at the owner's
-request. Engineering verification, data clearance and the release decision are
-separate statuses.
+Installation packages exclude example data. Do not create Git tags or GitHub
+releases without the owner's approval. Historical 8.x model compatibility is not
+claimed, and Neural Designer compatibility was not evaluated. Engineering
+verification and the release decision are separate statuses.
 
 Before promotion:
 
@@ -548,9 +529,7 @@ Studio). CPack does not create a Git tag or GitHub release.
 
 Record the candidate commit, toolchain, backend, test passes and skips, package
 checksums, consumer results and unresolved checks in the release or pull-request
-description. Keep raw evidence outside Git. The earlier September 2026 release
-audit, merge reconciliation and verification evidence are preserved at commit
-[`a379ec5e6`](https://github.com/Artelnics/opennn/tree/a379ec5e634d65436b8b175fcd03c044bc98182b).
+description. Keep raw evidence outside Git.
 
 ## Documentation
 
