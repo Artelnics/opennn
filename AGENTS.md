@@ -88,7 +88,7 @@ Choose one of the four concrete classes:
 | JSON fuzzing | `tools/fuzz/` |
 | Installed-package checks and C++ consumer | `tools/check_installed_package.py`, `tools/package_smoke/` |
 | Full example/device matrix | `tools/run-opennn-examples/SKILL.md` |
-| Benchmark preparation and execution | `benchmarks/prepare.py`, `benchmarks/run.py`, `benchmarks/compare.py` |
+| Benchmark preparation and execution | `benchmarks/prepare.py`, `benchmarks/run.py`, `benchmarks/compare.py`; procedure in `tools/run-opennn-benchmarks/SKILL.md` |
 
 ## Code organization
 
@@ -290,6 +290,8 @@ sudo systemctl restart actions.runner.Artelnics-opennn.opennn-wsl-cuda.service
   [benchmarks/README.md](benchmarks/README.md) and
   [benchmarks/PROTOCOL.md](benchmarks/PROTOCOL.md). Approve only measurements
   that meet the protocol.
+- To measure a benchmark cell or compare a change before and after, follow
+  [tools/run-opennn-benchmarks/SKILL.md](tools/run-opennn-benchmarks/SKILL.md).
 - Raw benchmark output belongs outside the checkout, in
   `../opennn-benchmark-results/` by default; `OPENNN_BENCH_RESULTS` overrides it.
   Benchmark results and reports are never committed.
@@ -556,8 +558,8 @@ audit, merge reconciliation and verification evidence are preserved at commit
   root. Do not add Markdown files for individual tasks, audits or sessions;
   update these two or the guides below.
 - Subfolder guides: `examples/README.md` (example catalog),
-  `benchmarks/README.md`, `benchmarks/PROTOCOL.md` and
-  `tools/run-opennn-examples/SKILL.md`.
+  `benchmarks/README.md`, `benchmarks/PROTOCOL.md`,
+  `tools/run-opennn-examples/SKILL.md` and `tools/run-opennn-benchmarks/SKILL.md`.
 - Preserve attribution notices (`examples/*/data/SOURCE.md`,
   `THIRD_PARTY_NOTICES.txt`) and skill entry points.
 - Link to an immutable Git revision for superseded material.
