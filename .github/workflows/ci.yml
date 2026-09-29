@@ -164,6 +164,34 @@ jobs:
             "./build/package-$configuration/opennn_package_smoke"
           done
 
+  compile-only:
+    name: Linux GCC (examples and benchmarks, compile only)
+    runs-on: ubuntu-24.04
+    env:
+      CC: gcc-13
+      CXX: g++-13
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build gcc-13 g++-13
+
+      - name: Configure (CPU only, examples and benchmarks enabled)
+        run: >
+          cmake -S . -B build -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          -DOpenNN_DISABLE_CUDA=ON
+          -DOpenNN_ENABLE_MKL=OFF
+          -DOpenNN_CPU_TARGET=PORTABLE
+          -DOpenNN_BUILD_TESTS=OFF
+          -DOpenNN_BUILD_EXAMPLES=ON
+          -DOpenNN_BUILD_BENCHMARKS=ON
+
+      - name: Build every example and benchmark driver
+        run: cmake --build build --target examples benchmarks --parallel
+
   shared-library:
     name: Linux GCC (shared-library package)
     runs-on: ubuntu-24.04

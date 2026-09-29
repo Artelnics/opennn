@@ -154,7 +154,7 @@ def session_id() -> str:
     return os.environ.get(SESSION_ENV) or f"adhoc-{os.getpid()}"
 
 def clocks_locked() -> bool:
-    """Read the Windows harness flag or use Linux persistence mode as a clock-lock proxy.
+    """Read OPENNN_BENCH_CLOCKS_LOCKED on Windows or use Linux persistence mode as a clock-lock proxy.
     Persistence mode alone does not prove that clocks are locked.
     """
     if os.name == "nt":

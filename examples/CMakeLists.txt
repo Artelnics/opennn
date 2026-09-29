@@ -23,8 +23,11 @@ function(opennn_example name)
     endif()
 endfunction()
 
+set(_example_targets "")
+
 if(OpenNN_BUILD_BLANK)
     opennn_example(blank)
+    list(APPEND _example_targets blank)
 endif()
 
 foreach(example
@@ -44,6 +47,7 @@ foreach(example
     yacht_hydrodynamics
     yolo)
     opennn_example(${example})
+    list(APPEND _example_targets ${example})
 endforeach()
 
 if(MSVC)
@@ -52,3 +56,6 @@ if(MSVC)
 else()
     target_precompile_headers(yolo PRIVATE "${PROJECT_SOURCE_DIR}/opennn/core/pch.h")
 endif()
+
+# Compile every example without running it.
+add_custom_target(examples DEPENDS ${_example_targets})

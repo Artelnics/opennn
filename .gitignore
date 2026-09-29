@@ -142,9 +142,10 @@ build-wrapper-dump.json
 /benchmarks/**/*.csv
 /benchmarks/**/pred_*.txt
 
-# Keep the former in-tree result location ignored for existing configurations.
-# Current benchmark results default to ../opennn-benchmark-results/.
+# Benchmark results and reports stay on each user's machine. Results default to
+# ../opennn-benchmark-results/; these in-tree folders are also ignored.
 /benchmarks/results/
+/benchmarks/reports/
 
 # OneDrive leaves these when it syncs the repo between machines.
 *-DESKTOP-*.cpp

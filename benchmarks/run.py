@@ -59,13 +59,6 @@ FAMILIES = {
         "data": lambda root: {"train": root / "wmt14/wmt14_pairs.txt"},
         "options": lambda a: [str(a.d_model), str(a.transformer_layers)],
     },
-    # footprint has no dataset and no batch: it measures what the framework
-    # costs before any of that exists. Its "modes" are its three questions.
-    "footprint": {
-        "data": lambda root: {},
-        "options": lambda a: [],
-        "modes": ("memory", "startup", "export"),
-    },
     "lstm": {
         "data": lambda root: {"train": root / "beijing_pm25/beijing_pm25_forecasting.csv"},
         "options": lambda a: [str(a.lstm_hidden), str(a.past)],
@@ -188,25 +181,6 @@ def capacity_summary(launches: list[dict]) -> dict:
         "frontier_valid": valid,
         "frontier_note": ("largest tested batch before a confirmed allocation failure" if valid
                           else "capacity unknown: no successful batch or no confirmed OOM"),
-    }
-
-
-def footprint_metrics(outcome: dict) -> dict:
-    fields = outcome["fields"]
-
-    def number(name: str) -> float | None:
-        try:
-            return float(fields[name])
-        except (KeyError, ValueError):
-            return None
-    return {
-        "baseline_ram_mib": number("baseline_ram_mb"),
-        "baseline_ram_metric": fields.get("baseline_ram_metric"),
-        "baseline_ram_note": fields.get("baseline_ram_note"),
-        "internal_first_prediction_seconds": number("first_prediction_s"),
-        "internal_first_prediction_scope": fields.get("first_prediction_scope"),
-        "process_lifetime_seconds": outcome["process_lifetime_seconds"],
-        "process_time_scope": outcome["process_time_scope"],
     }
 
 
@@ -417,66 +391,6 @@ def main() -> int:
               f"(threshold {BUSY_THRESHOLD:.1%}) -> results/scratch/")
 
     launches: list[dict] = []
-
-    if "modes" in FAMILIES[args.family]:
-        # One process per question, because a startup cost is already paid by
-        # anything sharing a process with it.
-        for question in FAMILIES[args.family]["modes"]:
-            for engine in engines:
-                outcome = launch(engine_command(args.family, engine) + [question],
-                                 not args.no_wait, "cpu", watched_cores=watched_cores)
-                outcome.update(engine=engine, batch=0, round=1, question=question)
-                outcome["footprint"] = footprint_metrics(outcome)
-                if not sys.platform.startswith("linux"):
-                    # The common anonymous-RSS peak sampler uses Linux procfs.
-                    outcome["instruments"].update(peak_mib=None, workload_mib=None,
-                        peak_file_mib=None, memory_metric=None,
-                        workload_note="anonymous_peak_sampler_unavailable; use footprint baseline_ram_mib")
-                launches.append(outcome)
-                reported = {k: v for k, v in outcome["fields"].items()
-                            if k not in ("engine", "mode", "RESULT")}
-                print(f"  {question:<8} {engine:<8} {reported}")
-                if question == "startup":
-                    print(f"    process lifetime (including teardown): {outcome['process_lifetime_seconds']:.6f} s")
-                note_activity(outcome)
-
-        busy_after = cpu_busy_fraction(cores=watched_cores)
-        busy_during, busy_during_at = busiest_second(launches)
-
-        if busy_after > BUSY_THRESHOLD:
-            print(f"\n  machine became busy during the run: {busy_after:.1%}")
-
-        machine_busy = (machine_busy or busy_after > BUSY_THRESHOLD
-                        or busy_during > BUSY_THRESHOLD)
-
-        artifact = {
-            "schema_version": 1,
-            "benchmark_id": f"cpu-{args.family}",
-            "run_id": run_id,
-            "session_id": session_id(),
-            "label": args.label,
-            "configuration": vars(args) | {"data_root": str(BENCH_DATA),
-                                            "device": "cpu", "precision": "fp32"},
-            "git": git,
-            "machine": gpu_state(),
-        "cpu": cpu_state(),
-            "frameworks": framework_versions(),
-            "machine_quiet": {"busy_before": round(busy_before, 4),
-                              "busy_after": round(busy_after, 4),
-                              "busy_during_max": round(busy_during, 4),
-                              "busy_during_at": busy_during_at,
-                              "threshold": BUSY_THRESHOLD,
-                              "quiet": not machine_busy},
-            "launches": launches,
-        }
-        name = (f"{artifact['benchmark_id']}"
-                f"{'-' + args.label if args.label else ''}-{run_id}.json")
-        path = result_destination(git.get("dirty"), "cpu", machine_busy) / name
-        path.write_text(json.dumps(artifact, indent=2, default=str))
-        if git.get("dirty") is not False:
-            print("\n  dirty or unknown tree -> results/scratch/, not the evidence store")
-        print(f"\nwrote {path}")
-        return 0
 
     if to_oom:
         # Capacity: double until a launch fails, per engine. The last rung that

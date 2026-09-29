@@ -1,7 +1,7 @@
 # run.py depends on the <family>_opennn executable names.
 set(_benchmark_targets "")
 
-foreach(family dense cnn transformer lstm footprint qwen quality)
+foreach(family dense cnn transformer lstm quality)
     set(target "${family}_opennn")
     add_executable(${target} "families/${family}.cpp")
     target_link_libraries(${target} PRIVATE opennn)
@@ -17,10 +17,6 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
         target_link_libraries(${target} PRIVATE opennn)
         list(APPEND _benchmark_targets ${target})
     endforeach()
-endif()
-
-if(WIN32)
-    target_link_libraries(footprint_opennn PRIVATE psapi)
 endif()
 
 # Compile every benchmark without running datasets that may not be available.

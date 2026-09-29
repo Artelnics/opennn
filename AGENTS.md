@@ -36,7 +36,7 @@ environment variables, not in repository files.
 | `opennn/` | The library; module map below. |
 | `tests/` | GoogleTest tests of the `opennn/` library only, one folder per library module (network layers and operators are separate). `tests/common/` holds the test `main`, the precompiled header and shared helpers. Do not add benchmark, example or tooling tests here, and keep no loose test files at the `tests/` root. |
 | `examples/` | Runnable applications and bundled data. The catalog is `examples/README.md`. |
-| `benchmarks/` | Comparison drivers, input manifests, `README.md` (usage), `PROTOCOL.md` (measurement contract) and `reports/README.md` (reviewed results). |
+| `benchmarks/` | OpenNN versus PyTorch comparison drivers, input manifests, `README.md` (usage) and `PROTOCOL.md` (measurement rules). `benchmarks/reports/` is ignored by Git and holds each user's own reports. |
 | `tools/` | Verification, checkers, packaging and reproduction; table below. |
 | `.github/workflows/` | `ci.yml` (hosted CI) and `cuda-nightly.yml` (Linux CUDA runtime). |
 
@@ -292,7 +292,9 @@ sudo systemctl restart actions.runner.Artelnics-opennn.opennn-wsl-cuda.service
   that meet the protocol.
 - Raw benchmark output belongs outside the checkout, in
   `../opennn-benchmark-results/` by default; `OPENNN_BENCH_RESULTS` overrides it.
-  Only reviewed reports belong in `benchmarks/reports/`.
+  Benchmark results and reports are never committed.
+- CI compiles every example and benchmark driver (targets `examples` and
+  `benchmarks`) on Linux but runs neither.
 
 ## Example data
 
@@ -509,8 +511,7 @@ Before promotion:
   certify a new candidate.
 - If a complete production 8.x model becomes available, follow the
   [migration procedure](#models-and-parameters) and compare its reference predictions.
-- Check the [release notes](#whats-new-in-90) and the benchmark publication
-  status. The GitHub release notes can start from that summary and the itemized
+- Check the [release notes](#whats-new-in-90). The GitHub release notes can start from that summary and the itemized
   changelog linked there.
 - After the owner's decision, merge `dev` into `master`, create the annotated
   `v9.0.0` tag on the reviewed commit, and publish the artifacts with their
@@ -555,8 +556,8 @@ audit, merge reconciliation and verification evidence are preserved at commit
   root. Do not add Markdown files for individual tasks, audits or sessions;
   update these two or the guides below.
 - Subfolder guides: `examples/README.md` (example catalog),
-  `benchmarks/README.md`, `benchmarks/PROTOCOL.md`, `benchmarks/reports/README.md`
-  (current benchmark findings) and `tools/run-opennn-examples/SKILL.md`.
+  `benchmarks/README.md`, `benchmarks/PROTOCOL.md` and
+  `tools/run-opennn-examples/SKILL.md`.
 - Preserve attribution notices (`examples/*/data/SOURCE.md`,
   `THIRD_PARTY_NOTICES.txt`) and skill entry points.
 - Link to an immutable Git revision for superseded material.

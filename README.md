@@ -103,7 +103,7 @@ header `opennn/core/pch.h` in an application.
 | [`opennn/`](opennn/) | The library: public headers, implementations, models and CPU/CUDA backends. See the [module map](AGENTS.md#library-modules-and-dependencies). |
 | [`examples/`](examples/README.md) | Runnable applications and bundled data. |
 | [`tests/`](tests/) | C++ unit tests of the library. |
-| [`benchmarks/`](benchmarks/README.md) | Comparison drivers, input manifests, the [measurement protocol](benchmarks/PROTOCOL.md) and [reviewed results](benchmarks/reports/README.md). |
+| [`benchmarks/`](benchmarks/README.md) | OpenNN versus PyTorch comparisons and their [measurement rules](benchmarks/PROTOCOL.md). |
 | [`tools/`](tools/) | Verification, packaging, asset reproduction and release checks; see [AGENTS.md](AGENTS.md#maintenance-tools). |
 | [`.github/workflows/`](.github/workflows/) | Hosted CI and Linux CUDA verification. |
 

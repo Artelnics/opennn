@@ -1,274 +1,106 @@
 # OpenNN benchmarks
 
-OpenNN against reference runtimes on model families, measuring throughput, peak
-memory and energy **from the same execution**.
+These programs compare OpenNN (C++) with PyTorch (Python) on the same models.
+Each run measures speed, peak memory and energy, and first checks that both
+engines did the same work.
 
-Results are generated outside the checkout, under
-`../opennn-benchmark-results/` by default. Set `OPENNN_BENCH_RESULTS` to an
-absolute path to choose another location. Each artifact names its commit,
-machine and session. Reviewed reports and their
-publication status are versioned under [the results review](reports/README.md). This README is the quick entry
-point; [`PROTOCOL.md`](PROTOCOL.md) contains the complete, machine-neutral
-measurement contract. Changing a measurement rule means rerunning the affected
-cells.
+## Families
 
-The [publication review](reports/README.md) consolidates the current
-evidence and identifies the measurements that still need work. The
-[publication guide](PROTOCOL.md#15-publication-procedure) explains the release process and
-plain-language reporting rules. Historical reports remain in Git history and raw
-observations in external result archives. A historical passing label does not
-approve a new release.
+| Family | Model | Data | Measures |
+| --- | --- | --- | --- |
+| `dense` | 28 → 1024 × 2 → 1 classifier | HIGGS | Training and inference throughput |
+| `cnn` | ResNet-50 v1.5 | ImageNet subset, 1,000 classes × 50 images | Training and inference throughput |
+| `transformer` | Base encoder-decoder, d512, 6 layers | WMT14 English–German | Training and inference throughput |
+| `lstm` | LSTM(15 → 128) → Linear | Beijing PM2.5 | Training and inference throughput |
+| `startup` | Small dense, LSTM, CNN and Transformer applications | Constructed inputs | Time to the first prediction (Linux) |
+| `deployment` | The same small applications | Constructed inputs | Installed size (Linux) |
+| `quality` | Dense, LSTM, ResNet and Transformer | Held-out splits of the datasets above | Prediction quality after training |
 
-## Build the drivers
+## Quick start
 
-These are measurement programs, separate from the learning examples. Build them
-in Release outside the checkout. For a CPU dense comparison:
+Build the OpenNN drivers in Release, outside the checkout. Add
+`-DOpenNN_DISABLE_CUDA=ON` for a CPU-only build:
 
 ```sh
-cmake -S . -B ../opennn-bench-build -DCMAKE_BUILD_TYPE=Release -DOpenNN_DISABLE_CUDA=ON -DOpenNN_BUILD_TESTS=OFF -DOpenNN_BUILD_EXAMPLES=OFF -DOpenNN_BUILD_BENCHMARKS=ON
-cmake --build ../opennn-bench-build --config Release --target dense_opennn --parallel
+cmake -S . -B ../opennn-bench-build -DCMAKE_BUILD_TYPE=Release -DOpenNN_BUILD_TESTS=OFF -DOpenNN_BUILD_EXAMPLES=OFF -DOpenNN_BUILD_BENCHMARKS=ON
+cmake --build ../opennn-bench-build --config Release --target benchmarks --parallel
 ```
 
-Target `benchmarks` compiles all drivers without running them. GPU comparisons
-need a CUDA build. Install a matching PyTorch environment for the selected
-backend; family-specific pinned dependencies are in `manifests/`.
-
-Point the runner at the external executable. For this single-family run:
+Install PyTorch for your device (CPU or CUDA) in the Python environment you run
+the scripts with. Then set the data folder and the driver to compare:
 
 ```sh
-export OPENNN_BIN="$PWD/../opennn-bench-build/bin/dense_opennn"
 export OPENNN_BENCH_DATA="$HOME/opennn-benchmark-data"
+export OPENNN_BIN="$PWD/../opennn-bench-build/bin/dense_opennn"
 ```
-
-In PowerShell with Visual Studio, use the actual executable path:
 
 ```powershell
-$env:OPENNN_BIN = (Resolve-Path '../opennn-bench-build/bin/Release/dense_opennn.exe').Path
 $env:OPENNN_BENCH_DATA = Join-Path $env:USERPROFILE 'opennn-benchmark-data'
+$env:OPENNN_BIN = (Resolve-Path '../opennn-bench-build/bin/Release/dense_opennn.exe').Path
 ```
 
-`OPENNN_BIN` selects one executable: update or unset it before changing families.
-Per-program overrides such as `OPENNN_DENSE_OPENNN_BIN` are also supported.
-Preparation downloads datasets; it does not train a publishable model or approve
-measurement conditions. See [the protocol](PROTOCOL.md) before a measured run.
+Download the family's data once, then run it:
 
-## Running one
-
-Application startup, deployment size and prediction quality also use this
-directory's entry points. The baseline is **OpenNN C++ versus the PyTorch Python
-API**. See [the application procedure](PROTOCOL.md#13-application-startup-and-deployment) for startup/deployment and
-[the quality procedure](PROTOCOL.md#14-prediction-quality) for the four-model training-quality comparison.
-Their provisional artifacts and generated tables go to `scratch/` inside the
-selected results directory.
-Presentation directories contain no benchmark code or raw measurements.
-
-```bash
-python benchmarks/prepare.py dense                       # once per family
-python benchmarks/run.py --family dense --mode train --batch 8192 --device cpu --precision fp32
+```sh
+python benchmarks/prepare.py dense
+python benchmarks/run.py --family dense --mode train --device cpu --precision fp32 --batch 8192
 ```
 
-That prints throughput, peak memory and energy for each engine, and writes an
-artifact. `--family` is `dense`, `cnn`, `transformer` or `lstm`; `--mode` is
-`train` or `infer`.
+The run prints throughput, peak memory and energy for each engine and writes a
+JSON file with every launch. Change `OPENNN_BIN` when you switch family.
 
-Compare two clean runs from the same controlled machine before accepting an
-execution-path change:
+## Main options
 
-```bash
+| Option | Values |
+| --- | --- |
+| `--family` | `dense`, `cnn`, `transformer`, `lstm` |
+| `--mode` | `train` or `infer` |
+| `--device` | `cpu` or `cuda` |
+| `--precision` | `fp32`, `bf16` or `strict` |
+| `--batch` | `8192` for one size, `1024,8192,65536` for a curve, `1024:OOM` to double until memory runs out |
+
+Run `python benchmarks/run.py --help` for the rest. `startup`, `deployment` and
+`quality` have their own procedures in [PROTOCOL.md](PROTOCOL.md).
+
+## Checks before a result counts
+
+- **Same work:** both engines must report the same samples, shapes and parameter
+  count.
+- **Same quality:** where the family reports accuracy (dense training), it must
+  be comparable.
+- **Quiet machine:** CPU activity is sampled before, during and after each run.
+
+A run that fails a check, runs on a busy machine, has uncommitted changes, or
+uses the GPU with unlocked clocks is written to `scratch/` as a diagnostic.
+
+For GPU results, lock the clocks first. On Linux use
+`sudo benchmarks/tools/gpu_clocks.sh lock <MHz>`. On Windows lock them with
+`nvidia-smi` and set `OPENNN_BENCH_CLOCKS_LOCKED=1`.
+
+## Results
+
+Results go to `../opennn-benchmark-results/`, or to the folder set in
+`OPENNN_BENCH_RESULTS`. Keep your own reports in `benchmarks/reports/`, which
+Git ignores. Results and reports are never committed.
+
+To compare two runs from the same machine, for example before and after a code
+change:
+
+```sh
 python benchmarks/compare.py baseline.json candidate.json
 ```
 
-The default gate allows 5% measurement tolerance for throughput and memory and
-does not allow confirmed batch capacity to fall. Invalid shape, quality, or
-machine-idle gates always fail. Adjust a tolerance explicitly when a machine's
-recorded variance justifies it.
-
-Capacity sweeps require an identified allocation failure after a successful
-batch. Other failures leave capacity unknown and send the run to `scratch/`.
-In that case `max_batch` is only the largest successful batch observed, or
-`null` if none succeeded, not a confirmed memory limit.
-
-`footprint` is the exception: it takes no batch and no dataset, and its modes
-are `memory`, `startup` and `export` — one process each, since a startup cost
-is already paid by anything sharing a process with it.
-
-Footprint memory/startup use CPU FP32 in both engines. Its baseline is current
-Linux RSS or Windows working set (MiB), not private commit or a peak. Missing
-readings are `null`. Each launch has a typed `footprint` metrics object.
-Internal prediction times remain diagnostic: OpenNN starts at `main`, whereas
-PyTorch includes its import but excludes interpreter startup. Compare the
-parent's `process_lifetime_seconds` for a common external boundary: process
-creation through exit and output collection, including teardown. This is not
-time-to-first-prediction. `wall_seconds` remains its rounded legacy alias.
-
-Qwen is the other deliberate exception. It compares the current OpenNN
-Qwen3-4B implementation with llama.cpp at the engine level and with
-llama.cpp/Ollama as complete runtimes. On Windows, use the pinned wrapper:
-
-```powershell
-.\benchmarks\tools\qwen_benchmark.ps1 prepare
-.\benchmarks\tools\qwen_benchmark.ps1 build
-.\benchmarks\tools\qwen_benchmark.ps1 smoke
-.\benchmarks\tools\qwen_benchmark.ps1 run
-```
-
-The Qwen runner fixes BF16 logical weights, greedy generation, batch 1, 256
-generated tokens and prompt lengths 128/512/2048/8192. Its primary cell is
-2048+256. Models, Python, llama.cpp and Ollama all live below
-`OPENNN_BENCH_DATA`; the wrapper does not use a globally installed Ollama.
-Qwen uses the same `prepare.py` / `run.py --family qwen` entry points, shared
-provenance, monitoring and result-directory helpers as the other families.
-The PowerShell wrapper provides Windows setup and clock restoration; it does
-not define a reference machine. Each result records the detected GPU, CPU and
-operating system. Historical measurements remain accessible through the results review with
-their original hardware identity.
-
-Before a measured run, set `OPENNN_BENCH_SM_CLOCK_MHZ` and
-`OPENNN_BENCH_MEMORY_CLOCK_MHZ` to supported, sustainable integer MHz values
-for the GPU under test. There are no default clock targets: missing targets or
-failed locks make the run diagnostic-only in the results directory's `scratch/` area. The current
-instrumentation uses NVIDIA device 0; use a single-GPU setup for comparisons.
-Builds target the detected CUDA architecture (`native`); override with
-`OPENNN_CUDA_ARCHITECTURES` when needed. Non-standard cuDNN installations use
-`OPENNN_CUDNN_INCLUDE_DIR` and `OPENNN_CUDNN_LIBRARY`, as in the verification
-wrappers. The pinned portable Ollama download is Windows x64-specific; this
-setup wrapper does not provision other operating systems.
-
-Greedy output is bit-reproducible across processes only if every process runs
-the same cuBLASLt kernel for every shape, and the tuner in
-`opennn/core/matmul_backend.cpp` picks kernels by timing them. OpenNN persists
-each winner below `%TEMP%\opennn-lt-plans\<card>-sm<cc>-cublaslt<version>`
-(`OPENNN_LT_PLAN_CACHE_DIR` moves it, `OPENNN_LT_PLAN_CACHE=0` disables it), so
-the first process on a card tunes and every later one loads. Warm that cache
-with one throwaway launch before a timed round; a cold first process may pick a
-different kernel than the rest. `OPENNN_LT_DETERMINISTIC=1` skips the tuner
-altogether and takes the heuristic's first candidate. Record this setting:
-it changes the algorithm-selection policy and can affect performance.
-Incompatible plan-cache records require re-tuning before measurement.
-
-`--batch` is the only sweep axis:
-
-| | |
-|---|---|
-| `--batch 8192` | one rung: the speed cell |
-| `--batch 1024,8192,65536` | several rungs: the throughput curve |
-| `--batch 1024:OOM` | double until a launch fails: the capacity frontier |
-
-## The families
-
-| family | model | data | why this one |
-|---|---|---|---|
-| `dense` | 28 → 1024 × 2 → 1 classifier | HIGGS | the shape a tabular workload actually has |
-| `cnn` | ResNet-50 v1.5 | ImageNet subset, 1000 classes × 50 | the citable convolution benchmark |
-| `transformer` | d512 · h8 · ff2048 · 6L | WMT14 English-German | the *Attention Is All You Need* base model, on its own corpus |
-| `lstm` | LSTM(15→128) → Linear | Beijing PM2.5, hourly | both engines reach the same cuDNN kernel here |
-| `footprint` | — | — | what a framework costs *before* it runs anything |
-| `qwen` | Qwen3-4B BF16 | pinned Hugging Face weights | engine and end-user runtime comparison |
-| `startup` | small dense, LSTM, CNN and Transformer applications | constructed inputs | process creation to the first completed prediction |
-| `deployment` | the same small applications | constructed inputs | native runtime files versus a standard PyTorch Python installation |
-| `quality` | dense, LSTM, ResNet and encoder-decoder Transformer | shared held-out tensors | trained prediction quality, separate from short speed tests |
-
-Each family keeps its C++ and Python implementation in
-[`families/`](families/). The standard families expose training and inference
-modes; `footprint` and Qwen use the specialized modes described above.
-
-## What every run checks before it reports
-
-A throughput number means nothing if the two engines were not doing the same
-work, so two gates run first and the artifact records both.
-
-**The shape gate** compares what each engine reports about the work: sample
-count, sequence length, vocabulary, and **parameter count**. These must agree
-before throughput can be compared.
-
-**The quality gate** compares test accuracy across engines at each batch
-wherever a driver reports one — today that is dense training only; the other
-families are held to the shape gate. A speed win bought by computing something
-different is not a speed win.
-
-Qwen additionally validates the OpenNN and GGUF tensors against the pinned
-canonical weights, verifies exact prompt-token counts and records whether each
-engine generated the requested number of tokens. Its `core` track excludes
-tokenization and sampling; its `runtime` track includes the complete serving
-path.
-
-**The attention-backend gate** applies to OpenNN's `runtime` track. The
-attention layer counts which backend each launch took while the profiler is
-on, and the driver turns the profiler on for its one unreported warm request
-only. The result carries them as `attention_backends` — `prefill_sdpa`,
-`prefill_fallback`, `sdpa_batched`, `gemm`, `kernel`, `decode_split` — and a
-run whose prefill did not go entirely through the cuDNN SDPA graph is marked
-invalid: a number from the materialized or generic path is not the number the
-engine is meant to publish. Decode launches are CUDA-graph replays, which the
-counters never see, so `decode_split` only reflects the capture.
-
-## Reading a result
-
-Energy is reported only when the timed window held a second of the driver's
-20 ms power samples — a short run says so rather than reporting `0.0000 Wh`,
-which is a claim and not a measurement. Peak memory is whole-device, minus the
-idle reading;
-`torch.cuda.max_memory_allocated()` never appears, because it excludes the CUDA
-context and cached blocks and so flatters PyTorch by construction.
-
-A dirty tree writes to `scratch/` inside the external results directory.
-That separation is enforced in code. Neither location is committed.
-
-OpenNN Qwen results also include `inference_memory`: reserved KV capacity and
-bytes, the decode arena **view** size (not the complete shared prefill arena),
-and graph workspace bytes. These diagnostics are not substitutes for measured
-device memory. On Windows, process launches record sampled private commit as
-`peak_private_mib`, separately from VRAM and working set. Raw process-memory,
-GPU telemetry and timestamped power samples accompany these launches. Windows
-uses `nvml.dll` when available; the labeled `nvidia-smi` fallback remains in
-place when NVML is unavailable.
-
-The OpenNN runtime currently computes `output_token_hash` by retokenizing the
-decoded response. It is not a trace of the original sampler IDs; strict
-token-by-token optimization acceptance needs that additional validation.
-
-## Specialized procedures
-
-| Task | Procedure |
-| --- | --- |
-| Prepare and measure small applications | [Startup and deployment](PROTOCOL.md#13-application-startup-and-deployment) |
-| Train and score shared held-out datasets | [Prediction quality](PROTOCOL.md#14-prediction-quality) |
-| Recalculate results and prepare the website | [Publication](PROTOCOL.md#15-publication-procedure) |
-| Review current values and missing measurements | [Results](reports/README.md) |
-
-## Result locations and existing evidence
-
-Use the same `OPENNN_BENCH_RESULTS` setting for preparation, execution and
-report generation. Its default is a sibling of this checkout, so results remain
-available while switching between `dev` and `master`.
-
-For an older checkout with `benchmarks/results/`, move that whole directory to
-`../opennn-benchmark-results/`, or set `OPENNN_BENCH_RESULTS` to its existing
-absolute path. Do not merge or overwrite result directories. The logical
-`results/...` paths in `reports/selection.json` resolve inside the selected store;
-original observations and their hashes remain unchanged.
+It accepts up to 5% variation in throughput and memory and fails if the largest
+batch that fits gets smaller.
 
 ## Files
 
-| | |
-|---|---|
-| [`run.py`](run.py) | common benchmark runner and Qwen dispatcher |
-| [`prepare.py`](prepare.py) | dataset, model and external-runtime preparation by family |
-| [`families/`](families/) | C++ and Python implementations for each benchmark family |
-| [`PROTOCOL.md`](PROTOCOL.md) | detailed, machine-neutral measurement contract |
-| [the results review](reports/README.md) | reviewed, versioned source of truth for official results |
-| [`tools/common.py`](tools/common.py) | provenance, binaries, sampling and metrics |
-| [`tools/gpu_clocks.sh`](tools/gpu_clocks.sh) | lock the GPU clock on Linux |
-| [`tools/qwen_benchmark.ps1`](tools/qwen_benchmark.ps1) | prepare, build, smoke-test and run Qwen on Windows |
-| [`tools/qwen_support.py`](tools/qwen_support.py) | parsing and aggregation helpers used by Qwen |
-| [`tools/validate_qwen.py`](tools/validate_qwen.py) | tensor-by-tensor OpenNN/GGUF weight gate |
-| [`tools/llama-bench-fixed-context.patch`](tools/llama-bench-fixed-context.patch) | fixed-context instrumentation for the pinned llama-bench |
-| [`manifests/imagenet_subset.manifest`](manifests/imagenet_subset.manifest) | exact, hashed CNN image subset |
-| [`manifests/qwen_manifest.json`](manifests/qwen_manifest.json) | Qwen revisions, asset hashes and protocol defaults |
-| [`CMakeLists.txt`](CMakeLists.txt) | builds one `<family>_opennn` per family |
-| [`reports/selection.json`](reports/selection.json) | pinned identities of evidence used by the results review |
-| `../opennn-benchmark-results/` | external raw artifacts; `scratch/` holds diagnostic runs |
-
-Datasets, model weights and external runtimes never enter the repository. The
-committed manifests pin the exact CNN image subset and every Qwen asset needed
-to reproduce the comparison.
+| Path | Contents |
+| --- | --- |
+| `run.py` | Runs a family on both engines |
+| `prepare.py` | Downloads and prepares the datasets |
+| `compare.py` | Compares two result files |
+| `families/` | The OpenNN (`.cpp`) and PyTorch (`.py`) version of each family |
+| `tools/` | Shared helpers: monitoring, startup, deployment and quality runners |
+| `manifests/` | The pinned ImageNet subset and Python package versions |
+| [`PROTOCOL.md`](PROTOCOL.md) | The complete measurement rules |

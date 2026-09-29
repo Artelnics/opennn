@@ -10,7 +10,6 @@ SPECIALIZED_FAMILIES = {
     "startup": "application_startup",
     "deployment": "application_deployment",
     "quality": "quality_runner",
-    "qwen": "families.qwen",
 }
 
 
