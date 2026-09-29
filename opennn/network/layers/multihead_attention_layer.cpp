@@ -3,7 +3,7 @@
 
 #include "opennn/core/string_utilities.h"
 #include "opennn/network/layers/multihead_attention_layer.h"
-#include "opennn/registry.h"
+#include "opennn/network/layers/layer_registry.h"
 
 namespace opennn
 {

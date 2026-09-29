@@ -24,7 +24,7 @@
 #endif
 #include "opennn/network/model_expression.h"
 #include "opennn/network/operators/combination_operator.h"
-#include "opennn/registry.h"
+#include "opennn/network/layers/layer_registry.h"
 
 namespace opennn
 {

@@ -5,7 +5,7 @@
 
 #include "opennn/core/json.h"
 #include "opennn/core/device_backend.h"
-#include "opennn/registry.h"
+#include "opennn/network/layers/layer_registry.h"
 
 namespace opennn
 {

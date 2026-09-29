@@ -4,6 +4,8 @@
 #include "opennn/model_selection/input_selection.h"
 
 #include "opennn/dataset/dataset.h"
+#include "opennn/model_selection/genetic_algorithm.h"
+#include "opennn/model_selection/growing_inputs.h"
 #include "opennn/model_selection/selection_utilities.h"
 #include "opennn/network/network.h"
 
@@ -84,6 +86,14 @@ void InputSelection::save(const filesystem::path& file_name) const
 void InputSelection::load(const filesystem::path& file_name)
 {
     from_JSON(load_json_file(file_name));
+}
+
+unique_ptr<InputSelection> create_input_selection(const string& name)
+{
+    if (name == "GeneticAlgorithm") return make_unique<GeneticAlgorithm>();
+    if (name == "GrowingInputs") return make_unique<GrowingInputs>();
+
+    throw runtime_error(format("Component not found: {}", name));
 }
 
 }

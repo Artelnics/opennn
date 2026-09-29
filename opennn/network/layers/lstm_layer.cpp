@@ -2,7 +2,7 @@
 // Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
 
 #include "opennn/network/layers/lstm_layer.h"
-#include "opennn/registry.h"
+#include "opennn/network/layers/layer_registry.h"
 
 #include "opennn/core/device_backend.h"
 #include "opennn/core/random_utilities.h"

@@ -56,8 +56,8 @@ The root JSON files are maintained inputs, not scratch results:
 
 | Module | Responsibility and starting points |
 | --- | --- |
-| `opennn/core/` | Configuration, tensor and storage types, backend operations and persistence utilities. Start with `configuration.h` and `opennn_types.h`; CUDA kernels are under `core/cuda/`. |
-| `opennn/network/` | `Network` (`network.h`), propagation, save/load (`network_io.cpp`), chat and `ModelExpression` source export (`model_expression.cpp`). `layers/` holds network layers and `operators/` reusable operators. |
+| `opennn/core/` | Configuration, tensor and storage types, backend operations and persistence utilities. Start with `configuration.h` and `opennn_types.h`; CUDA kernels are under `core/cuda/`. `pch.h` is the library's private precompiled header. |
+| `opennn/network/` | `Network` (`network.h`), propagation, save/load (`network_io.cpp`), chat and `ModelExpression` source export (`model_expression.cpp`). `layers/` holds network layers, `LayerType` and the layer factory (`layer_registry.h`); `operators/` holds reusable operators. |
 | `opennn/models/` | Ready-made tabular, image, language and forecasting architectures declared in `models.h`; shared execution and tokenizer methods belong to `Network`. |
 | `opennn/dataset/` | `Dataset` (`dataset.h`) and the four concrete classes below; I/O in `tabular_dataset_io.cpp` and `yolo_dataset_io.cpp`. |
 | `opennn/training/` | `Training` (`training.h`), losses and optimizers such as `Adam` and `SGD`. |
@@ -431,6 +431,8 @@ weights, numerical algorithms or memory ownership.
 | `opennn/bounding_layer.h` | `opennn/network/layers/clamping_layer.h` |
 | `opennn/response_optimization.h` | `opennn/response_optimization/response_optimization.h` |
 | `opennn/variable.h` | `opennn/core/variable.h` |
+| `opennn/registry.h` | `opennn/network/layers/layer_registry.h` (`LayerType`, `create_layer`); `create_optimizer` is in `opennn/training/optimizer.h` and `create_input_selection` in `opennn/model_selection/input_selection.h` |
+| `opennn/pch.h` | `opennn/core/pch.h` (private precompiled header) |
 
 Changing includes alone is insufficient: use `opennn::Dense` and `Clamping` for
 the current layer classes and the dataset classes below.
@@ -624,4 +626,5 @@ audit, merge reconciliation and verification evidence are preserved at commit
 - Preserve attribution notices (`examples/*/data/SOURCE.md`,
   `THIRD_PARTY_NOTICES.txt`) and skill entry points.
 - Link to an immutable Git revision for superseded material.
-- `.claude/CLAUDE.md` imports this file for Claude Code.
+- Agent-specific folders such as `.claude/` stay local and ignored by Git.
+  Instructions that matter for the repository belong in this file.

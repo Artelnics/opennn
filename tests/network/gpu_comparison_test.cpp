@@ -32,7 +32,7 @@
 #include "opennn/core/cuda/flash_attention.cuh"
 #include "opennn/core/cuda/kernel_prelude.cuh"
 #include "opennn/core/random_utilities.h"
-#include "opennn/registry.h"
+#include "opennn/network/layers/layer_registry.h"
 
 using namespace opennn;
 

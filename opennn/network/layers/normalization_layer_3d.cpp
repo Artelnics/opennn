@@ -4,7 +4,7 @@
 #include "opennn/network/layers/normalization_layer_3d.h"
 
 #include "opennn/core/tensor_types.h"
-#include "opennn/registry.h"
+#include "opennn/network/layers/layer_registry.h"
 
 namespace opennn
 {

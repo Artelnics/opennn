@@ -96,4 +96,6 @@ struct InputSelectionResult
     string elapsed_time;
 };
 
+unique_ptr<InputSelection> create_input_selection(const string& name);
+
 }

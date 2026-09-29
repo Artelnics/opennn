@@ -3,7 +3,7 @@
 
 #include "opennn/training/training.h"
 
-#include "opennn/registry.h"
+#include "opennn/training/optimizer.h"
 
 namespace opennn
 {

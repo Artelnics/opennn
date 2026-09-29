@@ -16,7 +16,7 @@
 #include "opennn/core/tensor_operations.h"
 #include "opennn/core/tensor_types.h"
 #include "opennn/network/forward_propagation.h"
-#include "opennn/registry.h"
+#include "opennn/network/layers/layer_registry.h"
 
 #ifdef OPENNN_HAS_CUDA
 #include "opennn/core/device_backend.h"

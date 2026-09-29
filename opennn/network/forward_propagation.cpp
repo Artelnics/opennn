@@ -3,7 +3,7 @@
 
 #include "opennn/network/forward_propagation.h"
 #include "opennn/network/training_arena_plan.h"
-#include "opennn/registry.h"
+#include "opennn/network/layers/layer_registry.h"
 #include "opennn/network/network.h"
 #include "opennn/core/memory_debug.h"
 #include "opennn/core/device_backend.h"

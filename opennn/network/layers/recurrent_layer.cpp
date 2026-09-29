@@ -3,7 +3,7 @@
 
 #include "opennn/network/layers/recurrent_layer.h"
 
-#include "opennn/registry.h"
+#include "opennn/network/layers/layer_registry.h"
 #include "opennn/network/forward_propagation.h"
 #include "opennn/network/back_propagation.h"
 

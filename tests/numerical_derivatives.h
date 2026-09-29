@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "opennn/pch.h"
+#include "opennn/core/pch.h"
 #include "opennn/training/loss.h"
 
 namespace opennn

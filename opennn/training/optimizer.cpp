@@ -35,8 +35,12 @@
 #include "opennn/network/layers/tokenizer_layer.h"
 #include "opennn/network/operators/dropout_operator.h"
 #include "opennn/network/operators/tokenizer_operator.h"
+#include "opennn/training/adam.h"
 #include "opennn/training/kernel_optimizers.cuh"
+#include "opennn/training/levenberg_marquardt.h"
 #include "opennn/training/loss.h"
+#include "opennn/training/quasi_newton.h"
+#include "opennn/training/sgd.h"
 
 namespace opennn
 {
@@ -2380,6 +2384,16 @@ Loss::EvaluationResult Optimizer::evaluate_epoch(
         epoch_result = device_metrics.read();
 
     return finalize_metrics(epoch_result);
+}
+
+unique_ptr<Optimizer> create_optimizer(const string& name)
+{
+    if (name == "Adam") return make_unique<Adam>();
+    if (name == "LevenbergMarquardt") return make_unique<LevenbergMarquardt>();
+    if (name == "QuasiNewton") return make_unique<QuasiNewton>();
+    if (name == "SGD") return make_unique<SGD>();
+
+    throw runtime_error(format("Component not found: {}", name));
 }
 
 }

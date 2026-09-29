@@ -5,7 +5,7 @@
 
 #include <utility>
 
-#include "opennn/registry.h"
+#include "opennn/network/layers/layer_registry.h"
 #include "opennn/network/layers/scaling_layer.h"
 #include "opennn/network/layers/unscaling_layer.h"
 #include "opennn/network/layers/clamping_layer.h"

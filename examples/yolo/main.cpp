@@ -21,7 +21,7 @@
 #ifdef OPENNN_HAS_CUDA
 #  include <cuda_runtime.h>
 #endif
-#include "opennn/registry.h"
+#include "opennn/network/layers/layer_registry.h"
 #include "opennn/dataset/image_processing.h"
 #include "opennn/training/adam.h"
 #include "opennn/core/configuration.h"

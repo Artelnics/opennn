@@ -92,7 +92,7 @@ package. Installation packages exclude example datasets and models.
 
 Include the public module headers directly, for example
 `#include "opennn/network/network.h"`. Do not include the private precompiled
-header `pch.h` in an application.
+header `opennn/core/pch.h` in an application.
 
 ## Repository contents
 

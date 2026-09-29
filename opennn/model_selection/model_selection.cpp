@@ -3,7 +3,7 @@
 
 #include "opennn/model_selection/model_selection.h"
 
-#include "opennn/registry.h"
+#include "opennn/model_selection/input_selection.h"
 
 namespace opennn
 {

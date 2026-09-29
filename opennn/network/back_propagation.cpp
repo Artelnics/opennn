@@ -2,7 +2,7 @@
 // Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
 
 #include "opennn/network/back_propagation.h"
-#include "opennn/registry.h"
+#include "opennn/network/layers/layer_registry.h"
 #include "opennn/core/memory_pool.h"
 #include "opennn/training/loss.h"
 #include "opennn/network/training_arena_plan.h"

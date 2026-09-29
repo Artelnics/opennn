@@ -40,15 +40,11 @@ enum class LayerType
 };
 
 class Layer;
-class Optimizer;
-class InputSelection;
 
 const EnumMap<LayerType>& layer_type_map();
 const std::string& layer_type_to_string(LayerType);
 LayerType string_to_layer_type(const std::string&);
 
 std::unique_ptr<Layer> create_layer(const std::string& name);
-std::unique_ptr<Optimizer> create_optimizer(const std::string& name);
-std::unique_ptr<InputSelection> create_input_selection(const std::string& name);
 
 }

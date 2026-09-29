@@ -2,7 +2,7 @@
 // Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
 
 #include "opennn/network/layers/upsampling_layer.h"
-#include "opennn/registry.h"
+#include "opennn/network/layers/layer_registry.h"
 #include "opennn/core/json.h"
 #include "opennn/core/tensor_operations.h"
 #include "opennn/network/forward_propagation.h"

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: LGPL-2.1-or-later
 // Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
 
-#include "opennn/pch.h"
+#include "opennn/core/pch.h"
 #include "opennn/response_optimization/expression_evaluator.h"
 #include "opennn/network/network.h"
 #include "opennn/core/string_utilities.h"

@@ -12,7 +12,7 @@
 #include "opennn/network/layers/dense_layer.h"
 #include "opennn/network/operators/layer_normalization_operator.h"
 #include "opennn/core/configuration.h"
-#include "opennn/registry.h"
+#include "opennn/network/layers/layer_registry.h"
 #include "opennn/training/loss.h"
 #include "opennn/network/back_propagation.h"
 #ifdef OPENNN_HAS_CUDA

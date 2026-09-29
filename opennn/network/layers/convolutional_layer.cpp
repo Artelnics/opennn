@@ -2,7 +2,7 @@
 // Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
 
 #include "opennn/network/layers/convolutional_layer.h"
-#include "opennn/registry.h"
+#include "opennn/network/layers/layer_registry.h"
 #include "opennn/core/string_utilities.h"
 
 #ifdef OPENNN_HAS_CUDA

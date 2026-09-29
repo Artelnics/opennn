@@ -362,4 +362,6 @@ protected:
     string name;
 };
 
+unique_ptr<Optimizer> create_optimizer(const string& name);
+
 }

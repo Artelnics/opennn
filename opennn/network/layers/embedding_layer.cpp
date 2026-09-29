@@ -4,7 +4,7 @@
 #include "opennn/network/layers/embedding_layer.h"
 
 #include "opennn/core/tensor_types.h"
-#include "opennn/registry.h"
+#include "opennn/network/layers/layer_registry.h"
 
 namespace opennn
 {

@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "opennn/pch.h"
+#include "opennn/core/pch.h"
 #include "opennn/response_optimization/expression_evaluator.h"
 
 namespace opennn

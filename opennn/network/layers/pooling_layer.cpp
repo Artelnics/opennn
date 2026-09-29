@@ -5,7 +5,7 @@
 #ifdef OPENNN_HAS_CUDA
 #include "opennn/core/cuda/kernel_pooling.cuh"
 #endif
-#include "opennn/registry.h"
+#include "opennn/network/layers/layer_registry.h"
 #include "opennn/core/enum_map.h"
 
 #include "opennn/core/tensor_operations.h"

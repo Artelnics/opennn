@@ -1,7 +1,7 @@
 #include "tests/pch.h"
 
 #include "opennn/core/json.h"
-#include "opennn/registry.h"
+#include "opennn/network/layers/layer_registry.h"
 #include "opennn/network/layers/activation_layer.h"
 #include "opennn/network/layers/addition_layer.h"
 #include "opennn/network/layers/clamping_layer.h"

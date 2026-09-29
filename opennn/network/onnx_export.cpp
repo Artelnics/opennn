@@ -7,7 +7,7 @@
 #include <cstring>
 #include <numeric>
 
-#include "opennn/registry.h"
+#include "opennn/network/layers/layer_registry.h"
 #include "opennn/network/network.h"
 #include "opennn/network/layers/clamping_layer.h"
 #include "opennn/network/layers/dense_layer.h"

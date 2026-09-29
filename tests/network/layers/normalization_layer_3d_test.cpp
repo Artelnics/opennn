@@ -5,7 +5,7 @@
 
 #include "opennn/core/tensor_types.h"
 #include "opennn/core/random_utilities.h"
-#include "opennn/registry.h"
+#include "opennn/network/layers/layer_registry.h"
 #include "opennn/network/layers/normalization_layer_3d.h"
 #include "opennn/network/layers/dense_layer.h"
 #include "opennn/network/layers/flatten_layer.h"

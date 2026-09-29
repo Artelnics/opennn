@@ -1,14 +1,13 @@
 // SPDX-License-Identifier: LGPL-2.1-or-later
 // Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
 
-#include "opennn/registry.h"
+#include "opennn/network/layers/layer_registry.h"
 
 #include <algorithm>
 #include <array>
 #include <format>
 #include <stdexcept>
 #include <string_view>
-#include <unordered_map>
 
 #include "opennn/network/layers/activation_layer.h"
 #include "opennn/network/layers/addition_layer.h"
@@ -35,24 +34,12 @@
 #include "opennn/network/layers/pooling_layer.h"
 #include "opennn/network/layers/pooling_layer_3d.h"
 #endif
-#include "opennn/training/adam.h"
-#include "opennn/training/levenberg_marquardt.h"
-#include "opennn/training/quasi_newton.h"
-#include "opennn/training/sgd.h"
-#include "opennn/model_selection/genetic_algorithm.h"
-#include "opennn/model_selection/growing_inputs.h"
 
 namespace opennn
 {
 
 namespace
 {
-
-template<typename Base, typename Class>
-unique_ptr<Base> construct()
-{
-    return make_unique<Class>();
-}
 
 using LayerFactory = unique_ptr<Layer>(*)();
 
@@ -64,7 +51,10 @@ struct LayerRegistration
 };
 
 template<typename Class>
-constexpr auto construct_layer = construct<Layer, Class>;
+unique_ptr<Layer> construct_layer()
+{
+    return make_unique<Class>();
+}
 
 #ifndef OPENNN_NO_VISION
 
@@ -173,18 +163,6 @@ const LayerRegistration* find_layer_registration(const string_view name)
     return &*alias;
 }
 
-template<typename Base>
-unique_ptr<Base> create(const unordered_map<string_view, unique_ptr<Base>(*)()>& factories,
-                        const string& name)
-{
-    const auto it = factories.find(name);
-
-    if (it == factories.end())
-        throw runtime_error(format("Component not found: {}", name));
-
-    return it->second();
-}
-
 }
 
 const EnumMap<LayerType>& layer_type_map()
@@ -231,28 +209,6 @@ unique_ptr<Layer> create_layer(const string& name)
              "Layer factory for {} produced {} instead of {}.",
              registration->name, layer->get_name(), layer_type_to_string(registration->type));
     return layer;
-}
-
-unique_ptr<Optimizer> create_optimizer(const string& name)
-{
-    static const unordered_map<string_view, unique_ptr<Optimizer>(*)()> factories = {
-        {"Adam", construct<Optimizer, Adam>},
-        {"LevenbergMarquardt", construct<Optimizer, LevenbergMarquardt>},
-        {"QuasiNewton", construct<Optimizer, QuasiNewton>},
-        {"SGD", construct<Optimizer, SGD>},
-    };
-
-    return create(factories, name);
-}
-
-unique_ptr<InputSelection> create_input_selection(const string& name)
-{
-    static const unordered_map<string_view, unique_ptr<InputSelection>(*)()> factories = {
-        {"GeneticAlgorithm", construct<InputSelection, GeneticAlgorithm>},
-        {"GrowingInputs", construct<InputSelection, GrowingInputs>},
-    };
-
-    return create(factories, name);
 }
 
 }

@@ -3,7 +3,7 @@
 
 #include "tests/pch.h"
 
-#include "opennn/registry.h"
+#include "opennn/network/layers/layer_registry.h"
 #include "opennn/models/models.h"
 #include "opennn/network/forward_propagation.h"
 #include "opennn/network/network.h"

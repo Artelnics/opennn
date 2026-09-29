@@ -17,7 +17,7 @@
 #include "opennn/core/random_utilities.h"
 #include "opennn/network/network.h"
 #include "opennn/network/layers/scaling_layer.h"
-#include "opennn/registry.h"
+#include "opennn/network/layers/layer_registry.h"
 #include "opennn/response_optimization/domain_contraction.h"
 #include "opennn/response_optimization/genetic_response.h"
 

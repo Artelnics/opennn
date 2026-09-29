@@ -23,7 +23,7 @@
 #include "opennn/network/network.h"
 #include "opennn/models/models.h"
 #include "opennn/network/layers/layer.h"
-#include "opennn/registry.h"
+#include "opennn/network/layers/layer_registry.h"
 
 #include <cstdlib>
 #include <filesystem>

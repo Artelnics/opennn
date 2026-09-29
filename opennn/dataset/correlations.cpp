@@ -11,7 +11,7 @@
 #include "opennn/network/layers/scaling_layer.h"
 #include "opennn/network/network.h"
 #include "opennn/models/models.h"
-#include "opennn/registry.h"
+#include "opennn/network/layers/layer_registry.h"
 #include "opennn/training/levenberg_marquardt.h"
 #include "opennn/training/quasi_newton.h"
 

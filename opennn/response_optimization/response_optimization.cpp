@@ -5,7 +5,7 @@
 
 #include <unsupported/Eigen/LevenbergMarquardt>
 
-#include "opennn/registry.h"
+#include "opennn/network/layers/layer_registry.h"
 #include "opennn/network/network.h"
 #include "opennn/network/layers/scaling_layer.h"
 #include "opennn/response_optimization/expression_evaluator.h"

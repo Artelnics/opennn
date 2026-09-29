@@ -511,7 +511,7 @@ target_compile_definitions(opennn PUBLIC
 )
 
 target_precompile_headers(opennn PRIVATE
-    $<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/pch.h>
+    $<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/core/pch.h>
 )
 
 if(MSVC AND OPENNN_HAS_CUDA)
