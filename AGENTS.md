@@ -49,8 +49,8 @@ The root JSON files are maintained inputs, not scratch results:
 | `datasets.manifest.json` | Hashes and clearance state of the example asset groups. |
 | `RELEASE_SCOPE.json` | What the current candidate may claim and distribute. |
 
-`LICENSE.txt`, `LICENSE-GPL-3.0.txt` and `THIRD_PARTY_NOTICES.txt` are installed
-with every package.
+`LICENSE.txt` (LGPL 2.1, matching the `LGPL-2.1-or-later` SPDX headers) and
+`THIRD_PARTY_NOTICES.txt` are installed with every package.
 
 ### Library modules and dependencies
 
@@ -592,7 +592,7 @@ cpack --config /absolute/path/to/build/CPackConfig.cmake -C Release -G TGZ -B ..
 The archive name records the version, system, processor, CPU target and backend,
 and each archive gets a SHA-256 file. `share/doc/OpenNN/build-info.json` records
 the compiler, configuration, CUDA, shared-library and LTO settings. The package
-installs `README.md`, the licence texts, `THIRD_PARTY_NOTICES.txt`,
+installs `README.md`, `LICENSE.txt`, `THIRD_PARTY_NOTICES.txt`,
 `RELEASE_SCOPE.json` and the libjpeg-turbo, zlib, Eigen, cuDNN frontend and
 FlashAttention notices that apply. Extract it into a new directory and check it:
 

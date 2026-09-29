@@ -116,8 +116,8 @@ configuration, reproduction command and error, and file it in
 
 ## License
 
-OpenNN is distributed under the GNU Lesser General Public License v3; see
-[LICENSE.txt](LICENSE.txt), [LICENSE-GPL-3.0.txt](LICENSE-GPL-3.0.txt) and the
+OpenNN is distributed under the GNU Lesser General Public License, version 2.1 or
+(at your option) any later version; see [LICENSE.txt](LICENSE.txt) and the
 per-file notices. Dependencies and downloadable pre-trained weights keep their own
 terms, listed in [THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt). Example data
-terms are listed [above](#example-data-and-licences).
+keeps its publishers' terms, recorded in the `SOURCE.md` notice of each data folder.

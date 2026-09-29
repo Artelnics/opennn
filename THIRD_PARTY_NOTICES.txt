@@ -1,10 +1,8 @@
 OpenNN third-party software notices
 ===================================
 
-OpenNN is licensed under the GNU Lesser General Public License v3
-(LICENSE.txt). LICENSE-GPL-3.0.txt supplies the GNU GPL v3 text incorporated
-by LGPL v3; it is copied verbatim from the GCC project's COPYING3
-(https://github.com/gcc-mirror/gcc/blob/master/COPYING3).
+OpenNN is licensed under the GNU Lesser General Public License, version 2.1 or
+(at your option) any later version (LICENSE.txt).
 
 The build uses or can use the following third-party components, each under its
 own license. Components marked "fetched" are downloaded by CMake at configure
@@ -71,8 +69,8 @@ documentation accompanying any distribution that includes it:
   This software is based in part on the work of the Independent JPEG Group.
 
 The JSON support in opennn/core/json.h is OpenNN's own. Example datasets under
-examples/*/data carry the terms of their original publishers; see the "Example
-data and licences" section of README.md.
+examples/*/data carry the terms of their original publishers; see the SOURCE.md
+notice in each data folder.
 
 
 Pre-trained weights

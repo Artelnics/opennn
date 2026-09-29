@@ -87,10 +87,9 @@ a Python model, and reference predictions beside the executable. The
 
 For complete CPU/CUDA and precision coverage, use the
 [example matrix skill](../tools/run-opennn-examples/SKILL.md).
-The [README data table](../README.md#example-data-and-licences) lists dataset
-attributions, and [AGENTS.md](../AGENTS.md#example-data) records reproduction
-procedures and unresolved permissions; keep each dataset's `SOURCE.md` notice
-with its data.
+Each dataset's `SOURCE.md` notice records its attribution and licence; keep it
+with its data. [AGENTS.md](../AGENTS.md#example-data) records reproduction
+procedures and unresolved permissions.
 
 Further examples: [concrete optimization](#concrete-response-optimization),
 [ECG anomaly detection](#ecg5000-anomaly-detection),
