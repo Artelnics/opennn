@@ -613,9 +613,18 @@ void ConvolutionOperator::apply_gpu_folded(const TensorView& input,
     const bool ran = cudnn_frontend::run_convolution_forward(
         *this, input, output, folded_weights.get_data(), folded_bias, relu, true, residual);
 
+    // Same answer as apply_gpu and the backward pass: when no plan is available,
+    // say whether the card is too old or the plan could not be built, and stop.
+    //
+    // This used to fall back to linear_forward, which could not work: the folded
+    // weights carry the convolution's own shape, and that is always rank 4 - see
+    // parameter_specs - while linear_forward requires a matrix. The fallback
+    // therefore only ever produced "linear_forward: weights must be a matrix",
+    // with nothing in it about cuDNN, the GPU or the compute capability. On a
+    // pre-Ampere card every convolution with folded batch normalisation reached
+    // it, which is every convolution in a YOLO network.
     if (!ran)
-        linear_forward(input, folded_weights, folded_bias, output,
-                       relu ? LinearEpilogue::ReluBias : LinearEpilogue::Bias);
+        cudnn_frontend::throw_frontend_unavailable("ConvolutionOperator: GPU convolution");
 }
 
 void ConvolutionOperator::apply_delta_gpu(const TensorView& input,
