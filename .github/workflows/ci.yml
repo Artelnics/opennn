@@ -1,16 +1,19 @@
-# Hosted CPU tests and CUDA compilation. The CUDA runtime suite runs on a
-# self-hosted runner (see cuda-nightly.yml); nothing here needs a GPU.
+# Hosted CPU tests and CUDA compilation. Nothing here needs a GPU: run the CUDA
+# test suite locally with tools/verify.sh before merging GPU changes.
 #
 # Every job builds the library and the tests from a clean checkout with the
 # dependencies CMake fetches itself (Eigen, libjpeg-turbo, zlib, GoogleTest),
 # so a green run means "a user with a compiler and CMake can build this".
 name: CI
 
+# Commits that only change Markdown documentation skip CI.
 on:
   push:
     branches: [dev, master]
+    paths-ignore: ["**.md"]
   pull_request:
     branches: [dev, master]
+    paths-ignore: ["**.md"]
   workflow_dispatch:
 
 concurrency:
@@ -464,8 +467,8 @@ jobs:
           -DOpenNN_BUILD_EXAMPLES=ON
           -DOpenNN_BUILD_BENCHMARKS=OFF
 
-      - name: Build library and tests
-        run: cmake --build build --config Release --target opennn opennn_tests blank --parallel
+      - name: Build library, tests and examples
+        run: cmake --build build --config Release --target opennn opennn_tests examples --parallel
 
       - name: Run the getting-started example
         run: ./build/bin/Release/blank.exe

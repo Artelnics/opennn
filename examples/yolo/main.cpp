@@ -14,6 +14,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <numbers>
 #include <random>
 #include <string>
 #include <vector>
@@ -1072,7 +1073,7 @@ int main(int argc, char* argv[])
                 const int global_epoch = epochs_done + static_cast<int>(epoch) + 1;
                 const float t = float(global_epoch) / float(cosine_total_epochs);
                 const float cosine_lr = cosine_lr_min + 0.5f * (cosine_lr_peak - cosine_lr_min)
-                    * (1.0f + std::cos(float(M_PI) * std::min(t, 1.0f)));
+                    * (1.0f + std::cos(std::numbers::pi_v<float> * std::min(t, 1.0f)));
                 adam->set_learning_rate(std::max(cosine_lr, cosine_lr_min));
             }
         };

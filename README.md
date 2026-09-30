@@ -105,7 +105,7 @@ header `opennn/core/pch.h` in an application.
 | [`tests/`](tests/) | C++ unit tests of the library. |
 | [`benchmarks/`](benchmarks/README.md) | OpenNN versus PyTorch comparisons and their [measurement rules](benchmarks/PROTOCOL.md). |
 | [`tools/`](tools/) | Verification, packaging, asset reproduction and release checks; see [AGENTS.md](AGENTS.md#maintenance-tools). |
-| [`.github/workflows/`](.github/workflows/) | Hosted CI and Linux CUDA verification. |
+| [`.github/workflows/`](.github/workflows/) | Continuous integration. |
 
 ## Contributing and support
 

@@ -38,7 +38,7 @@ environment variables, not in repository files.
 | `examples/` | Runnable applications and bundled data. The catalog is `examples/README.md`. |
 | `benchmarks/` | OpenNN versus PyTorch comparison drivers, input manifests, `README.md` (usage) and `PROTOCOL.md` (measurement rules). `benchmarks/reports/` is ignored by Git and holds each user's own reports. |
 | `tools/` | Verification, checkers, packaging and reproduction; table below. |
-| `.github/workflows/` | `ci.yml` (hosted CI) and `cuda-nightly.yml` (Linux CUDA runtime). |
+| `.github/workflows/` | `ci.yml`, the hosted CI. |
 
 `CMakePresets.json` holds the repeatable configure/build/test settings, and
 `tools/CODE_QUALITY.json` the reviewed maintainability limits (ratchet).
@@ -256,29 +256,13 @@ and the source checkers. It also runs:
   non-CUDA sources, plus the per-module floors in `tools/check_coverage.py`.
   Raise thresholds as tests are added.
 
+CI has no GPU: it compiles CUDA but never runs CUDA tests. Run
+`./tools/verify.sh full` (or `quick --backend cuda`) on a machine with a GPU
+before merging changes that touch CUDA or shared code, and report the result.
+
 `python benchmarks/compare.py baseline.json candidate.json` gates performance
 changes: it allows 5% throughput/memory variation and rejects lower confirmed
 batch capacity.
-
-### Linux CUDA runner
-
-`cuda-nightly.yml` runs on pushes to `dev` and `master`, by manual dispatch and
-nightly on the default branch. It needs an online self-hosted runner labeled
-`self-hosted`, `linux` and `cuda` with CMake 3.24+, Ninja, a C++20 compiler,
-CUDA, cuDNN 9 and a working GPU; otherwise the job stays queued. Configure CUDA
-paths in the runner environment, never in the workflow. Keep this runner off
-untrusted pull-request workflows.
-
-The current runner, `opennn-wsl-cuda`, is a WSL workstation service under the
-dedicated account `opennn-ci`. It accepts jobs only while its Windows host is on
-and WSL is running; the scheduled task `OpenNN Linux CUDA runner` keeps WSL alive
-after sign-in. Service operations inside WSL:
-
-```bash
-sudo systemctl status actions.runner.Artelnics-opennn.opennn-wsl-cuda.service
-sudo journalctl -u actions.runner.Artelnics-opennn.opennn-wsl-cuda.service -n 50
-sudo systemctl restart actions.runner.Artelnics-opennn.opennn-wsl-cuda.service
-```
 
 ## Examples and benchmarks
 
@@ -508,9 +492,9 @@ separate statuses.
 
 Before promotion:
 
-- Verify the exact candidate commit on every `ci.yml` job and on the Linux CUDA
-  workflow. Report skips and disabled tests separately; earlier passes do not
-  certify a new candidate.
+- Verify the exact candidate commit on every `ci.yml` job and run the CUDA
+  suite locally on a GPU machine. Report skips and disabled tests separately;
+  earlier passes do not certify a new candidate.
 - If a complete production 8.x model becomes available, follow the
   [migration procedure](#models-and-parameters) and compare its reference predictions.
 - Check the [release notes](#whats-new-in-90). The GitHub release notes can start from that summary and the itemized
