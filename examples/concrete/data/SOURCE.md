@@ -1,32 +1,24 @@
-# Concrete UCI Dataset
+# Concrete Compressive Strength data
 
-File: `concrete_uci.csv`
+Yeh, I. (1998), *Concrete Compressive Strength*.
+[UCI Machine Learning Repository](https://archive.ics.uci.edu/dataset/165/concrete+compressive+strength),
+DOI [10.24432/C5PK67](https://doi.org/10.24432/C5PK67).
+Yeh, I. (1998), *Modeling of strength of high-performance concrete using
+artificial neural networks*, Cement and Concrete Research, 28(12), 1797-1808,
+DOI [10.1016/S0008-8846(98)00165-3](https://doi.org/10.1016/S0008-8846(98)00165-3).
 
-Rows: 1030
+Data licence: [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/).
+Preserve the attribution, source and licence link when redistributing.
 
-Columns:
+OpenNN adaptation: `Concrete_Data.xls` converted to comma-separated values
+with short column names added. All 1,030 rows match the upstream values in
+order, verified 2026-09-30.
+
+Columns, in the UCI order:
 
 ```text
 cement, slag, fly_ash, water, sp, coarse_agg, fine_agg, age, strength
 ```
 
-Ingredient masses are in kg/m^3, `age` is in days, and `strength` is in MPa.
-
-Upstream dataset: Concrete Compressive Strength, UCI Machine Learning Repository, dataset 165.
-
-License: Creative Commons Attribution 4.0 International (CC-BY 4.0). Redistribution with attribution is permitted.
-
-Citation:
-
-```bibtex
-@article{Yeh1998Concrete,
-  author  = {Yeh, I-Cheng},
-  title   = {Modeling of strength of high-performance concrete using artificial neural networks},
-  journal = {Cement and Concrete Research},
-  volume  = {28},
-  number  = {12},
-  pages   = {1797--1808},
-  year    = {1998},
-  doi     = {10.1016/S0008-8846(98)00165-3}
-}
-```
+Ingredient masses are in kg/m^3, `age` is in days, and `strength` (the
+compressive strength, the target) is in MPa.

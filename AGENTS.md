@@ -37,7 +37,7 @@ environment variables, not in repository files.
 | `tests/` | GoogleTest tests of the `opennn/` library only, one folder per library module (network layers and operators are separate). `tests/common/` holds the test `main`, the precompiled header and shared helpers. Do not add benchmark, example or tooling tests here, and keep no loose test files at the `tests/` root. |
 | `examples/` | Runnable applications and bundled data. The catalog is `examples/README.md`. |
 | `benchmarks/` | OpenNN versus PyTorch comparison drivers, input manifests, `README.md` (usage) and `PROTOCOL.md` (measurement rules). `benchmarks/reports/` is ignored by Git and holds each user's own reports. |
-| `tools/` | Verification, checkers, packaging and reproduction; table below. |
+| `tools/` | Verification scripts, code checkers, fuzzing, package checks and agent skills; table below. |
 | `.github/workflows/` | `ci.yml`, the hosted CI. |
 
 `CMakePresets.json` holds the repeatable configure/build/test settings, and
@@ -292,6 +292,23 @@ notice with its data.
 - `examples/mnist/data/images.zip` and `examples/melanoma_cancer/data/images.zip`
   keep the original file names inside. CMake extracts only the selected
   example's archive into the build directory. Keep member names unique.
+- Record SHA-256 digests of the bytes stored in Git
+  (`git show HEAD:<path> | sha256sum`), not of a Windows checkout, where
+  `core.autocrlf` turns text files into CRLF. `.gitattributes` keeps the
+  pretrained-model licence files byte-exact for the same reason.
+- `bert`, `gpt2` and `qwen3` download their models at run time from the
+  Artelnics Hugging Face repositories, which carry the same licence, notice and
+  `SOURCE.md` files as `examples/<example>/data/`. Update both copies together.
+- The GPT-2 and BERT files were first published as the GitHub release assets
+  `gpt2-weights-v1` and `bert-weights-v1`; the Hugging Face files are
+  byte-identical. Only `dev` snapshots before `3a7e45b41` download from GitHub,
+  and removing those assets breaks them. `master` (8.x) uses neither.
+
+Pending licence work: `yolo` needs a dataset with recorded provenance to replace
+the default external synthetic images, and checkpoint-specific confirmation
+before redistributing `darknet53.conv.74` or `yolov3-tiny.weights`. Optional
+external datasets and Ultralytics conversions need their file manifests and
+applicable notices and source records; see `examples/yolo/data/SOURCE.md`.
 
 ## 9.0 release notes and migration
 
