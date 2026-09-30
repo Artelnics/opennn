@@ -1,0 +1,6 @@
+# Preserve the original pretrained-model licence bytes and recorded SHA-256.
+/examples/gpt2/data/LICENSE_GPT2.txt -text
+/examples/bert/data/LICENSE_BERT.txt -text
+/examples/qwen3/data/LICENSE_QWEN3.txt -text
+/examples/yolo/data/LICENSE_DARKNET.txt -text
+/examples/yolo/data/LICENSE_ULTRALYTICS.txt -text

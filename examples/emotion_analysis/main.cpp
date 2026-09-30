@@ -6,7 +6,8 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-// Six-class emotion classification of short English messages with a small
+// Six-class emotion classification of GoEmotions messages (CC BY 4.0;
+// see data/SOURCE.md) with a small
 // transformer encoder: token and learned positional embeddings, two post-norm
 // encoder blocks, masked mean pooling and a softmax output.
 //
@@ -101,7 +102,7 @@ int main(int argc, char* argv[])
 
         unsigned seed = 1;
         string device = "auto";
-        string data_path = "../data/emotion_analysis/emotion_analysis.txt";
+        string data_path = "../data/emotion_analysis/goemotions.txt";
         Index maximum_epochs = 30;
 
         for (int i = 1; i < argc; i += 2)

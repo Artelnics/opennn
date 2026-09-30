@@ -24,7 +24,8 @@ int main()
 
         set_seed(0);
 
-        ImageDataset dataset("../data/melanoma_cancer");
+        // ISIC 2016 images and labels, dedicated to the public domain under CC0.
+        ImageDataset dataset("../data/melanoma_cancer/isic2016");
 
         ImageClassificationNetwork network(dataset.get_input_shape(),
                                            {32, 64, 16},

@@ -7,6 +7,9 @@
 //   artelnics@artelnics.com
 
 //   Downloads a pretrained Qwen3-4B model and starts an interactive chat.
+//   Model and tokenizer: Apache 2.0; preserve data/LICENSE_QWEN3.txt,
+//   data/NOTICE_QWEN3.txt and data/SOURCE.md with redistributed model files.
+//   usage: qwen3 [model_dir] (default: ../data/qwen3)
 
 #include <filesystem>
 #include <iostream>
@@ -24,7 +27,7 @@ int main(int argc, char* argv[])
     {
         cout << "OpenNN. Qwen3 chat." << endl;
 
-        const filesystem::path data_directory = argc > 1 ? argv[1] : "../data";
+        const filesystem::path data_directory = argc > 1 ? argv[1] : "../data/qwen3";
 
         auto model = Qwen3::from_pretrained(
             Qwen3::Variant::B4, data_directory);

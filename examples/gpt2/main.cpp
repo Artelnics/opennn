@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 //   Downloads GPT-2 small and generates a continuation for a prompt. Requires CUDA.
+//   The model retains OpenAI's Modified MIT License; see data/SOURCE.md.
 
 #include <filesystem>
 #include <iostream>
@@ -40,7 +41,7 @@ int main(int argc, char* argv[])
         const string prompt = argc > 1 ? argv[1] : "Artificial intelligence";
         ChatSession session(model);
 
-        cout << session.send(prompt, options).content << endl;
+        cout << "GPT-2 generated text: " << session.send(prompt, options).content << endl;
 
         return 0;
     }

@@ -1,0 +1,22 @@
+BERT-Base Uncased pretrained model
+Copyright 2018 The Google AI Language Team Authors.
+
+Original source: https://github.com/google-research/bert
+Licensed under the Apache License, Version 2.0.
+The complete licence accompanies this notice in LICENSE_BERT.txt.
+
+Jacob Devlin, Ming-Wei Chang, Kenton Lee and Kristina Toutanova,
+BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding,
+NAACL-HLT 2019. https://doi.org/10.18653/v1/N19-1423
+
+Artelnics adaptations: conversion to OpenNN binary parameter storage for
+BertForSequenceClassification, a sequence length of 64 and a single-output
+classification head. The OpenNN example fine-tunes this model on the
+separately licensed Amazon/UCI reviews identified in SOURCE.md.
+
+Converted model:
+https://huggingface.co/Artelnics/bert-base-uncased-opennn
+
+This attribution and modification notice was prepared by OpenNN;
+it is not an upstream NOTICE file. Keep it, LICENSE_BERT.txt and SOURCE.md
+with redistributed copies of the converted weights and vocabulary.

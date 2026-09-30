@@ -266,8 +266,9 @@ batch capacity.
 
 ## Examples and benchmarks
 
-- When changing example targets or dependencies, update the catalog in
-  `examples/README.md`. Run data-dependent examples from the executable directory.
+- When changing an example, its data, targets or dependencies, update the catalog
+  in `examples/README.md` and the affected `data/SOURCE.md` notices. Run
+  data-dependent examples from the executable directory.
 - To run every example across the supported device/precision matrix, follow
   [tools/run-opennn-examples/SKILL.md](tools/run-opennn-examples/SKILL.md).
 - Benchmark usage and the measurement contract live in

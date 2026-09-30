@@ -375,7 +375,7 @@ static Index add_bert_encoder(Network& net,
 }
 
 constexpr string_view BERT_BASE_URL =
-    "https://github.com/Artelnics/opennn/releases/download/bert-weights-v1/";
+    "https://huggingface.co/Artelnics/bert-base-uncased-opennn/resolve/main/";
 constexpr string_view BERT_WEIGHTS_FILE = "bert-base-uncased-seq64.bin";
 constexpr string_view BERT_VOCABULARY_FILE = "bert-base-uncased-vocab.txt";
 
@@ -652,7 +652,7 @@ TextGenerationNetwork::TextGenerationNetwork(const filesystem::path& path)
 void TextGenerationNetwork::load_pretrained(const filesystem::path& data_directory)
 {
     constexpr string_view GPT2_BASE_URL =
-        "https://github.com/Artelnics/opennn/releases/download/gpt2-weights-v1/";
+        "https://huggingface.co/Artelnics/gpt2-small-opennn/resolve/main/";
     constexpr string_view GPT2_WEIGHTS_FILE = "gpt2-small-seq256.bin";
 
     download_files_if_missing(

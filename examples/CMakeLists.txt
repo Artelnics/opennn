@@ -36,7 +36,7 @@ foreach(example
     bert
     breast_cancer
     concrete
-    ecg5000_anomaly_detection
+    electrocardiogram_anomaly_detection
     emotion_analysis
     gpt2
     iris_plant

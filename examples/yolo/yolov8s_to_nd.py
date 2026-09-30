@@ -2,6 +2,13 @@
 """
 Convert official YOLOv8s backbone + neck weights into the opennn binary format.
 
+This converter is OpenNN code under LGPL-2.1-or-later. Ultralytics checkpoints
+and dependencies retain their upstream terms (AGPL-3.0 unless separately
+licensed); conversion does not relicense the output as LGPL. See data/SOURCE.md
+and data/LICENSE_ULTRALYTICS.txt for provenance and redistribution requirements.
+When the requested checkpoint file is missing, the converter uses Ultralytics
+to download yolov8s.pt.
+
 What transfers:
   - Backbone (model.0–model.9 incl. SPPF): all weights
   - Neck C2f + PAN convs (model.12, 15, 16, 18, 19, 21): all weights

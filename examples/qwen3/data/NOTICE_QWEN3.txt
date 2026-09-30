@@ -1,0 +1,23 @@
+Qwen3-0.6B and Qwen3-4B pretrained models
+Copyright 2024 Alibaba Cloud.
+
+Original sources:
+https://huggingface.co/Qwen/Qwen3-0.6B
+https://huggingface.co/Qwen/Qwen3-4B
+
+Licensed under the Apache License, Version 2.0.
+The complete original licence accompanies this notice in LICENSE_QWEN3.txt.
+Credit: Qwen Team, Qwen3 Technical Report, 2025.
+https://arxiv.org/abs/2505.09388
+
+Artelnics adaptations: flat OpenNN binary parameter ordering and alignment,
+BF16/FP32 representations, tokenizer JSON serialization, special-token TSV
+export and OpenNN's reserved padding-token index at load time.
+
+Converted sources:
+https://huggingface.co/Artelnics/qwen3-0.6b-opennn
+https://huggingface.co/Artelnics/qwen3-4b-opennn
+
+This attribution and modification notice was prepared by OpenNN;
+it is not an upstream NOTICE file. Keep it, LICENSE_QWEN3.txt and SOURCE.md
+with redistributed copies of the converted weights and tokenizer files.

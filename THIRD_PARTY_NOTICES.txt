@@ -85,32 +85,67 @@ Users are responsible for complying with the licence of any weights they
 download; Artelnics sublicenses none of them.
 
 GPT-2
-  Downloaded from github.com/Artelnics/opennn/releases/download/gpt2-weights-v1/
-  Hosted by Artelnics, converted from the original release.
+  Downloaded from huggingface.co/Artelnics/gpt2-small-opennn
+  Hosted by Artelnics, converted from OpenAI's GPT-2 Small release.
+  Modified MIT License; Software Copyright (c) 2019 OpenAI.
+  https://github.com/openai/gpt-2/blob/9b63575ef42771a015060c964af2c3da4cf7c8ab/LICENSE
+  The complete original text, including its generated-content paragraphs, is
+  preserved in examples/gpt2/data/LICENSE_GPT2.txt. Keep that licence and the
+  adjacent SOURCE.md notice with redistributed weights and tokenizer files;
+  substituting a generic MIT text omits the original release's additions.
 
 BERT
-  Downloaded from github.com/Artelnics/opennn/releases/download/bert-weights-v1/
-  Hosted by Artelnics, converted from the original release.
+  Downloaded from huggingface.co/Artelnics/bert-base-uncased-opennn
+  Hosted by Artelnics, converted from Google's BERT-Base Uncased release.
+  Apache License 2.0; Copyright 2018 The Google AI Language Team Authors.
+  https://github.com/google-research/bert/blob/eedf5716ce1268e56f0a50264a88cafad334ac61/LICENSE
+  The complete licence is preserved in examples/bert/data/LICENSE_BERT.txt.
+  Keep it, NOTICE_BERT.txt (attribution and modifications) and SOURCE.md
+  with redistributed weights and vocabulary. The example's Amazon review
+  data is separately licensed under CC BY 4.0, as recorded in SOURCE.md.
 
 Qwen3 0.6B
   Downloaded from huggingface.co/Artelnics/qwen3-0.6b-opennn
-  Hosted by Artelnics, converted from the original release.
+  Hosted by Artelnics, converted from Qwen/Qwen3-0.6B.
+  Apache License 2.0; Copyright 2024 Alibaba Cloud.
+  https://huggingface.co/Qwen/Qwen3-0.6B/blob/c1899de289a04d12100db370d81485cdf75e47ca/LICENSE
 
 Qwen3 4B
   Downloaded from huggingface.co/Artelnics/qwen3-4b-opennn
-  Hosted by Artelnics, converted from the original release.
+  Hosted by Artelnics, converted from Qwen/Qwen3-4B.
+  Apache License 2.0; Copyright 2024 Alibaba Cloud.
+  https://huggingface.co/Qwen/Qwen3-4B/blob/1cfa9a7208912126459214e8b04321603b3df60c/LICENSE
+  Both variants use the identical original licence preserved in
+  examples/qwen3/data/LICENSE_QWEN3.txt. Keep it, NOTICE_QWEN3.txt and
+  SOURCE.md with redistributed weights and tokenizer files.
 
 YOLOv4 backbone, yolov4.conv.137
   Downloaded from github.com/AlexeyAB/darknet/releases/
-  Hosted by the darknet project.
+  Hosted by the Darknet project under its custom YOLO public-domain declaration.
+  Preserve the original text in examples/yolo/data/LICENSE_DARKNET.txt.
+  The release-weight clarification and reviewed file digest are recorded in
+  examples/yolo/data/SOURCE.md. This is not the MIT licence or the Unlicense.
+
+Darknet53 backbone, darknet53.conv.74
+  Downloaded from pjreddie.com/media/files/
+  Hosted by Joseph Redmon. The project declares Darknet public domain;
+  a separate confirmation for this externally hosted checkpoint was not found.
+  See examples/yolo/data/SOURCE.md before redistributing it.
 
 YOLOv3-tiny, yolov3-tiny.weights
   Downloaded from pjreddie.com/media/files/
-  Hosted by the original author.
+  Hosted by Joseph Redmon, with the same recorded checkpoint-licence limitation
+  as darknet53.conv.74. No Darknet weights are bundled with OpenNN.
 
 examples/yolo/yolov8s_to_nd.py converts an Ultralytics YOLOv8 checkpoint that
-the user supplies. The script is OpenNN's own code and contains no Ultralytics
-code, but it imports the ultralytics package at run time, and Ultralytics
-licenses both its package and its published checkpoints under AGPL-3.0. Neither
-the script's output nor any YOLOv8 checkpoint is distributed with OpenNN, and
-the library's own YOLO path uses the darknet backbones above.
+the user supplies, or downloads yolov8s.pt through the ultralytics package when
+the requested file is missing. The script is OpenNN's own code; its dependencies
+and imported weights have their own terms. Ultralytics declares its package
+and trained checkpoints subject to AGPL-3.0, with a commercial licence option.
+The yolo example can also import a supplied yolov8s.onnx. Exporting these
+weights to ONNX or OpenNN binary format does not replace their upstream licence
+with LGPL. Preserve applicable notices and satisfy corresponding-source and
+deployment requirements, or the actual terms of a separate commercial licence.
+Neither converted output nor YOLOv8 checkpoints are distributed with OpenNN.
+The complete original AGPL text is in examples/yolo/data/LICENSE_ULTRALYTICS.txt;
+SOURCE.md records source revisions, adaptations and external dataset terms.

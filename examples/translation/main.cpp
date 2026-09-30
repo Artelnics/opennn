@@ -27,7 +27,8 @@ int main()
         Configuration::instance().set(Device::CUDA, Type::FP32);
 
         TextDataset dataset({.task = TextDataset::Task::SequenceToSequence});
-        dataset.read_txt("../data/translation/ES-EN-small.txt");
+        // Tatoeba/ManyThings sentences, CC BY 2.0 France; see data/SOURCE.md.
+        dataset.read_txt("../data/translation/tatoeba_es_en.tsv");
 
         Transformer transformer(dataset.get_input_shape()[0],
                                 dataset.get_shape(VariableRole::Decoder)[0],
@@ -43,7 +44,7 @@ int main()
         training.train();
 
         ChatSession session(transformer);
-        const string source = "yo tengo hambre";
+        const string source = "Vete.";
 
         cout << "Translation of '" << source << "': "
              << session.send(source).content << endl;

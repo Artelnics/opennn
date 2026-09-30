@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   E C G 5 0 0 0   A N O M A L Y   D E T E C T I O N
+//   E L E C T R O C A R D I O G R A M   A N O M A L Y   D E T E C T I O N
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
@@ -9,6 +9,8 @@
 // An autoencoder learns to reconstruct normal heartbeats. A heartbeat raises an
 // alert when its reconstruction error reaches the mean plus one standard
 // deviation of the errors on the normal training heartbeats.
+// Data: 5,000 heartbeats derived from PhysioNet's BIDMC chf07 recording
+// under ODC-By 1.0 (see data/SOURCE.md).
 
 #include <fstream>
 #include <iomanip>
@@ -30,7 +32,7 @@ int main()
 {
     try
     {
-        cout << "OpenNN. ECG5000 anomaly detection example." << endl;
+        cout << "OpenNN. Electrocardiogram anomaly detection example." << endl;
 
         set_seed(21);
 
@@ -40,7 +42,7 @@ int main()
 
         const Index signal_size = 140;
 
-        TabularDataset dataset("../data/ecg5000_anomaly_detection/ecg.csv", ",", false, false);
+        TabularDataset dataset("../data/electrocardiogram_anomaly_detection/chf07_heartbeats.csv", ",", false, false);
 
         const Index samples_number = dataset.get_samples_number();
         const MatrixR raw_data = dataset.get_data();
@@ -48,7 +50,7 @@ int main()
 
         // The 1,000 testing rows are listed in a file; the other rows are for development.
 
-        ifstream test_indices_file("../data/ecg5000_anomaly_detection/test_indices.csv");
+        ifstream test_indices_file("../data/electrocardiogram_anomaly_detection/test_indices.csv");
         if (!test_indices_file) throw runtime_error("Cannot open test_indices.csv.");
 
         vector<bool> is_testing(size_t(samples_number), false);

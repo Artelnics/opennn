@@ -1,17 +1,21 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   B E R T   S S T - 2   E X A M P L E
+//   B E R T   S E N T I M E N T   E X A M P L E
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-//   Fine-tunes a pretrained BERT (bert-base-uncased) for binary sentiment on SST-2.
+//   Fine-tunes a pretrained BERT (bert-base-uncased) on 1,000 Amazon reviews
+//   from UCI Sentiment Labelled Sentences (CC BY 4.0; see data/SOURCE.md).
+//   Model and vocabulary: Apache 2.0; preserve data/LICENSE_BERT.txt,
+//   data/NOTICE_BERT.txt and data/SOURCE.md with redistributed model files.
 //   The pretrained factory downloads and loads the matching architecture, weights,
 //   and WordPiece vocabulary.
 //
-//   usage: bert [sst2.txt] [model_dir]
-//     sst2.txt    text<TAB>label file (default: bundled ../data/bert/sst2.txt)
+//   usage: bert [reviews.txt] [model_dir]
+//     reviews.txt text<TAB>label file
+//                 (default: bundled ../data/bert/amazon_cells_labelled.txt)
 //     model_dir   pretrained model cache (default: ../data/bert)
 
 #include <iostream>
@@ -30,9 +34,9 @@ int main(int argc, char* argv[])
 {
     try
     {
-        cout << "OpenNN. BERT SST-2 example." << endl;
+        cout << "OpenNN. BERT Amazon reviews example." << endl;
 
-        const string text_path = argc > 1 ? argv[1] : "../data/bert/sst2.txt";
+        const string text_path = argc > 1 ? argv[1] : "../data/bert/amazon_cells_labelled.txt";
         const string model_directory = argc > 2 ? argv[2] : "../data/bert";
 
         Configuration::instance().set(Device::Auto, Type::FP32);
