@@ -1282,8 +1282,9 @@ void Loss::set_normalization_coefficient()
     {
         const auto& layers = network->get_layers();
         const Index last_trainable = network->get_last_trainable_layer_index();
-        throw_if(layers[last_trainable]->get_output_activation() != ActivationFunction::Softmax,
-                 "Cross-entropy error with multiple target features requires a softmax output layer.");
+        const ActivationFunction activation = layers[last_trainable]->get_output_activation();
+        throw_if(activation != ActivationFunction::Softmax && activation != ActivationFunction::Sigmoid,
+                 "Cross-entropy error with multiple target features requires a softmax or sigmoid output layer.");
     }
 }
 
@@ -1370,6 +1371,16 @@ Loss::EvaluationResult Loss::calculate_yolo(const ForwardPropagation& forward_pr
 
 #endif
 
+bool Loss::uses_binary_cross_entropy(const TensorView& input) const
+{
+    if (input.get_shape().back() == 1)
+        return true;
+
+    return network
+        && network->get_layers()[network->get_last_trainable_layer_index()]->get_output_activation()
+           == ActivationFunction::Sigmoid;
+}
+
 Index Loss::error_workspace_floats(const TensorView& input) const
 {
     return (error == Error::CrossEntropy3d)
@@ -1428,7 +1439,7 @@ Loss::EvaluationResult Loss::calculate_error(const Batch& batch,
         result.error *= get_weighted_coefficient(batch);
         break;
     case CrossEntropy:
-        cross_entropy(input, target, result.error, workspace_device);
+        cross_entropy(input, target, result.error, workspace_device, uses_binary_cross_entropy(input));
         break;
     case CrossEntropy3d:
     {
@@ -1547,7 +1558,7 @@ bool Loss::calculate_error_device_metrics(const Batch& batch,
     case CrossEntropy:
         input.dispatch([&]<typename T>()
         {
-            if (input.get_shape().back() == 1)
+            if (uses_binary_cross_entropy(input))
                 binary_cross_entropy_cuda<T>(input.size(), workspace, target.as<float>(), input.as<T>(), EPSILON);
             else
                 categorical_cross_entropy_cuda<T>(input.size(), workspace, target.as<float>(), input.as<T>(), EPSILON);
@@ -1715,7 +1726,7 @@ void Loss::calculate_output_deltas(const Batch& batch, const ForwardPropagation&
         weighted_squared_error_gradient(input, target, positives_weight, negatives_weight, get_weighted_coefficient(batch), input_delta);
         break;
     case CrossEntropy:
-        cross_entropy_gradient(input, target, input_delta);
+        cross_entropy_gradient(input, target, input_delta, uses_binary_cross_entropy(input));
         break;
     case CrossEntropy3d:
         cross_entropy_3d_gradient(input, target, input_delta, back_propagation.metrics.active_tokens_count);

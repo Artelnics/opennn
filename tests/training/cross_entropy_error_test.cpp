@@ -62,6 +62,53 @@ TEST(CrossEntropyError2d, BackPropagate)
 
 }
 
+TEST(CrossEntropyError2d, BackPropagateMultiLabelSigmoid)
+{
+    const Index samples_number = random_integer(2, 10);
+
+    const Index inputs_number = random_integer(1, 10);
+    const Index targets_number = random_integer(2, 5);
+
+    TabularDataset dataset(samples_number, { inputs_number }, { targets_number });
+
+    dataset.set_data_random();
+
+    dataset.set_sample_roles("Training");
+
+    Network network;
+    network.add_layer(make_unique<opennn::Dense>(Shape{ inputs_number }, Shape{ targets_number }, "Sigmoid"));
+    network.compile();
+
+    network.set_parameters_random();
+
+    Loss loss(&network, &dataset);
+    loss.set_error(Loss::Error::CrossEntropy);
+
+    const VectorR gradient = calculate_gradient(loss);
+
+    const VectorR numerical_gradient = calculate_numerical_gradient(loss);
+
+    EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(1.0e-3));
+}
+
+TEST(CrossEntropyError2d, MultipleTargetsRejectTanhOutput)
+{
+    TabularDataset dataset(4, { 2 }, { 3 });
+
+    dataset.set_data_random();
+
+    dataset.set_sample_roles("Training");
+
+    Network network;
+    network.add_layer(make_unique<opennn::Dense>(Shape{ 2 }, Shape{ 3 }, "Tanh"));
+    network.compile();
+
+    Loss loss(&network, &dataset);
+    loss.set_error(Loss::Error::CrossEntropy);
+
+    EXPECT_ANY_THROW(loss.set_normalization_coefficient());
+}
+
 TEST(CrossEntropyError2d, CalculateError)
 {
     TabularDataset dataset(5, { 3 }, { 1 });
