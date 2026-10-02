@@ -36,6 +36,134 @@ checked by `tools/check_architecture.py`. Retain the optional FlashAttention shi
 For response repair, preserve float/double return-point feasibility checks and
 constraint-container lifetimes; a failed repair does not prove infeasibility.
 
+## Code conventions
+
+### Naming
+
+| Category | Convention | Example |
+| --- | --- | --- |
+| Classes and enums | PascalCase; concrete layers are `final` | `class Convolutional final : public Layer` |
+| Enum values | PascalCase | `Device::CPU`, `Type::FP32`, `ActivationFunction::LeakyReLU` |
+| Member variables | `lowercase_with_underscores`, no prefix, initialized inline | `Index output_features = 0;` |
+| Methods | `lowercase_with_underscores`; `get_`/`set_` for properties | `get_output_shape()`, `set_label()` |
+| Files | `lowercase_with_underscores.h/.cpp`, paired | `dense_layer.h`, `dense_layer.cpp` |
+| Type aliases | Suffix encodes content: `R`=`float`, `I`=`Index`, `B`=`bool`, `Map`=mapped view | `MatrixR`, `VectorI`, `TensorMapR<Rank>` |
+| Constants | `UPPER_CASE` `constexpr` | `POS_INFINITY`, `ALIGN_BYTES` |
+| Template rank params | `Rank` (semantic); generic types `T`, `TIn`, `TOut` | `template <int Rank>` |
+
+### Tensor and matrix types
+
+All owned storage uses row-major layout: `constexpr int Layout = Eigen::RowMajor`.
+
+```cpp
+// Matrix aliases  (opennn_types.h)
+MatrixR   // Eigen::Matrix<float, Dynamic, Dynamic, RowMajor>
+MatrixI   // …<Index, …>
+VectorR   // Eigen::Matrix<float, Dynamic, 1>
+VectorMap // Eigen::Map<VectorR, AlignedMax>
+
+// Tensor aliases  (opennn_types.h)
+Tensor0 … Tensor4           // Eigen::Tensor<float, N, Layout|AlignedMax>
+TensorR<Rank>               // rank-generic owned tensor
+TensorMapR<Rank>            // rank-generic non-owning map into host memory
+```
+
+`TensorView` (`tensor_types.h`) is the runtime handle: `void* data + Shape + Type + Device`.
+Convert at call sites via `tv.as_matrix()`, `tv.as_vector()` or `tv.as_tensor<Rank>()`.
+`Shape` holds up to four `Index` dims plus a rank field; grow it with `push_back` or `append`.
+`Index` is `Eigen::Index` (64-bit signed).
+
+Never use raw `Eigen::Tensor<float, N>` in new code without the `Layout|AlignedMax` flags.
+
+### Layer class structure
+
+All layers derive from `Layer` (`opennn/network/layers/layer.h`).
+
+Key virtual methods to override:
+
+```cpp
+Shape get_output_shape() const override;          // pure virtual – always required
+vector<TensorSpec> get_parameter_specs() const;   // learnable parameters
+vector<TensorSpec> get_state_specs() const;       // persistent state (e.g. BN stats)
+vector<TensorSpec> get_forward_specs(Index batch_size) const;   // intermediate slot shapes
+vector<TensorSpec> get_backward_specs(Index batch_size) const;  // input-delta slot shapes
+```
+
+Propagation delegates to owned `Operator*` objects in order (forward) and reverse (backward):
+
+```cpp
+void forward_propagate(ForwardPropagation& fp, size_t layer, ForwardPropagationMode pass) override;
+void back_propagate(ForwardPropagation& fp, BackPropagation& bp, size_t layer) const override;
+```
+
+Operators are stored in `protected vector<Operator*> operators` and registered in the
+constructor (e.g. `operators = {&combination, &batch_norm, &activation_operator, &dropout}`).
+Use a private `enum Forward { Input, CombinationView, ..., Output }` to name slot indices;
+never use magic numbers.
+
+Constructors must pass `LayerType` to `Layer(type, trainability)`.
+
+### ForwardPropagation and BackPropagation
+
+`ForwardPropagation` (`network/forward_propagation.h`) owns a single `Buffer arena` for
+all intermediate activations. Per-layer slot tensors are `TensorView` pointers into this
+arena. Access layer inputs via `fp.inputs[layer][ordinal]` and intermediate slots via
+`fp.slots[layer][slot_idx]`.
+
+`BackPropagation` (`network/back_propagation.h`) owns a joint gradient `Buffer gradient`
+and a `Buffer arena` for intermediate deltas. Use `bp.output_deltas[layer]` for the loss
+gradient w.r.t. a layer's output; write input deltas into `bp.slots[layer][...]`.
+
+Operators receive `(ForwardPropagation&, size_t layer_index, ...)` and route their I/O
+via `input_slots` / `output_slots` index vectors declared on each operator.
+
+### Tests
+
+Tests live under `tests/`, organized by library module.  Every test file is named
+`{feature}_test.cpp`.  Framework is GoogleTest; the `pch.h` precompiled header is in
+`tests/common/`.
+
+```cpp
+#include "tests/common/pch.h"
+#include "opennn/<module>/...h"
+using namespace opennn;
+
+TEST(SuiteName, CaseName) {
+    // arrange
+    // act
+    // assert with EXPECT_* or ASSERT_*
+    EXPECT_LT((result.array() - expected.array()).abs().maxCoeff(), type(1e-6));
+}
+```
+
+### Numerical gradient testing
+
+Use the helpers in `tests/common/numerical_derivatives.h` to validate analytical gradients:
+
+```cpp
+VectorR analytical  = calculate_gradient(loss);
+VectorR numerical   = calculate_numerical_gradient(loss);
+// Compare element-wise; typical tolerance 1e-3 relative.
+```
+
+`calculate_h(x)` computes the finite-difference step `1e-3 * (1 + |x|)`.
+Always call `require_live_parameters(network)` before the gradient comparison to ensure
+no dead parameters produce a spurious all-zero match.
+
+### CMake
+
+Sources are collected with `file(GLOB_RECURSE … CONFIGURE_DEPENDS "*.cpp")` in
+`opennn/CMakeLists.txt`; add new `.cpp` files there automatically.  Vision/sequence
+sources are excluded when `OpenNN_BUILD_VISION=OFF` via a regex filter — keep new layer
+files in the right module folder so the filter works without modification.
+
+CUDA availability is detected with `check_language(CUDA)` and guarded by
+`OpenNN_DISABLE_CUDA`; wrap CUDA-specific code in `#ifdef OPENNN_HAS_CUDA`.
+External dependencies (Eigen, GoogleTest, cuDNN frontend) are provided via
+`FetchContent` with a `find_package` fast path; do not vendor them manually.
+
+The minimum standard is C++20 (`cxx_std_20`); use it freely.
+
 ## Build options
 
 Use [CMakePresets.json](CMakePresets.json) from the repository root. Ninja builds
