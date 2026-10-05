@@ -57,7 +57,7 @@ environment variables, not in repository files.
 | `opennn/training/` | `Training` (`training.h`), losses and optimizers such as `Adam` and `SGD`. |
 | `opennn/evaluation/` | `Evaluation` (`evaluation.h`) for prediction-quality analysis. |
 | `opennn/model_selection/` | Input and network-size selection. |
-| `opennn/response_optimization/` | Optimization of inputs subject to model outputs and constraints (`response_optimization.h`); feasibility repair is internal to `FeasibilityRepairSystem`. |
+| `opennn/response_optimization/` | Optimization of inputs subject to model outputs and constraints (`response_optimization.h`); numerical repair lives in `feasibility_repair_system.h/.cpp`. |
 
 `core` is the foundation. `network` and `models` define computation; datasets
 feed training, and evaluation and selection use those interfaces. This is not a
@@ -133,6 +133,17 @@ CMake. oneTBB and oneDNN are optional detected CPU dependencies, and MKL is
 explicitly opt-in. GoogleTest is needed only for tests. CUDA builds add NVIDIA
 runtime dependencies and the fetched cuDNN frontend. Versions and licences are
 listed in [THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt).
+
+Gauss–Newton is available through `FeasibilityRepairSystem::Solver::GaussNewton`
+using Eigen, with no additional dependency. It takes minimum-norm steps in
+input-span coordinates and clips them to the domain; LM remains the default.
+Both repair backends share rounds, per-round evaluation limits (excluding
+numerical probes), tolerance, margin and final discrete/feasibility checks.
+Both use analytical constraint Jacobians for supported CPU FP32 sequential
+dense networks, including common activations, affine scaling/unscaling and
+clamping. This logic stays in `response_optimization`; unsupported networks,
+unusable derivatives and nonsmooth boundaries use finite differences.
+There is no automatic solver fallback. A failed repair does not prove infeasibility.
 
 `PORTABLE` removes only explicit host-specific ISA flags (`-march=native`,
 `/arch:AVX2` or the Apple Silicon target). It does not change tensor layouts,
@@ -464,6 +475,25 @@ includes to `opennn/network/`, `opennn/training/` and `opennn/evaluation/`. JSON
 saved by those snapshots only needs the root keys renamed (`"NeuralNetwork"` to
 `"Network"`, `"TrainingStrategy"` to `"Training"`) and the optimizer names from the
 table above; its parameter file stays paired and unchanged.
+
+The `ResponseOptimization::Objectives` helper has been removed; use
+`get_advised_point()` to select a compromise from optimization results.
+Fixed objectives now score distance to their target during that selection.
+The singular `ResponseOptimization::Objective` type remains available.
+The unused `get_objectives_number()`, `clear_objectives()` and `is_objective()`
+members have also been removed.
+The protected `ResponseOptimization::solve(VectorR)` is now
+`get_feasible_points(VectorR)`. It still repairs one candidate and returns its
+input/output pair, or an empty pair on failure. `FeasibilityRepairSystem::solve()`
+retains its name.
+
+`FeasibilityRepairSystem` now borrows a `span<const ResponseOptimization::Constraint>`
+instead of building a separate `Equation` representation. Keep the constraint container
+alive and unchanged while repair uses it; pass a named container rather than a temporary.
+`Constraint` owns value validation, bounds calculation and discrete-column identification;
+`Objective::evaluate_score()` owns minimization, maximization and fixed-target scoring.
+The final repair constructor argument is the discrete constraint tolerance, independent
+of the numerical tolerance and feasibility margin.
 
 ## Release
 

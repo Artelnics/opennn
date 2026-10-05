@@ -98,7 +98,7 @@ pair<MatrixR, MatrixR> GeneticResponse::initialize_population(const pair<VectorR
     while (i < attempts_limit && feasible_number < points_number
         && (maximum_consecutive_failures == 0 || consecutive_failures < maximum_consecutive_failures))
     {
-        const auto [input, output] = solve(calculate_random_input(domain));
+        const auto [input, output] = get_feasible_points(calculate_random_input(domain));
         i++;
 
         if (input.size() == 0)
@@ -252,7 +252,7 @@ MatrixR GeneticResponse::recombinate_population(const MatrixR& parent_inputs,
              || (maximum_consecutive_failures > 0 && consecutive_failures >= maximum_consecutive_failures))
                 break;
 
-            const VectorR input = solve(move(*child)).first;
+            const VectorR input = get_feasible_points(move(*child)).first;
             i++;
 
             if (input.size() == 0)
@@ -302,7 +302,7 @@ pair<MatrixR, MatrixR> GeneticResponse::mutate_population(const MatrixR& offspri
 
         mutate_individual(child, domain);
 
-        const auto [input, output] = solve(move(child));
+        const auto [input, output] = get_feasible_points(move(child));
         i++;
 
         if (input.size() == 0)

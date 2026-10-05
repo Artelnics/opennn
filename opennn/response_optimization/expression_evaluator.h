@@ -54,6 +54,7 @@ struct CompiledExpression
     ExpressionProgram program;
 
     vector<pair<Index, ExpressionProgram>> input_gradient;
+    vector<pair<Index, ExpressionProgram>> output_gradient;
 
     Index symmetric_order = 0;
 
@@ -65,7 +66,6 @@ struct CompiledExpression
 };
 
 
-// Semicolons inside backtick-quoted names are part of the name, not separators.
 vector<string> split_expression_list(const string&);
 
 CompiledExpression compile_expression(const string&,
@@ -95,5 +95,10 @@ void evaluate_input_gradient(const CompiledExpression&,
                              VectorR& gradient);
 
 VectorR evaluate_input_gradient(const CompiledExpression&, const VectorR& point, const VectorR& output);
+
+void evaluate_output_gradient(const CompiledExpression&,
+                              const VectorR& point,
+                              const VectorR& output,
+                              VectorR& gradient);
 
 }

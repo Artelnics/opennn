@@ -1,17 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   S Y N T H E T I C   F I X T U R E
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
-
-// Small untrained networks built on the spot, and the handful of ways the response tests
-// read them. Nothing here is trained: the weights are whatever the constructor gives, so a
-// test may ask where the response goes but never what value it takes.
-//
-// Shared so that the expression tests and the condition tests state a network the same
-// way.
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
 
 #pragma once
 
@@ -30,8 +18,6 @@ using Sense = ResponseOptimization::Objective::Sense;
 using Condition = ResponseOptimization::Constraint::Condition;
 
 
-// The same range for every variable of a layer, which is all the box these tests need.
-
 inline vector<Descriptives> make_descriptives(const Index count, const float minimum, const float maximum)
 {
     return vector<Descriptives>(size_t(count),
@@ -41,8 +27,6 @@ inline vector<Descriptives> make_descriptives(const Index count, const float min
                                              0.25f*(maximum - minimum)));
 }
 
-
-// Numeric inputs in one box, numeric outputs in another.
 
 struct MinimalApproximation
 {
@@ -90,8 +74,6 @@ struct MinimalApproximation
     }
 };
 
-
-// The same, with one categorical input last, so its categories occupy the trailing columns.
 
 struct CategoricalApproximation
 {
@@ -158,9 +140,6 @@ struct CategoricalApproximation
 };
 
 
-// The best response the network gives inside each category, found by scanning. What a
-// search over the categories has to match.
-
 inline vector<float> scan_categories(Network& network,
                                      const Index numeric_number,
                                      const Index categories_number,
@@ -191,8 +170,6 @@ inline vector<float> scan_categories(Network& network,
 }
 
 
-// Which category a result row holds, or -1 if its columns are not one hot.
-
 inline Index read_category(const MatrixR& results,
                            const Index row,
                            const Index numeric_number,
@@ -215,9 +192,6 @@ inline Index read_category(const MatrixR& results,
 }
 
 
-// The median response of an untrained network, and the spread around it. A test that has
-// to name a reachable value asks for it here rather than assuming one.
-
 inline pair<float, float> sample_response(Network& network,
                                           const Index inputs_number,
                                           const float input_minimum,
@@ -239,7 +213,3 @@ inline pair<float, float> sample_response(Network& network,
 
     return {values[values.size()/2], values.back() - values.front()};
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   T O Y   N O N L I N E A R   S Y S T E M   T E S T
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
 
 #include "tests/common/pch.h"
 
@@ -62,9 +57,6 @@ vector<Index> get_group_members(const string& text)
     return members;
 }
 
-
-// The placement the repair makes before solving: the budget largest counted inputs by |x| stay,
-// every other one goes to zero.
 
 VectorR keep_largest(const VectorR& point, vector<Index> members, const Index budget)
 {
@@ -219,7 +211,3 @@ TEST(ToyNonlinearSystem, LevenbergMarquardtReachesTheRoot)
          << "iterations    " << levenberg_marquardt.iterations()
          << ",  evaluations " << levenberg_marquardt.nfev() << "\n";
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

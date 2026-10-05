@@ -120,7 +120,7 @@ pair<MatrixR, MatrixR> DomainContraction::sample_local_domains(
             for (Index j = 0; j < batch; j++)
             {
                 attempts++;
-                const auto [input, output] = solve(calculate_random_input(domain));
+                const auto [input, output] = get_feasible_points(calculate_random_input(domain));
 
                 if (input.size() == 0)
                 {

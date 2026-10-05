@@ -1,24 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   C O N D I T I O N   T E S T S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
-
-// Every condition and objective sense a response optimization understands, stated against
-// a small untrained network and run through both solvers.
-//
-// The networks carry no training, so no case asks what response comes back. Each one asks
-// only where the result may sit: inside the box, on a hyperplane, on a lattice, one hot
-// across a categorical block. That holds whatever the weights are.
-//
-// Cases that are refused before any search starts are grouped first, under
-// ResponseOptimizationSetup. The ones that run are parameterised over both solvers, so a
-// condition that only one of them honours fails here.
-//
-// The expression language the conditions are written in is tested in
-// expression_test.cpp.
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
 
 #include "tests/common/pch.h"
 
@@ -55,8 +36,6 @@ protected:
 };
 
 
-// Reaches the repair without a solver around it.
-
 class RepairProbe : public ResponseOptimization
 {
 public:
@@ -66,7 +45,7 @@ public:
     using ResponseOptimization::calculate_domain;
     using ResponseOptimization::calculate_random_input;
     using ResponseOptimization::input_bounds;
-    using ResponseOptimization::solve;
+    using ResponseOptimization::get_feasible_points;
 
 private:
 
@@ -179,8 +158,6 @@ TEST(ResponseOptimizationSetup, CardinalityNeedsAListOfAtLeastTwoInputs)
     EXPECT_NO_THROW(optimization.add_constraint("x1; x2; x3", Condition::Cardinality, {2.0f}));
 }
 
-
-// The list used to be read as a sum, which quietly dropped coefficients and repeated members.
 
 TEST(ResponseOptimizationSetup, CardinalityRejectsArithmeticInItsList)
 {
@@ -584,7 +561,6 @@ TEST_P(ResponseDriver, SamplingBudgetsLimitFailedRepairs)
 
         const long calls = profiler::stats().call_count("fp:set") - previous_calls;
         profiler::set_enabled(profiling_enabled);
-        // With the only input fixed, each unsuccessful repair needs one inference.
         EXPECT_EQ(calls, expected);
     };
 
@@ -619,7 +595,6 @@ TEST_P(ResponseDriver, FailureLimitPreservesPartialResultsAndResetsAfterSuccess)
         SCOPED_TRACE(interrupted);
         const vector<Index> sequence = interrupted ? vector<Index>{0, 2, 2, 1} : vector<Index>{2, 0, 2, 1};
 
-        // Find the desired successes/failures without assuming a platform's RNG sequence.
         unsigned seed = 0;
         for (; seed < 1024; seed++)
         {
@@ -668,10 +643,10 @@ TEST(Feasibility, RepairBudgetsControlNonlinearRepair)
         probe.set_feasibility_evaluations(1);
         probe.set_feasibility_rounds(1);
 
-        EXPECT_EQ(probe.solve(point).first.size(), 0);
+        EXPECT_EQ(probe.get_feasible_points(point).first.size(), 0);
 
         probe.set_feasibility_evaluations(50);
-        const VectorR repaired = probe.solve(point).first;
+        const VectorR repaired = probe.get_feasible_points(point).first;
         ASSERT_EQ(repaired.size(), 1);
         EXPECT_NEAR(repaired(0), 1.0f, 1e-4f);
 
@@ -679,7 +654,7 @@ TEST(Feasibility, RepairBudgetsControlNonlinearRepair)
         probe.set_feasibility_rounds(10);
         for (const float start : {4.0f, 9.0f})
         {
-            const VectorR retried = probe.solve(VectorR::Constant(1, start)).first;
+            const VectorR retried = probe.get_feasible_points(VectorR::Constant(1, start)).first;
             ASSERT_EQ(retried.size(), 1);
             EXPECT_NEAR(retried(0), 1.0f, 1e-4f);
         }
@@ -702,7 +677,7 @@ TEST(Feasibility, FeasiblePointsPassThroughWithMinimalBudgets)
         if (constrained) probe.add_constraint("x1^2", Condition::Between, {1.0f, 9.0f});
         probe.calculate_domain();
 
-        const auto [input, output] = probe.solve(point);
+        const auto [input, output] = probe.get_feasible_points(point);
         ASSERT_EQ(input.size(), point.size());
         EXPECT_EQ((input - point).squaredNorm(), 0.0f);
         ASSERT_EQ(output.size(), expected_output.size());
@@ -729,7 +704,7 @@ TEST(Feasibility, InputOnlyRepairAvoidsIntermediateNetworkCalls)
         const long previous_calls = profiler::stats().call_count("fp:set");
 
         pair<VectorR, VectorR> result;
-        EXPECT_NO_THROW(result = probe.solve(VectorR::Constant(1, 4.0f)));
+        EXPECT_NO_THROW(result = probe.get_feasible_points(VectorR::Constant(1, 4.0f)));
 
         const long calls = profiler::stats().call_count("fp:set") - previous_calls;
         profiler::set_enabled(profiling_enabled);
@@ -759,15 +734,14 @@ TEST(Feasibility, OutputCoupledRepairReturnsOutputAtTheRepairedPoint)
     probe.add_constraint("x1^2", Condition::Equal, {1.0f});
     probe.calculate_domain();
 
-    // Adding the output row between solves must update which expressions need inference.
-    ASSERT_EQ(probe.solve(VectorR::Constant(1, 4.0f)).first.size(), 1);
+    ASSERT_EQ(probe.get_feasible_points(VectorR::Constant(1, 4.0f)).first.size(), 1);
     probe.add_constraint("x1^2 + y", Condition::Equal, {1.0f + target});
     probe.calculate_domain();
 
     for (const float start : {4.0f, 10.0f})
     {
         SCOPED_TRACE(start);
-        const auto [input, output] = probe.solve(VectorR::Constant(1, start));
+        const auto [input, output] = probe.get_feasible_points(VectorR::Constant(1, start));
 
         ASSERT_EQ(input.size(), 1);
         ASSERT_EQ(output.size(), 1);
@@ -800,12 +774,12 @@ TEST(Feasibility, CopiesKeepTheirOwnConstraints)
     {
         SCOPED_TRACE(copy == &copied ? "copy construction" : "copy assignment");
 
-        const auto [input, output] = copy->solve(point);
+        const auto [input, output] = copy->get_feasible_points(point);
         ASSERT_EQ(input.size(), point.size());
         EXPECT_EQ((input - point).squaredNorm(), 0.0f);
         EXPECT_EQ(output.size(), 1);
 
-        const VectorR repaired = copy->solve(VectorR::Constant(2, 4.0f)).first;
+        const VectorR repaired = copy->get_feasible_points(VectorR::Constant(2, 4.0f)).first;
         ASSERT_EQ(repaired.size(), point.size());
         EXPECT_NEAR(repaired.sum(), 5.0f, 1e-4f);
     }
@@ -833,7 +807,7 @@ TEST(Feasibility, RepeatedRoundedCycleStopsBeforeTheRoundBudget)
         const long previous_calls = profiler::stats().call_count("fp:set");
 
         pair<VectorR, VectorR> result;
-        EXPECT_NO_THROW(result = probe.solve(VectorR::Zero(1)));
+        EXPECT_NO_THROW(result = probe.get_feasible_points(VectorR::Zero(1)));
 
         calls.push_back(profiler::stats().call_count("fp:set") - previous_calls);
         profiler::set_enabled(profiling_enabled);
@@ -841,14 +815,10 @@ TEST(Feasibility, RepeatedRoundedCycleStopsBeforeTheRoundBudget)
         EXPECT_EQ(result.second.size(), 0);
     }
 
-    // Each short LM step rounds to the other endpoint: 0 -> 1 -> 0.
     EXPECT_GT(calls[1], calls[0]);
     EXPECT_EQ(calls[2], calls[1]);
 }
 
-
-// The repair on its own, from random starts: whatever it returns has at most k counted inputs
-// that are not exactly zero, alone and beside a budget row that couples every counted input.
 
 TEST(CardinalityRepair, ReturnsOnlyKSparsePoints)
 {
@@ -888,7 +858,7 @@ TEST(CardinalityRepair, ReturnsOnlyKSparsePoints)
 
                 for (Index draw = 0; draw < 50; draw++)
                 {
-                    const auto [input, output] = probe.solve(probe.calculate_random_input(domain));
+                    const auto [input, output] = probe.get_feasible_points(probe.calculate_random_input(domain));
 
                     if (input.size() == 0) continue;
 
@@ -907,10 +877,6 @@ TEST(CardinalityRepair, ReturnsOnlyKSparsePoints)
 }
 
 
-// The row measures each member as a share of its range, so the cut must too. Ranked by raw
-// value instead, a narrow-range member near the top of its range loses to a wide-range member
-// near the bottom of its own, and the members a narrow range holds are the ones discarded.
-
 TEST(CardinalityRepair, CutRanksMembersByTheirShareOfTheirRange)
 {
     MinimalApproximation setup({"x1", "x2", "x3", "x4"}, {"y"});
@@ -926,7 +892,7 @@ TEST(CardinalityRepair, CutRanksMembersByTheirShareOfTheirRange)
     VectorR point(4);
     point << 10.0f, 10.0f, 0.9f, 0.9f;
 
-    const auto [input, output] = probe.solve(point);
+    const auto [input, output] = probe.get_feasible_points(point);
 
     ASSERT_EQ(input.size(), 4);
     EXPECT_EQ(input(0), 0.0f) << "x1 holds 10% of its range and should have been cut";
@@ -935,13 +901,6 @@ TEST(CardinalityRepair, CutRanksMembersByTheirShareOfTheirRange)
     EXPECT_GT(input(3), 0.0f) << "x4 holds 90% of its range and should have been kept";
 }
 
-
-// A search that contracts its box around an incumbent can leave a counted member with a range
-// that excludes zero. Cutting that member then does nothing, because the box puts it straight
-// back. On a small group the row notices, but the row averages over every subset one larger than
-// the budget, C(18, 5) = 8568 of them here, so a single member put back at a tenth of its range
-// sits inside the band. Four members at half their range and x18 at 1 give
-// sqrt((0.5^4 * 0.1)^2 / 8568) / 1e-3, about 0.07. The count has to hold at the cut itself.
 
 TEST(CardinalityRepair, CutKeepsMembersTheBoxCannotSwitchOff)
 {
@@ -963,16 +922,13 @@ TEST(CardinalityRepair, CutKeepsMembersTheBoxCannotSwitchOff)
     point.head(4).setConstant(5.0f);
     point(17) = 1.0f;
 
-    const auto [input, output] = probe.solve(point);
+    const auto [input, output] = probe.get_feasible_points(point);
 
     ASSERT_EQ(input.size(), 18) << "keeping x18 and three others is feasible, so a point is expected";
     EXPECT_LE((input.array() != 0.0f).count(), 4) << "more than the budget in play: " << input.transpose();
     EXPECT_GE(input(17), 1.0f) << "x18 cannot leave [1, 10], so it has to be one of the four kept";
 }
 
-
-// When more members than the budget cannot be switched off, no rounding can satisfy the count,
-// and the honest answer is no point rather than one with too many in play.
 
 TEST(CardinalityRepair, TooManyMembersTheBoxCannotSwitchOffIsInfeasible)
 {
@@ -988,7 +944,7 @@ TEST(CardinalityRepair, TooManyMembersTheBoxCannotSwitchOffIsInfeasible)
     VectorR point(3);
     point << 5.0f, 4.0f, 2.0f;
 
-    EXPECT_EQ(probe.solve(point).first.size(), 0) << "two members cannot be off and the budget is one";
+    EXPECT_EQ(probe.get_feasible_points(point).first.size(), 0) << "two members cannot be off and the budget is one";
 }
 
 
@@ -1227,9 +1183,6 @@ TEST_P(ResponseDriver, CategoricalSearchMatchesAScanOverCategories)
 }
 
 
-// An expression that is undefined over the whole box, or that overflows on it, leaves no
-// feasible point to repair towards, and the run has to say so rather than return a number.
-
 TEST_P(ResponseDriver, RejectsUndefinedAndOverflowedConstraints)
 {
     for (const bool overflow : {false, true})
@@ -1353,7 +1306,7 @@ TEST(ResponseOptimizationSetup, RejectsCategoricalBoundsWithoutAOneHotAssignment
     {
         VectorR point = VectorR::Zero(3);
         point(category) = 0.8f;
-        const VectorR repaired = probe.solve(point).first;
+        const VectorR repaired = probe.get_feasible_points(point).first;
         ASSERT_EQ(repaired.size(), 3);
         EXPECT_FLOAT_EQ(repaired(category), 1.0f);
         EXPECT_FLOAT_EQ(repaired.sum(), 1.0f);
@@ -1419,7 +1372,7 @@ TEST(Feasibility, RejectsNonFiniteNetworkOutputsWithoutOutputConstraints)
     RepairProbe probe(setup.network.get());
     probe.add_objective("x1", Sense::Maximize);
     probe.calculate_domain();
-    EXPECT_EQ(probe.solve(VectorR::Constant(1, 5.0f)).first.size(), 0);
+    EXPECT_EQ(probe.get_feasible_points(VectorR::Constant(1, 5.0f)).first.size(), 0);
 }
 
 
@@ -1436,7 +1389,7 @@ TEST(Feasibility, AllowedExpressionsUseDistanceToTheNearestValue)
             probe.add_constraint(coupled ? "x1 + x2 + y" : "x1 + x2",
                                  Condition::AllowedSet, {0.0f, 1.0f, 10000000.0f});
             probe.calculate_domain();
-            const auto [input, output] = probe.solve(VectorR::Constant(2, 0.25f));
+            const auto [input, output] = probe.get_feasible_points(VectorR::Constant(2, 0.25f));
             if (fixed)
                 EXPECT_EQ(input.size(), 0);
             else
@@ -1455,7 +1408,7 @@ TEST(Feasibility, LargeIntegersRemainFeasibleAfterRounding)
     RepairProbe probe(setup.network.get());
     probe.add_constraint("x1", Condition::Integer);
     probe.calculate_domain();
-    const VectorR repaired = probe.solve(VectorR::Constant(1, 1000003.25f)).first;
+    const VectorR repaired = probe.get_feasible_points(VectorR::Constant(1, 1000003.25f)).first;
     ASSERT_EQ(repaired.size(), 1);
     EXPECT_FLOAT_EQ(repaired(0), 1000003.0f);
 }
@@ -1467,7 +1420,7 @@ TEST(Feasibility, AnalyticGradientRepairsANarrowInputRange)
     RepairProbe probe(setup.network.get());
     probe.add_constraint("(10000*x1)^2", Condition::Equal, {0.25f});
     probe.calculate_domain();
-    const VectorR repaired = probe.solve(VectorR::Constant(1, 9e-5f)).first;
+    const VectorR repaired = probe.get_feasible_points(VectorR::Constant(1, 9e-5f)).first;
     ASSERT_EQ(repaired.size(), 1);
     EXPECT_NEAR(repaired(0), 5e-5f, 1e-8f);
 }
@@ -1480,7 +1433,7 @@ TEST(Feasibility, NumericalGradientFitsInsideAnOffsetInputRange)
     RepairProbe probe(setup.network.get());
     probe.add_constraint("x1 + y", Condition::Equal, {1000.25f});
     probe.calculate_domain();
-    const VectorR repaired = probe.solve(VectorR::Constant(1, 1000.5f)).first;
+    const VectorR repaired = probe.get_feasible_points(VectorR::Constant(1, 1000.5f)).first;
     ASSERT_EQ(repaired.size(), 1);
     EXPECT_NEAR(repaired(0), 1000.25f, 2e-3f);
 }
@@ -1502,7 +1455,7 @@ TEST(Feasibility, NumericalProbesHandleExpressionsUndefinedInOneDirection)
             probe.add_constraint("sqrt(0.0005 - x1)", Condition::Between, {0.0f, 2.0f});
         }
         probe.calculate_domain();
-        const VectorR repaired = probe.solve(VectorR::Zero(1)).first;
+        const VectorR repaired = probe.get_feasible_points(VectorR::Zero(1)).first;
         ASSERT_EQ(repaired.size(), 1);
         EXPECT_NEAR(repaired(0), coupled ? -0.2495f : -0.25f, 1e-4f);
     }
@@ -1543,11 +1496,91 @@ TEST(DomainContraction, KeepsPreviousResultsWhenALaterBatchHasNoFeasiblePoint)
 }
 
 
+TEST(ResponseOptimizationAdvisedPoint, EmptyResultsOrMissingObjectivesReturnNoPoint)
+{
+    MinimalApproximation setup({"x1"}, {"y"});
+    DomainContraction optimization(setup.network.get());
+    const MatrixR results = MatrixR::Zero(1, 2);
+
+    const auto [missing_index, missing_point] = optimization.get_advised_point(results);
+    EXPECT_EQ(missing_index, -1);
+    EXPECT_EQ(missing_point.size(), 0);
+
+    optimization.add_objective("x1", Sense::Minimize);
+    const auto [empty_index, empty_point] = optimization.get_advised_point(MatrixR(0, 2));
+    EXPECT_EQ(empty_index, -1);
+    EXPECT_EQ(empty_point.size(), 0);
+}
+
+
+TEST(ResponseOptimizationAdvisedPoint, NormalizesMixedObjectivesUsingSuppliedOutputs)
+{
+    MinimalApproximation setup({"x1", "x2"}, {"y"});
+    setup.network->set_parameters(VectorR::Zero(setup.network->get_parameters_buffer_size()));
+    DomainContraction optimization(setup.network.get());
+    optimization.add_objective("x1", Sense::Minimize);
+    optimization.add_objective("2*y + x2", Sense::Maximize);
+    optimization.add_objective("x2", Sense::Minimize);
+
+    MatrixR results(3, 3);
+    results << 0.0f, 7.0f, 0.0f,
+               4.0f, 7.0f, 60.0f,
+               10.0f, 7.0f, 100.0f;
+
+    const auto [index, point] = optimization.get_advised_point(results);
+    EXPECT_EQ(index, 1);
+    ASSERT_EQ(point.size(), results.cols());
+    EXPECT_TRUE(point.isApprox(results.row(1).transpose()));
+}
+
+
+TEST(ResponseOptimizationAdvisedPoint, KeepsTheFirstTiedRowAndReturnsASingleCandidate)
+{
+    MinimalApproximation setup({"x1"}, {"y"});
+    DomainContraction optimization(setup.network.get());
+    optimization.add_objective("x1", Sense::Minimize);
+    optimization.add_objective("y", Sense::Maximize);
+
+    MatrixR results(2, 2);
+    results << 0.0f, 3.0f,
+               10.0f, 13.0f;
+
+    const auto [tied_index, tied_point] = optimization.get_advised_point(results);
+    EXPECT_EQ(tied_index, 0);
+    ASSERT_EQ(tied_point.size(), results.cols());
+    EXPECT_TRUE(tied_point.isApprox(results.row(0).transpose()));
+
+    const auto [single_index, single_point] = optimization.get_advised_point(results.bottomRows(1));
+    EXPECT_EQ(single_index, 0);
+    ASSERT_EQ(single_point.size(), results.cols());
+    EXPECT_TRUE(single_point.isApprox(results.row(1).transpose()));
+}
+
+
+TEST(ResponseOptimizationAdvisedPoint, FixedObjectiveSelectsTheExactOrNearestTarget)
+{
+    MinimalApproximation setup({"x1"}, {"y"});
+    DomainContraction optimization(setup.network.get());
+    optimization.add_objective("x1", Sense::Fixed, 5.0f);
+
+    MatrixR results(3, 2);
+    results << 0.0f, 10.0f,
+               4.0f, 20.0f,
+               8.0f, 30.0f;
+
+    for (const float nearest : {4.0f, 5.0f})
+    {
+        SCOPED_TRACE(nearest);
+        results(1, 0) = nearest;
+        const auto [index, point] = optimization.get_advised_point(results);
+        EXPECT_EQ(index, 1);
+        ASSERT_EQ(point.size(), results.cols());
+        EXPECT_TRUE(point.isApprox(results.row(1).transpose()));
+    }
+}
+
+
 INSTANTIATE_TEST_SUITE_P(Drivers,
                          ResponseDriver,
                          testing::Values(Driver::Contraction, Driver::Genetic),
                          driver_name);
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

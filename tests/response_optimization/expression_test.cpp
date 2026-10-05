@@ -1,20 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   E X P R E S S I O N   T E S T S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
-
-// The expression language a constraint or an objective is written in, on its own: what
-// compiling a string yields, what the compiled form says about itself, what it evaluates
-// to, and which strings are refused.
-//
-// Most cases here compile against a bare list of named columns, with no network at all,
-// so what they check is the parser and nothing else. The residual cases follow, since a
-// residual is an expression read through a condition.
-//
-// What the optimizers then do with those expressions is checked in conditions_test.cpp.
+// SPDX-License-Identifier: LGPL-2.1-or-later
+// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
 
 #include "tests/common/pch.h"
 
@@ -29,7 +14,6 @@
 namespace
 {
 
-// The columns an expression is compiled against: a name and the position it stands for.
 
 vector<pair<string, Index>> make_named_columns(const vector<string>& names)
 {
@@ -52,9 +36,6 @@ float lookup_coefficient(const vector<pair<Index, float>>& terms, const Index co
     return 0.0f;
 }
 
-
-// sqrt(e_order(u^2)/C(n, order)) by listing every subset of order variables, in double: the
-// reference the recursion is checked against. It shares nothing with the library's code.
 
 double rooted_mean_by_subsets(const vector<double>& scaled, const Index order)
 {
@@ -80,9 +61,6 @@ double rooted_mean_by_subsets(const vector<double>& scaled, const Index order)
 }
 
 
-// A cardinality row over n counted columns, listed in reverse so that a column and its position
-// in the list differ, with its spans and a point to read it at.
-
 struct CardinalityCase
 {
     vector<Index> columns;
@@ -105,8 +83,6 @@ struct CardinalityCase
     }
 };
 
-
-// Exposes the constraints a problem compiled, so a test can read what add_constraint made of them.
 
 struct ConstraintProbe : DomainContraction
 {
@@ -294,6 +270,8 @@ TEST(Expression, EvaluateNonlinearExpression)
     const CompiledExpression expression =
         compile_expression("sqrt(x1) + x2^2", make_named_columns({"x1", "x2"}), {});
 
+    EXPECT_EQ(expression.program.stack_depth, 3);
+
     VectorR input(2); input << 9.0f, 3.0f;
     const VectorR output(0);
 
@@ -336,6 +314,9 @@ TEST(Expression, MinMaxSelectABranch)
     const CompiledExpression smallest = compile_expression("min(x1, x2)", inputs, {});
     const CompiledExpression largest = compile_expression("max(x1, x2)", inputs, {});
 
+    EXPECT_EQ(smallest.program.stack_depth, 2);
+    EXPECT_EQ(largest.program.stack_depth, 2);
+
     VectorR input(2); input << 2.0f, 7.0f;
     const VectorR output(0);
 
@@ -344,10 +325,6 @@ TEST(Expression, MinMaxSelectABranch)
     EXPECT_EQ(smallest.linearity, ExpressionLinearity::Nonlinear);
 }
 
-
-// Away from the kink a selector is differentiable, and its derivative is the derivative of
-// whichever branch wins. On the kink it is not, and the gradient says so by not being finite,
-// which is how the solver knows to fall back to probing that row.
 
 TEST(Expression, SelectorGradientFollowsTheWinningBranch)
 {
@@ -400,6 +377,10 @@ TEST(Expression, PowerCallIsTheSameAsThePowerOperator)
     const CompiledExpression written = compile_expression("x1^2 + x2", inputs, {});
 
     EXPECT_TRUE(ranges::equal(called.program.operations, written.program.operations));
+    EXPECT_EQ(called.program.stack_depth, 2);
+    ASSERT_EQ(called.input_gradient.size(), 2u);
+    EXPECT_EQ(called.input_gradient[1].first, 1);
+    EXPECT_EQ(called.input_gradient[1].second.stack_depth, 1);
 
     VectorR point(2); point << 3.0f, 4.0f;
     const VectorR output(0);
@@ -426,10 +407,6 @@ TEST(Expression, InvalidExpressionsThrow)
 }
 
 
-// Parsing, differentiating, analyzing and destroying a tree each recurse once per
-// level, so without a limit a deep enough expression exhausts the stack before any
-// of them can report a problem. Nesting is counted by the parser as it descends.
-
 TEST(Expression, NestingBeyondTheLimitThrows)
 {
     const vector<pair<string, Index>> inputs = make_named_columns({"x1"});
@@ -442,9 +419,6 @@ TEST(Expression, NestingBeyondTheLimitThrows)
     EXPECT_THROW(compile_expression(nested(5000), inputs, {}), runtime_error);
 }
 
-
-// A chain of operations leaves the parser shallow and the tree deep, so the tree
-// carries its own depth and is checked separately.
 
 TEST(Expression, ChainedOperationsBeyondTheLimitThrow)
 {
@@ -465,9 +439,6 @@ TEST(Expression, ChainedOperationsBeyondTheLimitThrow)
     EXPECT_THROW(compile_expression(chained(5000), inputs, {}), runtime_error);
 }
 
-
-// The refused expression reaches the user inside the message, and the ones these
-// limits reject can be tens of thousands of characters long.
 
 TEST(Expression, ARefusedExpressionIsQuotedBackAbbreviated)
 {
@@ -571,7 +542,6 @@ TEST(ConstraintCompilation, CardinalityBecomesOneRowHeldToTheUnitBand)
     point << 4.0f, 0.0f, 0.0f;
     EXPECT_EQ(budget.equation.evaluate(point, {}), 0.0f);
 
-    // Two inputs at 0.4 and 0.3 of their span: sqrt(0.4^2 * 0.3^2 / C(3, 2))/tolerance.
 
     point << 4.0f, 3.0f, 0.0f;
     EXPECT_NEAR(budget.equation.evaluate(point, {}), 0.12/sqrt(3.0)/1e-3, 1e-2);
@@ -718,6 +688,116 @@ TEST(ExpressionHelpers, InputGradientMatchesTheCoefficients)
     EXPECT_NEAR(nonlinear_gradient(1), 8.0f, 1e-4f);
 }
 
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.
+
+TEST(ExpressionHelpers, OutputGradientKeepsInputsIndependentAndClearsUnusedColumns)
+{
+    const auto inputs = make_named_columns({"x1", "x2"});
+    const auto outputs = make_named_columns({"y1", "y2", "y3"});
+    VectorR point(2); point << 3.0f, 4.0f;
+    VectorR output(3); output << 5.0f, 6.0f, 7.0f;
+    VectorR gradient = VectorR::Constant(1, 9.0f);
+
+    const auto mixed = compile_expression("-x1 + 2*y1 - 3*y2", inputs, outputs);
+    evaluate_output_gradient(mixed, point, output, gradient);
+
+    ASSERT_EQ(gradient.size(), output.size());
+    EXPECT_FLOAT_EQ(gradient(0), 2.0f);
+    EXPECT_FLOAT_EQ(gradient(1), -3.0f);
+    EXPECT_FLOAT_EQ(gradient(2), 0.0f);
+    EXPECT_FLOAT_EQ(evaluate_input_gradient(mixed, point, output)(0), -1.0f);
+
+    for (const auto& expression : {compile_expression("x1 + x2", inputs, outputs),
+                                   compile_expression("x1*x2", inputs, outputs),
+                                   compile_elementary_symmetric({0, 1}, {1.0f, 1.0f}, 2, 1e-3f)})
+    {
+        gradient.setConstant(9.0f);
+        evaluate_output_gradient(expression, point, output, gradient);
+        EXPECT_TRUE(gradient.isZero());
+    }
+}
+
+
+TEST(ExpressionHelpers, MixedPartialsComposeWithAnOutputJacobian)
+{
+    const auto inputs = make_named_columns({"x1", "x2"});
+    const auto outputs = make_named_columns({"y1", "y2"});
+    const auto expression = compile_expression("x1*y1 + exp(y2) + y1^x2", inputs, outputs);
+    VectorR point(2); point << 1.0f, 2.0f;
+    VectorR output(2); output << 3.0f, -1.0f;
+    VectorR output_gradient;
+    evaluate_output_gradient(expression, point, output, output_gradient);
+    const VectorR input_gradient = evaluate_input_gradient(expression, point, output);
+
+    EXPECT_NEAR(input_gradient(0), 3.0f, 1e-5f);
+    EXPECT_NEAR(input_gradient(1), 9.0f*log(3.0f), 1e-5f);
+    EXPECT_NEAR(output_gradient(0), 7.0f, 1e-5f);
+    EXPECT_NEAR(output_gradient(1), exp(-1.0f), 1e-5f);
+
+    MatrixR output_jacobian(2, 2);
+    output_jacobian << 2.0f, 1.0f, 1.0f, -1.0f;
+    const VectorR total_gradient = input_gradient + output_jacobian.transpose()*output_gradient;
+    const auto composed = [&](const VectorR& value)
+    {
+        VectorR prediction(2);
+        prediction << value(0)*value(0) + value(1), value(0) - value(1);
+        return expression.evaluate(value, prediction);
+    };
+
+    for (Index i = 0; i < point.size(); ++i)
+    {
+        VectorR plus = point, minus = point;
+        plus(i) += 1e-3f;
+        minus(i) -= 1e-3f;
+        EXPECT_NEAR(total_gradient(i), (composed(plus) - composed(minus))/2e-3f, 3e-3f);
+    }
+}
+
+
+TEST(ExpressionHelpers, OutputGradientMatchesNumericalPartialsForSupportedOperations)
+{
+    const auto inputs = make_named_columns({"x1", "x2"});
+    const auto outputs = make_named_columns({"y1", "y2"});
+    VectorR point(2); point << 0.3f, 0.7f;
+    VectorR output(2); output << 1.2f, -0.4f;
+
+    for (const string& text : {"-(x1-y1)/(x2+y2)", "y1^3 + 2^y2",
+                               "sqrt(y1) + log(y1) + abs(y2)",
+                               "sin(y1) + cos(y2) + tan(y2)",
+                               "min(x1,y1) + max(y1,y2)", "min(y2,x1) + max(y2,x2)"})
+    {
+        SCOPED_TRACE(text);
+        const auto expression = compile_expression(text, inputs, outputs);
+        VectorR gradient;
+        evaluate_output_gradient(expression, point, output, gradient);
+        ASSERT_TRUE(gradient.allFinite());
+
+        for (Index i = 0; i < output.size(); ++i)
+        {
+            VectorR plus = output, minus = output;
+            plus(i) += 1e-3f;
+            minus(i) -= 1e-3f;
+            EXPECT_NEAR(gradient(i),
+                        (expression.evaluate(point, plus) - expression.evaluate(point, minus))/2e-3f,
+                        2e-3f);
+        }
+    }
+}
+
+
+TEST(ExpressionHelpers, OutputGradientSignalsKinksAndSingularitiesWithoutThrowing)
+{
+    const auto inputs = make_named_columns({"x1"});
+    const auto outputs = make_named_columns({"y1"});
+    const VectorR point = VectorR::Constant(1, 2.0f);
+    const VectorR output = VectorR::Constant(1, 2.0f);
+
+    for (const string& text : {"min(x1,y1)", "max(x1,y1)", "abs(y1-x1)", "sqrt(y1-x1)"})
+    {
+        SCOPED_TRACE(text);
+        const auto expression = compile_expression(text, inputs, outputs);
+        ASSERT_TRUE(isfinite(expression.evaluate(point, output)));
+        VectorR gradient;
+        EXPECT_NO_THROW(evaluate_output_gradient(expression, point, output, gradient));
+        EXPECT_FALSE(gradient.allFinite());
+    }
+}
