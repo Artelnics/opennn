@@ -82,6 +82,29 @@ void assign_default_class_names(vector<string>& class_names, Index classes_numbe
         class_names[size_t(i)] = to_string(i);
 }
 
+filesystem::path label_path_for_image(const filesystem::path& labels_directory,
+                                      const filesystem::path& image_path)
+{
+    filesystem::path label_path = labels_directory / image_path.filename();
+    label_path.replace_extension(".txt");
+    return label_path;
+}
+
+void validate_yolo_class_id(Index class_id,
+                            Index classes_number,
+                            const filesystem::path& label_path)
+{
+    throw_if(class_id < 0,
+             "YOLO class id {} in {} is invalid; class ids must be non-negative.",
+             class_id, label_path.string());
+
+    if (classes_number >= 0)
+        throw_if(class_id >= classes_number,
+                 "YOLO class id {} in {} is out of range; the classes file defines {} "
+                 "classes (valid ids: 0..{}).",
+                 class_id, label_path.string(), classes_number, classes_number - 1);
+}
+
 vector<YoloDataset::Box> read_yolo_boxes(const filesystem::path& label_path)
 {
     ifstream file(label_path);
@@ -611,6 +634,12 @@ bool YoloDataset::try_rebuild_target_from_boxes(const vector<array<float, 2>>& r
         }
 
         const size_t n_samples = static_cast<size_t>(boxes_header.samples);
+        if (image_filenames.size() != n_samples)
+        {
+            image_cache_reader.close();
+            boxes_cache_reader.close();
+            return false;
+        }
 
         vector<uint64_t> offsets(n_samples + 1);
         boxes_cache_reader.read_at(span(offsets), boxes_header.offsets_byte_offset);
@@ -629,7 +658,12 @@ bool YoloDataset::try_rebuild_target_from_boxes(const vector<array<float, 2>>& r
             for (size_t j = start; j < end; ++j)
             {
                 const auto& r = raw_boxes[j];
-                labels[i].push_back({Index(r.class_id), r.x, r.y, r.w, r.h});
+                const Index class_id = Index(r.class_id);
+                const filesystem::path label_path = label_path_for_image(
+                    labels_directory, image_filenames[i]);
+                validate_yolo_class_id(class_id,
+                    class_names.empty() ? Index(-1) : ssize(class_names), label_path);
+                labels[i].push_back({class_id, r.x, r.y, r.w, r.h});
                 max_class_id = max(max_class_id, Index(r.class_id));
             }
         }
@@ -775,7 +809,8 @@ bool YoloDataset::try_open_cache(const vector<array<float, 2>>& requested_anchor
         boxes_cache_reader.read_at(span(&boxes_header, 1), 0);
         if (memcmp(boxes_header.magic, YOLO_BOXES_MAGIC, 8) != 0
         ||  boxes_header.version != YOLO_CACHE_VERSION
-        ||  boxes_header.samples != image_header.samples)
+        ||  boxes_header.samples != image_header.samples
+        ||  image_filenames.size() != size_t(boxes_header.samples))
             return false;
 
         boxes_offsets.assign(size_t(boxes_header.samples + 1), 0);
@@ -796,6 +831,18 @@ bool YoloDataset::try_open_cache(const vector<array<float, 2>>& requested_anchor
             + boxes_header.total_boxes * sizeof(YoloBoxRecord);
         if (boxes_cache_reader.file_size() != expected_boxes_size)
             return false;
+
+        vector<YoloBoxRecord> raw_boxes(static_cast<size_t>(boxes_header.total_boxes));
+        if (!raw_boxes.empty())
+            boxes_cache_reader.read_at(span(raw_boxes), boxes_header.boxes_byte_offset);
+
+        for (size_t i = 0; i < size_t(boxes_header.samples); ++i)
+        {
+            const filesystem::path label_path = label_path_for_image(
+                labels_directory, image_filenames[i]);
+            for (size_t j = size_t(boxes_offsets[i]); j < size_t(boxes_offsets[i + 1]); ++j)
+                validate_yolo_class_id(Index(raw_boxes[j].class_id), classes_number, label_path);
+        }
 
         setup_metadata(Index(image_header.samples));
         return true;
@@ -859,9 +906,11 @@ void YoloDataset::build_cache(const vector<array<float, 2>>& requested_anchors)
         const Tensor3 prepared = letterbox_image(image, input_shape[0], input_shape[1],
                                                  scale, offset_x, offset_y);
 
-        filesystem::path label_path = labels_directory / image_paths[i].filename();
-        label_path.replace_extension(".txt");
+        const filesystem::path label_path = label_path_for_image(labels_directory, image_paths[i]);
         labels[i] = read_yolo_boxes(label_path);
+        for (const Box& box : labels[i])
+            validate_yolo_class_id(box.class_id,
+                class_names.empty() ? Index(-1) : ssize(class_names), label_path);
         adjust_boxes_to_letterbox(labels[i], image.dimension(0), image.dimension(1),
                                   input_shape[0], input_shape[1], scale, offset_x, offset_y);
 
