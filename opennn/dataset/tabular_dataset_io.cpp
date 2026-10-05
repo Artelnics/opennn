@@ -45,7 +45,14 @@ bool looks_like_id_variable(const Variable& variable, const Index samples_number
 static float parse_float_or_nan(string_view token, const NumberFormat& number_format)
 {
     float value;
-    return parse_real(token, value, number_format) ? value : QUIET_NAN;
+
+    // "inf" and "-inf" do parse -- from_chars reads them -- but an infinity is
+    // not a value a model can be fitted on, and the statistics skip it anyway.
+    // Letting it through left a field that was neither usable nor counted as
+    // missing; as a quiet NaN it is both counted and imputed like any other gap.
+    return parse_real(token, value, number_format) && isfinite(value)
+         ? value
+         : QUIET_NAN;
 }
 
 static bool is_missing_token(string_view token, string_view missing_label)
@@ -205,8 +212,6 @@ public:
                                              has_quotes, scratch, tokens);
                 float* row = destination
                            + size_t(row_index - base) * size_t(feature_columns);
-                const bool row_has_missing = count_missing(
-                    tokens, thread_rows_missing, thread_missing, thread_variables_missing);
 
                 if(ssize(tokens) < required_tokens)
                 {
@@ -216,15 +221,23 @@ public:
                 }
 
                 if(has_sample_ids) sample_ids[size_t(row_index)] = string(tokens[0]);
-                if(binary_storage && row_has_missing)
-                    sample_roles[size_t(row_index)] = SampleRole::None;
 
                 try { parse_row(row, tokens); }
                 catch(const exception& error)
                 {
 #pragma omp critical
                     record_parse_error(row_index, error.what());
+                    continue;
                 }
+
+                // Counted after parsing, not before: for a numeric variable the
+                // parsed value is what tells the truth.
+                const bool row_has_missing = count_missing(
+                    tokens, row, thread_rows_missing, thread_missing,
+                    thread_variables_missing);
+
+                if(binary_storage && row_has_missing)
+                    sample_roles[size_t(row_index)] = SampleRole::None;
             }
 
 #pragma omp critical
@@ -244,13 +257,24 @@ public:
             refine_numeric(destination + size_t(i - base) * size_t(feature_columns));
     }
 
-    void throw_parse_error() const
+    // Numbered as the line the user will find when they open the file, which is
+    // what they need in order to go and look: the index among the data rows is
+    // one short of it whenever the file has a header. Blank lines are dropped
+    // before the rows are numbered, so a file padded with them counts short.
+    // The two column counts are both named, because "fewer columns than expected
+    // (2)" never said which of the two the 2 was.
+    void throw_parse_error(const Index first_data_line) const
     {
         if(bad_row_index < ssize(lines) && bad_row_index <= parse_error_index)
-            throw runtime_error(format("Row {} has fewer columns than expected ({}).",
-                                       bad_row_index, bad_row_columns));
+            throw runtime_error(
+                format("Line {} of the data file has {} columns; {} were expected.",
+                       bad_row_index + first_data_line, bad_row_columns,
+                       required_tokens));
+
         if(parse_error_index < ssize(lines))
-            throw runtime_error(format("Row {}: {}", parse_error_index, parse_error_message));
+            throw runtime_error(format("Line {} of the data file: {}",
+                                       parse_error_index + first_data_line,
+                                       parse_error_message));
     }
 
     void refine_variable_types(vector<Variable>& mutable_variables) const
@@ -304,7 +328,14 @@ private:
         }
     }
 
-    bool count_missing(const vector<string_view>& tokens,
+    // A numeric field is missing when the value it parsed to is not a number.
+    // A blank, the missing label, "inf", "NaN" and a value too large for the
+    // storage type all arrive as the same quiet NaN and are all imputed the same
+    // way; counting tokens instead saw only the first two, so a file whose
+    // values had in fact been replaced was reported as having none missing.
+    // Fields of every other type still go by their token: for those, text that
+    // is not a blank is a value.
+    bool count_missing(const vector<string_view>& tokens, const float* row,
                        Index& rows, Index& count, vector<Index>& columns) const
     {
         bool row_has_missing = false;
@@ -312,7 +343,14 @@ private:
         {
             const size_t token = size_t(token_indices[i]);
             if(token >= tokens.size()) break;
-            if(!is_missing_token(tokens[token], missing_label)) continue;
+
+            const bool field_is_missing =
+                variables[i].type == VariableType::Numeric
+                    ? isnan(row[size_t(feature_indices[i][0])])
+                    : is_missing_token(tokens[token], missing_label);
+
+            if(!field_is_missing) continue;
+
             row_has_missing = true;
             ++count;
             ++columns[i];
@@ -712,7 +750,7 @@ void TabularDataset::load_csv_data(const vector<string_view>& lines,
     else
         parser.parse_rows(0, samples_number, data.data());
 
-    parser.throw_parse_error();
+    parser.throw_parse_error(has_header ? 2 : 1);
     if(binary_storage)
     {
         cache_writer.finish_with_rename(cache_path);

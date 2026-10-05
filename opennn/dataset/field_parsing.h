@@ -54,6 +54,13 @@ struct NumberFormatVotes
     Index comma_decimal = 0;
     Index point_group = 0;
     Index comma_group = 0;
+
+    // Tokens that read both ways, such as "9,465": three digits after a single
+    // separator, and a leading part short enough to be a group of its own. They
+    // decide nothing on their own, and are only consulted when no other token
+    // in the file settles the format.
+    Index point_ambiguous = 0;
+    Index comma_ambiguous = 0;
 };
 
 void vote_number_format(string_view, NumberFormatVotes&);
