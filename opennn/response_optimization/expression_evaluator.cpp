@@ -41,13 +41,9 @@ string abbreviate(const string& expression)
 
 struct ExpressionNode
 {
-    enum class Kind { Const, Input, Output, UnaryNeg, Add, Sub, Mul, Div, Pow, Func };
-
-    Kind kind = Kind::Const;
+    ExpressionOp::Kind kind = ExpressionOp::Kind::PushConst;
     float constant = 0.0f;
     Index index = 0;
-
-    ExpressionOp::Kind function = ExpressionOp::Kind::Sqrt;
 
     vector<ExpressionNodePtr> children;
 
@@ -58,7 +54,7 @@ struct ExpressionNode
 ExpressionNodePtr make_const(const float value)
 {
     auto node = make_unique<ExpressionNode>();
-    node->kind = ExpressionNode::Kind::Const;
+    node->kind = ExpressionOp::Kind::PushConst;
     node->constant = value;
 
     return node;
@@ -67,14 +63,14 @@ ExpressionNodePtr make_const(const float value)
 
 optional<float> as_constant(const ExpressionNode& node)
 {
-    if (node.kind == ExpressionNode::Kind::Const)
+    if (node.kind == ExpressionOp::Kind::PushConst)
         return node.constant;
 
     return nullopt;
 }
 
 
-ExpressionNodePtr make_variable(const ExpressionNode::Kind kind, const Index index)
+ExpressionNodePtr make_variable(const ExpressionOp::Kind kind, const Index index)
 {
     auto node = make_unique<ExpressionNode>();
     node->kind = kind;
@@ -84,7 +80,7 @@ ExpressionNodePtr make_variable(const ExpressionNode::Kind kind, const Index ind
 }
 
 
-ExpressionNodePtr make_binary(const ExpressionNode::Kind kind, ExpressionNodePtr left, ExpressionNodePtr right)
+ExpressionNodePtr make_binary(const ExpressionOp::Kind kind, ExpressionNodePtr left, ExpressionNodePtr right)
 {
     auto node = make_unique<ExpressionNode>();
     node->kind = kind;
@@ -100,8 +96,7 @@ ExpressionNodePtr make_binary(const ExpressionNode::Kind kind, ExpressionNodePtr
 ExpressionNodePtr make_call(const ExpressionOp::Kind function, ExpressionNodePtr argument)
 {
     auto node = make_unique<ExpressionNode>();
-    node->kind = ExpressionNode::Kind::Func;
-    node->function = function;
+    node->kind = function;
     node->depth = 1 + argument->depth;
     node->children.push_back(move(argument));
 
@@ -115,7 +110,7 @@ ExpressionNodePtr make_neg(ExpressionNodePtr operand)
         return make_const(-*constant);
 
     auto node = make_unique<ExpressionNode>();
-    node->kind = ExpressionNode::Kind::UnaryNeg;
+    node->kind = ExpressionOp::Kind::Neg;
     node->depth = 1 + operand->depth;
     node->children.push_back(move(operand));
 
@@ -132,7 +127,7 @@ ExpressionNodePtr make_add(ExpressionNodePtr left, ExpressionNodePtr right)
     if (left_constant == 0.0f) return right;
     if (right_constant == 0.0f) return left;
 
-    return make_binary(ExpressionNode::Kind::Add, move(left), move(right));
+    return make_binary(ExpressionOp::Kind::Add, move(left), move(right));
 }
 
 
@@ -145,7 +140,7 @@ ExpressionNodePtr make_sub(ExpressionNodePtr left, ExpressionNodePtr right)
     if (right_constant == 0.0f) return left;
     if (left_constant == 0.0f) return make_neg(move(right));
 
-    return make_binary(ExpressionNode::Kind::Sub, move(left), move(right));
+    return make_binary(ExpressionOp::Kind::Sub, move(left), move(right));
 }
 
 
@@ -159,7 +154,7 @@ ExpressionNodePtr make_mul(ExpressionNodePtr left, ExpressionNodePtr right)
     if (left_constant == 1.0f) return right;
     if (right_constant == 1.0f) return left;
 
-    return make_binary(ExpressionNode::Kind::Mul, move(left), move(right));
+    return make_binary(ExpressionOp::Kind::Mul, move(left), move(right));
 }
 
 
@@ -173,7 +168,7 @@ ExpressionNodePtr make_div(ExpressionNodePtr left, ExpressionNodePtr right)
     if (left_constant && right_constant && *right_constant != 0.0f)
         return make_const(*left_constant / *right_constant);
 
-    return make_binary(ExpressionNode::Kind::Div, move(left), move(right));
+    return make_binary(ExpressionOp::Kind::Div, move(left), move(right));
 }
 
 
@@ -186,7 +181,7 @@ ExpressionNodePtr make_pow(ExpressionNodePtr base, ExpressionNodePtr exponent)
     if (exponent_constant == 1.0f) return base;
     if (base_constant && exponent_constant) return make_const(pow(*base_constant, *exponent_constant));
 
-    return make_binary(ExpressionNode::Kind::Pow, move(base), move(exponent));
+    return make_binary(ExpressionOp::Kind::Pow, move(base), move(exponent));
 }
 
 
@@ -196,7 +191,6 @@ ExpressionNodePtr clone(const ExpressionNode& node)
     copy->kind = node.kind;
     copy->constant = node.constant;
     copy->index = node.index;
-    copy->function = node.function;
     copy->depth = node.depth;
 
     copy->children.reserve(node.children.size());
@@ -408,8 +402,8 @@ struct Parser
 
     ExpressionNodePtr parse_binary(ExpressionNodePtr (Parser::*parse_operand)(),
                                    string_view operators,
-                                   ExpressionNode::Kind first_kind,
-                                   ExpressionNode::Kind second_kind)
+                                   ExpressionOp::Kind first_kind,
+                                   ExpressionOp::Kind second_kind)
     {
         ExpressionNodePtr left_node = (this->*parse_operand)();
 
@@ -437,13 +431,13 @@ struct Parser
         const NestingGuard guard(nesting);
 
         return parse_binary(&Parser::parse_term, "+-",
-                            ExpressionNode::Kind::Add, ExpressionNode::Kind::Sub);
+                            ExpressionOp::Kind::Add, ExpressionOp::Kind::Sub);
     }
 
     ExpressionNodePtr parse_term()
     {
         return parse_binary(&Parser::parse_factor, "*/",
-                            ExpressionNode::Kind::Mul, ExpressionNode::Kind::Div);
+                            ExpressionOp::Kind::Mul, ExpressionOp::Kind::Div);
     }
 
     ExpressionNodePtr parse_factor()
@@ -458,7 +452,7 @@ struct Parser
 
             const NestingGuard guard(nesting);
 
-            return make_binary(ExpressionNode::Kind::Pow, move(left_node), parse_factor());
+            return make_binary(ExpressionOp::Kind::Pow, move(left_node), parse_factor());
         }
 
         return left_node;
@@ -512,11 +506,11 @@ struct Parser
 
             for (const auto& named_column : input_columns)
                 if (named_column.first == token.text)
-                    return make_variable(ExpressionNode::Kind::Input, named_column.second);
+                    return make_variable(ExpressionOp::Kind::PushInput, named_column.second);
 
             for (const auto& named_column : output_columns)
                 if (named_column.first == token.text)
-                    return make_variable(ExpressionNode::Kind::Output, named_column.second);
+                    return make_variable(ExpressionOp::Kind::PushOutput, named_column.second);
 
             throw runtime_error(format("ExpressionParser: unknown identifier '{}' "
                                        "(not a registered input, output, or supported function)",
@@ -561,8 +555,7 @@ struct Parser
             return make_pow(move(arguments[0]), move(arguments[1]));
 
         auto call = make_unique<ExpressionNode>();
-        call->kind = ExpressionNode::Kind::Func;
-        call->function = entry->operation;
+        call->kind = entry->operation;
         call->children = move(arguments);
 
         return call;
@@ -605,26 +598,84 @@ static LinearForm scaled_linear_form(LinearForm form, float scaling)
 }
 
 
+LinearForm combine_linear_forms(const ExpressionOp::Kind kind, LinearForm left_form, LinearForm right_form)
+{
+    using enum ExpressionOp::Kind;
+
+    LinearForm result;
+
+    if (kind == Add || kind == Sub)
+    {
+        const float sign = (kind == Add) ? 1.0f : -1.0f;
+        left_form.constant += sign * right_form.constant;
+        accumulate_into(left_form.input_terms, right_form.input_terms, sign);
+        accumulate_into(left_form.output_terms, right_form.output_terms, sign);
+        return left_form;
+    }
+
+    if (kind == Mul)
+    {
+        if (left_form.is_constant())
+            return scaled_linear_form(move(right_form), left_form.constant);
+
+        if (right_form.is_constant())
+            return scaled_linear_form(move(left_form), right_form.constant);
+
+        result.is_linear = false;
+        return result;
+    }
+
+    if (kind == Div)
+    {
+        if (!right_form.is_constant() || abs(right_form.constant) < EPSILON)
+        {
+            result.is_linear = false;
+            return result;
+        }
+
+        return scaled_linear_form(move(left_form), 1.0f / right_form.constant);
+    }
+
+    if (left_form.is_constant() && right_form.is_constant())
+    {
+        result.constant = pow(left_form.constant, right_form.constant);
+        return result;
+    }
+
+    if (right_form.is_constant() && abs(right_form.constant - 1.0f) < EPSILON)
+        return left_form;
+
+    if (right_form.is_constant() && abs(right_form.constant) < EPSILON)
+    {
+        result.constant = 1.0f;
+        return result;
+    }
+
+    result.is_linear = false;
+    return result;
+}
+
+
 LinearForm analyze_linear(const ExpressionNode& node)
 {
     LinearForm result;
 
     switch (node.kind)
     {
-        using enum ExpressionNode::Kind;
-    case Const:
+        using enum ExpressionOp::Kind;
+    case PushConst:
         result.constant = node.constant;
         return result;
 
-    case Input:
+    case PushInput:
         result.input_terms[node.index] = 1.0f;
         return result;
 
-    case Output:
+    case PushOutput:
         result.output_terms[node.index] = 1.0f;
         return result;
 
-    case UnaryNeg:
+    case Neg:
     {
         LinearForm child_form = analyze_linear(*node.children[0]);
         if (!child_form.is_linear) { result.is_linear = false; return result; }
@@ -638,61 +689,15 @@ LinearForm analyze_linear(const ExpressionNode& node)
     case Pow:
     {
         LinearForm left_form = analyze_linear(*node.children[0]);
+        if (!left_form.is_linear) return left_form;
         LinearForm right_form = analyze_linear(*node.children[1]);
-        if (!left_form.is_linear || !right_form.is_linear) { result.is_linear = false; return result; }
+        if (!right_form.is_linear) return right_form;
 
-        if (node.kind == Add || node.kind == Sub)
-        {
-            const float sign = (node.kind == ExpressionNode::Kind::Add) ? 1.0f : -1.0f;
-            left_form.constant += sign * right_form.constant;
-            accumulate_into(left_form.input_terms, right_form.input_terms, sign);
-            accumulate_into(left_form.output_terms, right_form.output_terms, sign);
-            return left_form;
-        }
-
-        if (node.kind == Mul)
-        {
-            if (left_form.is_constant())
-                return scaled_linear_form(move(right_form), left_form.constant);
-
-            if (right_form.is_constant())
-                return scaled_linear_form(move(left_form), right_form.constant);
-
-            result.is_linear = false;
-            return result;
-        }
-
-        if (node.kind == Div)
-        {
-            if (!right_form.is_constant() || abs(right_form.constant) < EPSILON)
-            {
-                result.is_linear = false;
-                return result;
-            }
-
-            return scaled_linear_form(move(left_form), 1.0f / right_form.constant);
-        }
-
-        if (left_form.is_constant() && right_form.is_constant())
-        {
-            result.constant = pow(left_form.constant, right_form.constant);
-            return result;
-        }
-
-        if (right_form.is_constant() && abs(right_form.constant - 1.0f) < EPSILON)
-            return left_form;
-
-        if (right_form.is_constant() && abs(right_form.constant) < EPSILON)
-        {
-            result.constant = 1.0f;
-            return result;
-        }
-
-        result.is_linear = false;
-        return result;
+        return combine_linear_forms(node.kind, move(left_form), move(right_form));
     }
 
-    case Func:
+    case Sqrt: case Exp: case Log: case Abs:
+    case Sin: case Cos: case Tan: case Min: case Max:
         result.is_linear = false;
         return result;
     }
@@ -706,8 +711,8 @@ void collect_variable_references(const ExpressionNode& node,
                                  set<Index>& input_references,
                                  set<Index>& output_references)
 {
-    if (node.kind == ExpressionNode::Kind::Input)  { input_references.insert(node.index);  return; }
-    if (node.kind == ExpressionNode::Kind::Output) { output_references.insert(node.index); return; }
+    if (node.kind == ExpressionOp::Kind::PushInput)  { input_references.insert(node.index);  return; }
+    if (node.kind == ExpressionOp::Kind::PushOutput) { output_references.insert(node.index); return; }
 
     for (const ExpressionNodePtr& child : node.children)
         collect_variable_references(*child, input_references, output_references);
@@ -715,23 +720,23 @@ void collect_variable_references(const ExpressionNode& node,
 
 
 ExpressionNodePtr differentiate_call(const ExpressionNode& node, const Index wrt_index,
-                                     const ExpressionNode::Kind variable_kind);
+                                     const ExpressionOp::Kind variable_kind);
 
 
 ExpressionNodePtr differentiate(const ExpressionNode& node, const Index wrt_index,
-                                const ExpressionNode::Kind variable_kind)
+                                const ExpressionOp::Kind variable_kind)
 {
     switch (node.kind)
     {
-        using enum ExpressionNode::Kind;
-    case Const:
+        using enum ExpressionOp::Kind;
+    case PushConst:
         return make_const(0.0f);
 
-    case Input:
-    case Output:
+    case PushInput:
+    case PushOutput:
         return make_const(node.kind == variable_kind && node.index == wrt_index ? 1.0f : 0.0f);
 
-    case UnaryNeg:
+    case Neg:
         return make_neg(differentiate(*node.children[0], wrt_index, variable_kind));
 
     case Add:
@@ -799,7 +804,8 @@ ExpressionNodePtr differentiate(const ExpressionNode& node, const Index wrt_inde
                         make_add(move(from_exponent), move(from_base)));
     }
 
-    case Func:
+    case Sqrt: case Exp: case Log: case Abs:
+    case Sin: case Cos: case Tan: case Min: case Max:
         return differentiate_call(node, wrt_index, variable_kind);
     }
 
@@ -808,13 +814,13 @@ ExpressionNodePtr differentiate(const ExpressionNode& node, const Index wrt_inde
 
 
 ExpressionNodePtr differentiate_call(const ExpressionNode& node, const Index wrt_index,
-                                     const ExpressionNode::Kind variable_kind)
+                                     const ExpressionOp::Kind variable_kind)
 {
     const ExpressionNode& argument = *node.children[0];
 
     ExpressionNodePtr argument_derivative = differentiate(argument, wrt_index, variable_kind);
 
-    switch (node.function)
+    switch (node.kind)
     {
         using enum ExpressionOp::Kind;
 
@@ -837,8 +843,8 @@ ExpressionNodePtr differentiate_call(const ExpressionNode& node, const Index wrt
                                                      make_sub(move(argument_derivative),
                                                               move(second_derivative))));
 
-        return node.function == Min ? make_sub(move(average), move(spread))
-                                    : make_add(move(average), move(spread));
+        return node.kind == Min ? make_sub(move(average), move(spread))
+                                : make_add(move(average), move(spread));
     }
 
     case Sqrt:
@@ -874,25 +880,6 @@ ExpressionNodePtr differentiate_call(const ExpressionNode& node, const Index wrt
 }
 
 
-ExpressionOp::Kind binary_operation(const ExpressionNode::Kind kind)
-{
-    switch (kind)
-    {
-        using enum ExpressionNode::Kind;
-    case Add: return ExpressionOp::Kind::Add;
-    case Sub: return ExpressionOp::Kind::Sub;
-    case Mul: return ExpressionOp::Kind::Mul;
-    case Div: return ExpressionOp::Kind::Div;
-    case Pow: return ExpressionOp::Kind::Pow;
-
-    case Const: case Input: case Output: case UnaryNeg: case Func:
-        break;
-    }
-
-    throw runtime_error("ExpressionParser: not a binary operation");
-}
-
-
 void emit_operations(const ExpressionNode& node, ExpressionProgram& program, int& depth)
 {
     for (const ExpressionNodePtr& child : node.children)
@@ -901,37 +888,7 @@ void emit_operations(const ExpressionNode& node, ExpressionProgram& program, int
     depth += 1 - int(node.children.size());
     program.stack_depth = max(program.stack_depth, depth);
 
-    switch (node.kind)
-    {
-        using enum ExpressionNode::Kind;
-    case Const:
-        program.operations.push_back({ExpressionOp::Kind::PushConst, 0, node.constant});
-        return;
-
-    case Input:
-        program.operations.push_back({ExpressionOp::Kind::PushInput, int(node.index), 0.0f});
-        return;
-
-    case Output:
-        program.operations.push_back({ExpressionOp::Kind::PushOutput, int(node.index), 0.0f});
-        return;
-
-    case UnaryNeg:
-        program.operations.push_back({ExpressionOp::Kind::Neg, 0, 0.0f});
-        return;
-
-    case Add:
-    case Sub:
-    case Mul:
-    case Div:
-    case Pow:
-        program.operations.push_back({binary_operation(node.kind), 0, 0.0f});
-        return;
-
-    case Func:
-        program.operations.push_back({node.function, 0, 0.0f});
-        return;
-    }
+    program.operations.push_back({node.kind, int(node.index), node.constant});
 }
 
 
@@ -1048,13 +1005,13 @@ CompiledExpression compile_ast(const ExpressionNode& ast)
 
     for (const Index input_column : result.input_indices)
         result.input_gradient.emplace_back(input_column,
-            build_program(*differentiate(ast, input_column, ExpressionNode::Kind::Input)));
+            build_program(*differentiate(ast, input_column, ExpressionOp::Kind::PushInput)));
 
     result.output_gradient.reserve(result.output_indices.size());
 
     for (const Index output_column : result.output_indices)
         result.output_gradient.emplace_back(output_column,
-            build_program(*differentiate(ast, output_column, ExpressionNode::Kind::Output)));
+            build_program(*differentiate(ast, output_column, ExpressionOp::Kind::PushOutput)));
 
     return result;
 }
@@ -1128,8 +1085,10 @@ void evaluate_symmetric_gradient(const CompiledExpression& expression, const Vec
         scaled[j] = double(point(column))*inverse_span;
     }
 
-    prefix.assign((terms_number + 1)*width, 0.0);
-    suffix.assign((terms_number + 1)*width, 0.0);
+    prefix.resize((terms_number + 1)*width);
+    suffix.resize((terms_number + 1)*width);
+    fill_n(prefix.begin(), width, 0.0);
+    fill_n(suffix.begin() + terms_number*width, width, 0.0);
 
     prefix[0] = 1.0;
     suffix[terms_number*width] = 1.0;

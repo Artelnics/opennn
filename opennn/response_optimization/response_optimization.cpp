@@ -248,11 +248,27 @@ pair<VectorR, VectorR> ResponseOptimization::calculate_domain()
 }
 
 
-pair<VectorR, VectorR> ResponseOptimization::get_feasible_points(VectorR point) const
+FeasibilityRepairSystem ResponseOptimization::make_feasibility_system(const pair<VectorR, VectorR>& domain) const
 {
-    FeasibilityRepairSystem feasibility_system(network, constraints, input_bounds,
+    FeasibilityRepairSystem feasibility_system(network, constraints, domain,
                                                feasibility_rounds, feasibility_evaluations,
                                                numeric_tolerance, feasibility_margin_factor, constraint_tolerance);
+    feasibility_system.set_solver(feasibility_solver == FeasibilitySolver::GaussNewton
+        ? FeasibilityRepairSystem::Solver::GaussNewton : FeasibilityRepairSystem::Solver::LevenbergMarquardt);
+    return feasibility_system;
+}
+
+
+pair<VectorR, VectorR> ResponseOptimization::get_feasible_points(VectorR point) const
+{
+    auto feasibility_system = make_feasibility_system(input_bounds);
+    return get_feasible_points(move(point), feasibility_system);
+}
+
+
+pair<VectorR, VectorR> ResponseOptimization::get_feasible_points(VectorR point,
+                                                               FeasibilityRepairSystem& feasibility_system) const
+{
     auto result = feasibility_system.solve(move(point));
     if (result.first.size() == 0) return {};
     for (Index i = 0; i < Index(objectives.size()); i++)
@@ -325,6 +341,14 @@ void ResponseOptimization::set_feasibility_margin_factor(const float new_feasibi
 {
     throw_if(!isfinite(new_feasibility_margin_factor), "The feasibility margin factor must be finite.");
     feasibility_margin_factor = max(new_feasibility_margin_factor, 0.0f);
+}
+
+
+void ResponseOptimization::set_feasibility_solver(const FeasibilitySolver new_solver)
+{
+    throw_if(!is_one_of(new_solver, FeasibilitySolver::LevenbergMarquardt, FeasibilitySolver::GaussNewton),
+             "Invalid feasibility solver.");
+    feasibility_solver = new_solver;
 }
 
 
@@ -442,13 +466,20 @@ VectorR ResponseOptimization::calculate_random_input(const pair<VectorR, VectorR
     for (Index i = 0; i < input.size(); i++)
         input(i) = random_uniform(domain.first(i), domain.second(i));
 
-    assign_random_categories(input);
+    assign_random_categories(input, domain);
 
     return input;
 }
 
 
 void ResponseOptimization::assign_random_categories(VectorR& point, const float probability) const
+{
+    assign_random_categories(point, input_bounds, probability);
+}
+
+
+void ResponseOptimization::assign_random_categories(VectorR& point, const pair<VectorR, VectorR>& domain,
+                                                    const float probability) const
 {
     vector<char> closed_categories;
     vector<float> block;
@@ -461,7 +492,7 @@ void ResponseOptimization::assign_random_categories(VectorR& point, const float 
         closed_categories.resize(size_t(categories_number));
 
         for (Index j = 0; j < categories_number; j++)
-            closed_categories[size_t(j)] = (input_bounds.second(first_column + j) <= 0.0f) ? 1 : 0;
+            closed_categories[size_t(j)] = (domain.second(first_column + j) <= 0.0f) ? 1 : 0;
 
         if (!draw_k_hot(categories_number, 1, {}, closed_categories, block)) continue;
 

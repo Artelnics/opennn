@@ -59,6 +59,8 @@ void FeasibilityRepairSystem::set_domain(pair<VectorR, VectorR> domain)
 
 void FeasibilityRepairSystem::set_solver(const Solver new_solver)
 {
+    throw_if(!is_one_of(new_solver, Solver::LevenbergMarquardt, Solver::GaussNewton),
+             "Invalid feasibility repair solver.");
     solver = new_solver;
 }
 
@@ -123,7 +125,7 @@ pair<VectorR, VectorR> FeasibilityRepairSystem::solve(VectorR point)
 
         if (i == 0) box_scales = (upper_bounds - lower_bounds).cwiseMax(EPSILON)/box_weight;
         MatrixR initial_jacobian = calculate_jacobian(point, row_values, evaluated_output);
-        row_scales = initial_jacobian.rowwise().norm();
+        row_scales = initial_jacobian.rowwise().stableNorm();
 
         row_scales = (row_scales.array().isFinite() && (row_scales.array() > EPSILON))
                      .select(row_scales.array(), 1.0f);
@@ -233,8 +235,7 @@ void FeasibilityRepairSystem::evaluate_constraints(const VectorR& point)
 
         row_values(i) = constraint.equation.evaluate(point, evaluated_output);
 
-        row_residuals(i) = calculate_constraint_residual(constraint.get_bounds(numeric_tolerance, constraint_tolerance),
-                                                       calculate_constraint_value(i));
+        row_residuals(i) = calculate_constraint_residual(i).first;
     }
 }
 
@@ -522,10 +523,10 @@ void FeasibilityRepairSystem::calculate_numerical_jacobian(const VectorR& point,
 }
 
 
-float FeasibilityRepairSystem::calculate_constraint_residual(const pair<float, float>& bounds,
-                                                          const float value) const
+pair<float, float> FeasibilityRepairSystem::calculate_constraint_residual(const Index i) const
 {
-    const auto [lower, upper] = bounds;
+    const auto [lower, upper] = constraints[size_t(i)].get_bounds(numeric_tolerance, constraint_tolerance);
+    const float value = calculate_constraint_value(i);
 
     float crossed_bound = 0.0f;
 
@@ -534,7 +535,7 @@ float FeasibilityRepairSystem::calculate_constraint_residual(const pair<float, f
     else if (value > upper + get_bound_tolerance(upper))
         crossed_bound = upper;
     else
-        return 0.0f;
+        return {};
 
     const float residual = value - crossed_bound;
     const float margin = feasibility_margin_factor;
@@ -542,18 +543,13 @@ float FeasibilityRepairSystem::calculate_constraint_residual(const pair<float, f
     const float inset = min(margin*max(abs(residual), margin*abs(crossed_bound)),
                             0.5f*(upper - lower));
 
-    return residual + ((residual > 0.0f) ? inset : -inset);
-}
-
-
-float FeasibilityRepairSystem::calculate_constraint_slope(const Index i) const
-{
-    const auto [lower, upper] = constraints[size_t(i)].get_bounds(numeric_tolerance, constraint_tolerance);
-    const double bound = row_residuals(i) < 0.0f ? lower : upper;
-    const double violation = abs(double(calculate_constraint_value(i)) - bound);
-    const double margin = feasibility_margin_factor;
-    return violation >= margin*abs(bound) && margin*violation < 0.5*(double(upper) - lower)
-         ? 1.0f + feasibility_margin_factor : 1.0f;
+    const float result = residual + ((residual > 0.0f) ? inset : -inset);
+    const double bound = result < 0.0f ? lower : upper;
+    const double violation = abs(double(value) - bound);
+    const float slope = violation >= double(margin)*abs(bound)
+                     && double(margin)*violation < 0.5*(double(upper) - lower)
+                      ? 1.0f + margin : 1.0f;
+    return {result, slope};
 }
 
 
@@ -584,7 +580,7 @@ struct FeasibilityRepairSystem::LevenbergMarquardtFunctor : Eigen::DenseFunctor<
         jacobian.setZero(system.row_values.size() + point.size(), point.size());
         for (Index i = 0; i < system.row_values.size(); i++)
             if (system.row_residuals(i) != 0.0f && isfinite(system.row_residuals(i)))
-                jacobian.row(i) = value_jacobian.row(i)*(system.calculate_constraint_slope(i)/system.row_scales(i));
+                jacobian.row(i) = value_jacobian.row(i)*(system.calculate_constraint_residual(i).second/system.row_scales(i));
         const auto& [lower, upper] = system.input_bounds;
         for (Index j = 0; j < point.size(); j++)
             if (point(j) > upper(j) || point(j) < lower(j))
@@ -613,6 +609,7 @@ void FeasibilityRepairSystem::solve_gauss_newton(VectorR& point, MatrixR jacobia
 {
     const auto& [lower, upper] = input_bounds;
     const VectorR spans = upper - lower;
+    VectorR residuals(row_residuals.size());
 
     for (Index i = 0; i < feasibility_evaluations; i++)
     {
@@ -625,24 +622,22 @@ void FeasibilityRepairSystem::solve_gauss_newton(VectorR& point, MatrixR jacobia
         if ((row_residuals.array() == 0.0f).all()) return;
 
         if (i > 0) jacobian = calculate_jacobian(point, row_values, evaluated_output, row_residuals);
-        VectorR residuals(row_residuals.size());
         Index rows = 0;
         for (Index j = 0; j < row_residuals.size(); j++)
         {
             if (row_residuals(j) == 0.0f) continue;
-            jacobian.row(rows) = jacobian.row(j)*(calculate_constraint_slope(j)/row_scales(j));
+            jacobian.row(rows) = jacobian.row(j)*(calculate_constraint_residual(j).second/row_scales(j));
             residuals(rows++) = row_residuals(j)/row_scales(j);
         }
-        jacobian.conservativeResize(rows, Eigen::NoChange);
-        residuals.conservativeResize(rows);
-        jacobian.array().rowwise() *= spans.transpose().array();
-        if (!jacobian.allFinite() || !residuals.allFinite())
+        auto active_jacobian = jacobian.topRows(rows);
+        active_jacobian.array().rowwise() *= spans.transpose().array();
+        if (!active_jacobian.allFinite() || !residuals.head(rows).allFinite())
         {
             point.setConstant(QUIET_NAN);
             return;
         }
 
-        const VectorR step = jacobian.completeOrthogonalDecomposition().solve(-residuals);
+        const VectorR step = active_jacobian.completeOrthogonalDecomposition().solve(-residuals.head(rows));
         VectorR candidate = point + spans.cwiseProduct(step);
         if (!step.allFinite() || !candidate.allFinite())
         {

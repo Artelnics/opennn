@@ -35,6 +35,15 @@ protected:
 }
 
 
+TEST_P(FeasibilitySolver, RejectsUnknownAndRemovedSolverValues)
+{
+    Repair repair(setup.network.get(), {}, domain());
+    repair.set_solver(GetParam());
+    for (const int value : {-1, 1, 3})
+        EXPECT_THROW(repair.set_solver(static_cast<Repair::Solver>(value)), runtime_error);
+}
+
+
 TEST_P(FeasibilitySolver, RepairsMixedInputAndOutputEquations)
 {
     const auto input_equation = compile_expression("x1^2", setup.network.get());
@@ -53,6 +62,20 @@ TEST_P(FeasibilitySolver, RepairsMixedInputAndOutputEquations)
     EXPECT_NEAR(input(1) + output(0), 2.0f, 1e-4f);
     const VectorR expected = setup.network->calculate_outputs(input.transpose()).row(0).transpose();
     EXPECT_TRUE(output.isApprox(expected, 1e-6f));
+}
+
+
+TEST_P(FeasibilitySolver, RepairsEquationsWithLargeFiniteGradients)
+{
+    const vector<Constraint> constraints{{compile_expression("1e20*x1", setup.network.get()), Condition::Equal, {2e20f}},
+                                         {compile_expression("x1 + x2", setup.network.get()), Condition::Equal, {5.0f}}};
+    Repair repair(setup.network.get(), constraints, domain());
+    repair.set_solver(GetParam());
+    const auto [input, output] = repair.solve(VectorR::Constant(2, 4.0f));
+    ASSERT_EQ(input.size(), 2);
+    EXPECT_NEAR(input(0), 2.0f, 1e-4f);
+    EXPECT_NEAR(input(1), 3.0f, 1e-4f);
+    EXPECT_TRUE(output.allFinite());
 }
 
 

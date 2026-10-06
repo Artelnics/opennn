@@ -2,6 +2,7 @@
 // Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
 
 #include "opennn/response_optimization/domain_contraction.h"
+#include "opennn/response_optimization/feasibility_repair_system.h"
 #include "opennn/network/network.h"
 #include "opennn/core/tensor_operations.h"
 
@@ -99,6 +100,7 @@ pair<MatrixR, MatrixR> DomainContraction::sample_local_domains(
 
     pair<MatrixR, MatrixR> points{MatrixR(capacity, local_domains.front().first.size()),
                                  MatrixR(capacity, network->get_outputs_number())};
+    FeasibilityRepairSystem feasibility_system = make_feasibility_system(local_domains.front());
 
     Index total_sampled = 0;
     Index starved_domains = 0;
@@ -107,7 +109,7 @@ pair<MatrixR, MatrixR> DomainContraction::sample_local_domains(
 
     for (const pair<VectorR, VectorR>& domain : local_domains)
     {
-        input_bounds = domain;
+        feasibility_system.set_domain(domain);
 
         Index sampled = 0;
         Index consecutive_failures = 0;
@@ -120,7 +122,7 @@ pair<MatrixR, MatrixR> DomainContraction::sample_local_domains(
             for (Index j = 0; j < batch; j++)
             {
                 attempts++;
-                const auto [input, output] = get_feasible_points(calculate_random_input(domain));
+                const auto [input, output] = get_feasible_points(calculate_random_input(domain), feasibility_system);
 
                 if (input.size() == 0)
                 {

@@ -10,10 +10,13 @@ namespace opennn
 {
 
 class Network;
+class FeasibilityRepairSystem;
 
 class ResponseOptimization
 {
 public:
+
+    enum class FeasibilitySolver { LevenbergMarquardt, GaussNewton = 2 };
 
     void set(Network* = nullptr);
 
@@ -66,6 +69,7 @@ public:
     void set_feasibility_rounds(Index);
     void set_feasibility_evaluations(Index);
     void set_feasibility_margin_factor(float);
+    void set_feasibility_solver(FeasibilitySolver);
 
     MatrixR perform_response_optimization();
 
@@ -85,12 +89,16 @@ protected:
     pair<VectorR, VectorR> calculate_domain();
 
     pair<VectorR, VectorR> get_feasible_points(VectorR) const;
+    pair<VectorR, VectorR> get_feasible_points(VectorR, FeasibilityRepairSystem&) const;
+
+    FeasibilityRepairSystem make_feasibility_system(const pair<VectorR, VectorR>&) const;
 
     string get_sampling_failure() const;
 
     VectorR calculate_random_input(const pair<VectorR, VectorR>&) const;
 
     void assign_random_categories(VectorR&, float probability = 1.0f) const;
+    void assign_random_categories(VectorR&, const pair<VectorR, VectorR>&, float probability = 1.0f) const;
 
     MatrixR evaluate_objectives(const MatrixR&, const MatrixR&) const;
 
@@ -124,6 +132,8 @@ private:
     Index feasibility_rounds = 1;
 
     Index feasibility_evaluations = 50;
+
+    FeasibilitySolver feasibility_solver = FeasibilitySolver::LevenbergMarquardt;
 
     float diversity_factor = 0.2f;
 };

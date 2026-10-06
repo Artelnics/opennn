@@ -2,6 +2,7 @@
 // Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
 
 #include "opennn/response_optimization/genetic_response.h"
+#include "opennn/response_optimization/feasibility_repair_system.h"
 #include "opennn/network/network.h"
 #include "opennn/core/random_utilities.h"
 #include "opennn/core/statistics.h"
@@ -47,7 +48,7 @@ vector<vector<Index>> non_dominated_sort(const MatrixR& objective_values)
                 if (--domination_counts[j] == 0)
                     next_front.push_back(j);
 
-        fronts.push_back(next_front);
+        fronts.push_back(move(next_front));
     }
 
     fronts.pop_back();
@@ -87,6 +88,7 @@ GeneticResponse::GeneticResponse(Network* new_network)
 pair<MatrixR, MatrixR> GeneticResponse::initialize_population(const pair<VectorR, VectorR>& domain) const
 {
     const Index attempts_limit = (sampling_budget_multiplier > 0 ? sampling_budget_multiplier : iterations_number)*points_number;
+    FeasibilityRepairSystem feasibility_system = make_feasibility_system(domain);
 
     MatrixR inputs(points_number, domain.first.size());
     MatrixR outputs(points_number, network->get_outputs_number());
@@ -98,7 +100,7 @@ pair<MatrixR, MatrixR> GeneticResponse::initialize_population(const pair<VectorR
     while (i < attempts_limit && feasible_number < points_number
         && (maximum_consecutive_failures == 0 || consecutive_failures < maximum_consecutive_failures))
     {
-        const auto [input, output] = get_feasible_points(calculate_random_input(domain));
+        const auto [input, output] = get_feasible_points(calculate_random_input(domain), feasibility_system);
         i++;
 
         if (input.size() == 0)
@@ -115,12 +117,18 @@ pair<MatrixR, MatrixR> GeneticResponse::initialize_population(const pair<VectorR
         feasible_number++;
     }
 
-    throw_if(feasible_number < points_number,
-             get_sampling_failure() + "Only " + to_string(feasible_number) + " of " + to_string(points_number)
-             + " individuals could be made feasible with finite objectives in " + to_string(i)
-             + " candidate attempts. "
-             + (maximum_consecutive_failures > 0 && consecutive_failures >= maximum_consecutive_failures
-                ? "Consecutive failure limit reached." : "Sampling budget exhausted."));
+    if (feasible_number < points_number)
+    {
+        const string message = "Only " + to_string(feasible_number) + " of " + to_string(points_number)
+            + " individuals could be made feasible with finite objectives in " + to_string(i)
+            + " candidate attempts. "
+            + (maximum_consecutive_failures > 0 && consecutive_failures >= maximum_consecutive_failures
+               ? "Consecutive failure limit reached." : "Sampling budget exhausted.");
+        throw_if(feasible_number == 0, get_sampling_failure() + message);
+        logging::warning() << "Warning: " << message << " Continuing with the feasible individuals.\n";
+        inputs.conservativeResize(feasible_number, Eigen::NoChange);
+        outputs.conservativeResize(feasible_number, Eigen::NoChange);
+    }
 
     return {move(inputs), move(outputs)};
 }
@@ -230,6 +238,7 @@ MatrixR GeneticResponse::recombinate_population(const MatrixR& parent_inputs,
                                                 const pair<VectorR, VectorR>& domain) const
 {
     const Index attempts_limit = (sampling_budget_multiplier > 0 ? sampling_budget_multiplier : iterations_number)*points_number;
+    FeasibilityRepairSystem feasibility_system = make_feasibility_system(domain);
 
     MatrixR inputs(points_number, parent_inputs.cols());
 
@@ -252,7 +261,7 @@ MatrixR GeneticResponse::recombinate_population(const MatrixR& parent_inputs,
              || (maximum_consecutive_failures > 0 && consecutive_failures >= maximum_consecutive_failures))
                 break;
 
-            const VectorR input = get_feasible_points(move(*child)).first;
+            const VectorR input = get_feasible_points(move(*child), feasibility_system).first;
             i++;
 
             if (input.size() == 0)
@@ -275,8 +284,10 @@ MatrixR GeneticResponse::recombinate_population(const MatrixR& parent_inputs,
             << " candidate attempts. "
             << (maximum_consecutive_failures > 0 && consecutive_failures >= maximum_consecutive_failures
                 ? "Consecutive failure limit reached." : "Sampling budget exhausted.")
-            << " Keeping the previous population.\n";
-        return {};
+            << (feasible_number == 0 ? " Keeping the previous population.\n"
+                                    : " Continuing with the feasible children.\n");
+        if (feasible_number == 0) return {};
+        inputs.conservativeResize(feasible_number, Eigen::NoChange);
     }
 
     return inputs;
@@ -287,6 +298,7 @@ pair<MatrixR, MatrixR> GeneticResponse::mutate_population(const MatrixR& offspri
                                                           const pair<VectorR, VectorR>& domain) const
 {
     const Index attempts_limit = (sampling_budget_multiplier > 0 ? sampling_budget_multiplier : iterations_number)*points_number;
+    FeasibilityRepairSystem feasibility_system = make_feasibility_system(domain);
 
     MatrixR inputs(points_number, offspring_inputs.cols());
     MatrixR outputs(points_number, network->get_outputs_number());
@@ -302,7 +314,7 @@ pair<MatrixR, MatrixR> GeneticResponse::mutate_population(const MatrixR& offspri
 
         mutate_individual(child, domain);
 
-        const auto [input, output] = get_feasible_points(move(child));
+        const auto [input, output] = get_feasible_points(move(child), feasibility_system);
         i++;
 
         if (input.size() == 0)
@@ -326,8 +338,11 @@ pair<MatrixR, MatrixR> GeneticResponse::mutate_population(const MatrixR& offspri
             << " candidate attempts. "
             << (maximum_consecutive_failures > 0 && consecutive_failures >= maximum_consecutive_failures
                 ? "Consecutive failure limit reached." : "Sampling budget exhausted.")
-            << " Keeping the previous population.\n";
-        return {};
+            << (feasible_number == 0 ? " Keeping the previous population.\n"
+                                    : " Continuing with the feasible children.\n");
+        if (feasible_number == 0) return {};
+        inputs.conservativeResize(feasible_number, Eigen::NoChange);
+        outputs.conservativeResize(feasible_number, Eigen::NoChange);
     }
 
     return {move(inputs), move(outputs)};
@@ -389,7 +404,7 @@ void GeneticResponse::mutate_individual(VectorR& candidate, const pair<VectorR, 
                              domain.second(j));
     }
 
-    assign_random_categories(candidate, probability);
+    assign_random_categories(candidate, domain, probability);
 }
 
 }

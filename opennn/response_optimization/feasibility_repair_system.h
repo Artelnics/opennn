@@ -38,8 +38,7 @@ private:
     const VectorR& evaluate_outputs(const VectorR&);
     void evaluate_constraints(const VectorR&);
     float calculate_constraint_value(Index) const;
-    float calculate_constraint_residual(const pair<float, float>&, float) const;
-    float calculate_constraint_slope(Index) const;
+    pair<float, float> calculate_constraint_residual(Index) const;
     float get_bound_tolerance(float) const;
 
     MatrixR calculate_network_jacobian(const VectorR&, const VectorR&) const;

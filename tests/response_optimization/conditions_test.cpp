@@ -7,6 +7,7 @@
 
 #include "opennn/core/profiler.h"
 #include "opennn/response_optimization/domain_contraction.h"
+#include "opennn/response_optimization/feasibility_repair_system.h"
 #include "opennn/response_optimization/genetic_response.h"
 
 namespace
@@ -46,6 +47,7 @@ public:
     using ResponseOptimization::calculate_random_input;
     using ResponseOptimization::input_bounds;
     using ResponseOptimization::get_feasible_points;
+    using ResponseOptimization::make_feasibility_system;
 
 private:
 
@@ -615,17 +617,83 @@ TEST_P(ResponseDriver, FailureLimitPreservesPartialResultsAndResetsAfterSuccess)
         optimization->set_maximum_consecutive_failures(2);
 
         set_seed(seed);
-        if (interrupted && GetParam() == Driver::Genetic)
-        {
-            EXPECT_THROW(optimization->perform_response_optimization(), runtime_error);
-            continue;
-        }
-
         MatrixR results;
         ASSERT_NO_THROW(results = optimization->perform_response_optimization());
         ASSERT_EQ(results.rows(), 1);
-        EXPECT_EQ(read_category(results, 0, 0, 3), interrupted ? 0 : 1);
+        const Index category = read_category(results, 0, 0, 3);
+        if (interrupted && GetParam() == Driver::Genetic)
+            EXPECT_TRUE(category == 0 || category == 1);
+        else
+            EXPECT_EQ(category, interrupted ? 0 : 1);
     }
+}
+
+
+TEST_P(ResponseDriver, SelectsEitherFeasibilitySolver)
+{
+    MinimalApproximation setup({"x1", "x2"}, {"y"});
+    setup.network->set_parameters(VectorR::Zero(setup.network->get_parameters_buffer_size()));
+    const auto optimization = make_driver(GetParam(), setup.network.get());
+    optimization->add_constraint("x1^2 + x2^2", Condition::Equal, {25.0f});
+    optimization->add_objective("x1", Sense::Maximize);
+    optimization->set_points_number(4);
+    optimization->set_iterations_number(1);
+    for (const auto solver : {ResponseOptimization::FeasibilitySolver::LevenbergMarquardt,
+                              ResponseOptimization::FeasibilitySolver::GaussNewton})
+    {
+        SCOPED_TRACE(int(solver));
+        optimization->set_feasibility_solver(solver);
+        set_seed(1234);
+        const MatrixR result = optimization->perform_response_optimization();
+        ASSERT_EQ(result.rows(), 1);
+        EXPECT_TRUE(result.allFinite());
+        EXPECT_NEAR(result.leftCols(2).squaredNorm(), 25.0f, 1e-4f);
+    }
+}
+
+
+TEST(Feasibility, SamplingAndBatchRepairUseTheirExplicitDomain)
+{
+    CategoricalApproximation setup({"x"}, "material", {"first", "second"});
+    setup.network->set_parameters(VectorR::Zero(setup.network->get_parameters_buffer_size()));
+    RepairProbe probe(setup.network.get());
+    auto domain = probe.calculate_domain();
+    probe.input_bounds.second(2) = 0.0f;
+    domain.first(0) = domain.second(0) = 3.0f;
+    domain.second(1) = 0.0f;
+    auto feasibility_system = probe.make_feasibility_system(domain);
+    for (Index i = 0; i < 4; i++)
+    {
+        const VectorR sampled = probe.calculate_random_input(domain);
+        EXPECT_FLOAT_EQ(sampled(0), 3.0f);
+        EXPECT_FLOAT_EQ(sampled(1), 0.0f);
+        EXPECT_FLOAT_EQ(sampled(2), 1.0f);
+        const auto [input, output] = probe.get_feasible_points(sampled, feasibility_system);
+        ASSERT_EQ(input.size(), 3);
+        EXPECT_EQ((input - sampled).squaredNorm(), 0.0f);
+        EXPECT_TRUE(output.allFinite());
+    }
+    EXPECT_FLOAT_EQ(probe.input_bounds.second(2), 0.0f);
+}
+
+
+TEST(Feasibility, ConfiguredSolverIsUsedByBothRepairEntryPoints)
+{
+    MinimalApproximation setup({"x1", "x2"}, {"y"});
+    RepairProbe probe(setup.network.get());
+    probe.add_constraint("x1 + x2", Condition::Equal, {5.0f});
+    probe.calculate_domain();
+    probe.input_bounds.second(1) = 2.0f;
+    probe.set_feasibility_solver(ResponseOptimization::FeasibilitySolver::GaussNewton);
+    auto feasibility_system = probe.make_feasibility_system(probe.input_bounds);
+    const auto direct = probe.get_feasible_points(VectorR::Zero(2));
+    const auto reused = probe.get_feasible_points(VectorR::Zero(2), feasibility_system);
+    ASSERT_EQ(direct.first.size(), 2);
+    ASSERT_EQ(reused.first.size(), 2);
+    EXPECT_NEAR(direct.first(0), 125.0f/26.0f, 1e-5f);
+    EXPECT_NEAR(direct.first(1), 5.0f/26.0f, 1e-5f);
+    EXPECT_EQ((direct.first - reused.first).squaredNorm(), 0.0f);
+    EXPECT_THROW(probe.set_feasibility_solver(static_cast<ResponseOptimization::FeasibilitySolver>(1)), runtime_error);
 }
 
 
@@ -1584,3 +1652,92 @@ INSTANTIATE_TEST_SUITE_P(Drivers,
                          ResponseDriver,
                          testing::Values(Driver::Contraction, Driver::Genetic),
                          driver_name);
+
+
+TEST(GeneticResponse, KeepsUsefulPartialMutationBatch)
+{
+    CategoricalApproximation setup({}, "material", {"first", "best", "rejected"});
+    setup.network->set_parameters(VectorR::Zero(setup.network->get_parameters_buffer_size()));
+    RepairProbe probe(setup.network.get());
+    const auto domain = probe.calculate_domain();
+    GeneticResponse optimization(setup.network.get());
+    optimization.add_objective("best", Sense::Maximize);
+    optimization.add_constraint("first + best + y1", Condition::Equal, {1.0f});
+    optimization.set_points_number(2);
+    optimization.set_iterations_number(1);
+    optimization.set_sampling_budget_multiplier(1);
+    optimization.set_maximum_consecutive_failures(1);
+
+    bool retained_best = false;
+    for (unsigned seed = 0; seed < 1024 && !retained_best; seed++)
+    {
+        SCOPED_TRACE(seed);
+        set_seed(seed);
+        if (probe.calculate_random_input(domain)(0) != 1.0f
+         || probe.calculate_random_input(domain)(0) != 1.0f) continue;
+
+        string warnings;
+        const auto previous_level = logging::level();
+        logging::set_level(logging::Level::Warning);
+        logging::set_sink([&](logging::Level, string_view message) { warnings += message; });
+        set_seed(seed);
+        MatrixR results;
+        EXPECT_NO_THROW(results = optimization.perform_response_optimization());
+        logging::set_sink({});
+        logging::set_level(previous_level);
+
+        ASSERT_EQ(results.rows(), 1);
+        ASSERT_EQ(results.cols(), 4);
+        EXPECT_TRUE(results.allFinite());
+        EXPECT_EQ(results(0, 0) + results(0, 1), 1.0f);
+        retained_best = warnings.find("only 1 of 2 children survived mutation") != string::npos
+                     && results(0, 1) == 1.0f;
+    }
+    EXPECT_TRUE(retained_best);
+}
+
+
+TEST(GeneticResponse, ContinuesFromPartialRecombinationBatch)
+{
+    MinimalApproximation setup({"x1"}, {"y"}, -1.0f, 1.0f);
+    setup.network->set_parameters(VectorR::Zero(setup.network->get_parameters_buffer_size()));
+    RepairProbe probe(setup.network.get());
+    const auto domain = probe.calculate_domain();
+    const auto objective = compile_expression("sqrt(sin(100*x1))", setup.network.get(), "Objective");
+    GeneticResponse optimization(setup.network.get());
+    optimization.add_objective("sqrt(sin(100*x1))", Sense::Maximize);
+    optimization.set_points_number(2);
+    optimization.set_iterations_number(1);
+    optimization.set_sampling_budget_multiplier(1);
+    optimization.set_maximum_consecutive_failures(1);
+
+    bool continued = false;
+    for (unsigned seed = 0; seed < 1024 && !continued; seed++)
+    {
+        SCOPED_TRACE(seed);
+        set_seed(seed);
+        if (!isfinite(objective.evaluate(probe.calculate_random_input(domain), VectorR{}))
+         || !isfinite(objective.evaluate(probe.calculate_random_input(domain), VectorR{}))) continue;
+
+        string warnings;
+        const auto previous_level = logging::level();
+        logging::set_level(logging::Level::Warning);
+        logging::set_sink([&](logging::Level, string_view message) { warnings += message; });
+        set_seed(seed);
+        MatrixR results;
+        EXPECT_NO_THROW(results = optimization.perform_response_optimization());
+        logging::set_sink({});
+        logging::set_level(previous_level);
+
+        ASSERT_EQ(results.rows(), 1);
+        ASSERT_EQ(results.cols(), 2);
+        EXPECT_TRUE(results.allFinite());
+        EXPECT_GE(results(0, 0), -1.0f);
+        EXPECT_LE(results(0, 0), 1.0f);
+        EXPECT_TRUE(isfinite(objective.evaluate(results.row(0).head(1).transpose(), VectorR{})));
+        const size_t partial = warnings.find("only 1 of 2 children could be recombined");
+        continued = partial != string::npos
+                 && warnings.find("children survived mutation", partial) != string::npos;
+    }
+    EXPECT_TRUE(continued);
+}

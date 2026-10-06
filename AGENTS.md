@@ -134,8 +134,10 @@ explicitly opt-in. GoogleTest is needed only for tests. CUDA builds add NVIDIA
 runtime dependencies and the fetched cuDNN frontend. Versions and licences are
 listed in [THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt).
 
-Gauss–Newton is available through `FeasibilityRepairSystem::Solver::GaussNewton`
-using Eigen, with no additional dependency. It takes minimum-norm steps in
+Gauss–Newton is available through
+`set_feasibility_solver(ResponseOptimization::FeasibilitySolver::GaussNewton)`
+on either response search, or `FeasibilityRepairSystem::Solver::GaussNewton`
+for direct repair, using Eigen with no additional dependency. It takes minimum-norm steps in
 input-span coordinates and clips them to the domain; LM remains the default.
 Both repair backends share rounds, per-round evaluation limits (excluding
 numerical probes), tolerance, margin and final discrete/feasibility checks.
@@ -144,6 +146,10 @@ dense networks, including common activations, affine scaling/unscaling and
 clamping. This logic stays in `response_optimization`; unsupported networks,
 unusable derivatives and nonsmooth boundaries use finite differences.
 There is no automatic solver fallback. A failed repair does not prove infeasibility.
+Searches reuse a local repair system within each sampling batch and pass the
+active domain explicitly. Genetic search retains nonempty partial initial and
+offspring batches when sampling stops; an empty initial population still fails,
+and empty offspring batches leave the previous population intact.
 
 `PORTABLE` removes only explicit host-specific ISA flags (`-march=native`,
 `/arch:AVX2` or the Apple Silicon target). It does not change tensor layouts,
