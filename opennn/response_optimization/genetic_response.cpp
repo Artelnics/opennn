@@ -380,24 +380,28 @@ void GeneticResponse::mutate_individual(VectorR& candidate, const pair<VectorR, 
 
     vector<char> categorical_columns(size_t(candidate.size()), 0);
 
-    Index variables_number = candidate.size();
+    Index variables_number = (domain.first.array() < domain.second.array()).count();
 
     for (const auto& [first_column, categories_number] : categorical_blocks)
     {
         fill_n(categorical_columns.begin() + first_column, categories_number, 1);
 
-        variables_number -= categories_number - 1;
+        const Index free_categories =
+            (domain.first.segment(first_column, categories_number).array()
+             < domain.second.segment(first_column, categories_number).array()).count();
+        variables_number -= free_categories - Index(free_categories > 1);
     }
+
+    if (variables_number == 0) return;
 
     const float probability = 1.0f/float(variables_number);
 
     for (Index j = 0; j < candidate.size(); j++)
     {
-        if (categorical_columns[size_t(j)] || random_uniform(0.0f, 1.0f) >= probability) continue;
-
         const float range = domain.second(j) - domain.first(j);
 
-        if (range <= 0.0f) continue;
+        if (categorical_columns[size_t(j)] || range <= 0.0f
+         || random_uniform(0.0f, 1.0f) >= probability) continue;
 
         candidate(j) = clamp(candidate(j) + random_normal(0.0f, mutation_deviation)*range,
                              domain.first(j),

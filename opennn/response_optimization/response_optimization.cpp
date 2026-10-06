@@ -270,7 +270,12 @@ pair<VectorR, VectorR> ResponseOptimization::get_feasible_points(VectorR point,
                                                                FeasibilityRepairSystem& feasibility_system) const
 {
     auto result = feasibility_system.solve(move(point));
-    if (result.first.size() == 0) return {};
+    if (result.first.size() == 0)
+    {
+        const auto& failure = feasibility_system.get_closest_failure();
+        if (failure.first < closest_failure.first) closest_failure = failure;
+        return {};
+    }
     for (Index i = 0; i < Index(objectives.size()); i++)
     {
         if (!isfinite(objectives[size_t(i)].evaluate_score(result.first, result.second)))
@@ -290,14 +295,15 @@ void ResponseOptimization::set(Network* new_network)
     constraints.clear();
     input_bounds = {};
     invalid_objective = -1;
+    closest_failure = {numeric_limits<double>::infinity(), {}};
 }
 
 
 string ResponseOptimization::get_sampling_failure() const
 {
-    return invalid_objective < 0 ? "No feasible point with finite outputs and objectives was found. "
+    return (invalid_objective < 0 ? "No feasible point with finite outputs and objectives was found. "
          : "Objective '" + objectives[size_t(invalid_objective)].expression.text
-           + "' has no finite value at some sampled points. ";
+           + "' has no finite value at some sampled points. ") + closest_failure.second;
 }
 
 
@@ -450,6 +456,7 @@ void ResponseOptimization::add_constraint(const string& expression,
 MatrixR ResponseOptimization::perform_response_optimization()
 {
     invalid_objective = -1;
+    closest_failure = {numeric_limits<double>::infinity(), {}};
     throw_if(!network, "The neural network has not been set.");
     throw_if(objectives.empty(), "No objective has been set.");
     const Index multiplier = sampling_budget_multiplier > 0 ? sampling_budget_multiplier : iterations_number;
@@ -526,16 +533,10 @@ vector<Index> ResponseOptimization::calculate_pareto_front(const MatrixR& object
 {
     if (objective_values.rows() == 0) return {};
 
-    VectorR tolerance(objective_values.cols());
-
-    for (Index j = 0; j < objective_values.cols(); j++)
-        tolerance(j) = get_bound_tolerance(objective_values.col(j).maxCoeff() - objective_values.col(j).minCoeff());
-
-
     const auto is_as_good_as = [&](const Index point, const Index other)
     {
         for (Index j = 0; j < objective_values.cols(); j++)
-            if (objective_values(point, j) < objective_values(other, j) - tolerance(j))
+            if (!(objective_values(point, j) >= objective_values(other, j)))
                 return false;
 
         return true;
@@ -616,21 +617,21 @@ pair<Index, VectorR> ResponseOptimization::get_advised_point(const MatrixR& resu
                                                         results.rightCols(results.cols() - inputs_number));
     const VectorR utopian = objective_values.colwise().maxCoeff().transpose();
 
-    VectorR scale(objective_values.cols());
+    Eigen::VectorXd scale(objective_values.cols());
     for (Index j = 0; j < scale.size(); j++)
     {
-        const float range = utopian(j) - objective_values.col(j).minCoeff();
-        scale(j) = range > 0 ? 1.0f / range : 1.0f;
+        const double range = double(utopian(j)) - double(objective_values.col(j).minCoeff());
+        scale(j) = range > 0.0 ? 1.0 / range : 1.0;
     }
 
     Index best_index = 0;
-    float best_distance = numeric_limits<float>::infinity();
+    double best_distance = numeric_limits<double>::infinity();
     for (Index i = 0; i < objective_values.rows(); i++)
     {
-        float distance = 0.0f;
+        double distance = 0.0;
         for (Index j = 0; j < objective_values.cols(); j++)
         {
-            const float difference = (objective_values(i, j) - utopian(j)) * scale(j);
+            const double difference = (double(objective_values(i, j)) - double(utopian(j))) * scale(j);
             distance += difference * difference;
         }
         if (distance < best_distance) { best_distance = distance; best_index = i; }

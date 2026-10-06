@@ -7,6 +7,43 @@
 
 using namespace opennn;
 
+TEST(StatisticsTest, MinmaxScoreHandlesWideFiniteRanges)
+{
+    const float largest = numeric_limits<float>::max();
+    VectorR values(5);
+    values << -largest, -largest/2.0f, 0.0f, largest/2.0f, largest;
+    const VectorR scores = minmax_score(values);
+    const VectorR inverted = minmax_score(values, true);
+    EXPECT_TRUE(scores.allFinite());
+    EXPECT_TRUE(inverted.allFinite());
+    for (Index i = 0; i < values.size(); i++)
+    {
+        EXPECT_FLOAT_EQ(scores(i), float(i)/4.0f);
+        EXPECT_FLOAT_EQ(inverted(i), 1.0f - float(i)/4.0f);
+    }
+
+    MatrixR matrix(5, 2);
+    matrix.col(0) = values;
+    matrix.col(1).setConstant(largest);
+    const MatrixR normalized = minmax_score(matrix);
+    EXPECT_TRUE(normalized.allFinite());
+    EXPECT_TRUE(normalized.col(0).isApprox(scores));
+    EXPECT_TRUE(normalized.col(1).isZero());
+}
+
+TEST(StatisticsTest, MinmaxScorePreservesSmallRangeConvention)
+{
+    VectorR values(3);
+    values << 0.0f, EPSILON/4.0f, EPSILON/2.0f;
+    EXPECT_TRUE(minmax_score(values).isZero());
+    EXPECT_TRUE(minmax_score(values, true).isOnes());
+    values << 0.0f, EPSILON/2.0f, EPSILON;
+    const VectorR scores = minmax_score(values);
+    EXPECT_FLOAT_EQ(scores(0), 0.0f);
+    EXPECT_FLOAT_EQ(scores(1), 0.5f);
+    EXPECT_FLOAT_EQ(scores(2), 1.0f);
+}
+
 TEST(StatisticsTest, Minimum)
 {
     VectorR vector;

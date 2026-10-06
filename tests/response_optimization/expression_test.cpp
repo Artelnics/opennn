@@ -163,6 +163,52 @@ TEST(Expression, DivisionByConstantIsLinear)
 }
 
 
+TEST(Expression, SmallCoefficientsPreserveInputAndOutputUnits)
+{
+    const auto inputs = make_named_columns({"x1", "x2"});
+    const auto outputs = make_named_columns({"y1"});
+    VectorR point(2); point << 3.0f, 1e8f;
+    const VectorR output = VectorR::Constant(1, 2e8f);
+    const auto mixed = compile_expression("x1 + 1e-8*x2 - 1e-8*y1", inputs, outputs);
+    EXPECT_FLOAT_EQ(mixed.evaluate(point, output), 2.0f);
+    const VectorR input_gradient = evaluate_input_gradient(mixed, point, output);
+    EXPECT_FLOAT_EQ(input_gradient(0), 1.0f);
+    EXPECT_FLOAT_EQ(input_gradient(1), 1e-8f);
+    VectorR output_gradient;
+    evaluate_output_gradient(mixed, point, output, output_gradient);
+    EXPECT_FLOAT_EQ(output_gradient(0), -1e-8f);
+
+    for (const string& text : {"1e-8*x2", "x2/1e8"})
+    {
+        const auto expression = compile_expression(text, inputs, outputs);
+        EXPECT_EQ(expression.linearity, ExpressionLinearity::Linear);
+        EXPECT_FLOAT_EQ(expression.evaluate(point, output), 1.0f);
+    }
+
+    const auto small_divisor = compile_expression("x2/1e-8", inputs, outputs);
+    EXPECT_EQ(small_divisor.linearity, ExpressionLinearity::Nonlinear);
+    EXPECT_FLOAT_EQ(small_divisor.evaluate(point, output), point(1)/1e-8f);
+}
+
+
+TEST(Expression, PowersNearZeroAndOneKeepTheirExponents)
+{
+    const auto inputs = make_named_columns({"x1"});
+    const VectorR point = VectorR::Constant(1, 1e8f);
+    const vector<pair<string, float>> exponents{{"0.99999994", 0.99999994f}, {"1e-8", 1e-8f}};
+    for (const auto& [text, exponent] : exponents)
+        for (const string& expression_text : {"x1^" + text, "pow(x1," + text + ")"})
+        {
+            SCOPED_TRACE(expression_text);
+            const auto expression = compile_expression(expression_text, inputs, {});
+            EXPECT_EQ(expression.linearity, ExpressionLinearity::Nonlinear);
+            EXPECT_FLOAT_EQ(expression.evaluate(point, {}), pow(point(0), exponent));
+            EXPECT_FLOAT_EQ(evaluate_input_gradient(expression, point, {})(0),
+                            exponent*pow(point(0), exponent - 1.0f));
+        }
+}
+
+
 TEST(Expression, NonlinearOperationsAreClassified)
 {
     const auto inputs = make_named_columns({"x1", "x2"});
@@ -366,6 +412,70 @@ TEST(Expression, SelectorGradientIsNotFiniteOnTheKink)
 
     EXPECT_FALSE(evaluate_input_gradient(compile_expression("abs(x1 - 5)", inputs, {}),
                                          tied, output).allFinite());
+}
+
+
+TEST(Expression, SelectorTiesKeepCommonConstantSlopes)
+{
+    const auto inputs = make_named_columns({"x1"});
+    const auto outputs = make_named_columns({"y1"});
+    const VectorR point = VectorR::Constant(1, 2.0f);
+    const VectorR output = VectorR::Constant(1, 3.0f);
+    for (const string& function : {"min", "max"})
+    {
+        const auto affine = compile_expression(function + "(2*x1+y1,2*x1+y1)", inputs, outputs);
+        EXPECT_FLOAT_EQ(evaluate_input_gradient(affine, point, output)(0), 2.0f);
+        VectorR output_gradient;
+        evaluate_output_gradient(affine, point, output, output_gradient);
+        EXPECT_FLOAT_EQ(output_gradient(0), 1.0f);
+
+        const auto large_slope = compile_expression(function + "(2e38*x1,2e38*x1)", inputs, outputs);
+        EXPECT_FLOAT_EQ(evaluate_input_gradient(large_slope, VectorR::Zero(1), output)(0), 2e38f);
+
+        const auto nonlinear = compile_expression(function + "(x1^2,x1^2)", inputs, outputs);
+        EXPECT_FALSE(evaluate_input_gradient(nonlinear, point, output).allFinite());
+    }
+}
+
+
+TEST(Expression, SelectorKeepsSingularInactiveDerivativesAsFallbackSignals)
+{
+    const auto inputs = make_named_columns({"x1"});
+    const auto outputs = make_named_columns({"y1"});
+    const VectorR output = VectorR::Zero(1);
+    for (const string& function : {"min", "max"})
+    {
+        const VectorR point = VectorR::Constant(1, function == "min" ? -1.0f : 1.0f);
+        const auto expression = compile_expression(function + "(x1,sqrt(y1))", inputs, outputs);
+        EXPECT_FLOAT_EQ(expression.evaluate(point, output), point(0));
+        EXPECT_FLOAT_EQ(evaluate_input_gradient(expression, point, output)(0), 1.0f);
+        VectorR output_gradient;
+        evaluate_output_gradient(expression, point, output, output_gradient);
+        EXPECT_FALSE(output_gradient.allFinite());
+        const VectorR probe_output = VectorR::Constant(1, 1e-3f);
+        EXPECT_FLOAT_EQ((expression.evaluate(point, probe_output) - expression.evaluate(point, output))/1e-3f, 0.0f);
+    }
+}
+
+
+TEST(Expression, NestedSelectorDerivativesStayQuadratic)
+{
+    const auto inputs = make_named_columns({"x1"});
+    for (const string& function : {"min", "max"})
+        for (const bool nested_first : {false, true})
+            for (const size_t depth : {4u, 8u, 12u})
+            {
+                SCOPED_TRACE(function + " depth=" + to_string(depth) + " first=" + to_string(nested_first));
+                string text = "sin(x1)";
+                for (size_t i = 0; i < depth; i++)
+                    text = function + "(" + (nested_first ? text + ",0.25" : "0.25," + text) + ")";
+                const auto expression = compile_expression(text, inputs, {});
+                ASSERT_EQ(expression.input_gradient.size(), 1u);
+                EXPECT_LT(expression.input_gradient[0].second.operations.size(), 20*depth*depth + 20);
+                const VectorR point = VectorR::Constant(1, function == "min" ? 0.1f : 1.0f);
+                EXPECT_FLOAT_EQ(expression.evaluate(point, {}), sin(point(0)));
+                EXPECT_NEAR(evaluate_input_gradient(expression, point, {})(0), cos(point(0)), 1e-6f);
+            }
 }
 
 
@@ -665,6 +775,21 @@ TEST(ExpressionHelpers, BareVariableIsAPlainUnscaledColumn)
     EXPECT_FALSE(is_bare_variable(compile_expression("2*x1", inputs, {})));
     EXPECT_FALSE(is_bare_variable(compile_expression("x1 + 1", inputs, {})));
     EXPECT_FALSE(is_bare_variable(compile_expression("x1 + x2", inputs, {})));
+    EXPECT_FALSE(is_bare_variable(compile_expression("x1 + 1e-8", inputs, {})));
+    EXPECT_FALSE(is_bare_variable(compile_expression("0.99999994*x1", inputs, {})));
+    EXPECT_FALSE(is_bare_variable(compile_expression("1.00000012*x1", inputs, {})));
+}
+
+
+TEST(ExpressionHelpers, DiscreteConstraintsRejectNearlyBareVariables)
+{
+    MinimalApproximation setup({"x1"}, {"y"});
+    ConstraintProbe problem(setup.network.get());
+    for (const string& text : {"x1 + 1e-8", "0.99999994*x1", "1.00000012*x1"})
+    {
+        EXPECT_THROW(problem.add_constraint(text, Condition::Integer), runtime_error);
+        EXPECT_THROW(problem.add_constraint(text, Condition::AllowedSet, {0.0f, 1.0f}), runtime_error);
+    }
 }
 
 

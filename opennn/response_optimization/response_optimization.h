@@ -129,6 +129,8 @@ private:
 
     mutable Index invalid_objective = -1;
 
+    mutable pair<double, string> closest_failure{numeric_limits<double>::infinity(), {}};
+
     Index feasibility_rounds = 1;
 
     Index feasibility_evaluations = 50;

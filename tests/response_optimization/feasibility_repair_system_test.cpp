@@ -522,6 +522,87 @@ TEST(FeasibilityGaussNewton, ProjectsAnOvershootingStepAndContinuesRepair)
 }
 
 
+TEST(FeasibilityGaussNewton, BacktracksWithinTheCandidateEvaluationBudget)
+{
+    Network network;
+    network.add_layer(make_unique<opennn::Dense>(Shape{1}, Shape{1}, "Identity"));
+    network.set_input_variables({Variable("x1", "Input")});
+    network.set_output_variables({Variable("y", "Target")});
+    network.compile(Device::CPU);
+    network.set_parameters(VectorR::Zero(network.get_parameters_buffer_size()));
+    network.get_layer(0)->get_parameter_views()[1].as_vector()(0) = 1.0f;
+    network.mark_parameters_changed();
+    const vector<Constraint> constraints{{compile_expression("sin(y)", &network), Condition::Equal, {0.0f}}};
+
+    for (const Index budget : {1, 2, 50})
+    {
+        SCOPED_TRACE(budget);
+        Repair repair(&network, constraints, {VectorR::Constant(1, -1.5f), VectorR::Constant(1, 1.5f)}, 1, budget);
+        repair.set_solver(Repair::Solver::GaussNewton);
+        const bool profiling_enabled = profiler::is_enabled();
+        profiler::set_enabled(true);
+        const long previous_calls = profiler::stats().call_count("fp:set");
+        const auto result = repair.solve(VectorR::Constant(1, 1.4f));
+        const long calls = profiler::stats().call_count("fp:set") - previous_calls;
+        profiler::set_enabled(profiling_enabled);
+        EXPECT_LE(calls, budget + 2);
+        if (budget < 3) EXPECT_EQ(result.first.size(), 0);
+        else
+        {
+            ASSERT_EQ(result.first.size(), 1);
+            EXPECT_NEAR(result.first(0), 0.0f, 1e-6f);
+            EXPECT_TRUE(result.second.allFinite());
+        }
+    }
+}
+
+
+TEST(FeasibilityGaussNewton, BacktracksAfterANonfiniteTrial)
+{
+    MinimalApproximation setup({"x1"}, {"y"});
+    const vector<Constraint> constraints{{compile_expression("sqrt(x1)", setup.network.get()), Condition::Equal, {0.0f}}};
+    Repair repair(setup.network.get(), constraints, {VectorR::Constant(1, -8.0f), VectorR::Constant(1, 8.0f)});
+    repair.set_solver(Repair::Solver::GaussNewton);
+    const auto result = repair.solve(VectorR::Constant(1, 4.0f));
+    ASSERT_EQ(result.first.size(), 1);
+    EXPECT_FLOAT_EQ(result.first(0), 0.0f);
+    EXPECT_TRUE(result.second.allFinite());
+}
+
+
+TEST(FeasibilityGaussNewton, RepairsRedundantEquationsAcrossLargeFiniteDomains)
+{
+    MinimalApproximation setup({"x1"}, {"y"});
+    const vector<Constraint> constraints{{compile_expression("x1", setup.network.get()), Condition::Equal, {1.0f}},
+                                         {compile_expression("2*x1", setup.network.get()), Condition::Equal, {2.0f}}};
+    for (const float upper : {1e20f, 1e30f})
+    {
+        SCOPED_TRACE(upper);
+        Repair repair(setup.network.get(), constraints, {VectorR::Zero(1), VectorR::Constant(1, upper)});
+        repair.set_solver(Repair::Solver::GaussNewton);
+        const auto result = repair.solve(VectorR::Zero(1));
+        ASSERT_EQ(result.first.size(), 1);
+        EXPECT_NEAR(result.first(0), 1.0f, 1e-6f);
+        EXPECT_TRUE(result.second.allFinite());
+    }
+}
+
+
+TEST(FeasibilityGaussNewton, PreservesTheMinimumNormStepWithLargeResiduals)
+{
+    MinimalApproximation setup({"x1", "x2"}, {"y"});
+    const vector<Constraint> constraints{{compile_expression("1e30*(1-x1*x2)-x1-x2", setup.network.get()),
+                                         Condition::Equal, {-2.0f}}};
+    Repair repair(setup.network.get(), constraints, {VectorR::Zero(2), VectorR::Ones(2)});
+    repair.set_solver(Repair::Solver::GaussNewton);
+    const auto result = repair.solve(VectorR::Zero(2));
+    ASSERT_EQ(result.first.size(), 2);
+    EXPECT_FLOAT_EQ(result.first(0), 1.0f);
+    EXPECT_FLOAT_EQ(result.first(1), 1.0f);
+    EXPECT_TRUE(result.second.allFinite());
+}
+
+
 TEST(FeasibilityGaussNewton, AppliesASmallCorrectionBeforeStopping)
 {
     MinimalApproximation setup({"x1", "x2"}, {"y"});

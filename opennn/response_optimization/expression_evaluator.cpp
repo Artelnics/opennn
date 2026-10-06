@@ -642,10 +642,10 @@ LinearForm combine_linear_forms(const ExpressionOp::Kind kind, LinearForm left_f
         return result;
     }
 
-    if (right_form.is_constant() && abs(right_form.constant - 1.0f) < EPSILON)
+    if (right_form.is_constant() && right_form.constant == 1.0f)
         return left_form;
 
-    if (right_form.is_constant() && abs(right_form.constant) < EPSILON)
+    if (right_form.is_constant() && right_form.constant == 0.0f)
     {
         result.constant = 1.0f;
         return result;
@@ -831,20 +831,21 @@ ExpressionNodePtr differentiate_call(const ExpressionNode& node, const Index wrt
 
         ExpressionNodePtr second_derivative = differentiate(second, wrt_index, variable_kind);
 
+        const optional<float> first_slope = as_constant(*argument_derivative);
+        if (first_slope && isfinite(*first_slope) && as_constant(*second_derivative) == first_slope)
+            return make_const(*first_slope);
+
         ExpressionNodePtr gap = make_sub(clone(argument), clone(second));
         ExpressionNodePtr magnitude = make_call(Abs, clone(*gap));
         ExpressionNodePtr side = make_div(move(gap), move(magnitude));
 
-        ExpressionNodePtr average = make_mul(make_const(0.5f),
-                                             make_add(clone(*argument_derivative), clone(*second_derivative)));
+        ExpressionNodePtr first_weight = make_mul(make_const(0.5f),
+            node.kind == Min ? make_sub(make_const(1.0f), move(side))
+                             : make_add(make_const(1.0f), move(side)));
+        ExpressionNodePtr second_weight = make_sub(make_const(1.0f), clone(*first_weight));
 
-        ExpressionNodePtr spread = make_mul(make_const(0.5f),
-                                            make_mul(move(side),
-                                                     make_sub(move(argument_derivative),
-                                                              move(second_derivative))));
-
-        return node.kind == Min ? make_sub(move(average), move(spread))
-                                : make_add(move(average), move(spread));
+        return make_add(make_mul(move(first_weight), move(argument_derivative)),
+                        make_mul(move(second_weight), move(second_derivative)));
     }
 
     case Sqrt:
@@ -960,7 +961,7 @@ void collect_significant_terms(const unordered_map<Index, float>& terms,
     columns.reserve(terms.size());
 
     for (const auto& [column, coefficient] : terms)
-        if (abs(coefficient) > EPSILON)
+        if (coefficient != 0.0f)
         {
             kept_terms.emplace_back(column, coefficient);
             columns.push_back(column);
@@ -1314,13 +1315,13 @@ bool is_bare_variable(const CompiledExpression& expression)
 {
     if (expression.linearity != ExpressionLinearity::Linear
      || !is_univariate(expression)
-     || abs(expression.linear_constant) > EPSILON)
+     || expression.linear_constant != 0.0f)
         return false;
 
     const auto& terms = expression.linear_input_terms.empty() ? expression.linear_output_terms
                                                               : expression.linear_input_terms;
 
-    return abs(terms.front().second - 1.0f) <= EPSILON;
+    return terms.front().second == 1.0f;
 }
 
 

@@ -138,7 +138,8 @@ Gauss–Newton is available through
 `set_feasibility_solver(ResponseOptimization::FeasibilitySolver::GaussNewton)`
 on either response search, or `FeasibilityRepairSystem::Solver::GaussNewton`
 for direct repair, using Eigen with no additional dependency. It takes minimum-norm steps in
-input-span coordinates and clips them to the domain; LM remains the default.
+input-span coordinates, scales the linear system before decomposition and uses
+up to eight backtracking trials per step, clipped to the domain; LM remains the default.
 Both repair backends share rounds, per-round evaluation limits (excluding
 numerical probes), tolerance, margin and final discrete/feasibility checks.
 Both use analytical constraint Jacobians for supported CPU FP32 sequential
@@ -146,6 +147,10 @@ dense networks, including common activations, affine scaling/unscaling and
 clamping. This logic stays in `response_optimization`; unsupported networks,
 unusable derivatives and nonsmooth boundaries use finite differences.
 There is no automatic solver fallback. A failed repair does not prove infeasibility.
+Failed sampling reports the worst tolerance-scaled miss of the best checked
+rounded candidate with a constraint violation, when finite values are available. These
+diagnostics reuse evaluated values, exclude continuous solver probes and reset
+between optimization runs; they do not establish a globally nearest feasible value.
 Searches reuse a local repair system within each sampling batch and pass the
 active domain explicitly. Genetic search retains nonempty partial initial and
 offspring batches when sampling stops; an empty initial population still fails,

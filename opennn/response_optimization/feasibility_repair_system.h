@@ -25,6 +25,8 @@ public:
 
     pair<VectorR, VectorR> solve(VectorR);
 
+    const pair<double, string>& get_closest_failure() const { return closest_failure; }
+
 private:
 
     using Condition = Constraint::Condition;
@@ -37,6 +39,7 @@ private:
     bool round_discrete(VectorR&) const;
     const VectorR& evaluate_outputs(const VectorR&);
     void evaluate_constraints(const VectorR&);
+    void update_closest_failure();
     float calculate_constraint_value(Index) const;
     pair<float, float> calculate_constraint_residual(Index) const;
     float get_bound_tolerance(float) const;
@@ -69,6 +72,7 @@ private:
     VectorR row_residuals;
     VectorR evaluated_point;
     VectorR evaluated_output;
+    pair<double, string> closest_failure{numeric_limits<double>::infinity(), {}};
 };
 
 }

@@ -801,13 +801,13 @@ vector<Index> ranked_indices(const VectorR& data)
 
 VectorR minmax_score(const VectorR& values, const bool invert)
 {
-    const float smallest = values.minCoeff();
-    const float range = values.maxCoeff() - smallest;
+    const double smallest = double(values.minCoeff());
+    const double range = double(values.maxCoeff()) - smallest;
 
     if (range < EPSILON)
         return VectorR::Constant(values.size(), invert ? 1.0f : 0.0f);
 
-    const VectorR normalized = (values.array() - smallest) / range;
+    const VectorR normalized = ((values.cast<double>().array() - smallest) / range).cast<float>();
 
     return VectorR(invert ? (1.0f - normalized.array()).matrix() : normalized);
 }

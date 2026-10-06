@@ -110,6 +110,8 @@ pair<VectorR, VectorR> FeasibilityRepairSystem::solve(VectorR point)
             return {move(point), move(evaluated_output)};
         }
 
+        update_closest_failure();
+
         if (i == feasibility_rounds) return {};
 
         if (previous.size() == point.size()
@@ -237,6 +239,54 @@ void FeasibilityRepairSystem::evaluate_constraints(const VectorR& point)
 
         row_residuals(i) = calculate_constraint_residual(i).first;
     }
+}
+
+
+void FeasibilityRepairSystem::update_closest_failure()
+{
+    Index worst = -1;
+    double worst_ratio = 0.0;
+    double worst_gap = 0.0;
+    double worst_tolerance = 0.0;
+    float worst_bound = 0.0f;
+
+    for (Index i = 0; i < row_values.size(); i++)
+    {
+        if (row_residuals(i) == 0.0f) continue;
+        const Constraint& constraint = constraints[size_t(i)];
+        const auto [lower, upper] = constraint.get_bounds(numeric_tolerance, constraint_tolerance);
+        const float bound = row_residuals(i) < 0.0f ? lower : upper;
+        const bool discrete = is_one_of(constraint.condition, Condition::Integer, Condition::AllowedSet);
+        const double gap = discrete ? abs(double(calculate_constraint_value(i))) : abs(double(row_values(i)) - bound);
+        const double tolerance = get_bound_tolerance(bound) + (discrete ? double(constraint_tolerance) : 0.0);
+        const double ratio = gap/tolerance;
+        if (ratio <= worst_ratio) continue;
+        worst = i;
+        worst_ratio = ratio;
+        worst_gap = gap;
+        worst_tolerance = tolerance;
+        worst_bound = bound;
+    }
+    if (worst < 0 || worst_ratio >= closest_failure.first) return;
+
+    const Constraint& constraint = constraints[size_t(worst)];
+    static constexpr const char* names[] = {"Equal", "Between", "GreaterEqual", "LessEqual", "Greater", "Less",
+                                           "AllowedSet", "Integer", "Cardinality"};
+    ostringstream message;
+    message << setprecision(numeric_limits<float>::max_digits10)
+            << "Best checked rounded candidate with a constraint violation (smallest maximum miss/tolerance): constraint '"
+            << constraint.equation.text << "' (" << names[size_t(constraint.condition)] << "): "
+            << (constraint.condition == Condition::Cardinality ? "cardinality measure " : "value ") << row_values(worst);
+    if (constraint.condition == Condition::Integer) message << ", nearest integer " << round(row_values(worst));
+    else if (constraint.condition == Condition::AllowedSet)
+        message << ", nearest allowed value " << *ranges::min_element(constraint.values, {},
+            [&](const float allowed) { return abs(double(row_values(worst)) - allowed); });
+    else message << ", required " << (constraint.condition == Condition::Equal ? "value " : "bound ") << worst_bound;
+    message << ", absolute miss " << worst_gap << " against tolerance " << worst_tolerance
+            << " (" << worst_ratio << " times tolerance). ";
+    if (constraint.condition == Condition::Equal)
+        message << "If exact equality is not required, consider Between. ";
+    closest_failure = {worst_ratio, message.str()};
 }
 
 
@@ -610,10 +660,11 @@ void FeasibilityRepairSystem::solve_gauss_newton(VectorR& point, MatrixR jacobia
     const auto& [lower, upper] = input_bounds;
     const VectorR spans = upper - lower;
     VectorR residuals(row_residuals.size());
+    const auto calculate_merit = [&]
+        { return row_residuals.cast<double>().cwiseQuotient(row_scales.cast<double>()).squaredNorm(); };
 
-    for (Index i = 0; i < feasibility_evaluations; i++)
+    for (Index i = 0; i < feasibility_evaluations;)
     {
-        evaluate_constraints(point);
         if (!row_values.allFinite() || !row_residuals.allFinite())
         {
             point.setConstant(QUIET_NAN);
@@ -637,17 +688,37 @@ void FeasibilityRepairSystem::solve_gauss_newton(VectorR& point, MatrixR jacobia
             return;
         }
 
+        const float scale = max(1.0f, active_jacobian.cwiseAbs().maxCoeff());
+        if (scale > 1.0f)
+        {
+            active_jacobian /= scale;
+            residuals.head(rows) /= scale;
+        }
         const VectorR step = active_jacobian.completeOrthogonalDecomposition().solve(-residuals.head(rows));
-        VectorR candidate = point + spans.cwiseProduct(step);
-        if (!step.allFinite() || !candidate.allFinite())
+        if (!step.allFinite())
         {
             point.setConstant(QUIET_NAN);
             return;
         }
-        candidate = candidate.cwiseMax(lower).cwiseMin(upper);
-        const bool stopped = (candidate.array() == point.array()).all();
-        point = move(candidate);
-        if (stopped) return;
+        const double merit = calculate_merit();
+        float fraction = 1.0f;
+        bool accepted = false;
+        for (Index j = 0; j < 8 && i < feasibility_evaluations; j++, fraction *= 0.5f)
+        {
+            i++;
+            VectorR candidate = point + (fraction*spans).cwiseProduct(step);
+            if (!candidate.allFinite()) continue;
+            candidate = candidate.cwiseMax(lower).cwiseMin(upper);
+            if ((candidate.array() == point.array()).all()) return;
+            evaluate_constraints(candidate);
+            if (row_values.allFinite() && row_residuals.allFinite() && calculate_merit() < merit)
+            {
+                point = move(candidate);
+                accepted = true;
+                break;
+            }
+        }
+        if (!accepted) return;
     }
 }
 

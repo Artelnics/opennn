@@ -44,9 +44,12 @@ public:
     explicit RepairProbe(Network* network) : ResponseOptimization(network) {}
 
     using ResponseOptimization::calculate_domain;
+    using ResponseOptimization::calculate_pareto_front;
     using ResponseOptimization::calculate_random_input;
+    using ResponseOptimization::constraints;
     using ResponseOptimization::input_bounds;
     using ResponseOptimization::get_feasible_points;
+    using ResponseOptimization::get_sampling_failure;
     using ResponseOptimization::make_feasibility_system;
 
 private:
@@ -694,6 +697,110 @@ TEST(Feasibility, ConfiguredSolverIsUsedByBothRepairEntryPoints)
     EXPECT_NEAR(direct.first(1), 5.0f/26.0f, 1e-5f);
     EXPECT_EQ((direct.first - reused.first).squaredNorm(), 0.0f);
     EXPECT_THROW(probe.set_feasibility_solver(static_cast<ResponseOptimization::FeasibilitySolver>(1)), runtime_error);
+}
+
+
+TEST_P(ResponseDriver, SamplingFailureNamesTheMissedCatalogueConstraint)
+{
+    MinimalApproximation setup({"x"}, {"y"});
+    const auto optimization = make_driver(GetParam(), setup.network.get());
+    optimization->add_objective("x", Sense::Minimize);
+    optimization->add_constraint("x", Condition::AllowedSet, {1.0f});
+    optimization->add_constraint("x*x", Condition::Equal, {2.0f});
+    optimization->set_points_number(1);
+    optimization->set_iterations_number(1);
+    try
+    {
+        optimization->perform_response_optimization();
+        FAIL() << "The catalogue cannot meet this equality.";
+    }
+    catch (const runtime_error& error)
+    {
+        const string message = error.what();
+        EXPECT_NE(message.find("constraint 'x*x' (Equal): value 1, required value 2"), string::npos);
+        EXPECT_NE(message.find("absolute miss 1 against tolerance"), string::npos);
+        EXPECT_NE(message.find("consider Between"), string::npos);
+    }
+}
+
+
+TEST(Feasibility, DiagnosticTracksRoundedCandidatesAndResetsBetweenRuns)
+{
+    MinimalApproximation setup({"x"}, {"y"});
+    for (const auto solver : {ResponseOptimization::FeasibilitySolver::LevenbergMarquardt,
+                              ResponseOptimization::FeasibilitySolver::GaussNewton})
+    {
+        RepairProbe probe(setup.network.get());
+        probe.add_objective("x", Sense::Minimize);
+        probe.add_constraint("x", Condition::AllowedSet, {1.0f, 2.0f});
+        probe.add_constraint("x*x", Condition::Equal, {2.0f});
+        probe.set_feasibility_solver(solver);
+        probe.set_feasibility_rounds(2);
+        auto repair = probe.make_feasibility_system(probe.calculate_domain());
+        EXPECT_EQ(probe.get_feasible_points(VectorR::Ones(1), repair).first.size(), 0);
+        const string message = probe.get_sampling_failure();
+        EXPECT_NE(message.find("value 1, required value 2, absolute miss 1"), string::npos);
+        EXPECT_GT(repair.get_closest_failure().first, 4e5);
+        EXPECT_LT(repair.get_closest_failure().first, 6e5);
+        EXPECT_EQ(probe.get_feasible_points(VectorR::Constant(1, 2.0f), repair).first.size(), 0);
+        EXPECT_EQ(probe.get_sampling_failure(), message);
+        probe.perform_response_optimization();
+        EXPECT_EQ(probe.get_sampling_failure().find("constraint '"), string::npos);
+        probe.get_feasible_points(VectorR::Ones(1));
+        EXPECT_NE(probe.get_sampling_failure().find("constraint '"), string::npos);
+        probe.set(setup.network.get());
+        EXPECT_EQ(probe.get_sampling_failure().find("constraint '"), string::npos);
+    }
+}
+
+
+TEST(Feasibility, DiagnosticRanksTheWorstMissOfEachCandidate)
+{
+    MinimalApproximation setup({"x"}, {"y"});
+    RepairProbe probe(setup.network.get());
+    probe.add_constraint("x*x", Condition::Equal, {1.0f});
+    probe.add_constraint("(x+1)^2", Condition::Equal, {16.0f});
+    FeasibilityRepairSystem repair(setup.network.get(), probe.constraints, probe.calculate_domain(), 0);
+    for (const float value : {3.0f, 1.0f, 2.0f})
+        EXPECT_EQ(probe.get_feasible_points(VectorR::Constant(1, value), repair).first.size(), 0);
+    EXPECT_NE(probe.get_sampling_failure().find("constraint '(x+1)^2' (Equal): value 4"), string::npos);
+    EXPECT_GT(repair.get_closest_failure().first, 7e5);
+    EXPECT_LT(repair.get_closest_failure().first, 8e5);
+}
+
+
+TEST(Feasibility, DiagnosticUsesDiscreteToleranceAndSkipsNonfiniteValues)
+{
+    MinimalApproximation setup({"x", "z"}, {"y"});
+    for (const auto condition : {Condition::Integer, Condition::AllowedSet})
+    {
+        RepairProbe probe(setup.network.get());
+        probe.add_constraint("x+z", condition, condition == Condition::Integer ? vector<float>{} : vector<float>{0.0f, 1.0f});
+        FeasibilityRepairSystem repair(setup.network.get(), probe.constraints, probe.calculate_domain(), 0);
+        EXPECT_EQ(probe.get_feasible_points(VectorR::Constant(2, 0.125f), repair).first.size(), 0);
+        EXPECT_NE(probe.get_sampling_failure().find("absolute miss 0.25 against tolerance 0.001"), string::npos);
+        EXPECT_GT(repair.get_closest_failure().first, 249.0);
+        EXPECT_LT(repair.get_closest_failure().first, 250.0);
+    }
+    RepairProbe probe(setup.network.get());
+    probe.add_constraint("sqrt(-x-1)", Condition::Equal, {1.0f});
+    probe.calculate_domain();
+    EXPECT_EQ(probe.get_feasible_points(VectorR::Ones(2)).first.size(), 0);
+    EXPECT_EQ(probe.get_sampling_failure().find("constraint '"), string::npos);
+}
+
+
+TEST(Feasibility, DiagnosticRetainsMissesSmallerThanTheValuePrecision)
+{
+    MinimalApproximation setup({"x"}, {"y"});
+    const vector<ResponseOptimization::Constraint> constraints{
+        {compile_expression("x", setup.network.get()), Condition::Equal, {1e20f}}};
+    FeasibilityRepairSystem repair(setup.network.get(), constraints,
+        {VectorR::Zero(1), VectorR::Constant(1, 2e20f)}, 0, 1, 1e-30f);
+    EXPECT_EQ(repair.solve(VectorR::Constant(1, nextafter(1e20f, MAX))).first.size(), 0);
+    EXPECT_TRUE(isfinite(repair.get_closest_failure().first));
+    EXPECT_GT(repair.get_closest_failure().first, 1.0);
+    EXPECT_FALSE(repair.get_closest_failure().second.empty());
 }
 
 
@@ -1740,4 +1847,97 @@ TEST(GeneticResponse, ContinuesFromPartialRecombinationBatch)
                  && warnings.find("children survived mutation", partial) != string::npos;
     }
     EXPECT_TRUE(continued);
+}
+
+
+TEST(ResponseOptimizationPareto, DominatedOutliersDoNotChangeTradeoffs)
+{
+    RepairProbe probe(nullptr);
+    MatrixR scores(4, 2);
+    scores << 0.0f, 1.0f,
+              1.0f, 0.0f,
+              -2e6f, -2e6f,
+              0.0f, 1.0f;
+    EXPECT_EQ(probe.calculate_pareto_front(MatrixR(scores.topRows(2))), (vector<Index>{0, 1}));
+    EXPECT_EQ(probe.calculate_pareto_front(scores), (vector<Index>{0, 1}));
+    scores(3, 0) = 1e-8f;
+    EXPECT_EQ(probe.calculate_pareto_front(scores), (vector<Index>{1, 3}));
+}
+
+
+TEST(ResponseOptimizationPareto, HandlesExtremeFiniteScores)
+{
+    RepairProbe probe(nullptr);
+    MatrixR scores(3, 2);
+    scores << -2e38f, -2e38f,
+              2e38f, 2e38f,
+              2e38f, 2e38f;
+    EXPECT_EQ(probe.calculate_pareto_front(scores), (vector<Index>{1}));
+    scores << -2e38f, 2e38f,
+              0.0f, 0.0f,
+              2e38f, -2e38f;
+    EXPECT_EQ(probe.calculate_pareto_front(scores), (vector<Index>{0, 1, 2}));
+}
+
+
+TEST(ResponseOptimizationAdvisedPoint, HandlesWideAndTinyFiniteScoreRanges)
+{
+    MinimalApproximation setup({"x"}, {"first", "second", "constant"});
+    RepairProbe probe(setup.network.get());
+    for (const string name : {"first", "second", "constant"})
+        probe.add_objective(name, Sense::Maximize);
+    for (const float scale : {2e38f, 1e-40f})
+    {
+        SCOPED_TRACE(scale);
+        MatrixR results(4, 4);
+        results << 0.0f, -scale, scale, 7.0f,
+                   1.0f, 0.5f*scale, -0.5f*scale, 7.0f,
+                   2.0f, 0.0f, 0.0f, 7.0f,
+                   3.0f, scale, -scale, 7.0f;
+        const auto [index, point] = probe.get_advised_point(results);
+        EXPECT_EQ(index, 2);
+        EXPECT_TRUE(point.isApprox(results.row(2).transpose()));
+    }
+}
+
+
+TEST(GeneticResponse, FixedVariablesDoNotSuppressMutationOfFreeInput)
+{
+    vector<string> names{"free_input"};
+    for (Index i = 1; i < 32; i++) names.push_back("fixed_" + to_string(i));
+    CategoricalApproximation setup(names, "material", {"kept", "closed"});
+    setup.network->set_parameters(VectorR::Zero(setup.network->get_parameters_buffer_size()));
+    RepairProbe probe(setup.network.get());
+    pair<VectorR, VectorR> domain{VectorR::Zero(34), VectorR::Zero(34)};
+    domain.second(0) = 10.0f;
+    domain.first(32) = domain.second(32) = 1.0f;
+    unsigned seed = 0;
+    for (; seed < 1024; seed++)
+    {
+        set_seed(seed);
+        if (probe.calculate_random_input(domain)(0) < 1.0f) break;
+    }
+    ASSERT_LT(seed, 1024u);
+
+    for (const bool all_fixed : {false, true})
+    {
+        SCOPED_TRACE(all_fixed);
+        GeneticResponse optimization(setup.network.get());
+        optimization.add_objective("free_input", Sense::Maximize);
+        for (Index i = all_fixed ? 0 : 1; i < 32; i++)
+            optimization.add_constraint(names[size_t(i)], Condition::Equal, {0.0f});
+        optimization.add_constraint("kept", Condition::Equal, {1.0f});
+        optimization.set_points_number(1);
+        optimization.set_iterations_number(all_fixed ? 1 : 64);
+        optimization.set_sampling_budget_multiplier(1);
+        set_seed(seed);
+        const MatrixR results = optimization.perform_response_optimization();
+        ASSERT_EQ(results.rows(), 1);
+        ASSERT_EQ(results.cols(), 35);
+        EXPECT_TRUE(results.allFinite());
+        EXPECT_TRUE(results.row(0).segment(1, 31).isZero());
+        EXPECT_EQ(read_category(results, 0, 32, 2), 0);
+        if (all_fixed) EXPECT_FLOAT_EQ(results(0, 0), 0.0f);
+        else EXPECT_GT(results(0, 0), 8.0f);
+    }
 }
