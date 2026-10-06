@@ -193,6 +193,7 @@ private:
     }
 
     Index error_workspace_floats(const TensorView&) const;
+    bool uses_binary_cross_entropy(const TensorView&) const;
     float* ensure_error_workspace(Buffer&, const TensorView&,
                                   Index batch_samples,
                                   Index reduction_floats = 0) const;

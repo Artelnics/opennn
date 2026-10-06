@@ -108,7 +108,7 @@ An existing cache in `../data` can still be used by passing that directory
 explicitly. If a different cache is used, keep copies of the three model
 notices beside the downloaded files.
 
-Published copies of both Artelnics conversions should include the complete
-licence, attribution/modification notice and this source record, and link
-to them from their model cards. The model cards currently declare Apache 2.0;
-that metadata alone does not provide the complete licence text.
+The Hugging Face repositories of both Artelnics conversions include the
+complete licence, the attribution/modification notice and this source record,
+with links from their model cards. Preserve these notices with redistributed
+copies of the model and tokenizer.

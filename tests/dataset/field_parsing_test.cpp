@@ -146,8 +146,29 @@ TEST(FieldParsingTest, DetectNumberFormat)
     EXPECT_TRUE(detect({}).is_default());
     EXPECT_TRUE(detect({"1.5", "2.5"}).is_default());
     EXPECT_TRUE(detect({"2020-01-15", "12:30:45"}).is_default());
-    EXPECT_TRUE(detect({"1,234", "5,678"}).is_default());
     EXPECT_TRUE(detect({"24,44", "3.14"}).is_default());
+
+    // "1,234" reads both ways. Nothing else in the file settles it, and leaving
+    // it undecided is not neutral: the default format rejects the comma, so the
+    // column is taken for text and, with every value different, for identifiers
+    // -- and dropped. Read it as a decimal mark, which is what such a file means
+    // far more often than a column of grouped four-digit integers.
+    const NumberFormat ambiguous = detect({"1,234", "5,678"});
+    EXPECT_EQ(ambiguous.decimal_separator, ',');
+    EXPECT_EQ(ambiguous.group_separator, '.');
+
+    // Only ambiguous while the leading part could be a group of its own.
+    EXPECT_EQ(detect({"12345,678"}).decimal_separator, ',');
+
+    // One token that does settle it is enough; the ambiguous ones follow.
+    EXPECT_EQ(detect({"1,234", "56,7"}).decimal_separator, ',');
+
+    // Both shapes present and neither decisive: still undecided.
+    EXPECT_TRUE(detect({"1,234", "5.678"}).is_default());
+
+    // The same shape with a point needs no rule of its own: the default format
+    // already reads it as a decimal mark.
+    EXPECT_TRUE(detect({"1.234", "5.678"}).is_default());
 
     EXPECT_EQ(detect({"1.234.567", "2.345.678"}).decimal_separator, ',');
     EXPECT_EQ(detect({"1,234,567", "2,345,678"}).group_separator, ',');

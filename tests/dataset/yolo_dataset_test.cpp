@@ -2,6 +2,7 @@
 #include "opennn/core/json.h"
 
 #include "opennn/dataset/yolo_dataset.h"
+#include "opennn/dataset/yolo_dataset_internal.h"
 #include "opennn/core/device_backend.h"
 
 #include "tests/common/test_helpers.h"
@@ -16,6 +17,115 @@
 
 using namespace opennn;
 using namespace opennn_test;
+
+TEST(YoloDataset, RejectsClassIdsOutsideClassesFile)
+{
+    TempDir dir("opennn_yolo_invalid_class_");
+    const filesystem::path images_dir = dir.path / "images";
+    const filesystem::path labels_dir = dir.path / "labels";
+    filesystem::create_directories(images_dir);
+    filesystem::create_directories(labels_dir);
+
+    write_bmp_24(images_dir / "sample.bmp", 8, 8, 200, 100, 50);
+    write_label(labels_dir / "sample.txt", 2, 0.5f, 0.5f, 0.4f, 0.4f);
+    write_classes(labels_dir / "obj.names", {"cat", "dog"});
+
+    YoloDataset dataset;
+    dataset.set_display(false);
+
+    try
+    {
+        dataset.set(images_dir, labels_dir, Shape{8, 8, 3}, 2, 1,
+                    {{0.2f, 0.2f}});
+        FAIL() << "Expected an out-of-range YOLO class id to be rejected.";
+    }
+    catch (const runtime_error& error)
+    {
+        const string message = error.what();
+        EXPECT_NE(message.find("class id 2"), string::npos);
+        EXPECT_NE(message.find("sample.txt"), string::npos);
+        EXPECT_NE(message.find("defines 2 classes"), string::npos);
+        EXPECT_NE(message.find("0..1"), string::npos);
+    }
+}
+
+TEST(YoloDataset, RejectsNegativeClassIdsWithoutClassesFile)
+{
+    TempDir dir("opennn_yolo_negative_class_");
+    const filesystem::path images_dir = dir.path / "images";
+    const filesystem::path labels_dir = dir.path / "labels";
+    filesystem::create_directories(images_dir);
+    filesystem::create_directories(labels_dir);
+
+    write_bmp_24(images_dir / "sample.bmp", 8, 8, 200, 100, 50);
+    write_label(labels_dir / "sample.txt", -1, 0.5f, 0.5f, 0.4f, 0.4f);
+
+    YoloDataset dataset;
+    dataset.set_display(false);
+
+    EXPECT_THROW(dataset.set(images_dir, labels_dir, Shape{8, 8, 3}, 2, 1,
+                             {{0.2f, 0.2f}}), runtime_error);
+}
+
+TEST(YoloDataset, InfersClassesWhenClassesFileIsAbsent)
+{
+    TempDir dir("opennn_yolo_inferred_classes_");
+    const filesystem::path images_dir = dir.path / "images";
+    const filesystem::path labels_dir = dir.path / "labels";
+    filesystem::create_directories(images_dir);
+    filesystem::create_directories(labels_dir);
+
+    write_bmp_24(images_dir / "sample.bmp", 8, 8, 200, 100, 50);
+    write_label(labels_dir / "sample.txt", 2, 0.5f, 0.5f, 0.4f, 0.4f);
+
+    YoloDataset dataset;
+    dataset.set_display(false);
+    dataset.set(images_dir, labels_dir, Shape{8, 8, 3}, 2, 1,
+                {{0.2f, 0.2f}});
+
+    EXPECT_EQ(dataset.get_classes_number(), 3);
+}
+
+TEST(YoloDataset, RejectsOutOfRangeClassIdsFromExistingCache)
+{
+    TempDir dir("opennn_yolo_cached_invalid_class_");
+    const filesystem::path images_dir = dir.path / "images";
+    const filesystem::path labels_dir = dir.path / "labels";
+    filesystem::create_directories(images_dir);
+    filesystem::create_directories(labels_dir);
+
+    const filesystem::path label_path = labels_dir / "sample.txt";
+    write_bmp_24(images_dir / "sample.bmp", 8, 8, 200, 100, 50);
+    write_label(label_path, 1, 0.5f, 0.5f, 0.4f, 0.4f);
+    write_classes(labels_dir / "obj.names", {"cat", "dog"});
+
+    {
+        YoloDataset dataset;
+        dataset.set_display(false);
+        dataset.set(images_dir, labels_dir, Shape{8, 8, 3}, 2, 1,
+                    {{0.2f, 0.2f}});
+    }
+
+    const auto label_time = filesystem::last_write_time(label_path);
+    write_label(label_path, 2, 0.5f, 0.5f, 0.4f, 0.4f);
+    filesystem::last_write_time(label_path, label_time);
+
+    const filesystem::path boxes_path = images_dir / ".cache" / "yolo_boxes.bin";
+    fstream boxes_file(boxes_path, ios::binary | ios::in | ios::out);
+    ASSERT_TRUE(boxes_file.good());
+    yolo_detail::YoloBoxesCacheHeader header{};
+    boxes_file.read(reinterpret_cast<char*>(&header), sizeof(header));
+    ASSERT_TRUE(boxes_file.good());
+    const int32_t invalid_class_id = 2;
+    boxes_file.seekp(streamoff(header.boxes_byte_offset));
+    boxes_file.write(reinterpret_cast<const char*>(&invalid_class_id), sizeof(invalid_class_id));
+    boxes_file.close();
+
+    YoloDataset dataset;
+    dataset.set_display(false);
+    EXPECT_THROW(dataset.set(images_dir, labels_dir, Shape{8, 8, 3}, 2, 1,
+                             {{0.2f, 0.2f}}), runtime_error);
+}
 
 TEST(YoloDataset, AugmentationControlsDeviceResidency)
 {

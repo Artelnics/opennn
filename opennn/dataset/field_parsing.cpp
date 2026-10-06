@@ -222,9 +222,20 @@ void vote_number_format(const string_view text, NumberFormatVotes& votes)
 
     if (digits == 0 || commas + points == 0) return;
 
-    const auto marks_a_decimal = [&](const size_t mark)
+    // A single separator with exactly three digits after it is the one shape
+    // that reads both ways: "9,465" is nine point four six five in a European
+    // file and nine thousand four hundred and sixty-five where the comma groups
+    // thousands. It is only really ambiguous when what precedes the mark could
+    // be a group as well, that is, one to three digits: "12345,678" cannot be
+    // grouped and is a decimal whatever the file does elsewhere.
+    const auto could_be_a_group = [&](const size_t mark)
     {
-        return text.size() - mark - 1 != 3;
+        if(text.size() - mark - 1 != 3) return false;
+
+        const size_t leading =
+            mark - size_t(text[0] == '+' || text[0] == '-' ? 1 : 0);
+
+        return leading >= 1 && leading <= 3;
     };
 
     if (commas > 0 && points > 0)
@@ -238,10 +249,16 @@ void vote_number_format(const string_view text, NumberFormatVotes& votes)
         ++votes.comma_group;
     else if (points > 1)
         ++votes.point_group;
-    else if (commas == 1 && marks_a_decimal(last_comma))
-        ++votes.comma_decimal;
-    else if (points == 1 && marks_a_decimal(last_point))
-        ++votes.point_decimal;
+    else if (commas == 1)
+    {
+        if(could_be_a_group(last_comma)) ++votes.comma_ambiguous;
+        else                             ++votes.comma_decimal;
+    }
+    else if (points == 1)
+    {
+        if(could_be_a_group(last_point)) ++votes.point_ambiguous;
+        else                             ++votes.point_decimal;
+    }
 }
 
 NumberFormat decide_number_format(const NumberFormatVotes& votes)
@@ -251,6 +268,21 @@ NumberFormat decide_number_format(const NumberFormatVotes& votes)
 
     if (votes.comma_decimal == 0 && votes.comma_group > 0)
         return {'.', ','};
+
+    // Nothing in the file settles it and the only numbers seen are of the shape
+    // that reads both ways. Both readings keep those columns numeric; leaving
+    // the format undecided does not, because the default rejects the comma, the
+    // column is then taken for text, and a column of values all different is
+    // taken for identifiers and dropped from the data set. So the cost of not
+    // choosing is the whole column, while the cost of choosing wrongly is a
+    // scale factor the user can see in the statistics -- and the engine says
+    // which format it read the file with. A file whose every number is a
+    // four-digit integer written with thousands separators is far rarer than a
+    // European file with three decimals, so read the comma as a decimal mark.
+    if (votes.point_decimal == 0 && votes.comma_decimal == 0
+        && votes.point_group == 0 && votes.comma_group == 0
+        && votes.comma_ambiguous > 0 && votes.point_ambiguous == 0)
+        return {',', '.'};
 
     return {};
 }

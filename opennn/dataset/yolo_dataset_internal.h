@@ -169,8 +169,9 @@ inline void make_target(const vector<YoloDataset::Box>& boxes,
 
     for (const auto& box : boxes)
     {
-        if (box.class_id < 0 || box.class_id >= classes_number)
-            continue;
+        throw_if(box.class_id < 0 || box.class_id >= classes_number,
+                 "YOLO target contains class id {} outside the valid range 0..{}.",
+                 box.class_id, classes_number - 1);
 
         const Index col = grid_cell(box.x, grid_size);
         const Index row = grid_cell(box.y, grid_size);
@@ -207,8 +208,9 @@ inline void make_target_multi_scale(const vector<YoloDataset::Box>& boxes,
 
     for (const auto& box : boxes)
     {
-        if (box.class_id < 0 || box.class_id >= classes_number)
-            continue;
+        throw_if(box.class_id < 0 || box.class_id >= classes_number,
+                 "YOLO target contains class id {} outside the valid range 0..{}.",
+                 box.class_id, classes_number - 1);
 
         const AnchorMatch best = best_anchor_across_heads(box, head_anchors);
 
@@ -239,7 +241,9 @@ inline void make_target_v8_gtlist(const vector<YoloDataset::Box>& boxes,
     for (Index i = 0; i < n; ++i)
     {
         const auto& b = boxes[size_t(i)];
-        if (b.class_id < 0 || b.class_id >= classes_number) continue;
+        throw_if(b.class_id < 0 || b.class_id >= classes_number,
+                 "YOLO target contains class id {} outside the valid range 0..{}.",
+                 b.class_id, classes_number - 1);
         target[i*5 + 0] = b.x;
         target[i*5 + 1] = b.y;
         target[i*5 + 2] = b.w;

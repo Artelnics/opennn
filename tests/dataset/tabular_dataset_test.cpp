@@ -580,8 +580,14 @@ TEST(TabularDataset, ReadCSV_DecimalCommaCanBeForced)
 
     ASSERT_NO_THROW(detected.read_csv());
 
-    EXPECT_TRUE(detected.get_number_format().is_default());
-    EXPECT_EQ(detected.get_variables()[0].type, VariableType::Categorical);
+    // "1,234" reads either way, and nothing else in the file settles it. Left
+    // undecided the comma is not part of a number at all, so these columns used
+    // to arrive as categorical -- which for a file of values all different means
+    // they are taken for identifiers and dropped. Detection now resolves the tie
+    // towards the decimal mark, which is what such a file means far more often.
+    EXPECT_EQ(detected.get_number_format().decimal_separator, ',');
+    EXPECT_EQ(detected.get_variables()[0].type, VariableType::Numeric);
+    EXPECT_EQ(detected.get_variables()[1].type, VariableType::Numeric);
 
     TabularDataset forced;
     forced.set_data_path(temp_csv_file_path);

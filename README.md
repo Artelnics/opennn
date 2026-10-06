@@ -104,7 +104,7 @@ header `opennn/core/pch.h` in an application.
 | [`examples/`](examples/README.md) | Runnable applications and bundled data. |
 | [`tests/`](tests/) | C++ unit tests of the library. |
 | [`benchmarks/`](benchmarks/README.md) | OpenNN versus PyTorch comparisons and their [measurement rules](benchmarks/PROTOCOL.md). |
-| [`tools/`](tools/) | Verification, packaging, asset reproduction and release checks; see [AGENTS.md](AGENTS.md#maintenance-tools). |
+| [`tools/`](tools/) | Verification scripts, code checkers, fuzzing, package checks and agent skills; see [AGENTS.md](AGENTS.md#maintenance-tools). |
 | [`.github/workflows/`](.github/workflows/) | Continuous integration. |
 
 ## Contributing and support

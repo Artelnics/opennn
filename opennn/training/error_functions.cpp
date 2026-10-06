@@ -265,22 +265,22 @@ void categorical_cross_entropy(const TensorView& input, const TensorView& target
 }
 
 void cross_entropy(const TensorView& input, const TensorView& target, float& error,
-                   float* workspace_device)
+                   float* workspace_device, bool binary)
 {
-    if (input.get_shape().back() == 1)
+    if (binary)
         binary_cross_entropy(input, target, error, workspace_device);
     else
         categorical_cross_entropy(input, target, error, workspace_device);
 }
 
-void cross_entropy_gradient(const TensorView& input, const TensorView& target, const TensorView& input_delta)
+void cross_entropy_gradient(const TensorView& input, const TensorView& target, const TensorView& input_delta,
+                            bool binary)
 {
     if (input.is_cuda()) {
-        const Index num_classes = input.get_shape().back();
         const float scale = 1.0f / static_cast<float>(input.get_shape()[0]);
 
         input.dispatch([&]<typename T>() {
-            if (num_classes == 1)
+            if (binary)
                 binary_cross_entropy_gradient_cuda<T>(input.size(),
                     input_delta.as<T>(), target.as<float>(), input.as<T>(), EPSILON, scale);
             else
@@ -290,13 +290,12 @@ void cross_entropy_gradient(const TensorView& input, const TensorView& target, c
         return;
     }
     const Index samples_number = input.get_shape()[0];
-    const Index num_classes = input.get_shape().back();
 
     const MatrixMap outputs = input.as_matrix();
     const MatrixMap targets = target.as_matrix();
     MatrixMap gradients = input_delta.as_matrix();
 
-    if (num_classes == 1)
+    if (binary)
         gradients.array() = (-targets.array() / (outputs.array() + EPSILON)
                              + (1.0f - targets.array()) / (1.0f - outputs.array() + EPSILON))
                             / to_type(samples_number);

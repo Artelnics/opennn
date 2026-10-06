@@ -216,8 +216,18 @@ template<typename Message, typename... Args>
 [[noreturn]] inline void throw_formatted(string_view message,
                                          const source_location& loc = source_location::current())
 {
+    // The file name, never the path it was built from. The applications show this
+    // text to the user exactly as it arrives, so the full path would put the build
+    // machine's directory layout in a dialog on someone else's computer.
+    const string_view file = loc.file_name();
+    const size_t separator = file.find_last_of("/\\");
+
     throw runtime_error(format("{} [at {}:{}]",
-                                    message, loc.file_name(), loc.line()));
+                               message,
+                               separator == string_view::npos
+                                   ? file
+                                   : file.substr(separator + 1),
+                               loc.line()));
 }
 
 template<typename... Args>

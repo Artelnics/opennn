@@ -121,8 +121,11 @@ testing = np.random.RandomState(21).permutation(len(selected))[:1000]
 np.savetxt(output / "test_indices.csv", testing, fmt="%d")
 ```
 
+On Windows, `np.savetxt` writes CRLF line endings; convert them to LF before
+comparing with the digests below, which are those of the files stored in Git.
+
 SHA-256 of `chf07_heartbeats.csv` (LF line endings):
-`b326f4ef9ea8dea02038bd5102c13996fb06d0993f8ee53bd24d6e8840a03701`.
+`d2c952356a79de3a1c6e9d38b7e5cb4cc1f1c055432846eae8205df158a80e4a`.
 
 SHA-256 of `test_indices.csv` (LF line endings):
-`2cc30a39e9af6e72b2b851e2cf2e51a2900256db4361f2ad00ad2edbdf671031`.
+`5f830f59497394445bb43bae7a11b7293cd0aff28c5fdf5e49343b51e08b470a`.
