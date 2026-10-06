@@ -106,6 +106,14 @@ ExpressionNodePtr make_output(const Index index)
 }
 
 
+void check_operation_depth(const ExpressionNode& node)
+{
+    throw_if(node.depth > max_operation_depth,
+             format("ExpressionParser: the expression chains more than {} operations",
+                    max_operation_depth));
+}
+
+
 ExpressionNodePtr make_binary(const ExpressionNode::Kind kind, ExpressionNodePtr left, ExpressionNodePtr right)
 {
     auto node = make_unique<ExpressionNode>();
@@ -462,6 +470,8 @@ struct Parser
             left_node = make_binary((operation == 0) ? first_kind : second_kind,
                                     move(left_node),
                                     move(right_node));
+
+            check_operation_depth(*left_node);
         }
 
         return left_node;
@@ -1152,9 +1162,7 @@ ExpressionNodePtr parse_expression_tree(const string& expression,
 
     // Chained operations ('a + a + a + ...') leave the parser shallow but the tree
     // deep, so the tree itself is checked too.
-    throw_if(ast->depth > max_operation_depth,
-             format("ExpressionParser: the expression chains more than {} operations",
-                    max_operation_depth));
+    check_operation_depth(*ast);
 
     return ast;
 }
