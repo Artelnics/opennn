@@ -1,14 +1,14 @@
 {
   "limits": {
     "files": 210,
-    "nloc": 58635,
-    "functions": 3536,
+    "nloc": 58900,
+    "functions": 3550,
     "functions_nloc_100": 37,
-    "functions_ccn_25": 30,
+    "functions_ccn_25": 31,
     "maximum_function_nloc": 282,
     "maximum_function_ccn": 47,
     "duplicate_percent": 0.76,
-    "physical_lines": 75831,
+    "physical_lines": 76250,
     "cuda_files": 44,
     "cuda_nloc": 6132,
     "cuda_functions": 325,
