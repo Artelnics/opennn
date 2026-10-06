@@ -1081,12 +1081,6 @@ ExpressionNodePtr parse_expression_tree(const string& expression,
     return ast;
 }
 
-}
-
-
-namespace
-{
-
 
 double evaluate_symmetric_polynomial(const CompiledExpression& expression, const VectorR& point)
 {

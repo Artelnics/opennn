@@ -104,9 +104,8 @@ pair<VectorR, VectorR> FeasibilityRepairSystem::solve(VectorR point)
 
         if ((row_residuals.array() == 0.0f).all())
         {
-            const VectorR& response = evaluate_outputs(point);
-            if (!response.allFinite()) return {};
-            return {point, response};
+            if (!evaluate_outputs(point).allFinite()) return {};
+            return {move(point), move(evaluated_output)};
         }
 
         if (i == feasibility_rounds) return {};
@@ -123,13 +122,14 @@ pair<VectorR, VectorR> FeasibilityRepairSystem::solve(VectorR point)
         previous = point;
 
         if (i == 0) box_scales = (upper_bounds - lower_bounds).cwiseMax(EPSILON)/box_weight;
-        row_scales = calculate_jacobian(point, row_values, evaluated_output).rowwise().norm();
+        MatrixR initial_jacobian = calculate_jacobian(point, row_values, evaluated_output);
+        row_scales = initial_jacobian.rowwise().norm();
 
         row_scales = (row_scales.array().isFinite() && (row_scales.array() > EPSILON))
                      .select(row_scales.array(), 1.0f);
 
-        if (solver == Solver::GaussNewton) solve_gauss_newton(point);
-        else solve_levenberg_marquardt(point);
+        if (solver == Solver::GaussNewton) solve_gauss_newton(point, move(initial_jacobian));
+        else solve_levenberg_marquardt(point, move(initial_jacobian));
     }
 }
 
@@ -403,14 +403,6 @@ MatrixR FeasibilityRepairSystem::calculate_jacobian(const VectorR& point,
     for (const auto& [first_column, categories_number] : categorical_blocks)
         steps.segment(first_column, categories_number).setZero();
 
-    for (Index j = 0; j < steps.size(); j++)
-        if (steps(j) > 0.0f)
-            steps(j) = max(difference_step*max(steps(j), abs(point(j))), EPSILON);
-
-    for (const Constraint& constraint : constraints)
-        if (const Index column = constraint.get_discrete_column(); column >= 0)
-            steps(column) = min(steps(column), discrete_difference_step);
-
     MatrixR jacobian = MatrixR::Zero(values.size(), point.size());
 
     vector<Index> probed_rows;
@@ -456,6 +448,16 @@ MatrixR FeasibilityRepairSystem::calculate_jacobian(const VectorR& point,
         if (steps(j) == 0.0f)
             jacobian.col(j).setZero();
 
+    if (probed_rows.empty()) return jacobian;
+
+    for (Index j = 0; j < steps.size(); j++)
+        if (steps(j) > 0.0f)
+            steps(j) = max(difference_step*max(steps(j), abs(point(j))), EPSILON);
+
+    for (const Constraint& constraint : constraints)
+        if (const Index column = constraint.get_discrete_column(); column >= 0)
+            steps(column) = min(steps(column), discrete_difference_step);
+
     calculate_numerical_jacobian(point, values, steps, probed_rows, jacobian);
 
     return jacobian;
@@ -468,8 +470,6 @@ void FeasibilityRepairSystem::calculate_numerical_jacobian(const VectorR& point,
                                                           const vector<Index>& rows,
                                                           MatrixR& jacobian) const
 {
-    if (rows.empty()) return;
-
     const auto& [lower_bounds, upper_bounds] = input_bounds;
 
     const bool reads_output = ranges::any_of(rows, [&](const Index i)
@@ -546,11 +546,23 @@ float FeasibilityRepairSystem::calculate_constraint_residual(const pair<float, f
 }
 
 
+float FeasibilityRepairSystem::calculate_constraint_slope(const Index i) const
+{
+    const auto [lower, upper] = constraints[size_t(i)].get_bounds(numeric_tolerance, constraint_tolerance);
+    const double bound = row_residuals(i) < 0.0f ? lower : upper;
+    const double violation = abs(double(calculate_constraint_value(i)) - bound);
+    const double margin = feasibility_margin_factor;
+    return violation >= margin*abs(bound) && margin*violation < 0.5*(double(upper) - lower)
+         ? 1.0f + feasibility_margin_factor : 1.0f;
+}
+
+
 struct FeasibilityRepairSystem::LevenbergMarquardtFunctor : Eigen::DenseFunctor<float>
 {
-    explicit LevenbergMarquardtFunctor(FeasibilityRepairSystem& system)
+    LevenbergMarquardtFunctor(FeasibilityRepairSystem& system, MatrixR jacobian)
         : Eigen::DenseFunctor<float>(int(system.input_bounds.first.size()),
-              int(system.constraints.size() + system.input_bounds.first.size())), system(system) {}
+              int(system.constraints.size() + system.input_bounds.first.size())),
+          system(system), initial_jacobian(move(jacobian)) {}
 
     int operator()(const VectorR& point, VectorR& violations)
     {
@@ -567,12 +579,12 @@ struct FeasibilityRepairSystem::LevenbergMarquardtFunctor : Eigen::DenseFunctor<
     int df(const VectorR& point, JacobianType& jacobian)
     {
         system.evaluate_constraints(point);
-        const MatrixR value_jacobian =
-            system.calculate_jacobian(point, system.row_values, system.evaluated_output, system.row_residuals);
+        const MatrixR value_jacobian = initial_jacobian.size() != 0 ? exchange(initial_jacobian, MatrixR{})
+            : system.calculate_jacobian(point, system.row_values, system.evaluated_output, system.row_residuals);
         jacobian.setZero(system.row_values.size() + point.size(), point.size());
         for (Index i = 0; i < system.row_values.size(); i++)
             if (system.row_residuals(i) != 0.0f && isfinite(system.row_residuals(i)))
-                jacobian.row(i) = value_jacobian.row(i)/system.row_scales(i);
+                jacobian.row(i) = value_jacobian.row(i)*(system.calculate_constraint_slope(i)/system.row_scales(i));
         const auto& [lower, upper] = system.input_bounds;
         for (Index j = 0; j < point.size(); j++)
             if (point(j) > upper(j) || point(j) < lower(j))
@@ -581,12 +593,13 @@ struct FeasibilityRepairSystem::LevenbergMarquardtFunctor : Eigen::DenseFunctor<
     }
 
     FeasibilityRepairSystem& system;
+    MatrixR initial_jacobian;
 };
 
 
-void FeasibilityRepairSystem::solve_levenberg_marquardt(VectorR& point)
+void FeasibilityRepairSystem::solve_levenberg_marquardt(VectorR& point, MatrixR initial_jacobian)
 {
-    LevenbergMarquardtFunctor functor(*this);
+    LevenbergMarquardtFunctor functor(*this, move(initial_jacobian));
     Eigen::LevenbergMarquardt<LevenbergMarquardtFunctor> levenberg_marquardt(functor);
     levenberg_marquardt.setMaxfev(feasibility_evaluations);
     levenberg_marquardt.setFtol(numeric_tolerance);
@@ -596,7 +609,7 @@ void FeasibilityRepairSystem::solve_levenberg_marquardt(VectorR& point)
 }
 
 
-void FeasibilityRepairSystem::solve_gauss_newton(VectorR& point)
+void FeasibilityRepairSystem::solve_gauss_newton(VectorR& point, MatrixR jacobian)
 {
     const auto& [lower, upper] = input_bounds;
     const VectorR spans = upper - lower;
@@ -611,20 +624,13 @@ void FeasibilityRepairSystem::solve_gauss_newton(VectorR& point)
         }
         if ((row_residuals.array() == 0.0f).all()) return;
 
-        MatrixR jacobian = calculate_jacobian(point, row_values, evaluated_output, row_residuals);
+        if (i > 0) jacobian = calculate_jacobian(point, row_values, evaluated_output, row_residuals);
         VectorR residuals(row_residuals.size());
         Index rows = 0;
         for (Index j = 0; j < row_residuals.size(); j++)
         {
             if (row_residuals(j) == 0.0f) continue;
-            const auto [lower_bound, upper_bound] = constraints[size_t(j)].get_bounds(numeric_tolerance, constraint_tolerance);
-            const double bound = row_residuals(j) < 0.0f ? lower_bound : upper_bound;
-            const double violation = abs(double(calculate_constraint_value(j)) - bound);
-            const double margin = feasibility_margin_factor;
-            const float slope = violation >= margin*abs(bound)
-                             && margin*violation < 0.5*(double(upper_bound) - lower_bound)
-                              ? 1.0f + feasibility_margin_factor : 1.0f;
-            jacobian.row(rows) = jacobian.row(j)*(slope/row_scales(j));
+            jacobian.row(rows) = jacobian.row(j)*(calculate_constraint_slope(j)/row_scales(j));
             residuals(rows++) = row_residuals(j)/row_scales(j);
         }
         jacobian.conservativeResize(rows, Eigen::NoChange);

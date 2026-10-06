@@ -31,14 +31,15 @@ private:
 
     struct LevenbergMarquardtFunctor;
 
-    void solve_levenberg_marquardt(VectorR&);
-    void solve_gauss_newton(VectorR&);
+    void solve_levenberg_marquardt(VectorR&, MatrixR);
+    void solve_gauss_newton(VectorR&, MatrixR);
 
     bool round_discrete(VectorR&) const;
     const VectorR& evaluate_outputs(const VectorR&);
     void evaluate_constraints(const VectorR&);
     float calculate_constraint_value(Index) const;
     float calculate_constraint_residual(const pair<float, float>&, float) const;
+    float calculate_constraint_slope(Index) const;
     float get_bound_tolerance(float) const;
 
     MatrixR calculate_network_jacobian(const VectorR&, const VectorR&) const;

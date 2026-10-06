@@ -419,8 +419,6 @@ void ResponseOptimization::add_constraint(const string& expression,
                                << "' is between two equal values. Use the Equal condition instead.\n";
     }
 
-    constraint.equation.text = expression;
-
     constraints.push_back(move(constraint));
 }
 

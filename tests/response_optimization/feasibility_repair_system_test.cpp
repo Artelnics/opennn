@@ -4,6 +4,7 @@
 #include "tests/common/pch.h"
 
 #include "tests/response_optimization/synthetic_fixture.h"
+#include "opennn/core/profiler.h"
 #include "opennn/network/layers/clamping_layer.h"
 #include "opennn/network/layers/dense_layer.h"
 #include "opennn/response_optimization/feasibility_repair_system.h"
@@ -91,6 +92,8 @@ TEST_P(FeasibilitySolver, ReusesUpdatedDomainsAndRefreshesOutputs)
         ASSERT_EQ(input.size(), 2);
         EXPECT_FLOAT_EQ(input(0), fixed);
         EXPECT_NEAR(input.sum(), 5.0f, 1e-4f);
+        const VectorR original_input = input;
+        const VectorR original_output = output;
 
         setup.network->set_parameters(VectorR::Constant(setup.network->get_parameters_buffer_size(), 0.1f*fixed));
         const VectorR expected = setup.network->calculate_outputs(input.transpose()).row(0).transpose();
@@ -99,6 +102,8 @@ TEST_P(FeasibilitySolver, ReusesUpdatedDomainsAndRefreshesOutputs)
         ASSERT_EQ(repeated.first.size(), 2);
         EXPECT_EQ((repeated.first - input).squaredNorm(), 0.0f);
         EXPECT_TRUE(repeated.second.isApprox(expected, 1e-6f));
+        EXPECT_EQ((input - original_input).squaredNorm(), 0.0f);
+        EXPECT_EQ((output - original_output).squaredNorm(), 0.0f);
     }
 }
 
@@ -356,6 +361,21 @@ TEST_P(FeasibilitySolver, FallsBackForLogarithmicScaling)
     ASSERT_EQ(output.size(), 1);
     EXPECT_NEAR(input(0), 2.0f, 1e-4f);
     EXPECT_NEAR(output(0), log(2.0f), 2e-6f);
+
+    Repair one_step(&network, constraints, {VectorR::Constant(1, 0.1f), VectorR::Constant(1, 10.0f)},
+                    1, GetParam() == Repair::Solver::GaussNewton ? 1 : 2);
+    one_step.set_solver(GetParam());
+    const bool profiling_enabled = profiler::is_enabled();
+    profiler::set_enabled(true);
+    const long previous_calls = profiler::stats().call_count("fp:set");
+    pair<VectorR, VectorR> result;
+    EXPECT_NO_THROW(result = one_step.solve(VectorR::Constant(1, 2.0001f)));
+    const long calls = profiler::stats().call_count("fp:set") - previous_calls;
+    profiler::set_enabled(profiling_enabled);
+    ASSERT_EQ(result.first.size(), 1);
+    EXPECT_NEAR(result.first(0), 2.0f, 1e-5f);
+    EXPECT_GT(calls, 0);
+    EXPECT_LE(calls, 3);
 }
 
 
@@ -511,22 +531,29 @@ TEST(FeasibilityGaussNewton, ContinuesSmallProjectedStepsUntilFeasible)
 }
 
 
-TEST(FeasibilityGaussNewton, AccountsForProportionalAndCappedMarginsInOneStep)
+TEST_P(FeasibilitySolver, AccountsForMarginSlopesWithinASmallBudget)
 {
-    MinimalApproximation setup({"x1", "x2"}, {"y"});
     const auto equation = compile_expression("x1", setup.network.get());
-    for (const Condition condition : {Condition::GreaterEqual, Condition::Between})
-    {
-        SCOPED_TRACE(int(condition));
-        const vector<Constraint> constraints{{equation, condition,
-            condition == Condition::Between ? vector<float>{1.0f, 1.01f} : vector<float>{1.0f}}};
-        Repair repair(setup.network.get(), constraints, {VectorR::Zero(2), VectorR::Constant(2, 10.0f)}, 1, 1);
-        repair.set_solver(Repair::Solver::GaussNewton);
-        const auto result = repair.solve(VectorR::Zero(2));
-        ASSERT_EQ(result.first.size(), 2);
-        EXPECT_NEAR(result.first(0), condition == Condition::Between ? 1.005f : 1.0f, 1e-6f);
-        EXPECT_FLOAT_EQ(result.first(1), 0.0f);
-    }
+    for (const Condition condition : {Condition::GreaterEqual, Condition::LessEqual, Condition::Between})
+        for (const bool near_boundary : {false, true})
+        {
+            SCOPED_TRACE(int(condition));
+            SCOPED_TRACE(near_boundary);
+            const vector<Constraint> constraints{{equation, condition,
+                condition == Condition::Between ? vector<float>{1.0f, 1.01f} : vector<float>{1.0f}}};
+            Repair repair(setup.network.get(), constraints, domain(), 1,
+                          GetParam() == Repair::Solver::GaussNewton ? 1 : 2);
+            repair.set_solver(GetParam());
+            const float direction = condition == Condition::LessEqual ? 1.0f : -1.0f;
+            VectorR point = VectorR::Zero(2);
+            point(0) = 1.0f + direction*(near_boundary ? 0.05f : 1.0f);
+            const auto result = repair.solve(point);
+            ASSERT_EQ(result.first.size(), 2);
+            const float expected = condition == Condition::Between ? 1.005f
+                                 : 1.0f - direction*(near_boundary ? 0.01f : 0.0f);
+            EXPECT_NEAR(result.first(0), expected, 1e-6f);
+            EXPECT_FLOAT_EQ(result.first(1), 0.0f);
+        }
 }
 
 
