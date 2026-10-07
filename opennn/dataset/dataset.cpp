@@ -841,7 +841,11 @@ void Dataset::variables_from_JSON(const Json *variables_element)
             const Json* const categories_element = el->find("Categories");
 
             if (categories_element)
-                variable.categories = get_tokens(read_json_string(el, "Categories"), ";");
+                // A list is what is written now; the joined string is how models
+                // saved before carried it.
+                variable.categories = categories_element->is_array()
+                    ? read_json_strings(el, "Categories")
+                    : get_tokens(read_json_string(el, "Categories"), ";");
             else if (variable.is_binary())
                 variable.categories = { "0", "1" };
             else
