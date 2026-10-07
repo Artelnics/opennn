@@ -153,6 +153,43 @@ size_t available_memory()
 #endif
 }
 
+string cuda_unavailable_reason() noexcept
+{
+#ifdef OPENNN_HAS_CUDA
+    int count = 0;
+    const cudaError_t error = cudaGetDeviceCount(&count);
+    cudaGetLastError();
+
+    if (error == cudaSuccess && count > 0) return {};
+
+    // The driver and the runtime carry separate CUDA versions: a driver that
+    // supports CUDA 12 cannot run a build made with CUDA 13 even though the
+    // card is there, and saying "no GPU" sends the user looking for the wrong
+    // problem.
+    int driver = 0;
+    int runtime = 0;
+    cudaDriverGetVersion(&driver);
+    cudaRuntimeGetVersion(&runtime);
+    cudaGetLastError();
+
+    const auto version = [](int value) { return format("{}.{}", value / 1000, (value % 1000) / 10); };
+
+    if (driver == 0)
+        return "no NVIDIA driver is installed.";
+
+    if (error == cudaErrorInsufficientDriver || driver < runtime)
+        return format("the NVIDIA driver installed supports CUDA {}, but this build needs CUDA {} or newer. "
+                      "Update the NVIDIA driver to use the GPU.", version(driver), version(runtime));
+
+    if (error == cudaErrorNoDevice || (error == cudaSuccess && count == 0))
+        return "no NVIDIA graphics card was found.";
+
+    return format("CUDA could not start: {}.", cudaGetErrorString(error));
+#else
+    return "this build has no GPU support.";
+#endif
+}
+
 string gpu_info_string() noexcept
 {
 #ifdef OPENNN_HAS_CUDA

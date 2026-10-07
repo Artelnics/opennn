@@ -78,6 +78,11 @@ constexpr bool is_cuda_build() noexcept
 #endif
 }
 bool has_cuda_device() noexcept;
+
+// Why has_cuda_device() is false, in words a user can act on: no NVIDIA
+// driver, a driver older than the CUDA this build needs (with both versions),
+// no card, or the error CUDA gave. Empty when a device is available.
+string cuda_unavailable_reason() noexcept;
 int cuda_compute_capability() noexcept;
 size_t available_memory();
 string gpu_info_string() noexcept;
