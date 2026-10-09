@@ -1042,6 +1042,169 @@ TEST(TextDatasetClassification, SeveralTextColumnsSurviveCacheAndJson)
 
 namespace
 {
+    const string target_first_content =
+        "label\ttitle\tbody\n"
+        "Good\tgreat phone\texcellent product works\n"
+        "Bad\tterrible battery\tawful screen\n"
+        "Good\tamazing camera\tfantastic value\n"
+        "Bad\tbroken charger\tuseless device\n";
+
+    const string rated_content =
+        "id\trating\treview\tlabel\n"
+        "r1\t5\tgreat phone excellent product\tGood\n"
+        "r2\t1\tterrible battery awful screen\tBad\n"
+        "r3\t5\tamazing camera fantastic value\tGood\n"
+        "r4\t1\tbroken charger useless device\tBad\n";
+
+    vector<string> column_summary(const TextDataset& dataset)
+    {
+        vector<string> summary;
+        for (const TextDataset::Column& column : dataset.get_columns())
+            summary.push_back(column.name + ":" + variable_role_to_string(column.role));
+        return summary;
+    }
+}
+
+TEST(TextDatasetClassification, DeclaredRolesChooseTheTargetColumn)
+{
+    const string path = temp_language_file("opennn_text_target_first.txt", target_first_content);
+    TextDataset dataset;
+    dataset.set_storage_mode(Dataset::StorageMode::Matrix);
+    dataset.set_has_header(true);
+    dataset.set_columns({{"label", VariableRole::Target},
+                         {"title", VariableRole::Input},
+                         {"body", VariableRole::Input}});
+    ASSERT_NO_THROW(dataset.read_txt(path));
+
+    EXPECT_EQ(dataset.get_samples_number(), 4);
+    EXPECT_EQ(dataset.get_text_columns(), (vector<string>{"title", "body"}));
+    EXPECT_EQ(dataset.get_text_column_markers(), (vector<string>{"[title]", "[body]"}));
+    EXPECT_EQ(dataset.get_vocabulary(VariableRole::Target), (vector<string>{"bad", "good"}));
+    EXPECT_EQ(column_summary(dataset),
+              (vector<string>{"label:Target", "title:Input", "body:Input"}));
+
+    const TokenizerOperator* tokenizer = dataset.get_tokenizer();
+    EXPECT_EQ(tokenizer->token_to_id("good"), tokenizer->get_unk_id());
+    const vector<float> expected{2, float(tokenizer->token_to_id("[title]")),
+                                 float(tokenizer->token_to_id("great")), float(tokenizer->token_to_id("phone")),
+                                 float(tokenizer->token_to_id("[body]")), float(tokenizer->token_to_id("excellent")),
+                                 float(tokenizer->token_to_id("product")), float(tokenizer->token_to_id("works")), 3};
+    EXPECT_EQ(data_row(dataset, 0), expected);
+    EXPECT_EQ(as_floats(dataset.encode_text(vector<string>{"great phone", "excellent product works"}),
+                        dataset.get_sequence_length()), expected);
+    remove_language_file(path);
+}
+
+TEST(TextDatasetClassification, ColumnsWithRoleNoneAreIgnored)
+{
+    const string path = temp_language_file("opennn_text_none_columns.txt", rated_content);
+    TextDataset dataset;
+    dataset.set_storage_mode(Dataset::StorageMode::Matrix);
+    dataset.set_has_header(true);
+    dataset.set_has_ids(true);
+    dataset.set_columns({{"id", VariableRole::None},
+                         {"rating", VariableRole::None},
+                         {"review", VariableRole::Input},
+                         {"label", VariableRole::Target}});
+    ASSERT_NO_THROW(dataset.read_txt(path));
+
+    EXPECT_EQ(dataset.get_samples_number(), 4);
+    EXPECT_EQ(dataset.get_text_columns(), (vector<string>{"review"}));
+    EXPECT_TRUE(dataset.get_text_column_markers().empty());
+    EXPECT_EQ(dataset.get_sample_ids(), (vector<string>{"r1", "r2", "r3", "r4"}));
+
+    const TokenizerOperator* tokenizer = dataset.get_tokenizer();
+    EXPECT_EQ(tokenizer->token_to_id("5"), tokenizer->get_unk_id());
+    EXPECT_EQ(tokenizer->token_to_id("r1"), tokenizer->get_unk_id());
+
+    const vector<TextDataset::Record> records = dataset.read_records();
+    ASSERT_EQ(records.size(), size_t(4));
+    EXPECT_EQ(records[0].id, "r1");
+    EXPECT_EQ(records[0].texts, (vector<string>{"great phone excellent product"}));
+    EXPECT_EQ(records[0].target, "Good");
+    remove_language_file(path);
+}
+
+TEST(TextDatasetClassification, ColumnRolesKeyTheCacheAndTravelInJson)
+{
+    const string path = temp_language_file("opennn_text_roles_cache.txt", rated_content);
+    TextDataset positional;
+    positional.set_has_header(true);
+    positional.set_has_ids(true);
+    positional.read_txt(path);
+    EXPECT_EQ(positional.get_text_columns(), (vector<string>{"rating", "review"}));
+
+    TextDataset declared;
+    declared.set_has_header(true);
+    declared.set_has_ids(true);
+    declared.set_columns({{"id", VariableRole::None},
+                          {"rating", VariableRole::None},
+                          {"review", VariableRole::Input},
+                          {"label", VariableRole::Target}});
+    declared.read_txt(path);
+    EXPECT_EQ(declared.get_text_columns(), (vector<string>{"review"}));
+    EXPECT_NE(declared.get_vocabulary(), positional.get_vocabulary());
+
+    TextDataset cached;
+    cached.set_has_header(true);
+    cached.set_has_ids(true);
+    cached.set_columns(declared.get_columns());
+    cached.read_txt(path);
+    EXPECT_EQ(column_summary(cached), column_summary(declared));
+    EXPECT_EQ(cached.get_vocabulary(), declared.get_vocabulary());
+
+    JsonWriter saved;
+    declared.to_JSON(saved);
+    JsonDocument document;
+    document.set_root(Json::parse(saved.c_str()));
+    TextDataset restored;
+    ASSERT_NO_THROW(restored.from_JSON(document));
+    EXPECT_EQ(column_summary(restored), column_summary(declared));
+
+    document.get_root()["Dataset"]["DataSource"]["Path"] = path + ".missing";
+    TextDataset deployment;
+    deployment.from_JSON(document);
+    EXPECT_EQ(deployment.get_text_columns(), (vector<string>{"review"}));
+    remove_language_file(path);
+}
+
+TEST(TextDatasetClassification, LegacyColumnNamesFallBackToThePositionalLayout)
+{
+    Json names = Json::make_object();
+    names.set("TextColumns", json_array(vector<string>{"title", "body"}));
+    EXPECT_TRUE(TextDataset::columns_from_JSON(&names).empty());
+
+    Json roles = Json::make_object();
+    Json array = Json::make_array();
+    Json item = Json::make_object();
+    item.set("Name", Json("label"));
+    item.set("Role", Json("Target"));
+    array.push_back(std::move(item));
+    roles.set("TextColumns", std::move(array));
+
+    const vector<TextDataset::Column> parsed = TextDataset::columns_from_JSON(&roles);
+    ASSERT_EQ(parsed.size(), size_t(1));
+    EXPECT_EQ(parsed[0].name, "label");
+    EXPECT_EQ(parsed[0].role, VariableRole::Target);
+}
+
+TEST(TextDatasetClassification, ColumnRolesNeedExactlyOneTarget)
+{
+    TextDataset dataset;
+    EXPECT_THROW(dataset.set_columns({{"first", VariableRole::Target},
+                                      {"second", VariableRole::Target}}), std::exception);
+
+    const string path = temp_language_file("opennn_text_no_target.txt", target_first_content);
+    dataset.set_has_header(true);
+    dataset.set_columns({{"label", VariableRole::Input},
+                         {"title", VariableRole::Input},
+                         {"body", VariableRole::Input}});
+    EXPECT_THROW(dataset.read_txt(path), std::exception);
+    remove_language_file(path);
+}
+
+namespace
+{
 void check_resident_text_matrix(TextDataset& dataset)
 {
     const vector<Index> samples{1, 0};

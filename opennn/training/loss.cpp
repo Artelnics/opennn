@@ -1473,7 +1473,7 @@ Loss::EvaluationResult Loss::calculate_error(const Batch& batch,
 bool Loss::supports_device_epoch_metrics() const
 {
     if (error == Error::Yolo) return false;
-    return runs_on_gpu() && error != Error::MinkowskiError;
+    return runs_on_gpu();
 }
 
 #ifdef OPENNN_HAS_CUDA
@@ -1582,8 +1582,15 @@ bool Loss::calculate_error_device_metrics(const Batch& batch,
         return true;
     }
 
-    case Yolo:
     case MinkowskiError:
+        input.dispatch([&]<typename T>()
+        {
+            minkowski_error_cuda<T>(input.size(), workspace, target.as<float>(), input.as<T>(), minkowski_parameter);
+        });
+        reduce_and_accumulate(1.0f / (minkowski_parameter * static_cast<float>(input.get_shape()[0])));
+        return true;
+
+    case Yolo:
         return false;
     }
 
@@ -1732,8 +1739,7 @@ void Loss::calculate_output_deltas(const Batch& batch, const ForwardPropagation&
         cross_entropy_3d_gradient(input, target, input_delta, back_propagation.metrics.active_tokens_count);
         break;
     case MinkowskiError:
-        minkowski_error_gradient(input, target, minkowski_parameter, input_delta,
-                                 network && network->is_gpu());
+        minkowski_error_gradient(input, target, minkowski_parameter, input_delta);
         break;
     case Yolo:
 #ifndef OPENNN_NO_VISION

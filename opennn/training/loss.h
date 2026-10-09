@@ -86,6 +86,7 @@ public:
     void set_regularization(const string& new_regularization_method) { regularization_method = string_to_regularization(new_regularization_method); }
     void set_regularization(Regularization new_regularization) { regularization_method = new_regularization; }
     void set_regularization_weight(const float new_regularization_weight) { regularization_weight = new_regularization_weight; }
+    void set_minkowski_parameter(const float new_minkowski_parameter) { minkowski_parameter = new_minkowski_parameter; }
 
     void set_normalization_coefficient();
 

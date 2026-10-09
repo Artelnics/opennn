@@ -26,19 +26,16 @@ TextClassificationNetwork::TextClassificationNetwork(const Shape& input_shape,
                                                      PoolingMethod pooling_method)
     : Network(NetworkTask::TextClassification)
 {
-    throw_if(input_shape.get_rank() < 3,
+    throw_if(input_shape.get_rank() < 2,
              "TextClassificationNetwork: the input shape must be "
-             "{{vocabulary_size, sequence_length, embedding_dimension}}, got rank {}.",
+             "{{vocabulary_size, sequence_length[, embedding_dimension]}}, got rank {}.",
              input_shape.get_rank());
-    throw_if(complexity_dimensions.get_rank() < 1,
-             "TextClassificationNetwork: the complexity dimensions must name at least the "
-             "number of heads.");
 
     const Index vocabulary_size = input_shape[0];
     const Index sequence_length = input_shape[1];
-    const Index embedding_dimension = input_shape[2];
-    const Index heads_number = complexity_dimensions[0];
-    const Index hidden_neurons = complexity_dimensions.get_rank() > 1 ? complexity_dimensions[1] : 64;
+    const Index embedding_dimension = input_shape.get_rank() > 2 ? input_shape[2] : default_embedding_dimension;
+    const Index heads_number = complexity_dimensions.get_rank() > 0 ? complexity_dimensions[0] : default_heads_number;
+    const Index hidden_neurons = complexity_dimensions.get_rank() > 1 ? complexity_dimensions[1] : default_hidden_neurons;
 
     add_layer(make_unique<Tokenizer>(Shape{sequence_length}, "tokenizer"), {-1});
 

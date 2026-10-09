@@ -37,6 +37,47 @@ void mean_absolute_error_gradient_cuda(const Index n,
 }
 
 template<typename T>
+__global__ void minkowski_error_kernel(const int n, float* __restrict__ term_results, const float* __restrict__ targets, const T* __restrict__ outputs, const float power)
+{
+    for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < n; i += Index(blockDim.x) * gridDim.x)
+        term_results[i] = powf(fabsf(static_cast<float>(outputs[i]) - targets[i]), power);
+}
+
+template<typename T>
+void minkowski_error_cuda(const Index n, float* term_results, const float* targets, const T* outputs, const float power)
+{
+    launch_elementwise(n, minkowski_error_kernel<T>, term_results, targets, outputs, power);
+}
+
+template<typename T>
+__global__ void minkowski_error_gradient_kernel(
+    const int n,
+    T* __restrict__ deltas,
+    const float* __restrict__ targets,
+    const T* __restrict__ outputs,
+    const float power,
+    const float scale)
+{
+    for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < n; i += Index(blockDim.x) * gridDim.x)
+    {
+        const float difference = static_cast<float>(outputs[i]) - targets[i];
+        const float sign = difference > 0.0f ? 1.0f : (difference < 0.0f ? -1.0f : 0.0f);
+        deltas[i] = static_cast<T>(scale * sign * powf(fabsf(difference), power - 1.0f));
+    }
+}
+
+template<typename T>
+void minkowski_error_gradient_cuda(const Index n,
+                                   T* deltas,
+                                   const float* targets,
+                                   const T* outputs,
+                                   const float power,
+                                   const float scale)
+{
+    launch_elementwise(n, minkowski_error_gradient_kernel<T>, deltas, targets, outputs, power, scale);
+}
+
+template<typename T>
 __global__ void binary_cross_entropy_kernel(const int n, float* __restrict__ term_results, const float* __restrict__ targets, const T* __restrict__ outputs, const float epsilon)
 {
     for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < n; i += Index(blockDim.x) * gridDim.x)
@@ -855,7 +896,9 @@ void yolo_gradient_cuda(const float* output, const float* target, float* delta,
     template void cross_entropy_3d_multiple_forward_cuda<T>(const Index, const int, const T*, const float*, float*, float*, float*); \
     template void cross_entropy_3d_metrics_cuda<T>(const Index, const int, const T*, const float*, float*); \
     template void cross_entropy_3d_multiple_backward_cuda<T>(const Index, const int, const T*, const float*, T*, const float, const float*); \
-    template void mean_absolute_error_gradient_cuda<T>(const Index, T*, const float*, const T*, float);
+    template void mean_absolute_error_gradient_cuda<T>(const Index, T*, const float*, const T*, float); \
+    template void minkowski_error_cuda<T>(const Index, float*, const float*, const T*, const float); \
+    template void minkowski_error_gradient_cuda<T>(const Index, T*, const float*, const T*, const float, const float);
 
 OPENNN_INSTANTIATE_FLOAT_BF16(INSTANTIATE)
 #undef INSTANTIATE

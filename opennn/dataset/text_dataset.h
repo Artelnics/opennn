@@ -43,7 +43,24 @@ public:
         return shape.empty() ? 0 : shape.size();
     }
 
-    const vector<string>& get_text_columns() const noexcept { return text_columns; }
+    // One entry per field of the data file, in file order. Role::Input feeds the
+    // network, Role::Target carries the class and Role::None is ignored; the
+    // identifier column, when there is one, is the first field and has_sample_ids
+    // tells the reader to keep it. An empty vector means the positional default:
+    // identifier first, target last, every other field an input.
+    struct Column
+    {
+        string name;
+        VariableRole role = VariableRole::Input;
+
+        friend bool operator==(const Column&, const Column&) = default;
+    };
+
+    const vector<Column>& get_columns() const noexcept { return columns; }
+    void set_columns(vector<Column>);
+    static vector<Column> columns_from_JSON(const Json*);
+
+    vector<string> get_text_columns() const;
     vector<string> get_text_column_markers() const;
     vector<Index> encode_text(span<const string> texts) const;
 
@@ -87,7 +104,7 @@ private:
 
     struct Documents
     {
-        vector<string> text_columns;
+        vector<Column> columns;
         vector<vector<string>> input;
         vector<vector<Index>> input_lengths;
         vector<vector<string>> target;
@@ -120,7 +137,7 @@ private:
     string tokenizer_identity;
     string target_tokenizer_identity;
     vector<string> labels;
-    vector<string> text_columns;
+    vector<Column> columns;
     vector<Segment> segments;
     Index record_tokens = 0;
     filesystem::path cache_path;

@@ -133,6 +133,10 @@ public:
         float confidence = 0.0f;
     };
 
+    static constexpr Index default_embedding_dimension = 64;
+    static constexpr Index default_heads_number = 4;
+    static constexpr Index default_hidden_neurons = 64;
+
     TextClassificationNetwork(const Shape&,
                               const Shape&,
                               const Shape&,

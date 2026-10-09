@@ -34,8 +34,11 @@ void Variable::to_JSON(JsonWriter& printer) const
     if (features > 1)
         add_json_field(printer, "Features", features);
 
+    // As a list, not a joined string: a category can hold the separator itself
+    // (a text class is a line of the corpus), and splitting it back then invents
+    // categories that were never there.
     if (is_one_of(type, VariableType::Categorical, VariableType::Binary))
-        add_json_field(printer, "Categories", vector_to_string(categories, ";"));
+        add_json_field(printer, "Categories", json_array(categories));
 }
 
 vector<string> Variable::get_names() const

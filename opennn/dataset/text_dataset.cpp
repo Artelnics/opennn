@@ -50,6 +50,19 @@ vector<string> make_column_markers(const vector<string>& columns)
     return markers;
 }
 
+Json columns_to_JSON(const vector<TextDataset::Column>& columns)
+{
+    Json array = Json::make_array();
+    for (const TextDataset::Column& column : columns)
+    {
+        Json item = Json::make_object();
+        item.set("Name", Json(column.name));
+        item.set("Role", Json(variable_role_to_string(column.role)));
+        array.push_back(std::move(item));
+    }
+    return array;
+}
+
 vector<Index> share_budget(span<const Index> lengths, Index budget)
 {
     vector<Index> taken(lengths.size(), 0);
@@ -138,9 +151,45 @@ const vector<string>& TextDataset::get_vocabulary(VariableRole role) const noexc
     return selected ? selected->get_vocabulary() : empty;
 }
 
+vector<string> TextDataset::get_text_columns() const
+{
+    vector<string> names;
+    for (const Column& column : columns)
+        if (column.role == VariableRole::Input) names.push_back(column.name);
+    return names;
+}
+
 vector<string> TextDataset::get_text_column_markers() const
 {
-    return text_columns.size() > 1 ? make_column_markers(text_columns) : vector<string>{};
+    const vector<string> names = get_text_columns();
+    return names.size() > 1 ? make_column_markers(names) : vector<string>{};
+}
+
+void TextDataset::set_columns(vector<Column> new_columns)
+{
+    const Index targets = Index(ranges::count_if(new_columns,
+        [](const Column& column) { return column.role == VariableRole::Target; }));
+    throw_if(targets > 1, "TextDataset: only one target column is supported, {} were given.", targets);
+    columns = std::move(new_columns);
+}
+
+vector<TextDataset::Column> TextDataset::columns_from_JSON(const Json* root)
+{
+    const Json* element = root ? root->find("TextColumns") : nullptr;
+    if (!element || !element->is_array()) return {};
+    vector<Column> new_columns;
+    for (const Json& item : element->as_array())
+    {
+        // A plain array of names is how the columns were stored before roles
+        // existed; it carried the input names only, so it cannot describe the
+        // layout and the positional default takes over.
+        if (!item.is_object()) return {};
+        Column column;
+        column.name = read_json_string(&item, "Name");
+        column.role = string_to_variable_role(read_json_string(&item, "Role", "Input"));
+        new_columns.push_back(std::move(column));
+    }
+    return new_columns;
 }
 
 void TextDataset::prepare_tokenizer()
@@ -186,8 +235,8 @@ vector<Index> TextDataset::encode_text(span<const string> texts) const
 {
     throw_if(options.task != Task::Classification || options.input_layout != InputLayout::Tokens,
              "TextDataset: encode_text supports token classification datasets only.");
-    const size_t columns = max<size_t>(1, text_columns.size());
-    throw_if(texts.size() != columns, "TextDataset: expected {} texts, got {}.", columns, texts.size());
+    const size_t inputs = max<size_t>(1, get_text_columns().size());
+    throw_if(texts.size() != inputs, "TextDataset: expected {} texts, got {}.", inputs, texts.size());
     vector<string> tokens;
     vector<Index> lengths;
     for (const string& text : texts)
@@ -301,10 +350,18 @@ void TextDataset::read_txt(const filesystem::path& path)
     const filesystem::path parent = cache_directory.empty()
         ? filesystem::path(data_path.string() + ".cache")
         : cache_directory / (data_path.filename().string() + ".cache");
-    cache_path = parent / format("text_v5_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}.bin",
+    string columns_key = "auto";
+    if (!columns.empty())
+    {
+        columns_key.clear();
+        for (const Column& column : columns)
+            columns_key += column.role == VariableRole::Target ? 't'
+                         : column.role == VariableRole::Input ? 'i' : 'n';
+    }
+    cache_path = parent / format("text_v6_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}_{}.bin",
         task_names.to_string(options.task), layout_names.to_string(options.input_layout),
         options.sequence_length, options.maximum_vocabulary_size, options.minimum_token_frequency,
-        get_separator_name(), has_header, has_sample_ids,
+        get_separator_name(), has_header, has_sample_ids, columns_key,
         tokenizer_identity, target_tokenizer_identity);
     const filesystem::path metadata_path = cache_path.string() + ".json";
     if (uses_cache() && is_file_current(cache_path, {data_path})
@@ -323,25 +380,48 @@ void TextDataset::read_txt(const filesystem::path& path)
 namespace
 {
 
+using Column = TextDataset::Column;
+
+constexpr size_t no_field = numeric_limits<size_t>::max();
+
 struct RecordLayout
 {
     size_t first = 0;
-    size_t id_fields = 0;
-    size_t text_fields = 0;
     size_t fields_number = 0;
     char separator = '\t';
     bool has_quotes = false;
-    vector<string> text_columns;
+    vector<TextDataset::Column> columns;
+    size_t id_field = no_field;
+    vector<size_t> input_fields;
+    size_t target_field = no_field;
+
+    size_t id_fields() const noexcept { return id_field == no_field ? 0 : 1; }
+    size_t text_fields() const noexcept { return input_fields.size(); }
 };
 
+void resolve_roles(RecordLayout& layout, bool has_ids)
+{
+    if (has_ids && !layout.columns.empty())
+    {
+        layout.columns.front().role = VariableRole::None;
+        layout.id_field = 0;
+    }
+    for (size_t field = 0; field < layout.columns.size(); ++field)
+        if (field != layout.id_field)
+        {
+            if (layout.columns[field].role == VariableRole::Input) layout.input_fields.push_back(field);
+            else if (layout.columns[field].role == VariableRole::Target) layout.target_field = field;
+        }
+}
+
 RecordLayout scan_record_layout(const CsvReader::Result& source, char separator,
-                                bool has_header, bool has_ids)
+                                bool has_header, bool has_ids,
+                                const vector<TextDataset::Column>& declared)
 {
     RecordLayout layout;
     layout.separator = separator;
     layout.has_quotes = source.has_quotes;
     layout.first = has_header && !source.lines.empty() ? 1 : 0;
-    layout.id_fields = has_ids ? 1 : 0;
     layout.fields_number = 2;
 
     const Index rows = Index(source.lines.size() - layout.first);
@@ -373,16 +453,24 @@ RecordLayout scan_record_layout(const CsvReader::Result& source, char separator,
         layout.fields_number = ranges::max_element(frequencies, {}, &pair<const size_t, Index>::second)->first;
     }
 
-    if (layout.fields_number < layout.id_fields + 2) return layout;
+    if (layout.fields_number < (has_ids ? 3u : 2u)) return layout;
 
-    layout.text_fields = layout.fields_number - layout.id_fields - 1;
-    layout.text_columns.resize(layout.text_fields);
-    for (size_t k = 0; k < layout.text_fields; ++k)
+    // The roles come from the editor when it has described every field; otherwise
+    // the positional default applies: identifier first, target last, rest inputs.
+    const bool declared_layout = declared.size() == layout.fields_number;
+    layout.columns.resize(layout.fields_number);
+    for (size_t field = 0; field < layout.fields_number; ++field)
     {
-        const size_t column = layout.id_fields + k;
-        const string_view name = column < header.size() ? trim_view(header[column]) : string_view{};
-        layout.text_columns[k] = name.empty() ? format("variable_{}", column + 1) : string(name);
+        const string_view header_name = field < header.size() ? trim_view(header[field]) : string_view{};
+        Column& column = layout.columns[field];
+        column.name = !header_name.empty() ? string(header_name)
+                    : declared_layout && !declared[field].name.empty() ? declared[field].name
+                    : format("variable_{}", field + 1);
+        column.role = declared_layout ? declared[field].role
+                    : field + 1 == layout.fields_number ? VariableRole::Target
+                    : VariableRole::Input;
     }
+    resolve_roles(layout, has_ids);
     return layout;
 }
 
@@ -396,9 +484,9 @@ RecordLayout masked_record_layout(const CsvReader::Result& source, bool has_head
 {
     RecordLayout layout;
     layout.first = has_header && !source.lines.empty() ? 1 : 0;
-    layout.text_fields = 1;
     layout.fields_number = 2;
-    layout.text_columns = {"variable_1"};
+    layout.columns = {{"variable_1", VariableRole::Input}, {"variable_2", VariableRole::Target}};
+    resolve_roles(layout, false);
     return layout;
 }
 
@@ -413,19 +501,20 @@ void TextDataset::load_documents(Documents& documents) const
 
     const RecordLayout layout = masked
         ? masked_record_layout(source, has_header)
-        : scan_record_layout(source, separator_char, has_header, has_sample_ids);
+        : scan_record_layout(source, separator_char, has_header, has_sample_ids, columns);
 
-    throw_if(layout.text_fields == 0, "TextDataset: each line needs {}text and target fields.",
-             layout.id_fields ? "an identifier, " : "");
-    throw_if(layout.text_fields > 1 && options.task != Task::Classification,
+    throw_if(layout.text_fields() == 0, "TextDataset: each line needs {}text and target fields.",
+             layout.id_fields() ? "an identifier, " : "");
+    throw_if(layout.target_field == no_field, "TextDataset: no column is marked as target.");
+    throw_if(layout.text_fields() > 1 && options.task != Task::Classification,
              "TextDataset: several text columns are only supported for classification.");
 
     const size_t first = layout.first;
-    const size_t id_fields = layout.id_fields;
-    const size_t text_fields = layout.text_fields;
+    const size_t id_fields = layout.id_fields();
+    const size_t text_fields = layout.text_fields();
     const Index rows = Index(source.lines.size() - first);
 
-    documents.text_columns = layout.text_columns;
+    documents.columns = layout.columns;
 
     documents.input.assign(size_t(rows), {});
     documents.target.assign(size_t(rows), {});
@@ -452,18 +541,18 @@ void TextDataset::load_documents(Documents& documents) const
                 valid[size_t(row)] = 0;
                 continue;
             }
-            if (id_fields) documents.ids[size_t(row)] = string(trim_view(fields[0]));
+            if (id_fields) documents.ids[size_t(row)] = string(trim_view(fields[layout.id_field]));
             vector<string>& input = documents.input[size_t(row)];
             if (text_fields == 1)
-                input = tokenizer->tokenize(fields[id_fields]);
+                input = tokenizer->tokenize(fields[layout.input_fields.front()]);
             else
-                for (size_t k = 0; k < text_fields; ++k)
+                for (const size_t field : layout.input_fields)
                 {
-                    vector<string> column = tokenizer->tokenize(fields[id_fields + k]);
+                    vector<string> column = tokenizer->tokenize(fields[field]);
                     documents.input_lengths[size_t(row)].push_back(ssize(column));
                     input.insert(input.end(), make_move_iterator(column.begin()), make_move_iterator(column.end()));
                 }
-            const string_view target = fields.back();
+            const string_view target = fields[layout.target_field];
             if (options.task == Task::Classification)
                 documents.target[size_t(row)] = {masked ? string(target) : ascii_lowercase(trim_view(target))};
             else
@@ -501,9 +590,10 @@ void TextDataset::for_each_record(const function<bool(Index, const Record&)>& vi
     const CsvReader::Result source = CsvReader().read(data_path);
     const string delimiter = get_separator_string();
     const char separator_char = delimiter.empty() ? '\t' : delimiter[0];
-    const RecordLayout layout = scan_record_layout(source, separator_char, has_header, has_sample_ids);
+    const RecordLayout layout = scan_record_layout(source, separator_char, has_header,
+                                                   has_sample_ids, columns);
 
-    if (layout.text_fields == 0) return;
+    if (layout.text_fields() == 0 || layout.target_field == no_field) return;
 
     string scratch;
     vector<string_view> fields;
@@ -517,10 +607,10 @@ void TextDataset::for_each_record(const function<bool(Index, const Record&)>& vi
 
         if (split_record(source.lines[line], layout, scratch, fields))
         {
-            if (layout.id_fields) record.id = string(trim_view(fields[0]));
-            for (size_t k = 0; k < layout.text_fields; ++k)
-                record.texts.emplace_back(trim_view(fields[layout.id_fields + k]));
-            record.target = string(trim_view(fields.back()));
+            if (layout.id_fields()) record.id = string(trim_view(fields[layout.id_field]));
+            for (const size_t field : layout.input_fields)
+                record.texts.emplace_back(trim_view(fields[field]));
+            record.target = string(trim_view(fields[layout.target_field]));
         }
         else
             record.texts.emplace_back(trim_view(source.lines[line]));
@@ -531,7 +621,7 @@ void TextDataset::for_each_record(const function<bool(Index, const Record&)>& vi
 
 optional<TextDataset::Record> TextDataset::split_line(string_view line, bool with_id) const
 {
-    const size_t text_fields = max<size_t>(1, text_columns.size());
+    const size_t text_fields = max<size_t>(1, get_text_columns().size());
     const size_t id_fields = with_id && has_sample_ids ? 1 : 0;
 
     Record record;
@@ -602,7 +692,7 @@ void TextDataset::read_rows()
     const vector<vector<string>>& input_documents = documents.input;
     const vector<vector<string>>& target_documents = documents.target;
     throw_if(input_documents.empty(), "TextDataset: no text rows found.");
-    text_columns = std::move(documents.text_columns);
+    columns = std::move(documents.columns);
     sample_ids = std::move(documents.ids);
     prepare_tokenizer();
     if (!fixed_vocabulary)
@@ -614,10 +704,11 @@ void TextDataset::read_rows()
     else
         for (const vector<Index>& lengths : input_lengths)
             input_length = max(input_length, framed_multi_column_length(lengths));
-    const Index minimum_length = input_lengths.empty() ? 2 : 2 + 2 * ssize(text_columns);
+    const Index text_columns_number = ssize(get_text_columns());
+    const Index minimum_length = input_lengths.empty() ? 2 : 2 + 2 * text_columns_number;
     throw_if(!input_lengths.empty() && options.sequence_length > 0 && options.sequence_length < minimum_length,
              "TextDataset: a sequence length of at least {} is needed for {} text columns.",
-             minimum_length, text_columns.size());
+             minimum_length, text_columns_number);
     if (options.sequence_length > 0)
         input_length = options.input_layout == InputLayout::TokensAndMask
             ? options.sequence_length : min(input_length, options.sequence_length);
@@ -706,7 +797,7 @@ void TextDataset::read_corpus()
     const Index samples = ssize(ids) / block_size;
     throw_if(samples == 0, "TextDataset: corpus has {} tokens; at least {} are required.", ids.size(), block_size);
     labels.clear();
-    text_columns.clear();
+    columns.clear();
     sample_ids.clear();
     configure(samples, options.sequence_length, options.sequence_length);
     write_records(samples, [&](Index sample, span<int32_t> record)
@@ -854,7 +945,7 @@ void TextDataset::write_configuration(JsonWriter& writer) const
         {"InputSequenceLength", get_sequence_length(token_role())},
         {"TargetSequenceLength", get_sequence_length(VariableRole::Target)},
         {"Labels", json_array(labels)},
-        {"TextColumns", json_array(text_columns)}
+        {"TextColumns", columns_to_JSON(columns)}
     });
     const auto write_tokenizer = [&](const char* name, const TokenizerOperator* value, bool fixed, const string& identity)
     {
@@ -876,7 +967,7 @@ void TextDataset::read_configuration(const Json* root)
     options.maximum_vocabulary_size = read_json_index(root, "MaximumVocabularySize");
     options.minimum_token_frequency = read_json_index(root, "MinimumTokenFrequency");
     labels = read_json_strings(root, "Labels");
-    text_columns = root->has("TextColumns") ? read_json_strings(root, "TextColumns") : vector<string>{};
+    columns = columns_from_JSON(root);
     const auto read_tokenizer = [&](const char* name, unique_ptr<TokenizerOperator>& value, bool& fixed, string& identity)
     {
         value.reset();
@@ -902,7 +993,7 @@ bool TextDataset::load_cache(const filesystem::path& metadata_path)
     {
         const JsonDocument document = load_json_file(metadata_path);
         const Json* root = get_json_root(document, "TextCache");
-        if (read_json_index(root, "Version") != 2
+        if (read_json_index(root, "Version") != 3
             || read_json_string(root, "Key") != cache_path.filename().string()) return false;
         TextDataset cached;
         cached.read_configuration(root);
@@ -930,7 +1021,7 @@ bool TextDataset::load_cache(const filesystem::path& metadata_path)
         tokenizer = std::move(cached.tokenizer);
         target_tokenizer = std::move(cached.target_tokenizer);
         labels = std::move(cached.labels);
-        text_columns = std::move(cached.text_columns);
+        columns = std::move(cached.columns);
         sample_ids = read_json_strings(root, "SampleIds");
         configure(samples, cached.get_sequence_length(cached.token_role()),
                    cached.get_sequence_length(VariableRole::Target));
@@ -957,7 +1048,7 @@ void TextDataset::save_cache(const filesystem::path& metadata_path) const
 {
     JsonWriter metadata;
     metadata.open_element("TextCache");
-    write_json(metadata, {{"Version", 2}, {"Key", cache_path.filename().string()},
+    write_json(metadata, {{"Version", 3}, {"Key", cache_path.filename().string()},
                           {"SamplesNumber", get_samples_number()}, {"SampleIds", json_array(sample_ids)}});
     write_configuration(metadata);
     metadata.close_element();
