@@ -100,7 +100,7 @@ TEST(LossDeviceMetricsTest, MatchesHostMetricsAndAccumulatesAcrossBatches)
     const vector<Loss::Error> errors{
         Loss::Error::MeanAbsoluteError, Loss::Error::MeanSquaredError,
         Loss::Error::NormalizedSquaredError, Loss::Error::WeightedSquaredError,
-        Loss::Error::CrossEntropy};
+        Loss::Error::CrossEntropy, Loss::Error::MinkowskiError};
     const vector<vector<Index>> sample_batches{{0, 3, 1}, {2, 4}};
 
     for (const Type precision : {Type::FP32, Type::BF16})

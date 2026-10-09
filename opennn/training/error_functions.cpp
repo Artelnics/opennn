@@ -82,6 +82,8 @@ OPENNN_CUDA_STUBS(OPENNN_CUDA_STUB)
 OPENNN_CUDA_TEMPLATE_STUB(weighted_squared_error_cuda)
 OPENNN_CUDA_TEMPLATE_STUB(scaled_diff_cuda_typed)
 OPENNN_CUDA_TEMPLATE_STUB(mean_absolute_error_gradient_cuda)
+OPENNN_CUDA_TEMPLATE_STUB(minkowski_error_cuda)
+OPENNN_CUDA_TEMPLATE_STUB(minkowski_error_gradient_cuda)
 OPENNN_CUDA_TEMPLATE_STUB(weighted_squared_error_gradient_cuda)
 OPENNN_CUDA_TEMPLATE_STUB(binary_cross_entropy_cuda)
 OPENNN_CUDA_TEMPLATE_STUB(binary_cross_entropy_gradient_cuda)
@@ -305,25 +307,41 @@ void cross_entropy_gradient(const TensorView& input, const TensorView& target, c
 
 void minkowski_error(const TensorView& input, const TensorView& target, float power, float& error, float* workspace_device)
 {
-    throw_if(workspace_device,
-             "minkowski_error: GPU implementation not available.");
-
     const Index batch_size = input.get_shape()[0];
+
+    if (input.is_cuda())
+    {
+        input.dispatch([&]<typename T>() {
+            minkowski_error_cuda<T>(input.size(), workspace_device, target.as<float>(), input.as<T>(), power);
+        });
+
+        error = sum_abs_cuda(workspace_device, input.size()) / (power * to_type(batch_size));
+        return;
+    }
+
     error = (input.as_vector() - target.as_vector()).array().abs().pow(power).sum() / (power * to_type(batch_size));
 }
 
+// on_gpu is kept for source compatibility: the input's device decides, as in the other errors.
 void minkowski_error_gradient(const TensorView& input,
                               const TensorView& target,
                               float power,
                               const TensorView& input_delta,
-                              bool on_gpu)
+                              [[maybe_unused]] bool on_gpu)
 {
-    throw_if(on_gpu,
-             "minkowski_error_gradient: GPU implementation not available.");
-
     const Index batch_size = input.get_shape()[0];
-    const VectorR difference_vec = input.as_vector() - target.as_vector();
     const float scale = 1.0f / to_type(batch_size);
+
+    if (input.is_cuda())
+    {
+        input.dispatch([&]<typename T>() {
+            minkowski_error_gradient_cuda<T>(input.size(), input_delta.as<T>(), target.as<float>(), input.as<T>(),
+                                             power, scale);
+        });
+        return;
+    }
+
+    const VectorR difference_vec = input.as_vector() - target.as_vector();
     const float exponent = power - 1.0f;
     input_delta.as_vector().array() = scale
         * difference_vec.array().sign()

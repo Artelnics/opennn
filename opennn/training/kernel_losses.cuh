@@ -19,6 +19,12 @@ template<typename T>
 void mean_absolute_error_gradient_cuda(const Index, T*, const float*, const T*, float);
 
 template<typename T>
+void minkowski_error_cuda(const Index, float*, const float*, const T*, const float);
+
+template<typename T>
+void minkowski_error_gradient_cuda(const Index, T*, const float*, const T*, const float, const float);
+
+template<typename T>
 void binary_cross_entropy_cuda(const Index, float*, const float*, const T*, const float);
 
 template<typename T>
