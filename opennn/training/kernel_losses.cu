@@ -11,32 +11,6 @@
 #include "opennn/training/kernel_losses.cuh"
 
 template<typename T>
-__global__ void mean_absolute_error_gradient_kernel(
-    const int n,
-    T* __restrict__ deltas,
-    const float* __restrict__ targets,
-    const T* __restrict__ outputs,
-    const float scale)
-{
-    for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < n; i += Index(blockDim.x) * gridDim.x)
-    {
-        const float difference = static_cast<float>(outputs[i]) - targets[i];
-        const float sign = difference > 0.0f ? 1.0f : (difference < 0.0f ? -1.0f : 0.0f);
-        deltas[i] = static_cast<T>(scale * sign);
-    }
-}
-
-template<typename T>
-void mean_absolute_error_gradient_cuda(const Index n,
-                                       T* deltas,
-                                       const float* targets,
-                                       const T* outputs,
-                                       const float scale)
-{
-    launch_elementwise(n, mean_absolute_error_gradient_kernel<T>, deltas, targets, outputs, scale);
-}
-
-template<typename T>
 __global__ void minkowski_error_kernel(const int n, float* __restrict__ term_results, const float* __restrict__ targets, const T* __restrict__ outputs, const float power)
 {
     for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < n; i += Index(blockDim.x) * gridDim.x)
@@ -49,21 +23,18 @@ void minkowski_error_cuda(const Index n, float* term_results, const float* targe
     launch_elementwise(n, minkowski_error_kernel<T>, term_results, targets, outputs, power);
 }
 
+// Derivative of |d|^p / p: sign(d) |d|^(p-1), and zero at a zero residual.
+__device__ __forceinline__ float minkowski_slope(const float difference, const float power)
+{
+    const float sign = difference > 0.0f ? 1.0f : (difference < 0.0f ? -1.0f : 0.0f);
+    return sign * powf(fabsf(difference), power - 1.0f);
+}
+
 template<typename T>
-__global__ void minkowski_error_gradient_kernel(
-    const int n,
-    T* __restrict__ deltas,
-    const float* __restrict__ targets,
-    const T* __restrict__ outputs,
-    const float power,
-    const float scale)
+__global__ void minkowski_error_gradient_kernel(const int n, T* __restrict__ deltas, const float* __restrict__ targets, const T* __restrict__ outputs, const float power, const float scale)
 {
     for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < n; i += Index(blockDim.x) * gridDim.x)
-    {
-        const float difference = static_cast<float>(outputs[i]) - targets[i];
-        const float sign = difference > 0.0f ? 1.0f : (difference < 0.0f ? -1.0f : 0.0f);
-        deltas[i] = static_cast<T>(scale * sign * powf(fabsf(difference), power - 1.0f));
-    }
+        deltas[i] = static_cast<T>(scale * minkowski_slope(static_cast<float>(outputs[i]) - targets[i], power));
 }
 
 template<typename T>
@@ -896,7 +867,6 @@ void yolo_gradient_cuda(const float* output, const float* target, float* delta,
     template void cross_entropy_3d_multiple_forward_cuda<T>(const Index, const int, const T*, const float*, float*, float*, float*); \
     template void cross_entropy_3d_metrics_cuda<T>(const Index, const int, const T*, const float*, float*); \
     template void cross_entropy_3d_multiple_backward_cuda<T>(const Index, const int, const T*, const float*, T*, const float, const float*); \
-    template void mean_absolute_error_gradient_cuda<T>(const Index, T*, const float*, const T*, float); \
     template void minkowski_error_cuda<T>(const Index, float*, const float*, const T*, const float); \
     template void minkowski_error_gradient_cuda<T>(const Index, T*, const float*, const T*, const float, const float);
 

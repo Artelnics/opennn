@@ -198,6 +198,7 @@ private:
     float* ensure_error_workspace(Buffer&, const TensorView&,
                                   Index batch_samples,
                                   Index reduction_floats = 0) const;
+    float* ensure_metrics_workspace(Buffer&, const TensorView&, Index batch_samples) const;
 
     float get_weighted_coefficient(const Batch& batch) const { return get_batch_scale(batch) / (normalization_coefficient + EPSILON); }
 

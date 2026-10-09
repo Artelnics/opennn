@@ -81,7 +81,6 @@ OPENNN_CUDA_STUBS(OPENNN_CUDA_STUB)
 
 OPENNN_CUDA_TEMPLATE_STUB(weighted_squared_error_cuda)
 OPENNN_CUDA_TEMPLATE_STUB(scaled_diff_cuda_typed)
-OPENNN_CUDA_TEMPLATE_STUB(mean_absolute_error_gradient_cuda)
 OPENNN_CUDA_TEMPLATE_STUB(minkowski_error_cuda)
 OPENNN_CUDA_TEMPLATE_STUB(minkowski_error_gradient_cuda)
 OPENNN_CUDA_TEMPLATE_STUB(weighted_squared_error_gradient_cuda)
@@ -153,12 +152,13 @@ void mean_absolute_error_gradient(const TensorView& input,
 
     const float scale = 1.0f / to_type(input.size());
 
+    // On the GPU this is the Minkowski gradient with power 1, since |d|^0 = 1.
     if (input.is_cuda())
     {
         input.dispatch([&]<typename T>()
         {
-            mean_absolute_error_gradient_cuda<T>(input.size(), input_delta.as<T>(),
-                                                 target.as<float>(), input.as<T>(), scale);
+            minkowski_error_gradient_cuda<T>(input.size(), input_delta.as<T>(),
+                                             target.as<float>(), input.as<T>(), 1.0f, scale);
         });
         return;
     }

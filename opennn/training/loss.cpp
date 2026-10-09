@@ -1404,6 +1404,24 @@ float* Loss::ensure_error_workspace(Buffer& storage,
     return storage.as<float>();
 }
 
+// Every error writes its per-element terms and reduces them into the three
+// floats after them. The fused 3-D cross-entropy metrics kernel reduces
+// directly into those three scalars: its per-token scratch was left in this
+// allocation by the generic error path, but is neither read nor written here.
+float* Loss::ensure_metrics_workspace(Buffer& storage,
+                                      const TensorView& input,
+                                      Index batch_samples) const
+{
+    if (error != Error::CrossEntropy3d)
+        return ensure_error_workspace(storage, input, batch_samples, 3);
+
+    storage.grow_to(3 * Index(sizeof(float)));
+    memory_debug::record("loss", "ForwardPropagation::loss_workspace",
+                         3 * Index(sizeof(float)),
+                         format("batch={}", batch_samples));
+    return storage.as<float>();
+}
+
 Loss::EvaluationResult Loss::calculate_error(const Batch& batch,
                                               const ForwardPropagation& forward_propagation) const
 {
@@ -1489,29 +1507,10 @@ bool Loss::calculate_error_device_metrics(const Batch& batch,
     const TensorView target = batch.get_targets();
     if (input.empty() || target.empty()) return false;
 
-    // The fused 3-D cross-entropy metrics kernel reduces directly into three
-    // scalars.  Its per-token scratch was left in this allocation from the
-    // generic error path, but is neither read nor written here.
-    const Index workspace_floats =
-        error == Error::CrossEntropy3d ? 0 : error_workspace_floats(input);
-    float* workspace = nullptr;
-    if(error == Error::CrossEntropy3d)
-    {
-        forward_propagation.loss_workspace.grow_to(3 * Index(sizeof(float)));
-        workspace = forward_propagation.loss_workspace.as<float>();
-        memory_debug::record("loss", "ForwardPropagation::loss_workspace",
-                             3 * Index(sizeof(float)),
-                             format("batch={}", batch.get_batch_size()));
-    }
-    else
-    {
-        workspace = ensure_error_workspace(
-            forward_propagation.loss_workspace,
-            input,
-            batch.get_batch_size(),
-            3);
-    }
-    float* const results_device = workspace + workspace_floats;
+    float* const workspace = ensure_metrics_workspace(forward_propagation.loss_workspace,
+                                                      input, batch.get_batch_size());
+    float* const results_device =
+        workspace + (error == Error::CrossEntropy3d ? 0 : error_workspace_floats(input));
     cublasHandle_t handle = device::get_cublas_handle();
 
     enum class Reduction { Absolute, Squared };

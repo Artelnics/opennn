@@ -16,9 +16,6 @@ void mean_squared_error_metrics_gradient_cuda(const Index n, const Index batch,
                                               TOut* delta, float* error_sum);
 
 template<typename T>
-void mean_absolute_error_gradient_cuda(const Index, T*, const float*, const T*, float);
-
-template<typename T>
 void minkowski_error_cuda(const Index, float*, const float*, const T*, const float);
 
 template<typename T>
