@@ -73,6 +73,18 @@ TEST(ScalingLayerTest, ScalingAndUnscalingExpressionsShareAffineFormatting)
               "y=x*2.0+5.0;\n");
 }
 
+TEST(ScalingLayerTest, ExpressionUsesExplicitOutputsAndRejectsMissingBindings)
+{
+    Scaling scaling({2});
+    scaling.set_scalers("None");
+    EXPECT_EQ(scaling.write_expression({"x", "y"}, {"left", "right"}),
+              "left = x;\nright = y;\n");
+    EXPECT_THROW(scaling.write_expression({"x"}, {"left", "right"}), runtime_error);
+    EXPECT_THROW(scaling.write_expression({"x", "y"}, {"left"}), runtime_error);
+    Unscaling unscaling({2});
+    EXPECT_THROW(unscaling.write_expression({"x", "y"}, {}), runtime_error);
+}
+
 TEST(ScalingLayerTest, ForwardPropagate)
 {
     Index inputs_number = 3;

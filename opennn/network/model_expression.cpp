@@ -3,7 +3,9 @@
 
 #include "opennn/network/model_expression.h"
 
+#include <cctype>
 #include <utility>
+#include <unordered_set>
 
 #include "opennn/network/layers/layer_registry.h"
 #include "opennn/network/layers/scaling_layer.h"
@@ -273,7 +275,11 @@ vector<string> ModelExpression::get_flat_input_names() const
     const Index flat_inputs_number = network->get_inputs_number();
 
     if (ssize(names) == flat_inputs_number)
+    {
+        for (Index i = 0; i < flat_inputs_number; ++i)
+            if (names[size_t(i)].empty()) names[size_t(i)] = format("input_{}", i);
         return names;
+    }
 
     const auto& layers = network->get_layers();
     const Shape first_input_shape = layers.empty() ? Shape{} : layers[0]->get_input_shape();
@@ -298,6 +304,8 @@ vector<string> ModelExpression::get_flat_input_names() const
     }
 
     names.resize(size_t(flat_inputs_number));
+    for (Index i = 0; i < flat_inputs_number; ++i)
+        if (names[size_t(i)].empty()) names[size_t(i)] = format("input_{}", i);
     return names;
 }
 
@@ -326,6 +334,10 @@ ModelExpression::ExportNames ModelExpression::collect_names() const
 
     names.inputs = get_flat_input_names();
     names.outputs = network->get_output_feature_names();
+    names.outputs.resize(size_t(network->get_outputs_number()));
+    for (Index i = 0; i < network->get_outputs_number(); ++i)
+        if (names.outputs[size_t(i)].empty())
+            names.outputs[size_t(i)] = format("output_{}", i);
     names.fixed_inputs = fix_names(names.inputs, "input_");
     names.fixed_outputs = fix_names(names.outputs, "output_");
 
@@ -355,7 +367,6 @@ string ModelExpression::build_expression(const vector<string>& input_names,
     const Network::HostParametersGuard host_parameters(
         *const_cast<Network*>(network));
 
-    const size_t layers_number = network->get_layers_number();
     const vector<string> layer_labels = network->get_layer_labels();
 
     check_parameters_are_finite();
@@ -363,26 +374,43 @@ string ModelExpression::build_expression(const vector<string>& input_names,
     const Index inputs_number = network->get_inputs_number();
     const Index outputs_number = network->get_outputs_number();
 
-    vector<string> new_input_names = input_names;
-    new_input_names.resize(inputs_number);
+    const auto& layers = network->get_layers();
+    vector<vector<string>> bindings(layers.size() + 1);
+    bindings.front() = input_names;
+    bindings.front().resize(inputs_number);
     for (Index i = 0; i < inputs_number; ++i)
-        if (new_input_names[i].empty())
-            new_input_names[i] = format("input_{}", i);
+        if (bindings.front()[i].empty())
+            bindings.front()[i] = format("input_{}", i);
 
-    vector<string> new_output_names = output_names;
-    new_output_names.resize(outputs_number);
+    vector<string> final_names = output_names;
+    final_names.resize(outputs_number);
     for (Index i = 0; i < outputs_number; ++i)
-        if (new_output_names[i].empty())
-            new_output_names[i] = format("output_{}", i);
+        if (final_names[i].empty())
+            final_names[i] = format("output_{}", i);
+    if (layers.empty()) return {};
+    bindings.back() = std::move(final_names);
+
+    // Plan every boundary before emission. Internal identifiers are independent
+    // of editable layer labels and cannot shadow raw or sanitized public names.
+    unordered_set<string> occupied;
+    for (const auto* names : {&bindings.front(), &bindings.back()})
+    {
+        occupied.insert(names->begin(), names->end());
+        const auto fixed = fix_names(*names, names == &bindings.front() ? "input_" : "output_");
+        occupied.insert(fixed.begin(), fixed.end());
+    }
+    for (size_t boundary = 1; boundary < layers.size(); ++boundary)
+        for (Index neuron = 0; neuron < layers[boundary - 1]->get_outputs_number(); ++neuron)
+        {
+            string name = format("opennn_layer_{}_output_{}", boundary - 1, neuron);
+            while (!occupied.insert(name).second) name += "_";
+            bindings[boundary].push_back(std::move(name));
+        }
 
     ostringstream buffer;
-
-    const auto& layers = network->get_layers();
-
-    for (size_t i = 0; i < layers_number; ++i)
+    for (size_t stage = 0; stage < layers.size(); ++stage)
     {
-        const LayerType layer_type = layers[i]->get_type();
-
+        const LayerType layer_type = layers[stage]->get_type();
         throw_if(layer_type != LayerType::Scaling
                  && layer_type != LayerType::Dense
                  && layer_type != LayerType::Recurrent
@@ -390,34 +418,17 @@ string ModelExpression::build_expression(const vector<string>& input_names,
                  && layer_type != LayerType::Unscaling
                  && layer_type != LayerType::Clamping,
                  "ModelExpression: layer '{}' ({}) is not supported for export.",
-                        layer_labels[i], layer_type_map().to_string(layer_type));
+                        layer_labels[stage], layer_type_map().to_string(layer_type));
 
-        const bool is_last = (i == layers_number - 1);
-        vector<string> layer_output_names;
-
-        if (is_last)
-        {
-            layer_output_names = new_output_names;
-        }
-        else
-        {
-            const Index layer_neurons_number = layers[i]->get_outputs_number();
-            layer_output_names.resize(layer_neurons_number);
-            for (size_t j = 0; j < static_cast<size_t>(layer_neurons_number); ++j)
-                layer_output_names[j] = (layer_labels[i] == "scaling_layer" && j < new_input_names.size())
-                                            ? "scaled_" + new_input_names[j]
-                                            : format("{}_output_{}", layer_labels[i], j);
-        }
-
-        const string layer_expression = layers[i]->write_expression(new_input_names, layer_output_names);
-
-        throw_if(!is_last && layer_expression.find("Softmax") != string::npos,
+        const string layer_expression = layers[stage]->write_expression(bindings[stage], bindings[stage + 1]);
+        throw_if(stage + 1 < layers.size() && layer_expression.find("Softmax") != string::npos,
                  "ModelExpression: Softmax in a hidden layer is not supported for export.");
-
+        // Disabled clamping emits no arithmetic, but its output bindings must
+        // still receive the preceding layer's values.
+        if (layer_expression.empty())
+            for (size_t i = 0; i < bindings[stage + 1].size(); ++i)
+                buffer << bindings[stage + 1][i] << " = " << bindings[stage][i] << ";\n";
         buffer << layer_expression << "\n";
-
-        if (!is_last)
-            new_input_names = std::move(layer_output_names);
     }
 
     return buffer.str();
@@ -1138,10 +1149,11 @@ string ModelExpression::get_expression_c_embedded() const
                 const vector<TensorView>& parameter_views =
                     dense->get_parameter_views();
 
+                const size_t weight_slot = dense->get_use_bias() ? 1 : 0;
                 throw_if(
-                    parameter_views.size() < 2
-                    || !parameter_views[0].get_data()
-                    || !parameter_views[1].get_data(),
+                    parameter_views.size() <= weight_slot
+                    || !parameter_views[weight_slot].get_data()
+                    || (dense->get_use_bias() && !parameter_views[0].get_data()),
                     "ModelExpression: layer '{}' is not configured.",
                     layer_labels[i]);
 
@@ -1151,11 +1163,12 @@ string ModelExpression::get_expression_c_embedded() const
                 const Index layer_outputs =
                     dense->get_outputs_number();
 
-                const float* bias_data =
-                    parameter_views[0].as<float>();
+                const vector<float> zero_biases(dense->get_use_bias() ? 0 : size_t(layer_outputs), 0.0f);
+                const float* bias_data = dense->get_use_bias()
+                    ? parameter_views[0].as<float>() : zero_biases.data();
 
                 const float* weight_data =
-                    parameter_views[1].as<float>();
+                    parameter_views[weight_slot].as<float>();
 
                 emit_float_array(
                     table_prefix + "_weights",
@@ -1589,45 +1602,49 @@ string ModelExpression::get_expression_c_embedded() const
 string ModelExpression::get_expression_php() const
 {
     const ExportNames names = collect_names();
+    const string expression = build_expression(names.fixed_inputs, names.fixed_outputs);
 
-    const vector<string>& input_names = names.inputs;
-    const vector<string>& output_names = names.outputs;
-    const vector<string>& fixed_input_names = names.fixed_inputs;
-    const vector<string>& fixed_output_names = names.fixed_outputs;
-
-    string expression = build_expression();
-
-    replace_all_word_appearances(expression, "Tanh", "OpenNNTanh");
-
-    apply_name_mapping(expression, input_names, fixed_input_names);
-    apply_name_mapping(expression, output_names, fixed_output_names);
-
-    const vector<string> output_assignments = fix_output_names(expression, output_names, ProgrammingLanguage::PHP);
-
-    vector<string> php_vars = fixed_input_names;
-    php_vars.insert(php_vars.end(), fixed_output_names.begin(), fixed_output_names.end());
-
-    for (string_view line_view : get_token_views(expression, '\n'))
+    // Layer writers receive valid identifiers from the outset. Translate the
+    // resulting expression as tokens: variable names get one sigil, function
+    // names and numeric literals keep their own syntax.
+    string php_expression;
+    php_expression.reserve(expression.size());
+    for (size_t cursor = 0; cursor < expression.size();)
     {
-        const size_t equal_pos = line_view.find('=');
-        if (equal_pos == string_view::npos) continue;
-        const string lhs(trim_view(line_view.substr(0, equal_pos)));
-        if (!lhs.empty() && ranges::find(php_vars, lhs) == php_vars.end())
-            php_vars.push_back(lhs);
-    }
+        const size_t begin = cursor;
+        const unsigned char character = static_cast<unsigned char>(expression[cursor]);
+        if (isdigit(character) || character == '.')
+        {
+            do { ++cursor; }
+            while (cursor < expression.size()
+                   && (isdigit(static_cast<unsigned char>(expression[cursor])) || expression[cursor] == '.'));
+            if (cursor < expression.size() && (expression[cursor] == 'e' || expression[cursor] == 'E'))
+            {
+                ++cursor;
+                if (cursor < expression.size() && (expression[cursor] == '+' || expression[cursor] == '-'))
+                    ++cursor;
+                while (cursor < expression.size() && isdigit(static_cast<unsigned char>(expression[cursor])))
+                    ++cursor;
+            }
+            php_expression.append(expression, begin, cursor - begin);
+        }
+        else if (isalpha(character) || character == '_')
+        {
+            do { ++cursor; }
+            while (cursor < expression.size()
+                   && (isalnum(static_cast<unsigned char>(expression[cursor])) || expression[cursor] == '_'));
 
-    ranges::sort(php_vars, greater<>{}, [](const string& php_var) { return php_var.length(); });
-    for (const string& var_name : php_vars)
-        replace_all_word_appearances(expression, var_name, "$" + var_name);
-
-    vector<string> lines = split_expression_lines(expression);
-    for (string& l : lines)
-    {
-        replace(l, "[", "_");
-        replace(l, "]", "_");
+            const string_view identifier(expression.data() + begin, cursor - begin);
+            const size_t next = expression.find_first_not_of(" \t\r\n", cursor);
+            const bool function_call = next != string::npos && expression[next] == '(';
+            if (!function_call) php_expression += '$';
+            php_expression += function_call && identifier == "Tanh" ? "OpenNNTanh" : identifier;
+        }
+        else
+        {
+            php_expression += expression[cursor++];
+        }
     }
-    rename_spaced_var_definitions(lines);
-    lines.insert(lines.end(), output_assignments.begin(), output_assignments.end());
 
     const bool has_softmax = expression.find("Softmax") != string::npos;
 
@@ -1635,7 +1652,7 @@ string ModelExpression::get_expression_php() const
     emit_php_prelude(buffer, names);
     emit_activations(buffer, expression, &ActivationBodies::php, {});
     emit_php_inputs_setup(buffer, names);
-    emit_php_body(buffer, lines, has_softmax, names);
+    emit_php_body(buffer, split_expression_lines(php_expression), has_softmax, names);
     emit_php_response(buffer, names);
     return buffer.str();
 }

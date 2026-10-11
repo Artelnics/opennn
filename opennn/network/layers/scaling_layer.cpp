@@ -488,6 +488,10 @@ string Scaling::write_scaling_expression(const vector<string>& input_names,
              || outputs_number % ssize(scalers) != 0,
              "{}::write_expression: layer not configured.", inverse ? "Unscaling" : "Scaling");
 
+    throw_if(ssize(input_names) != outputs_number
+             || (ssize(output_names) != outputs_number && (inverse || !output_names.empty())),
+             "{}::write_expression: names must match the layer width.", inverse ? "Unscaling" : "Scaling");
+
     ostringstream buffer;
 
     for (Index i = 0; i < outputs_number; ++i)
@@ -496,8 +500,9 @@ string Scaling::write_scaling_expression(const vector<string>& input_names,
         const ScalerMethod scaler = scalers[feature];
         const string& input = input_names[i];
 
-        if (inverse) buffer << output_names[i] << "=";
-        else         buffer << "scaled_" << input << " = ";
+        // Empty forward output names retain the standalone legacy shorthand.
+        const string output = output_names.empty() ? "scaled_" + input : output_names[i];
+        buffer << output << (inverse ? "=" : " = ");
 
         if (scaler == ScalerMethod::Logarithm)
         {

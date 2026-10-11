@@ -110,6 +110,11 @@ TEST_F(AdamTest, DefaultConstructor)
     Adam adam;
 
     EXPECT_EQ(adam.get_loss() == nullptr, true);
+    EXPECT_FLOAT_EQ(adam.get_epsilon(), EPSILON);
+    EXPECT_ANY_THROW(adam.set_epsilon(0.0f));
+    EXPECT_ANY_THROW(adam.set_epsilon(-1.0f));
+    adam.set_epsilon(1.0e-4f);
+    EXPECT_FLOAT_EQ(adam.get_epsilon(), 1.0e-4f);
 }
 
 TEST_F(AdamTest, GeneralConstructor)

@@ -45,43 +45,78 @@ void for_each_token(string_view document, Emit&& emit)
 template <typename Emit>
 void for_each_quoted_field(string_view line, char separator, string& scratch, Emit&& emit)
 {
+    enum class Phase { Leading, Bare, Quoted };
+
+    Phase phase = Phase::Leading;
+    size_t closed_bytes = 0;
+
     scratch.clear();
     scratch.reserve(line.size());
-    const char* const base = scratch.data();
 
-    bool in_quote = false;
-    size_t field_start = 0;
+    const auto pending_field = [&scratch, &closed_bytes]
+    {
+        return string_view(scratch).substr(closed_bytes);
+    };
+
+    const auto close_field = [&]
+    {
+        if (!emit(pending_field())) return false;
+        closed_bytes = scratch.size();
+        phase = Phase::Leading;
+        return true;
+    };
 
     for (size_t i = 0; i < line.size(); ++i)
     {
         const char character = line[i];
 
-        if (character == '"')
+        switch (phase)
         {
-            if (in_quote && i + 1 < line.size() && line[i + 1] == '"')
+        case Phase::Leading:
+            if (character == '"')
             {
+                phase = Phase::Quoted;
+            }
+            else if (character != separator)
+            {
+                scratch.push_back(character);
+                phase = Phase::Bare;
+            }
+            else if (!close_field())
+            {
+                return;
+            }
+            break;
+
+        case Phase::Bare:
+            // A quote inside an unquoted field does not flip the mode, so it is literal
+            // unless it is the separator, which still ends the field here.
+            if (character != separator)
+                scratch.push_back(character);
+            else if (!close_field())
+                return;
+            break;
+
+        case Phase::Quoted:
+            if (character != '"')
+            {
+                scratch.push_back(character);
+            }
+            else if (i + 1 < line.size() && line[i + 1] == '"')
+            {
+                // A doubled quote inside a quoted field stands for one literal quote.
                 scratch.push_back('"');
                 ++i;
-                continue;
             }
-
-            if (in_quote || scratch.size() == field_start)
+            else
             {
-                in_quote = !in_quote;
-                continue;
+                phase = scratch.size() == closed_bytes ? Phase::Leading : Phase::Bare;
             }
+            break;
         }
-
-        if (!in_quote && character == separator)
-        {
-            if (!emit(string_view(base + field_start, scratch.size() - field_start))) return;
-            field_start = scratch.size();
-        }
-        else
-            scratch.push_back(character);
     }
 
-    emit(string_view(base + field_start, scratch.size() - field_start));
+    emit(pending_field());
 }
 
 }
@@ -162,10 +197,13 @@ void split_views(string_view text, char separator, vector<string_view>& tokens)
 void get_token_views_maybe_quoted(string_view line, char separator, bool file_has_quotes,
                                   string& scratch, vector<string_view>& out)
 {
-    out.clear();
-
     if (!file_has_quotes || line.find('"') == string_view::npos)
-        return split_views(line, separator, out);
+    {
+        split_views(line, separator, out);
+        return;
+    }
+
+    out.clear();
 
     for_each_quoted_field(line, separator, scratch, [&](string_view field)
     {
@@ -177,18 +215,15 @@ void get_token_views_maybe_quoted(string_view line, char separator, bool file_ha
 vector<string_view> get_token_views_maybe_quoted(string_view line, char separator,
                                                  bool file_has_quotes, string& scratch)
 {
-    vector<string_view> out;
-    get_token_views_maybe_quoted(line, separator, file_has_quotes, scratch, out);
-    return out;
+    vector<string_view> fields;
+    get_token_views_maybe_quoted(line, separator, file_has_quotes, scratch, fields);
+    return fields;
 }
 
 string_view first_token_maybe_quoted(string_view line, char separator, bool file_has_quotes, string& scratch)
 {
     if (!file_has_quotes || line.find('"') == string_view::npos)
-    {
-        const size_t pos = line.find(separator);
-        return pos == string_view::npos ? line : line.substr(0, pos);
-    }
+        return line.substr(0, line.find(separator));
 
     string_view first;
     for_each_quoted_field(line, separator, scratch, [&](string_view field)
@@ -263,24 +298,31 @@ void replace_all_word_appearances(string& text, const string& to_replace, const 
 {
     if (to_replace.empty()) return;
 
-    size_t start_pos = 0;
-
-    while ((start_pos = text.find(to_replace, start_pos)) != string::npos)
+    const auto is_word_character = [](char character)
     {
-        const bool is_prefix_valid = (start_pos == 0)
-            || (!isalnum(static_cast<unsigned char>(text[start_pos - 1])) && text[start_pos - 1] != '_');
+        const unsigned char byte = static_cast<unsigned char>(character);
+        return isalnum(byte) != 0 || byte == '_';
+    };
 
-        const size_t end_pos = start_pos + to_replace.length();
-        const bool is_suffix_valid = (end_pos == text.length())
-            || (!isalnum(static_cast<unsigned char>(text[end_pos])) && text[end_pos] != '_');
+    const size_t length = to_replace.length();
+    size_t position = 0;
 
-        if (is_prefix_valid && is_suffix_valid)
+    while ((position = text.find(to_replace, position)) != string::npos)
+    {
+        const size_t end = position + length;
+
+        const bool starts_word = position == 0 || !is_word_character(text[position - 1]);
+        const bool ends_word = end == text.length() || !is_word_character(text[end]);
+
+        if (starts_word && ends_word)
         {
-            text.replace(start_pos, to_replace.length(), replace_with);
-            start_pos += replace_with.length();
+            text.replace(position, length, replace_with);
+            position += replace_with.length();
         }
         else
-            start_pos += 1;
+        {
+            ++position;
+        }
     }
 }
 

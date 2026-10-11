@@ -45,6 +45,7 @@ struct InferenceShapePolicy
     Index sequence_capacity = 0;
     Index final_output_capacity = 0;
     vector<Index> retained_output_layers;
+    bool capture_binary_logits = false;
 };
 
 struct ForwardPropagation
@@ -95,6 +96,10 @@ struct ForwardPropagation
 
     TensorView get_outputs() const;
 
+    // Loss-aware contexts can retain an eligible sigmoid head's affine output.
+    // Ordinary probability inference does not allocate this training scratch.
+    void enable_binary_logits(Buffer* shared_storage = nullptr);
+
     void recompute_for_backward(Index layer_index);
 
     void set_cuda_graph(bool enabled);
@@ -117,6 +122,10 @@ struct ForwardPropagation
 
     mutable Buffer loss_workspace{Device::CUDA};
     mutable Buffer loss_target_workspace{Device::CUDA};
+
+    Buffer binary_logits_storage;
+    TensorView binary_logits;
+    Index binary_logits_layer = -1;
 
     vector<vector<uint16_t>> host_bf16_input_scratch;
     vector<uint16_t> host_bf16_output_scratch;

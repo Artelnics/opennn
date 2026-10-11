@@ -43,32 +43,42 @@ vector<array<float, 2>> anchors_from_json(const Json* source)
 
 vector<string> read_yolo_classes(const filesystem::path& labels_directory)
 {
-    vector<filesystem::path> search_dirs = { labels_directory };
-    if (labels_directory.has_parent_path())
-        search_dirs.push_back(labels_directory.parent_path());
-
-    for (const auto& dir : search_dirs)
+    const auto non_empty_lines = [](istream& stream)
     {
-        if (!filesystem::is_directory(dir)) continue;
-        for (const auto& entry : filesystem::directory_iterator(dir))
+        vector<string> lines;
+        for (string text; getline(stream, text, '\n');)
+            if (!text.empty())
+                lines.push_back(std::move(text));
+        return lines;
+    };
+
+    const auto names_from_directory = [&](const filesystem::path& folder) -> vector<string>
+    {
+        if (!filesystem::is_directory(folder)) return {};
+
+        for (const filesystem::directory_entry& item : filesystem::directory_iterator(folder))
         {
-            if (!entry.is_regular_file() || entry.path().extension() != ".names")
-                continue;
+            const filesystem::path& candidate = item.path();
 
-            ifstream file(entry.path());
-            throw_if(!file,
-                     "Cannot open YOLO classes file: {}", entry.path().string());
+            if (!item.is_regular_file() || candidate.extension() != ".names") continue;
 
-            vector<string> classes;
-            string line;
-            while (getline(file, line))
-                if (!line.empty())
-                    classes.push_back(line);
+            ifstream classes_stream(candidate);
+            throw_if(!classes_stream, "YOLO classes file cannot be opened: {}", candidate.string());
 
-            if (!classes.empty())
-                return classes;
+            vector<string> names = non_empty_lines(classes_stream);
+            if (!names.empty()) return names;
         }
-    }
+
+        return {};
+    };
+
+    vector<filesystem::path> search_order{labels_directory};
+    if (labels_directory.has_parent_path())
+        search_order.push_back(labels_directory.parent_path());
+
+    for (const filesystem::path& folder : search_order)
+        if (vector<string> found = names_from_directory(folder); !found.empty())
+            return found;
 
     return {};
 }
@@ -462,17 +472,26 @@ Index YoloDataset::convert_voc_to_yolo(const filesystem::path& voc_root,
 
     filesystem::create_directories(output_labels_dir);
 
-    const vector<string>& active_classes = class_filter.empty() ? voc_class_names() : class_filter;
+    const vector<string>& selected_classes = [&]() -> const vector<string>&
+    {
+        if (!class_filter.empty())
+            return class_filter;
+        return voc_class_names();
+    }();
+
     unordered_map<string, Index> class_index;
-    for (Index i = 0; i < ssize(active_classes); ++i)
-        class_index[active_classes[size_t(i)]] = i;
+    class_index.reserve(selected_classes.size());
+
+    Index next_class_id = 0;
+    for (const string& name : selected_classes)
+        class_index.insert_or_assign(name, next_class_id++);
 
     ofstream names_file(output_labels_dir / "voc.names");
     throw_if(!names_file,
              "Cannot write VOC names file in {}",
                     output_labels_dir.string());
-    for (const string& name : active_classes)
-        names_file << name << '\n';
+    for (const string& class_name : selected_classes)
+        names_file << class_name << '\n';
     names_file.close();
 
     ifstream id_file(image_set_path);
@@ -489,7 +508,8 @@ Index YoloDataset::convert_voc_to_yolo(const filesystem::path& voc_root,
 
         const VocAnnotation ann = parse_voc_xml(xml_path);
 
-        vector<pair<Index, array<float,4>>> kept_boxes;
+        vector<pair<Index, array<float, 4>>> label_rows;
+
         for (const VocBox& box : ann.boxes)
         {
             const auto it = class_index.find(box.class_name);
@@ -499,17 +519,18 @@ Index YoloDataset::convert_voc_to_yolo(const filesystem::path& voc_root,
             const float cy = clamp_unit(0.5f * (box.ymin + box.ymax) / ann.height);
             const float bw = clamp_unit((box.xmax - box.xmin) / ann.width);
             const float bh = clamp_unit((box.ymax - box.ymin) / ann.height);
-            kept_boxes.push_back({it->second, {cx, cy, bw, bh}});
+            label_rows.emplace_back(it->second, array<float, 4>{cx, cy, bw, bh});
         }
 
-        if (!class_filter.empty() && kept_boxes.empty())
+        if (!class_filter.empty() && label_rows.empty())
             continue;
 
         const filesystem::path out_path = output_labels_dir / (image_id + ".txt");
         ofstream out(out_path);
         throw_if(!out, "Cannot write YOLO label: {}", out_path.string());
-        for (const auto& [id, b] : kept_boxes)
-            out << id << ' ' << b[0] << ' ' << b[1] << ' ' << b[2] << ' ' << b[3] << '\n';
+        for (const auto& [class_id, values] : label_rows)
+            out << class_id << ' ' << values[0] << ' ' << values[1]
+                << ' ' << values[2] << ' ' << values[3] << '\n';
         ++converted;
     }
 
@@ -890,12 +911,11 @@ void YoloDataset::build_cache(const vector<array<float, 2>>& requested_anchors)
 
         if (image.dimension(2) == 1 && input_shape[2] == 3)
         {
-            Tensor3 rgb(image.dimension(0), image.dimension(1), 3);
-            rgb.chip(0, 2) = image.chip(0, 2);
-            rgb.chip(1, 2) = image.chip(0, 2);
-            rgb.chip(2, 2) = image.chip(0, 2);
+            // Grayscale source for an RGB model: replicate the single channel.
+            Tensor3 rgb = image.broadcast(array<Index, 3>{1, 1, 3});
             image = std::move(rgb);
         }
+
         throw_if(image.dimension(2) != input_shape[2],
                  "YoloDataset: channel mismatch in {} (got {} channels, expected {})",
                         image_paths[i].string(), image.dimension(2), input_shape[2]);

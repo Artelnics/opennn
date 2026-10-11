@@ -22,8 +22,17 @@ add_executable(opennn_tests ${TEST_SOURCES})
 
 target_link_libraries(opennn_tests PRIVATE GTest::gtest opennn)
 
+# Keep executable export checks runnable when an unrelated full-suite source
+# needs repair. This target includes the same expression tests as opennn_tests.
+add_executable(opennn_expression_execution_tests
+    network/expression_execution_test.cpp)
+target_link_libraries(opennn_expression_execution_tests
+    PRIVATE GTest::gtest_main opennn)
+target_precompile_headers(opennn_expression_execution_tests PRIVATE common/pch.h)
+
 if(WIN32)
     target_link_libraries(opennn_tests PRIVATE ws2_32)
+    target_link_libraries(opennn_expression_execution_tests PRIVATE ws2_32)
 endif()
 
 # OpenNN_ONEDNN_FOUND, not OpenNN_ENABLE_ONEDNN: the latter is a tri-state

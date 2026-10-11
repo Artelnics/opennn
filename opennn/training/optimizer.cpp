@@ -132,6 +132,7 @@ InferenceShapePolicy loss_inference_policy(const Loss& loss)
 {
     InferenceShapePolicy policy;
     policy.retained_output_layers = loss.get_output_delta_layer_indices();
+    policy.capture_binary_logits = loss.get_error() == Loss::Error::CrossEntropy;
     return policy;
 }
 
@@ -485,24 +486,30 @@ Index Optimizer::get_maximum_batch_size() const
     {
 #if defined(__APPLE__)
 
-        const mach_port_t host = mach_host_self();
-        vm_size_t page_size = 0;
-        vm_statistics64_data_t statistics{};
-        mach_msg_type_number_t count = HOST_VM_INFO64_COUNT;
+        // VM counters are in the kernel's page unit, so the page size must come
+        // from the same host port (it differs from sysconf under Rosetta 2).
 
-        const kern_return_t page_result = host_page_size(host, &page_size);
-        const kern_return_t statistics_result = host_statistics64(
-            host, HOST_VM_INFO64, reinterpret_cast<host_info64_t>(&statistics), &count);
+        const mach_port_t host = mach_host_self();
+
+        vm_size_t page_size = 0;
+        const kern_return_t page_size_status = host_page_size(host, &page_size);
+
+        vm_statistics64_data_t vm_statistics{};
+        mach_msg_type_number_t statistics_count = HOST_VM_INFO64_COUNT;
+        const kern_return_t statistics_status =
+            host_statistics64(host, HOST_VM_INFO64,
+                              reinterpret_cast<host_info64_t>(&vm_statistics),
+                              &statistics_count);
+
         mach_port_deallocate(mach_task_self(), host);
 
-        throw_if(page_result != KERN_SUCCESS || statistics_result != KERN_SUCCESS
-                     || page_size == 0,
-                 "Optimizer::get_maximum_batch_size: Mach failed to query available RAM.");
+        throw_if(page_size_status != KERN_SUCCESS
+                 || statistics_status != KERN_SUCCESS
+                 || page_size == 0,
+                 "Optimizer::get_maximum_batch_size: could not query available RAM from Mach.");
 
-        // Estimate reclaimable physical RAM; speculative pages are already
-        // included in free_count. Keep the existing memory-fraction margin below.
-        available_bytes = (Index(statistics.free_count) + Index(statistics.inactive_count))
-                          * Index(page_size);
+        available_bytes = (Index(vm_statistics.free_count) + Index(vm_statistics.inactive_count))
+                        * Index(page_size);
 
 #elif defined(__linux__) || defined(__unix__)
 

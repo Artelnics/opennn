@@ -926,8 +926,12 @@ TEST(TabularDataset, InputVariableCorrelations)
     {
         EXPECT_EQ(input_correlations(i,i).coefficient, 1);
 
-        for(Index j = 0; i < j ; j++)
-            EXPECT_TRUE(-1 < input_correlations(i,j).coefficient && input_correlations(i,j).coefficient < 1);
+        for(Index j = 0; j < i; j++)
+        {
+            const type coefficient = input_correlations(i,j).coefficient;
+
+            EXPECT_TRUE(coefficient > type(-1) && coefficient < type(1));
+        }
     }
 
     data.resize(3, 4);
@@ -1022,8 +1026,9 @@ TEST(TabularDataset, UnuseUncorrelatedVariables)
     dataset.set_variable_names({ "A", "B", "C", "T" });
     dataset.set_data(data);
 
-    vector<Index> input_indices = { 0, 1, 2 };
-    vector<Index> target_indices = { 3 };
+    const vector<Index> input_indices = { 0, 1, 2 };
+    const vector<Index> target_indices = { 3 };
+
     dataset.set_variable_indices(input_indices, target_indices);
 
     type min_correlation = 0.25;

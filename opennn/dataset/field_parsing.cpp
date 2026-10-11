@@ -69,8 +69,11 @@ CsvReader::Result CsvReader::read(const filesystem::path& path) const
     return result;
 }
 
-const vector<string> positive_words = {"1", "yes", "positive", "+", "true", "good", "si", "sí", "Sí"};
-const vector<string> negative_words = {"0", "no", "negative", "-", "false", "bad", "not", "No"};
+const vector<string> positive_words =
+    {"1", "yes", "positive", "+", "true", "good", "si", "s\xC3\xAD", "S\xC3\xAD"};
+
+const vector<string> negative_words =
+    {"0", "no", "negative", "-", "false", "bad", "not", "No"};
 
 constexpr size_t maximum_number_length = 64;
 
@@ -116,8 +119,6 @@ static bool has_digit_groups(const string_view integer_part, const char group_se
 template <typename T>
 static bool parse_real_value(string_view text, T& value, const NumberFormat& format)
 {
-    // Data file fields can be padded (" 4.00 "). Trim as parse_date_time does:
-    // otherwise a padded number is not numeric here and ends up typed as a date.
     text = trim_view(text);
 
     if (text.empty()) return false;
@@ -182,17 +183,13 @@ bool parse_real(const string_view text, double& value, const NumberFormat& forma
 
 bool is_numeric_string(const string_view text, const NumberFormat& format)
 {
-    const string_view field = trim_view(text);
+    string_view number = trim_view(text);
 
-    if (field.empty()) return false;
+    if (number.ends_with('%'))
+        number.remove_suffix(1);
 
-    const string_view number = field.back() == '%'
-                             ? field.substr(0, field.size() - 1)
-                             : field;
-
-    double value;
-
-    return parse_real_value(number, value, format);
+    double value = 0.0;
+    return parse_real(number, value, format);
 }
 
 void vote_number_format(const string_view text, NumberFormatVotes& votes)
@@ -399,9 +396,6 @@ bool is_date_time_string(string_view text)
     const optional<ParsedDateTime> parsed = parse_date_time(text);
     if (!parsed) return false;
 
-    // date_to_timestamp only resolves two-field dates when the year comes first
-    // (2024-05). Reporting "1-2" as a date types the column as DateTime and the
-    // import then aborts on the first row instead of falling back to categorical.
     return parsed->date_count != 2 || parsed->year_index == 0;
 }
 

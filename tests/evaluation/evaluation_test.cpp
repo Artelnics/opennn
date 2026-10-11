@@ -10,6 +10,7 @@
 #include "opennn/models/models.h"
 #include "opennn/evaluation/evaluation.h"
 #include "opennn/network/layers/dense_layer.h"
+#include "opennn/network/layers/unscaling_layer.h"
 
 using namespace opennn;
 
@@ -112,6 +113,62 @@ TEST(Evaluation, ErrorData)
     EXPECT_EQ(error_data.size(), 3);
     EXPECT_EQ(error_data.dimension(0), 1);
     EXPECT_EQ(error_data.dimension(1), 3);
+}
+
+TEST(Evaluation, ErrorChannelsPreserveRangesSignZeroRangesAndTestingOrder)
+{
+    const ScopeExit reset_configuration([] { Configuration::instance().set(Device::CPU, Type::FP32); });
+    for (const auto [device_kind, precision] : {
+             pair{Device::CPU, Type::FP32}, pair{Device::CUDA, Type::FP32}, pair{Device::CUDA, Type::BF16}})
+    {
+        if (device_kind == Device::CUDA && !device::has_cuda_device()) continue;
+        if (precision == Type::BF16 && device::cuda_compute_capability() < 80) continue;
+        Configuration::instance().set(device_kind, precision);
+        TabularDataset dataset(7, {1}, {5});
+        MatrixR data(7, 6);
+        for (Index row = 0; row < data.rows(); ++row)
+            for (Index col = 0; col < data.cols(); ++col)
+                data(row, col) = float(row - col) * 0.5f;
+        dataset.set_data(data);
+        dataset.set_sample_roles("None");
+        const vector<Index> samples{1, 3, 4, 6};
+        dataset.set_sample_roles(samples, "Testing");
+        ApproximationNetwork network({1}, {}, {5});
+        network.get_parameters_map().setZero();
+        if (network.is_gpu()) network.copy_parameters_device();
+        auto* unscaling = static_cast<Unscaling*>(network.get_first("Unscaling"));
+        unscaling->set_scalers("None");
+        unscaling->set_descriptives({Descriptives(0, 0, 0, 1), Descriptives(-1, 1, 0, 1),
+                                    Descriptives(-2, 2, 0, 1), Descriptives(0, 1, 0, 1),
+                                    Descriptives(-4, 4, 0, 1)});
+        const std::array<float, 5> ranges{0, 2, 4, 1, 8};
+        Evaluation evaluation(&network, &dataset);
+        evaluation.set_batch_size(3);
+        const Tensor3 errors = evaluation.calculate_error_data();
+        const MatrixR percentages = evaluation.calculate_percentage_error_data();
+        ASSERT_EQ(errors.dimension(0), samples.size());
+        ASSERT_EQ(errors.dimension(1), 3);
+        ASSERT_EQ(errors.dimension(2), 5);
+        for (Index row = 0; row < ssize(samples); ++row)
+            for (Index col = 0; col < 5; ++col)
+            {
+                const float difference = data(samples[row], col + 1); // zero network output
+                EXPECT_FLOAT_EQ(errors(row, 0, col), abs(difference));
+                if (ranges[col] == 0)
+                {
+                    if (difference == 0) EXPECT_TRUE(isnan(errors(row, 1, col)));
+                    else EXPECT_TRUE(isinf(errors(row, 1, col)));
+                    EXPECT_FALSE(isfinite(errors(row, 2, col)));
+                    EXPECT_FLOAT_EQ(percentages(row, col), 0);
+                }
+                else
+                {
+                    EXPECT_FLOAT_EQ(errors(row, 1, col), abs(difference) / ranges[col]);
+                    EXPECT_FLOAT_EQ(errors(row, 2, col), abs(difference) / ranges[col] * 100);
+                    EXPECT_FLOAT_EQ(percentages(row, col), difference * 100 / ranges[col]);
+                }
+            }
+    }
 }
 
 TEST(Evaluation, PercentageErrorData)
@@ -438,19 +495,18 @@ TEST(Evaluation, Confusion)
 
     EXPECT_EQ(confusion.rows(), 4);
     EXPECT_EQ(confusion.cols(), 4);
-    EXPECT_EQ(confusion(0,0), 1);
-    EXPECT_EQ(confusion(1,1), 2);
-    EXPECT_EQ(confusion(2,2), 1);
 
-    EXPECT_EQ(confusion(0,3), confusion(0,0) + confusion(0,1) + confusion(0,2));
-    EXPECT_EQ(confusion(1,3), confusion(1,0) + confusion(1,1) + confusion(1,2));
-    EXPECT_EQ(confusion(2,3), confusion(2,0) + confusion(2,1) + confusion(2,2));
+    EXPECT_EQ(confusion(0, 0), 1);
+    EXPECT_EQ(confusion(1, 1), 2);
+    EXPECT_EQ(confusion(2, 2), 1);
 
-    EXPECT_EQ(confusion(3,0), confusion(0,0) + confusion(1,0) + confusion(2,0));
-    EXPECT_EQ(confusion(3,1), confusion(0,1) + confusion(1,1) + confusion(2,1));
-    EXPECT_EQ(confusion(3,2), confusion(0,2) + confusion(1,2) + confusion(2,2));
+    for (Index row = 0; row < 3; ++row)
+        EXPECT_EQ(confusion(row, 3), confusion.row(row).head(3).sum()) << "Row total " << row;
 
-    EXPECT_EQ(confusion(3,3), 4);
+    for (Index column = 0; column < 3; ++column)
+        EXPECT_EQ(confusion(3, column), confusion.col(column).head(3).sum()) << "Column total " << column;
+
+    EXPECT_EQ(confusion(3, 3), 4);
 }
 
 TEST(Evaluation, BinaryClassificationTests)

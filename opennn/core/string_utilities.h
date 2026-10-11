@@ -27,26 +27,28 @@ namespace opennn
     {
         if constexpr (is_floating_point_v<T>)
         {
+            // strtof and strtod read up to a NUL, which [first, last) does not have to contain.
+
             const string buffer(first, last);
-            char* parse_end = nullptr;
+            const char* const begin = buffer.c_str();
+            char* end = nullptr;
+
             errno = 0;
 
             if constexpr (is_same_v<T, float>)
-                value = strtof(buffer.c_str(), &parse_end);
+                value = strtof(begin, &end);
             else
-                value = static_cast<T>(strtod(buffer.c_str(), &parse_end));
-
-            if (parse_end == buffer.c_str())
-                return {first, errc::invalid_argument};
-
-            const size_t consumed = static_cast<size_t>(parse_end - buffer.c_str());
+                value = static_cast<T>(strtod(begin, &end));
 
             // strtof also flags ERANGE for a subnormal it did represent; std::from_chars only
             // refuses a value that overflows to infinity or underflows all the way to zero.
-            if (errno == ERANGE && (value == T(0) || !isfinite(value)))
-                return {first + consumed, errc::result_out_of_range};
+            const bool out_of_range = errno == ERANGE && (value == T(0) || !isfinite(value));
+            const ptrdiff_t consumed = end - begin;
 
-            return {first + consumed, errc{}};
+            if (consumed == 0)
+                return {first, errc::invalid_argument};
+
+            return {first + consumed, out_of_range ? errc::result_out_of_range : errc{}};
         }
         else
         {

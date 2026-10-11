@@ -80,6 +80,18 @@ void CombinationOperator::forward_propagate(ForwardPropagation& forward_propagat
     PROFILE_SCOPE("op:combination_fwd");
     TensorView& output = get_output(forward_propagation, layer);
 
+    if (Index(layer) == forward_propagation.binary_logits_layer)
+    {
+        TensorView& logits = forward_propagation.binary_logits;
+        linear_forward(get_input(forward_propagation, layer), weights, bias, logits,
+                       use_bias ? LinearEpilogue::Bias : LinearEpilogue::Default,
+                       nullptr, weight_scale);
+        copy(logits, output);
+        if (fused_activation == ActivationFunction::Sigmoid)
+            activation_forward(output, ActivationFunction::Sigmoid);
+        return;
+    }
+
     if (tied_transposed)
         return linear_forward_transposed(get_input(forward_propagation, layer), weights, output, weight_scale);
 

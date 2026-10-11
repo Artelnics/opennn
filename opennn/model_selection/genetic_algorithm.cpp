@@ -8,6 +8,7 @@
 #include "opennn/dataset/dataset.h"
 #include "opennn/model_selection/cross_validation.h"
 #include "opennn/model_selection/selection_utilities.h"
+#include "opennn/model_selection/weighted_selection.h"
 #include "opennn/training/training.h"
 
 namespace opennn
@@ -73,9 +74,14 @@ void GeneticAlgorithm::set_maximum_inputs_number(const Index new_maximum_inputs_
     const Dataset* dataset = training ? training->get_dataset() : nullptr;
     const Index inputs_number = dataset ? dataset->get_variables_number(VariableRole::Input) : 0;
 
-    maximum_inputs_number = (inputs_number == 0)
-        ? new_maximum_inputs_number
-        : clamp(new_maximum_inputs_number, Index(1), inputs_number);
+    if (inputs_number < 1)
+    {
+        // No dataset yet (e.g. from_JSON before set-up): keep the request as given.
+        maximum_inputs_number = new_maximum_inputs_number;
+        return;
+    }
+
+    maximum_inputs_number = clamp(new_maximum_inputs_number, Index(1), inputs_number);
 }
 
 void GeneticAlgorithm::set_individuals_number(const Index new_individuals_number)
@@ -190,14 +196,17 @@ void GeneticAlgorithm::initialize_population_correlations()
 
 vector<Index> GeneticAlgorithm::genes_to_variable_indices(const VectorB& genes) const
 {
-    vector<Index> variable_indices;
-    variable_indices.reserve(genes.count());
+    vector<Index> activated(static_cast<size_t>(genes.count()));
 
-    for (Index i = 0; i < genes.size(); ++i)
-        if (genes(i))
-            variable_indices.push_back(original_input_indices[i]);
+    Index gene = 0;
 
-    return variable_indices;
+    for (Index& variable : activated)
+    {
+        while (!genes(gene)) ++gene;
+        variable = original_input_indices[gene++];
+    }
+
+    return activated;
 }
 
 void GeneticAlgorithm::evaluate_population()
@@ -275,32 +284,20 @@ void GeneticAlgorithm::perform_selection()
 {
     const Index individuals_number = get_individuals_number();
 
-    const float fitness_sum = fitness.sum();
-
     selected.setConstant(false);
 
     const Index individuals_to_be_selected = individuals_number/2;
 
-    if (elitism_size != 0)
-        selected = (fitness.array() > float(individuals_number - elitism_size)).matrix();
-
-    VectorR fitness_cumsum(individuals_number);
-    partial_sum(fitness.data(), fitness.data() + individuals_number, fitness_cumsum.data());
-
-    Index selected_count = selected.count();
-
-    while (selected_count < individuals_to_be_selected)
+    if (elitism_size > 0)
     {
-        const float arrow = random_uniform(0.0f, fitness_sum);
+        const float elite_fitness_threshold = float(individuals_number - elitism_size);
 
-        const Index i = min(static_cast<Index>(upper_bound(fitness_cumsum.data(), fitness_cumsum.data() + individuals_number, arrow) - fitness_cumsum.data()), individuals_number - 1);
-
-        if (!selected(i))
-        {
-            selected(i) = true;
-            ++selected_count;
-        }
+        for (Index i = 0; i < individuals_number; ++i)
+            selected(i) = fitness(i) > elite_fitness_threshold;
     }
+
+    detail::fill_weighted_selection(fitness, individuals_to_be_selected, selected,
+                                    [] { return random_uniform(0.0f, 1.0f); });
 }
 
 vector<Index> GeneticAlgorithm::get_selected_indices() const

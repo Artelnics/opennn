@@ -376,6 +376,6 @@ TEST(MeanSquaredErrorTest, BackPropagateMultiheadAttention)
     const VectorR analytical_gradient = calculate_gradient(loss);
     const VectorR numerical_gradient = calculate_numerical_gradient(loss);
 
-    EXPECT_GE(error, 0.0) << "MSE must be positive";
+    EXPECT_GE(error, type(0)) << "A mean squared error is a mean of squares and must not be negative.";
     EXPECT_LT((analytical_gradient - numerical_gradient).array().abs().maxCoeff(), type(1.0e-3));
 }

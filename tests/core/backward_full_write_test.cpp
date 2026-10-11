@@ -340,13 +340,12 @@ TEST(BackwardFullWrite, UpsamplingGpuWritesEveryElementAndMatchesReference)
                 for (int c = 0; c < channels; ++c)
                 {
                     float accumulator = 0.0f;
-                    for (int dh = 0; dh < scale; ++dh)
-                        for (int dw = 0; dw < scale; ++dw)
-                        {
-                            const int oh = ih * scale + dh;
-                            const int ow = iw * scale + dw;
-                            accumulator += output_delta[size_t(((b * out_h + oh) * out_w + ow) * channels + c)];
-                        }
+                    for (int y = ih * scale; y < (ih + 1) * scale; ++y)
+                    {
+                        const int row_offset = (b * out_h + y) * out_w;
+                        for (int x = iw * scale; x < (iw + 1) * scale; ++x)
+                            accumulator += output_delta[size_t((row_offset + x) * channels + c)];
+                    }
                     expected[size_t(((b * in_h + ih) * in_w + iw) * channels + c)] = accumulator;
                 }
 

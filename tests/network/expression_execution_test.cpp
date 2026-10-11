@@ -28,6 +28,7 @@
 #include "opennn/network/layers/scaling_layer.h"
 #include "opennn/network/layers/unscaling_layer.h"
 #include "opennn/core/statistics.h"
+#include "opennn/core/configuration.h"
 
 #include <array>
 #include <chrono>
@@ -440,12 +441,20 @@ MatrixR logarithmic_inputs()
 
 // The targets differ only in how the export is run, so every check below is
 // written once and pointed at any of them.
-enum class Target { Python, C, CEmbedded, JavaScript, CSharp };
+enum class Target { Python, C, CEmbedded, JavaScript, CSharp, PHP };
 
 bool target_available(Target target)
 {
     if (target == Target::CSharp) return !find_csharp_compiler().empty();
 
+    if (target == Target::PHP)
+    {
+#ifdef _WIN32
+        return system("php -n --version >NUL 2>&1") == 0;
+#else
+        return system("php -n --version >/dev/null 2>&1") == 0;
+#endif
+    }
     if (target == Target::JavaScript)
     {
 #ifdef _WIN32
@@ -459,6 +468,7 @@ bool target_available(Target target)
 
 const char* target_missing(Target target)
 {
+    if (target == Target::PHP) return "php is not on PATH.";
     if (target == Target::JavaScript) return "node is not on PATH.";
     if (target == Target::CSharp) return "no C# compiler found.";
     return target == Target::Python ? "python is not on PATH." : "no C compiler on PATH.";
@@ -473,6 +483,7 @@ const char* target_name(Target target)
     case Target::CEmbedded: return "embedded";
     case Target::JavaScript: return "javascript";
     case Target::CSharp:    return "csharp";
+    case Target::PHP:       return "php";
     }
     return "unknown";
 }
@@ -487,6 +498,7 @@ ModelExpression::ProgrammingLanguage target_language(Target target)
     case Target::CEmbedded: return CEmbedded;
     case Target::JavaScript: return JavaScript;
     case Target::CSharp:    return CSharp;
+    case Target::PHP:       return PHP;
     }
     return C;
 }
@@ -531,6 +543,29 @@ void expect_export_matches(Target target, const string& directory_name,
     }
     else if (target == Target::CSharp)
         output = run_exported_csharp_model(directory, model_expression, inputs);
+    else if (target == Target::PHP)
+    {
+        model_expression.save(directory / "model.php", ModelExpression::ProgrammingLanguage::PHP);
+        ostringstream script;
+        script << "<?php\n$rows = [\n" << setprecision(9);
+        for (Index row = 0; row < inputs.rows(); ++row)
+        {
+            script << "[";
+            for (Index col = 0; col < inputs.cols(); ++col)
+                script << (col ? "," : "") << inputs(row, col);
+            script << "],\n";
+        }
+        script << "];\nforeach ($rows[(int)$argv[1]] as $i => $value) $_GET['num'.$i] = $value;\n"
+               << "ob_start();\ninclude __DIR__.'/model.php';\nob_end_clean();\n"
+               << "unset($response['status'], $response['status_message']);\n"
+               << "echo implode(' ', $response), PHP_EOL;\n";
+        const filesystem::path script_path = directory / "driver.php";
+        write_file(script_path, script.str());
+        // Each request gets a fresh process, as the generated API declares functions.
+        for (Index row = 0; row < inputs.rows(); ++row)
+            output += run_capturing("php -n " + quoted_path(script_path) + " " + to_string(row),
+                                    directory / "output.txt", "RUN FAILED");
+    }
     else output = target == Target::Python
         ? run_exported_python_model(directory, model_expression, inputs)
         : run_exported_c_model(directory, model_expression, inputs, expected.cols(),
@@ -552,10 +587,90 @@ void expect_export_matches(Target target, const string& directory_name,
                 << "\n--- it printed ---\n" << output;
         }
 
+    if (::testing::Test::HasFailure())
+    {
+        ADD_FAILURE() << "Export artifacts retained in " << directory.string();
+        return;
+    }
     error_code error;
     filesystem::remove_all(directory, error);
 }
 
+}
+
+TEST(ExpressionExecution, RenamedLayersAndInternalNameCollisionsMatchNetwork)
+{
+    Configuration::instance().set(Device::CPU, Type::FP32);
+    auto network = build_network();
+    network->set_input_names({"opennn_layer_0_output_0", "opennn layer 0 output 1", "third", "fourth"});
+    network->set_output_names({"opennn_layer_1_output_0", "result"});
+    for (const auto& layer : network->get_layers()) layer->set_label("renamed layer");
+    const MatrixR inputs = sample_inputs();
+    const MatrixR expected = network->calculate_outputs(inputs);
+    bool ran = false;
+    for (const Target target : {Target::Python, Target::C, Target::CEmbedded, Target::JavaScript})
+    {
+        if (!target_available(target)) continue;
+        ran = true;
+        SCOPED_TRACE(target_name(target));
+        expect_export_matches(target, "opennn_binding_collision", *network, inputs, expected);
+    }
+    if (!ran) GTEST_SKIP() << "No export runtime available.";
+}
+
+TEST(ExpressionExecution, PhpHandlesSharedNamesSanitizedCollisionsAndScientificLiterals)
+{
+    if (!target_available(Target::PHP)) GTEST_SKIP() << target_missing(Target::PHP);
+    Configuration::instance().set(Device::CPU, Type::FP32);
+    auto network = build_network();
+    network->set_input_names({"Tanh", "e", "signal[0]", "signal0"});
+    network->set_output_names({"Tanh", "e"});
+    const MatrixR inputs = sample_inputs();
+    expect_export_matches(Target::PHP, "opennn_php_identifiers", *network,
+                          inputs, network->calculate_outputs(inputs));
+    network->get_parameters_map().setConstant(1e-6f);
+    const MatrixR large_inputs = inputs * 1e6f;
+    expect_export_matches(Target::PHP, "opennn_php_exponents", *network,
+                          large_inputs, network->calculate_outputs(large_inputs));
+}
+
+TEST(ExpressionExecution, PhpForecastingMatchesNetwork)
+{
+    if (!target_available(Target::PHP)) GTEST_SKIP() << target_missing(Target::PHP);
+    Configuration::instance().set(Device::CPU, Type::FP32);
+    ForecastingLstmNetwork network(Shape{3, 2}, Shape{2}, Shape{1});
+    network.get_parameters_map().setLinSpaced(-0.4f, 0.5f);
+    MatrixR inputs(2, 6);
+    inputs << -1, 2, 0, 0.5f, 1, -2, 3, 0, 1, -1, 0.25f, 0.5f;
+    expect_export_matches(Target::PHP, "opennn_php_lstm", network,
+                          inputs, network.calculate_outputs(inputs));
+}
+
+TEST(ExpressionExecution, DenseWithoutBiasMatchesNetwork)
+{
+    Configuration::instance().set(Device::CPU, Type::FP32);
+    Network network;
+    auto dense = make_unique<opennn::Dense>(Shape{2}, Shape{3}, "Tanh");
+    dense->set_use_bias(false);
+    network.add_layer(std::move(dense));
+    network.compile();
+    network.get_parameters_map().setLinSpaced(-0.7f, 0.9f);
+    network.set_input_variables(vector<Variable>(2));
+    network.set_output_variables(vector<Variable>(3));
+    network.set_input_names({"x", "y"});
+    network.set_output_names({"a", "b", "c"});
+    MatrixR inputs(3, 2);
+    inputs << -2, 1, 0, 0, 1, 3;
+    const MatrixR expected = network.calculate_outputs(inputs);
+    bool ran = false;
+    for (const Target target : {Target::Python, Target::C, Target::CEmbedded, Target::JavaScript})
+    {
+        if (!target_available(target)) continue;
+        ran = true;
+        SCOPED_TRACE(target_name(target));
+        expect_export_matches(target, "opennn_dense_without_bias", network, inputs, expected);
+    }
+    if (!ran) GTEST_SKIP() << "No export runtime available.";
 }
 
 TEST(ExpressionExecution, EveryDenseActivationMatchesEveryExecutableTarget)
@@ -564,7 +679,8 @@ TEST(ExpressionExecution, EveryDenseActivationMatchesEveryExecutableTarget)
         "Identity", "Sigmoid", "Tanh", "ReLU", "Softmax",
         "LeakyReLU", "GELU", "GELUTanh", "SiLU"
     };
-    constexpr std::array<Target, 5> targets = {Target::Python, Target::C, Target::CEmbedded, Target::JavaScript, Target::CSharp};
+    constexpr std::array<Target, 6> targets = {
+        Target::Python, Target::C, Target::CEmbedded, Target::JavaScript, Target::CSharp, Target::PHP};
 
     MatrixR inputs(4, 2);
     inputs << -2.0f,  1.0f,
@@ -614,6 +730,32 @@ TEST(ExpressionExecution, PythonModelMatchesTheNetworkItCameFrom)
 
     expect_export_matches(Target::Python, "opennn_expression_python",
                           *network, inputs, network->calculate_outputs(inputs));
+}
+
+TEST(ExpressionExecution, UnnamedNetworkExportsProducePredictions)
+{
+    Configuration::instance().set(Device::CPU, Type::FP32);
+    Network network;
+    network.add_layer(make_unique<opennn::Dense>(Shape{3}, Shape{1}, "Tanh"));
+    network.compile();
+    network.set_parameters(VectorR::LinSpaced(
+        network.get_parameters_buffer_size(), -0.5f, 0.5f));
+
+    MatrixR inputs(2, 3);
+    inputs << 0.25f, -0.5f, 1.0f,
+              -0.75f, 0.125f, 0.5f;
+    const MatrixR expected = network.calculate_outputs(inputs);
+
+    bool ran_target = false;
+    for (Target target : {Target::C, Target::Python})
+    {
+        if (!target_available(target)) continue;
+        ran_target = true;
+        expect_export_matches(target,
+            string("opennn_unnamed_") + target_name(target),
+            network, inputs, expected);
+    }
+    if (!ran_target) GTEST_SKIP() << "Neither Python nor a C compiler is available.";
 }
 
 TEST(ExpressionExecution, JavaScriptPreservesNumericAndOverlappingFeatureLabels)

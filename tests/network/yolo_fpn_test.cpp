@@ -22,41 +22,61 @@ using namespace opennn_test;
 
 TEST(YoloFPN, SingleHeadLargeGridNoObjectGradientMatchesNumerical)
 {
-
-    TempDir dir("opennn_yolo_fpn_test_");
+    // Fixture: two object-free 8x8 images of clearly different, unsaturated
+    // colours, each paired with an empty label file, and a single class.
+    TempDir dir("opennn_yolo_fpn_single_head_test_");
     const filesystem::path images_dir = dir.path / "images";
     const filesystem::path labels_dir = dir.path / "labels";
     filesystem::create_directories(images_dir);
     filesystem::create_directories(labels_dir);
-    write_classes(labels_dir / "classes.names", {"only"});
+    write_classes(labels_dir / "single.names", {"target"});
 
-    write_bmp_24(images_dir / "a.bmp", 8, 8, 200, 100, 50);
-    write_bmp_24(images_dir / "b.bmp", 8, 8,  50, 200, 100);
-    { ofstream empty_a(labels_dir / "a.txt"); }
-    { ofstream empty_b(labels_dir / "b.txt"); }
+    struct UniformImage
+    {
+        const char* stem;
+        std::uint8_t red, green, blue;
+    };
 
-    constexpr Index input_H = 8, input_W = 8, classes_number = 1, boxes_per_cell = 3;
+    const UniformImage images[] = {{"warm", 192, 64, 96}, {"cool", 64, 160, 200}};
+
+    for (const UniformImage& image : images)
+    {
+        write_bmp_24(images_dir / (string(image.stem) + ".bmp"), 8, 8, image.red, image.green, image.blue);
+        ofstream empty_label(labels_dir / (string(image.stem) + ".txt"));
+    }
+
+    constexpr Index grid_size = 8;
+    constexpr Index boxes_per_cell = 3;
+    constexpr Index classes_number = 1;
     constexpr Index head_channels = boxes_per_cell * (5 + classes_number);
-    const vector<std::array<float, 2>> anchors{{0.1f, 0.1f}, {0.15f, 0.15f}, {0.2f, 0.2f}};
+
+    const Shape input_shape{8, 8, 3};
+    const vector<std::array<float, 2>> anchors{{0.08f, 0.08f}, {0.14f, 0.14f}, {0.2f, 0.2f}};
 
     YoloDataset dataset;
     dataset.set_display(false);
-    dataset.set(images_dir, labels_dir, Shape{input_H, input_W, 3},
-                              8, boxes_per_cell, anchors);
+    dataset.set(images_dir, labels_dir, input_shape, grid_size, boxes_per_cell, anchors);
+
+    // Every error and gradient evaluation below must see the same data.
     {
-        YoloDataset::AugmentationPolicy no_aug; no_aug.enabled = false;
-        dataset.set_augmentation_policy(no_aug);
+        YoloDataset::AugmentationPolicy no_augmentation;
+        no_augmentation.enabled = false;
+        dataset.set_augmentation_policy(no_augmentation);
     }
 
+    // Layer order matters: the packed attribution below walks layers by index.
     Network network;
     network.add_layer(make_unique<Convolutional>(
-        Shape{input_H, input_W, 3}, Shape{3, 3, 3, 4},
-        "Identity", Shape{1, 1}, "Same", BatchNormalization::No, "conv1"));
+        input_shape, Shape{3, 3, 3, 4},
+        "Identity", Shape{1, 1}, "Same", BatchNormalization::No, "features"));
     network.add_layer(make_unique<Convolutional>(
-        Shape{input_H, input_W, 4}, Shape{1, 1, 4, head_channels},
-        "Identity", Shape{1, 1}, "Same", BatchNormalization::No, "logits"));
+        Shape{grid_size, grid_size, 4}, Shape{1, 1, 4, head_channels},
+        "Identity", Shape{1, 1}, "Same", BatchNormalization::No, "head_logits"));
     network.add_layer(make_unique<Detection>(
-        Shape{input_H, input_W, head_channels}, anchors, "detection"));
+        Shape{grid_size, grid_size, head_channels}, anchors, "head_detection"));
+
+    // compile() zeroes the parameters, and calculate_gradient rejects an
+    // all-zero vector, so the whole buffer (padding included) is set here.
     network.compile();
     network.get_parameters_map().setConstant(0.05f);
 
@@ -64,94 +84,106 @@ TEST(YoloFPN, SingleHeadLargeGridNoObjectGradientMatchesNumerical)
     loss.set_error(Loss::Error::Yolo);
     loss.set_regularization(Loss::Regularization::NoRegularization);
 
+    // Smoke probe of the parameter-override forward pass: central differences
+    // on one first-layer weight at several step sizes. Prints only.
     {
-        const Index sn = dataset.get_samples_number("Training");
-        const vector<Index> ti = dataset.get_sample_indices("Training");
-        Batch batch_diag(sn, &dataset, network.get_config());
-        batch_diag.fill(ti, dataset.get_feature_selection());
-        ForwardPropagation fp_diag(sn, &network);
-        network.forward_propagate(batch_diag.get_inputs(), fp_diag, ForwardPropagationMode::Training);
-        BackPropagation bp_diag(sn, loss);
-        const float L0 = loss.calculate_error(batch_diag, fp_diag).error;
+        const Index samples_number = dataset.get_samples_number("Training");
 
-        VectorMap params = network.get_parameters_map();
-        VectorR perturbed = params;
-        const float h = calculate_h(params(0));
-        perturbed(0) += h;
-        network.forward_propagate(batch_diag.get_inputs(), perturbed, fp_diag);
-        const float Lp = loss.calculate_error(batch_diag, fp_diag).error;
-        perturbed(0) -= 2.0f*h;
-        network.forward_propagate(batch_diag.get_inputs(), perturbed, fp_diag);
-        const float Lm = loss.calculate_error(batch_diag, fp_diag).error;
-        network.forward_propagate(batch_diag.get_inputs(), params, fp_diag);
+        Batch batch(samples_number, &dataset, network.get_config());
+        batch.fill(dataset.get_sample_indices("Training"), dataset.get_feature_selection());
 
-        cout << "Manual check param[0]: L0=" << L0 << " L+=" << Lp << " L-=" << Lm
-                  << " h=" << h << "\n"
-                  << "  manual_num=" << (Lp-Lm)/(2.0f*h)
-                  << "  c4 effect: 3boxes*0.05w*sum_cells_c4\n";
-
-        for (float hh : {1e-4f, 1e-3f, 1e-2f}) {
-            VectorR p_ph = VectorR(params); p_ph(0) += hh;
-            VectorR p_mh = VectorR(params); p_mh(0) -= hh;
-            network.forward_propagate(batch_diag.get_inputs(), p_ph, fp_diag);
-            const float Lph = loss.calculate_error(batch_diag, fp_diag).error;
-            network.forward_propagate(batch_diag.get_inputs(), p_mh, fp_diag);
-            const float Lmh = loss.calculate_error(batch_diag, fp_diag).error;
-            cout << "  h=" << hh << " num_grad=" << (Lph-Lmh)/(2.0f*hh) << "\n";
+#ifdef OPENNN_HAS_CUDA
+        if (network.is_gpu())
+        {
+            batch.upload_to_device_batch_async(batch, device::get_transfer_stream());
+            batch.wait_h2d_complete();
         }
-        {VectorR r = VectorR(params); network.forward_propagate(batch_diag.get_inputs(), r, fp_diag);}
+#endif
+
+        ForwardPropagation forward_propagation(samples_number, &network);
+
+        network.forward_propagate(batch.get_inputs(), forward_propagation, ForwardPropagationMode::Training);
+        const float current_error = loss.calculate_error(batch, forward_propagation).error;
+
+        const Network& const_network = network;
+        const VectorR current_parameters = const_network.get_parameters_map();
+
+        constexpr Index probed_index = 13;
+        VectorR shifted_parameters = current_parameters;
+
+        const auto error_with_shift = [&](const float shift) -> float
+        {
+            shifted_parameters(probed_index) = current_parameters(probed_index) + shift;
+            network.forward_propagate(batch.get_inputs(), shifted_parameters, forward_propagation);
+            return loss.calculate_error(batch, forward_propagation).error;
+        };
+
+        cout << "[override probe] error at current parameters: " << current_error << "\n"
+             << "[override probe] parameter " << probed_index
+             << " = " << current_parameters(probed_index) << "\n";
+
+        const float default_step = calculate_h(current_parameters(probed_index));
+
+        for (const float step : {default_step, 1e-4f, 1e-3f, 1e-2f})
+        {
+            const float estimate = (error_with_shift(step) - error_with_shift(-step)) / (2.0f * step);
+            cout << "[override probe]   step " << step << ": dE/dp ~ " << estimate << "\n";
+        }
+
+        const bool restored = (const_network.get_parameters_map().array() == current_parameters.array()).all();
+        cout << "[override probe] parameters restored: " << (restored ? "yes" : "no") << "\n";
     }
-    network.get_parameters_map().setConstant(0.05f);
+
     const VectorR gradient = calculate_gradient(loss);
     const VectorR numerical_gradient = calculate_numerical_gradient(loss);
 
-    Index offset = 0;
-    float worst = 0.0f;
-    Index worst_idx = 0;
-    for (Index li = 0; li < network.get_layers_number(); ++li)
+    // Each layer owns a packed range [start, start + P_i); the checked prefix
+    // is the concatenation of those ranges, not the aligned buffer layout.
+    Index packed_total = 0;
+    Index worst_index = 0;
+    float worst_difference = 0.0f;
+
+    for (Index layer_index = 0; layer_index < network.get_layers_number(); ++layer_index)
     {
-        const Index np = network.get_layer(li)->get_parameters_number();
-        if (np == 0) { cout << "  layer " << li << " (" << network.get_layer(li)->get_label() << "): no params\n"; continue; }
-        float lworst = 0.0f; Index lwi = offset;
-        for (Index k = offset; k < offset + np; ++k)
+        const unique_ptr<Layer>& layer = network.get_layer(layer_index);
+        const Index layer_parameters = layer->get_parameters_number();
+
+        cout << "[gradient check] layer " << layer_index << " '" << layer->get_label() << "': ";
+
+        if (layer_parameters == 0)
         {
-            const float d = abs(gradient(k) - numerical_gradient(k));
-            if (d > lworst) { lworst = d; lwi = k; }
-            if (d > worst)  { worst  = d; worst_idx = k; }
+            cout << "no parameters\n";
+            continue;
         }
-        cout << "  layer " << li << " (" << network.get_layer(li)->get_label()
-                  << "): worst=" << lworst << " at local[" << (lwi-offset) << "]"
-                  << " grad=" << gradient(lwi) << " num=" << numerical_gradient(lwi) << "\n";
-        cout << "    first 4 grad: ";
-        for (Index k = offset; k < min(offset+4, offset+np); ++k) cout << gradient(k) << " ";
-        cout << "\n    first 4 num:  ";
-        for (Index k = offset; k < min(offset+4, offset+np); ++k) cout << numerical_gradient(k) << " ";
-        cout << "\n";
-        offset += np;
+
+        float layer_worst = 0.0f;
+
+        for (Index k = packed_total; k < packed_total + layer_parameters; ++k)
+        {
+            const float difference = abs(gradient(k) - numerical_gradient(k));
+
+            layer_worst = max(layer_worst, difference);
+
+            if (difference > worst_difference)
+            {
+                worst_difference = difference;
+                worst_index = k;
+            }
+        }
+
+        cout << layer_parameters << " parameters, max |analytic - numerical| = " << layer_worst << "\n";
+
+        packed_total += layer_parameters;
     }
-    cout << "\n[SingleHead8x8] Overall worst at idx " << worst_idx
-              << ": grad=" << gradient(worst_idx) << " num=" << numerical_gradient(worst_idx)
-              << " ratio=" << gradient(worst_idx)/numerical_gradient(worst_idx) << "\n";
 
-    cout << "gradient.size()=" << gradient.size()
-              << " sum_per_layer=" << offset
-              << " get_parameters_buffer_size()=" << network.get_parameters_buffer_size() << "\n";
-    const Index conv1_np = network.get_layer(0)->get_parameters_number();
-    cout << "conv1 params=" << conv1_np << " logits params=" << network.get_layer(1)->get_parameters_number() << "\n";
-    Index logits_true_start = conv1_np;
-    for (Index k = conv1_np; k < gradient.size(); ++k)
-        if (gradient(k) != 0.0f || numerical_gradient(k) != 0.0f)
-            { logits_true_start = k; break; }
-    cout << "logits_true_start=" << logits_true_start << "\n";
-    cout << "logits grad[0..17]: ";
-    for (Index k = logits_true_start; k < logits_true_start+18 && k < gradient.size(); ++k)
-        cout << gradient(k) << " ";
-    cout << "\nlogits num[0..17]: ";
-    for (Index k = logits_true_start; k < logits_true_start+18 && k < numerical_gradient.size(); ++k)
-        cout << numerical_gradient(k) << " ";
-    cout << "\n";
+    cout << "[gradient check] worst index " << worst_index
+         << ": analytic " << gradient(worst_index)
+         << ", numerical " << numerical_gradient(worst_index) << "\n"
+         << "[gradient check] gradient size " << gradient.size()
+         << ", packed total " << packed_total
+         << ", parameter buffer size " << network.get_parameters_buffer_size() << "\n";
 
-    EXPECT_LT(worst, 0.05f);
+    EXPECT_LT(worst_difference, 0.05f);
 }
 
 TEST(YoloFPN, MultiHeadNoObjectGradientMatchesNumerical)
@@ -187,8 +219,9 @@ TEST(YoloFPN, MultiHeadNoObjectGradientMatchesNumerical)
                               2,                    3, anchors_large);
     dataset.set_multi_scale_heads(head_grids, {anchors_large, anchors_medium, anchors_small});
     {
-        YoloDataset::AugmentationPolicy no_aug; no_aug.enabled = false;
-        dataset.set_augmentation_policy(no_aug);
+        YoloDataset::AugmentationPolicy no_augmentation;
+        no_augmentation.enabled = false;
+        dataset.set_augmentation_policy(no_augmentation);
     }
 
     Network network;
@@ -246,9 +279,10 @@ TEST(YoloFPN, MultiHeadNoObjectGradientMatchesNumerical)
     }
 
     EXPECT_LT(worst, 0.01f)
-        << "Worst at idx " << worst_idx
-        << ": grad=" << gradient(worst_idx)
-        << " num=" << numerical_gradient(worst_idx);
+        << "gradient mismatch at parameter " << worst_idx
+        << ": analytic " << gradient(worst_idx)
+        << ", numerical " << numerical_gradient(worst_idx)
+        << " (difference " << worst << ")";
 }
 
 TEST(YoloFPN, C3k2ScalingParameterCountsMonotonic)
