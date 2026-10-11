@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
+
 // Stand-in for the two ATen entities FlashAttention-2 touches, so its kernels
 // build without PyTorch. Only the non-captured path is provided, which is all a
 // dropout-free call needs: the kernels are compiled with

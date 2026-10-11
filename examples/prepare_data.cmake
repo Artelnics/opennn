@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
+
 # Stage only the selected example's data beside its executable. ZIP members keep
 # the same relative names as the original loose assets; no Python is required.
 if(NOT DEFINED OPENNN_DATA_SOURCE OR NOT DEFINED OPENNN_DATA_DESTINATION)

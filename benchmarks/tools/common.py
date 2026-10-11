@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
+
 """Shared provenance, binary discovery, monitoring and scoring for PROTOCOL.md."""
 
 from __future__ import annotations

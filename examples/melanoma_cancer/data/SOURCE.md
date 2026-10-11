@@ -11,7 +11,7 @@ without asking permission or requiring attribution. See the
 [CC0 dedication](https://creativecommons.org/publicdomain/zero/1.0/) and its
 [legal text](https://creativecommons.org/publicdomain/zero/1.0/legalcode).
 Keep this provenance notice and `manifest.csv` with the example data. OpenNN's
-LGPL software licence does not replace this dedication.
+software licence does not replace this dedication.
 
 ## Source and credit
 

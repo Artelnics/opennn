@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
+
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
@@ -195,7 +198,3 @@ TEST(ConvolutionOperatorTest, RectangularStridedPatchGradientsWithAndWithoutPadd
         EXPECT_LT((gradient - numerical).cwiseAbs().maxCoeff(), 1.0e-4f);
     }
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

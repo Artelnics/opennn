@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
+
 // The transformer family, defined once, driven four ways.
 //
 // The "Attention Is All You Need" base model -- d_model 512, 8

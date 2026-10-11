@@ -17,6 +17,7 @@ standalone source code for supported architectures.
 | Understand the source folders | [Repository contents](#repository-contents) |
 | Run or review performance comparisons | [Benchmarks](benchmarks/README.md) |
 | Contribute or run the tests | [Contributing](#contributing-and-support) |
+| Use OpenNN under the AGPL or a commercial licence | [License](#license) |
 
 Tutorials are available on [opennn.net](https://www.opennn.net/).
 
@@ -110,7 +111,9 @@ header `opennn/core/pch.h` in an application.
 ## Contributing and support
 
 Base contributions on `dev`, include the validation you ran, and describe the
-resulting behavior in the pull request. [AGENTS.md](AGENTS.md) holds the
+resulting behavior in the pull request. A pull request can be merged only after
+its author has accepted the [Contributor License Agreement](CLA.md); see
+[CONTRIBUTING.md](CONTRIBUTING.md). [AGENTS.md](AGENTS.md) holds the
 engineering rules, verification commands and release procedure. For a bug
 report, include the OpenNN commit, operating system, compiler, CPU/CUDA
 configuration, reproduction command and error, and file it in
@@ -118,8 +121,20 @@ configuration, reproduction command and error, and file it in
 
 ## License
 
-OpenNN is distributed under the GNU Lesser General Public License, version 2.1 or
-(at your option) any later version; see [LICENSE.txt](LICENSE.txt) and the
-per-file notices. Dependencies and downloadable pre-trained weights keep their own
+OpenNN is Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L.
+(Artelnics) and Roberto Lopez, and is dual-licensed:
+
+- **Open source:** the GNU Affero General Public License, version 3 only
+  ([LICENSE.txt](LICENSE.txt)), with additional permissions for linking with
+  NVIDIA CUDA, cuDNN and Intel oneMKL and for the code and model files that
+  OpenNN generates.
+- **Commercial:** a licence from Artelnics for closed-source products and
+  hosted services that cannot meet the AGPL's terms. Write to
+  artelnics@artelnics.com.
+
+[LICENSING.md](LICENSING.md) gives the details. OpenNN 8.x and earlier, and the
+development snapshots published before this change, were distributed under the
+GNU Lesser General Public License, version 2.1 or later, and copies of them keep
+those terms. Dependencies and downloadable pre-trained weights keep their own
 terms, listed in [THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt). Example data
 keeps its publishers' terms, recorded in the `SOURCE.md` notice of each data folder.

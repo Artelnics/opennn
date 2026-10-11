@@ -1,4 +1,6 @@
-// SPDX-License-Identifier: LGPL-2.1-or-later
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
+
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
@@ -322,7 +324,3 @@ bool small_k_linear_forward_cuda(Index rows, Index contraction, Index out_featur
     return relu ? launch<__nv_bfloat16, true>(rows_int, contraction_int, columns, a, w, b, y, stream)
                 : launch<__nv_bfloat16, false>(rows_int, contraction_int, columns, a, w, b, y, stream);
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

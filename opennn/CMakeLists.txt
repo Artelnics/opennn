@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
+
 option(OpenNN_BUILD_VISION "Build vision/seq layers, networks, and datasets" ON)
 option(OpenNN_BUILD_SHARED "Build OpenNN as a shared library (DLL) instead of static" OFF)
 option(OpenNN_INSTALL "Generate install rules for the OpenNN library" ON)
@@ -588,6 +591,7 @@ if(OpenNN_INSTALL)
 
     install(FILES
         ${PROJECT_SOURCE_DIR}/LICENSE.txt
+        ${PROJECT_SOURCE_DIR}/LICENSING.md
         ${PROJECT_SOURCE_DIR}/THIRD_PARTY_NOTICES.txt
         ${PROJECT_SOURCE_DIR}/README.md
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/OpenNN)

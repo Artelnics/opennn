@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
+
 """Prepare datasets, one subcommand per family. Usage: python
 benchmarks/prepare.py dense|cnn|transformer|lstm. Generated assets live below
 OPENNN_BENCH_DATA; the committed manifest pins the ImageNet subset.

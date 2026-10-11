@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
+
 """Ratchet OpenNN source size, duplication, and function complexity."""
 
 from __future__ import annotations
@@ -83,7 +86,7 @@ def analyze(source: Path = SOURCE) -> dict[str, int | float]:
     missing_spdx = [
         path.relative_to(source.parent).as_posix() for path in paths
         if not path.read_text(encoding="utf-8-sig").startswith(
-            "// SPDX-License-Identifier: LGPL-2.1-or-later"
+            "// SPDX-License-Identifier: AGPL-3.0-only"
         )
     ]
     if missing_spdx:

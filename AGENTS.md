@@ -43,8 +43,11 @@ environment variables, not in repository files.
 `CMakePresets.json` holds the repeatable configure/build/test settings, and
 `tools/CODE_QUALITY.json` the reviewed maintainability limits (ratchet).
 
-`LICENSE.txt` (LGPL 2.1, matching the `LGPL-2.1-or-later` SPDX headers) and
-`THIRD_PARTY_NOTICES.txt` are installed with every package.
+`LICENSE.txt` (AGPL 3.0, matching the `AGPL-3.0-only` SPDX headers),
+`LICENSING.md` (dual licensing and the section 7 additional permissions) and
+`THIRD_PARTY_NOTICES.txt` are installed with every package. Every source file
+starts with the two-line SPDX and copyright header that
+`tools/check_code_quality.py` enforces.
 
 ### Library modules and dependencies
 

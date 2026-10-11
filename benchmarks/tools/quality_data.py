@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
+
 """Prepare shared, hashed tensors for paired training-quality experiments.
 
 Training and test examples are disjoint. Transformations and vocabularies are

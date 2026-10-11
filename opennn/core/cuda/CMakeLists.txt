@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
+
 # FlashAttention-2 ships CUDA kernels wrapped in a PyTorch extension. OpenNN
 # builds only the kernels and supplies the few ATen/c10 declarations they use.
 # The integration is optional because each specialization takes minutes to build.

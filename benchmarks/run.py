@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
+
 """Run benchmark families with shared provenance, memory and energy monitoring. Use --batch
 N, a comma-separated sweep, or N:OOM. See PROTOCOL.md.
 """

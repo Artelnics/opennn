@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
+
 """
 Convert official YOLOv8s backbone + neck weights into the opennn binary format.
 
-This converter is OpenNN code under LGPL-2.1-or-later. Ultralytics checkpoints
+This converter is OpenNN code (see LICENSING.md). Ultralytics checkpoints
 and dependencies retain their upstream terms (AGPL-3.0 unless separately
-licensed); conversion does not relicense the output as LGPL. See data/SOURCE.md
+licensed); conversion does not relicense the output under OpenNN's licence. See data/SOURCE.md
 and data/LICENSE_ULTRALYTICS.txt for provenance and redistribution requirements.
 When the requested checkpoint file is missing, the converter uses Ultralytics
 to download yolov8s.pt.

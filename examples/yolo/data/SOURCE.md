@@ -2,7 +2,7 @@
 
 Review date: 2026-09-30. OpenNN bundles no YOLO training images, annotations,
 pretrained weights, ONNX models or converted checkpoints. This directory holds
-notices only. OpenNN's LGPL software licence does not license external assets.
+notices only. OpenNN's software licence does not license external assets.
 
 ## What the example actually uses
 
@@ -60,7 +60,7 @@ no digest. `LICENSE_DARKNET.txt`: 515 bytes, SHA-256
 Keep the original licence and this provenance record beside redistributed
 YOLOv4 weights or OpenNN conversions. Record the source file's digest,
 conversion command, transferred layers and modifications with each conversion.
-Do not describe third-party weights as licensed by OpenNN's LGPL.
+Do not describe third-party weights as licensed under OpenNN's licence.
 
 ## Optional Ultralytics YOLOv8 conversion
 
@@ -68,7 +68,7 @@ Ultralytics declares its package and trained models subject to **AGPL-3.0**,
 with a separate commercial licence option:
 [official licensing guidance](https://www.ultralytics.com/license).
 AGPL is a free copyleft licence; it is not a permissive licence and is not
-replaced by OpenNN's LGPL when weights are exported to ONNX or OpenNN binary
+replaced by OpenNN's licence when weights are exported to ONNX or OpenNN binary
 format. Being an open-source project alone does not establish compliance with
 the corresponding-source and licence requirements for a derivative work.
 

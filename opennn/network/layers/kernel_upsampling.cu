@@ -1,4 +1,6 @@
-// SPDX-License-Identifier: LGPL-2.1-or-later
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
+
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
@@ -72,7 +74,3 @@ void upsampling_backward_cuda(const int batch, const int in_h, const int in_w, c
     launch_elementwise_strided(n, upsampling_backward_kernel,
                        out_delta, in_delta, in_h, in_w, in_h * scale, in_w * scale, channels, scale);
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
+
 """Check required release documentation and notices in an installation prefix."""
 import argparse
 import json
@@ -12,7 +15,7 @@ def main():
     parser.add_argument("--expect-cpu-target", choices=("NATIVE", "PORTABLE"))
     args = parser.parse_args()
     docs = args.prefix / args.data_dir / "doc/OpenNN"
-    required = ["LICENSE.txt", "THIRD_PARTY_NOTICES.txt", "README.md",
+    required = ["LICENSE.txt", "LICENSING.md", "THIRD_PARTY_NOTICES.txt", "README.md",
                 "build-info.json", "libjpeg-turbo/LICENSE.md", "libjpeg-turbo/README.ijg", "zlib/LICENSE"]
     metadata = json.loads((docs / "build-info.json").read_text())
     if metadata["version"] != "9.0.0":

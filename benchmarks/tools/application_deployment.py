@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
+
 """Deployment files for OpenNN applications and standard PyTorch Python installs.
 
 Primary: OpenNN executable + exercised native dependency closure; Python script

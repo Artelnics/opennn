@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
+
 // The smallest program that exercises the installed package: build a network,
 // run it on the CPU, and print one number. If this compiles, links and runs,
 // the exported target, its include directories and its transitive

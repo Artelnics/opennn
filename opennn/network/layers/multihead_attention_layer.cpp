@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: LGPL-2.1-or-later
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
 
 #include "opennn/core/string_utilities.h"
 #include "opennn/network/layers/multihead_attention_layer.h"

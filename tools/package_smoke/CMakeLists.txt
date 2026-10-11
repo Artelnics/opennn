@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
+
 # Consumer smoke test: a separate project that finds an installed OpenNN
 # with find_package and links a one-file program against it. It is not part
 # of the main build; CI installs the library to a prefix and configures this
