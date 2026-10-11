@@ -11,10 +11,89 @@
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/models/models.h"
 #include "opennn/training/levenberg_marquardt.h"
+#include "opennn/training/levenberg_marquardt_step.h"
 #include "opennn/core/device_backend.h"
 #include "gtest/gtest.h"
 
 using namespace opennn;
+
+TEST(LevenbergMarquardtStep, SolvesCoupledSystemWithoutChangingInputs)
+{
+    MatrixR curvature(2, 2);
+    curvature << 3, 1, 1, 2;
+    const MatrixR original = curvature;
+    VectorR gradient(2), step(2);
+    gradient << -9, -8;
+    float damping = 1.0f;
+    ASSERT_TRUE(detail::find_damped_step(curvature, gradient, damping, 10.0f, 0.001f, 100.0f,
+                                         step, [](const auto&) { return true; }));
+    EXPECT_NEAR(step(0), 19.0f / 11, 1.0e-6f);
+    EXPECT_NEAR(step(1), 23.0f / 11, 1.0e-6f);
+    EXPECT_EQ(curvature, original);
+    EXPECT_FLOAT_EQ(damping, 0.1f);
+}
+
+TEST(LevenbergMarquardtStep, RetriesFromOriginalSystemUntilAcceptance)
+{
+    MatrixR curvature = MatrixR::Zero(2, 2);
+    curvature.diagonal() << 1, 2;
+    const MatrixR original = curvature;
+    VectorR gradient(2), step(2);
+    gradient << -2, -3;
+    float damping = 0.1f;
+    vector<float> attempts;
+    const auto accept = [&](const auto& candidate)
+    {
+        attempts.push_back(damping);
+        return candidate.norm() < 1.0f;
+    };
+    ASSERT_TRUE(detail::find_damped_step(curvature, gradient, damping, 10.0f, 0.001f, 100.0f,
+                                         step, accept));
+    EXPECT_EQ(attempts, (vector<float>{0.1f, 1.0f, 10.0f}));
+    EXPECT_NEAR(step(0), 2.0f / 11, 1.0e-6f);
+    EXPECT_NEAR(step(1), 0.25f, 1.0e-6f);
+    EXPECT_EQ(curvature, original);
+    EXPECT_FLOAT_EQ(damping, 1.0f);
+}
+
+TEST(LevenbergMarquardtStep, ExhaustionPreservesCurvatureAndStopsAtBound)
+{
+    MatrixR curvature = MatrixR::Identity(1, 1);
+    const VectorR gradient = VectorR::Ones(1);
+    VectorR step(1);
+    float damping = 1.0f;
+    int attempts = 0;
+    const auto reject = [&](const auto&) { ++attempts; return false; };
+    EXPECT_FALSE(detail::find_damped_step(curvature, gradient, damping, 10.0f, 0.001f, 100.0f,
+                                          step, reject));
+    EXPECT_EQ(attempts, 2);
+    EXPECT_FLOAT_EQ(damping, 100.0f);
+    EXPECT_FLOAT_EQ(curvature(0, 0), 1.0f);
+    attempts = 0;
+    EXPECT_FALSE(detail::find_damped_step(curvature, gradient, damping, 10.0f, 0.001f, 100.0f,
+                                          step, reject));
+    EXPECT_EQ(attempts, 1);
+}
+
+TEST(LevenbergMarquardtStep, RejectsInvalidFactorsAndNonfiniteSystem)
+{
+    LevenbergMarquardt optimizer;
+    for (float factor : {0.0f, 1.0f, -2.0f, numeric_limits<float>::infinity(),
+                         numeric_limits<float>::quiet_NaN()})
+        EXPECT_THROW(optimizer.set_damping_parameter_factor(factor), runtime_error);
+
+    MatrixR curvature = MatrixR::Identity(1, 1);
+    VectorR gradient = VectorR::Ones(1), step(1);
+    float damping = 1.0f;
+    int attempts = 0;
+    const auto accept = [&](const auto&) { ++attempts; return true; };
+    EXPECT_THROW(detail::find_damped_step(curvature, gradient, damping, 1.0f, 0.001f, 100.0f,
+                                          step, accept), invalid_argument);
+    gradient(0) = numeric_limits<float>::quiet_NaN();
+    EXPECT_FALSE(detail::find_damped_step(curvature, gradient, damping, 10.0f, 0.001f, 100.0f,
+                                          step, accept));
+    EXPECT_EQ(attempts, 0);
+}
 
 class LevenbergMarquardtTest : public ::testing::Test
 {

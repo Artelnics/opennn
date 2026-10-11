@@ -3,7 +3,7 @@
 
 #include "opennn/training/levenberg_marquardt.h"
 
-#include <Eigen/QR>
+#include "opennn/training/levenberg_marquardt_step.h"
 
 #include "opennn/core/statistics.h"
 #include "opennn/core/tensor_types.h"
@@ -25,6 +25,13 @@ LevenbergMarquardt::LevenbergMarquardt(Loss* new_loss)
     maximum_validation_failures = 1000;
     maximum_epochs = 1000;
     maximum_time = 3600.0f;
+}
+
+void LevenbergMarquardt::set_damping_parameter_factor(const float factor)
+{
+    throw_if(!std::isfinite(factor) || factor <= 1.0f,
+             "LevenbergMarquardt: damping factor must be finite and greater than one.");
+    damping_parameter_factor = factor;
 }
 
 void LevenbergMarquardt::back_propagate(const Batch& batch,
@@ -302,74 +309,35 @@ void LevenbergMarquardt::update_full_batch_parameters(const Batch& batch,
 
     VectorMap parameters = network->get_parameters_map();
 
-    float& error = back_propagation_lm.error;
-    float& regularization = back_propagation_lm.regularization;
-    float& current_loss = back_propagation_lm.loss;
-    const float previous_error = error;
-    const float previous_regularization = regularization;
-
     const VectorR& gradient = back_propagation_lm.gradient;
-    MatrixR& hessian = back_propagation_lm.hessian;
-
     VectorMap parameter_updates = optimization_data.views[ParameterUpdate].as_vector();
-
-    bool success = false;
-
-    const VectorR neg_gradient = -gradient;
-
-    do
+    const auto accept = [&](const auto& step)
     {
-        hessian.diagonal().array() += damping_parameter;
+        potential_parameters = parameters + step;
+        network->forward_propagate(batch.get_inputs(), potential_parameters, forward_propagation);
+        const VectorR residuals = forward_propagation.get_last_trainable_layer_outputs().as_vector()
+                                - batch.get_targets().as_vector();
+        const float error = residuals.squaredNorm() / float(residuals.size());
+        const float penalty = loss->calculate_regularization(potential_parameters);
+        const float objective = error + penalty;
+        if (!std::isfinite(objective) || !(objective < back_propagation_lm.loss)) return false;
 
-        parameter_updates = hessian.colPivHouseholderQr().solve(neg_gradient);
+        parameters = potential_parameters;
+        back_propagation_lm.errors = residuals;
+        back_propagation_lm.error = error;
+        back_propagation_lm.regularization = penalty;
+        back_propagation_lm.loss = objective;
+        return true;
+    };
 
-        potential_parameters = parameters + parameter_updates;
+    if (detail::find_damped_step(back_propagation_lm.hessian, gradient,
+                                 damping_parameter, damping_parameter_factor,
+                                 minimum_damping_parameter, maximum_damping_parameter,
+                                 parameter_updates, accept)) return;
 
-        network->forward_propagate(batch.get_inputs(),
-                                          potential_parameters,
-                                          forward_propagation);
-
-        calculate_errors(batch, forward_propagation, back_propagation_lm);
-
-        const float candidate_regularization = loss->calculate_regularization(potential_parameters);
-        float new_loss = error + candidate_regularization;
-
-        if (!isfinite(new_loss))
-            new_loss = current_loss;
-
-        if (new_loss < current_loss)
-        {
-            damping_parameter = clamp(damping_parameter / damping_parameter_factor,
-                                      minimum_damping_parameter,
-                                      maximum_damping_parameter);
-
-            parameters = potential_parameters;
-
-            regularization = candidate_regularization;
-            current_loss = new_loss;
-
-            success = true;
-
-            break;
-        }
-
-        hessian.diagonal().array() -= damping_parameter;
-
-        damping_parameter = clamp(damping_parameter * damping_parameter_factor,
-                                  minimum_damping_parameter,
-                                  maximum_damping_parameter);
-
-    } while (damping_parameter < maximum_damping_parameter);
-
-    if (!success)
-    {
-        error = previous_error;
-        regularization = previous_regularization;
-
-        parameter_updates = (gradient.array().abs() >= EPSILON)
-                                .select(-gradient.array().sign() * EPSILON, 0.0f);
-        parameters += parameter_updates;
-    }
+    parameter_updates = (gradient.array().abs() >= EPSILON)
+                            .select(-gradient.array().sign() * EPSILON, 0.0f);
+    parameters += parameter_updates;
 }
 
 void LevenbergMarquardt::to_JSON(JsonWriter& printer) const

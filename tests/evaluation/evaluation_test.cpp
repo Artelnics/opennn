@@ -389,6 +389,29 @@ TEST(Evaluation, BinaryMetricsPreserveAllFieldsAndDegenerateConventions)
     }
 }
 
+TEST(Evaluation, BinaryMetricsIgnoreOrderingAndReplicationAtCustomThreshold)
+{
+    MatrixR targets(10, 1), outputs(10, 1);
+    targets << 0.3f, 0.3f, 0.3f, 0, 0, 0.3f, 0, 0, 0, 0;
+    outputs << 0.3f, 0.3f, 0.3f, 0.3f, 0.3f, 0, 0, 0, 0, 0;
+    Evaluation evaluation;
+    const VectorR expected = evaluation.calculate_binary_classification_tests(targets, outputs, 0.3f);
+    EXPECT_FLOAT_EQ(expected(0), 0.7f);
+    EXPECT_NEAR(expected(6), 0.375f, 1.0e-6f);
+
+    MatrixR repeated_targets(30, 1), repeated_outputs(30, 1);
+    for (Index row = 0; row < 30; ++row)
+    {
+        const Index source = (row * 7) % 10;
+        repeated_targets(row, 0) = targets(source, 0);
+        repeated_outputs(row, 0) = outputs(source, 0);
+    }
+    const VectorR actual = evaluation.calculate_binary_classification_tests(repeated_targets, repeated_outputs, 0.3f);
+    ASSERT_EQ(actual.size(), expected.size());
+    for (Index i = 0; i < actual.size(); ++i)
+        EXPECT_NEAR(actual(i), expected(i), 1.0e-6f) << "metric " << i;
+}
+
 TEST(Evaluation, BinaryRateAnalysisGroupsOriginalTestingIndicesInOneResult)
 {
     Configuration::instance().set(Device::CPU, Type::FP32);

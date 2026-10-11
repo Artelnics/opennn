@@ -317,6 +317,15 @@ applicable notices and source records; see `examples/yolo/data/SOURCE.md`.
 
 ### What's new in 9.0
 
+Keep the candidate at 9.0.0 during licensing preparation. The planned 26.0
+number is deferred until the licence change has been completed.
+
+- Levenberg-Marquardt now evaluates damped steps against an immutable curvature
+  matrix and commits only accepted candidate metrics. Its damping factor must
+  be finite and greater than one; invalid factors are rejected instead of
+  allowing a retry loop that cannot advance. Binary classification keeps its
+  15-field result format and existing degenerate-case conventions.
+
 - A module layout under `opennn/<module>/` and shorter public names: `Network`,
   `Training`, `Evaluation`, `Adam`, `SGD`, `LSTM`, `LevenbergMarquardt`,
   `QuasiNewton`, `Autoencoder`, `Yolo` and `InputSelection`.

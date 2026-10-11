@@ -749,68 +749,50 @@ VectorR Evaluation::calculate_binary_classification_tests(const MatrixR& targets
     check_classification_data(targets, outputs, true);
     const MatrixI confusion = calculate_confusion(targets, outputs, decision_threshold);
 
-    const Index true_positive = confusion(0,0);
-    const Index false_positive = confusion(1,0);
-    const Index false_negative = confusion(0,1);
-    const Index true_negative = confusion(1,1);
+    const Index tp = confusion(0, 0), fn = confusion(0, 1);
+    const Index fp = confusion(1, 0), tn = confusion(1, 1);
+    const Index actual_positive = tp + fn, actual_negative = fp + tn;
+    const Index predicted_positive = tp + fp, predicted_negative = fn + tn;
+    const Index count = actual_positive + actual_negative;
 
-    const Index total = true_positive + true_negative + false_positive + false_negative;
+    // Positions are part of the public result format. Define the simple rates
+    // together, then derive composite measures from those rates.
+    struct Ratio { Index position; float numerator; Index denominator; };
+    const std::array<Ratio, 10> ratios{{
+        {0, float(tp + tn), count},
+        {1, float(fp + fn), count},
+        {2, float(tp), actual_positive},
+        {3, float(tn), actual_negative},
+        {4, float(tp), predicted_positive},
+        {7, 2.0f * float(tp), 2 * tp + fp + fn},
+        {8, float(fp), actual_negative},
+        {9, float(fp), predicted_positive},
+        {10, float(fn), actual_positive},
+        {11, float(tn), predicted_negative}
+    }};
+    VectorR result = VectorR::Zero(15);
+    for (const auto& ratio : ratios)
+        result(ratio.position) = classification_ratio(ratio.numerator, ratio.denominator);
 
-    const float classification_accuracy = classification_ratio(float(true_positive + true_negative), total);
-    const Index tp_plus_fn = true_positive + false_negative;
-    const Index fp_plus_tn = false_positive + true_negative;
-    const Index tp_plus_fp = true_positive + false_positive;
+    // Preserve OpenNN's conventions at perfect accuracy and zero denominators.
+    if (abs(result(0) - 1.0f) < EPSILON)
+        result.segment<2>(5).setOnes();
+    else
+    {
+        if (abs(1.0f - result(3)) >= EPSILON)
+            result(5) = result(2) / (1.0f - result(3));
+        if (result(3) >= EPSILON)
+            result(6) = (1.0f - result(2)) / result(3);
+    }
 
-    const float sensitivity = classification_ratio(float(true_positive), tp_plus_fn);
-    const float specificity = classification_ratio(float(true_negative), fp_plus_tn);
-    const float precision = classification_ratio(float(true_positive), tp_plus_fp);
-
-    const bool accuracy_is_one = abs(classification_accuracy - 1.0f) < EPSILON;
-
-    const float positive_likelihood = accuracy_is_one ? 1.0f
-        : (abs(1.0f - specificity) < EPSILON) ? 0.0f
-        : sensitivity / (1.0f - specificity);
-
-    const float negative_likelihood = accuracy_is_one ? 1.0f
-        : (specificity < EPSILON) ? 0.0f
-        : (1.0f - sensitivity) / specificity;
-
-    const Index f1_denominator = 2 * true_positive + false_positive + false_negative;
-    const Index tn_plus_fn = true_negative + false_negative;
-    const float negative_predictive_value = classification_ratio(float(true_negative), tn_plus_fn);
-
-    const double matthews_denominator = sqrt(double(tp_plus_fp) * double(tp_plus_fn)
-                                           * double(fp_plus_tn) * double(tn_plus_fn));
-
-    const float Matthews_correlation_coefficient = (matthews_denominator == 0.0)
-                                                      ? 0.0f
-                                                      : float((double(true_positive) * double(true_negative)
-                                                             - double(false_positive) * double(false_negative))
-                                                              / matthews_denominator);
-
-    const float markedness = (fp_plus_tn == 0)
-                                ? precision - 1.0f
-                                : precision + negative_predictive_value - 1.0f;
-
-    VectorR binary_classification_test(15);
-
-    binary_classification_test << classification_accuracy,
-                                  classification_ratio(float(false_positive + false_negative), total), // Error rate
-                                  sensitivity,
-                                  specificity,
-                                  precision,
-                                  positive_likelihood,
-                                  negative_likelihood,
-                                  classification_ratio(2.0f * float(true_positive), f1_denominator), // F1 score
-                                  classification_ratio(float(false_positive), fp_plus_tn), // False positive rate
-                                  classification_ratio(float(false_positive), tp_plus_fp), // False discovery rate
-                                  classification_ratio(float(false_negative), tp_plus_fn), // False negative rate
-                                  negative_predictive_value,
-                                  Matthews_correlation_coefficient,
-                                  sensitivity + specificity - 1.0f, // Informedness
-                                  markedness;
-
-    return binary_classification_test;
+    // MCC, informedness and markedness: Powers, arXiv:2010.16061.
+    const double normalization = sqrt(double(predicted_positive) * double(actual_positive)
+                                      * double(actual_negative) * double(predicted_negative));
+    if (normalization != 0.0)
+        result(12) = float((double(tp) * double(tn) - double(fp) * double(fn)) / normalization);
+    result(13) = result(2) + result(3) - 1.0f;
+    result(14) = result(4) + (actual_negative == 0 ? 0.0f : result(11)) - 1.0f;
+    return result;
 }
 
 void Evaluation::print_binary_classification_tests() const

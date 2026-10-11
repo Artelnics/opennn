@@ -41,7 +41,7 @@ public:
 
    explicit LevenbergMarquardt(Loss* = nullptr);
 
-   void set_damping_parameter_factor(const float new_damping_parameter_factor) { damping_parameter_factor = new_damping_parameter_factor; }
+   void set_damping_parameter_factor(const float);
 
    void set_minimum_loss_decrease(const float new_minimum_loss_decrease) { minimum_loss_decrease = new_minimum_loss_decrease; }
    TrainingResult train() override;
