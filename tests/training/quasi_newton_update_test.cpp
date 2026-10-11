@@ -1,4 +1,4 @@
-#include "tests/pch.h"
+#include "tests/common/pch.h"
 #include "opennn/training/quasi_newton_update.h"
 #include <Eigen/Cholesky>
 
