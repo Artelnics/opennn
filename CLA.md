@@ -42,6 +42,11 @@ of protection.
 This grant does not transfer ownership of Your Contribution. You remain free to
 use, license and distribute Your Contribution however You wish.
 
+You expressly consent, for the purposes of articles 49 and 50 of the Spanish
+Intellectual Property Law, to Artelnics transferring the licences granted in
+this agreement, in whole or in part, together with OpenNN or with the business
+to which OpenNN belongs.
+
 ## 3. Grant of patent licence
 
 You grant to Artelnics, and to recipients of software distributed by Artelnics,
