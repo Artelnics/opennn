@@ -25,73 +25,49 @@ using namespace opennn_test;
 
 TEST(YoloOverfit, SingleImageSingleClassLossDecreases)
 {
+    TempDir fixture("opennn_yolo_memorization_");
+    const auto images = fixture.path / "images";
+    const auto labels = fixture.path / "labels";
+    filesystem::create_directories(images);
+    filesystem::create_directories(labels);
+    write_classes(labels / "classes.names", {"target"});
+    write_label(labels / "target.txt", 0, 0.375f, 0.625f, 0.25f, 0.5f);
+    write_bmp_24(images / "target.bmp", 8, 8, 60, 150, 210);
 
-    TempDir workspace("opennn_yolo_overfit_");
-    const filesystem::path images_path = workspace.path / "images";
-    const filesystem::path labels_path = workspace.path / "labels";
-    filesystem::create_directories(images_path);
-    filesystem::create_directories(labels_path);
+    const vector<std::array<float, 2>> anchors{{0.25f, 0.5f}};
+    YoloDataset observations;
+    observations.set_display(false);
+    observations.set(images, labels, Shape{8, 8, 3}, 1, 1, anchors);
+    observations.set_sample_roles("Training");
+    YoloDataset::AugmentationPolicy policy;
+    policy.enabled = false;
+    observations.set_augmentation_policy(policy);
 
-    write_bmp_24(images_path / "a.bmp", 32, 32, 200, 100,  50);
-    write_bmp_24(images_path / "b.bmp", 32, 32,  50, 100, 200);
-    write_label(labels_path / "a.txt", 0, 0.5f, 0.5f, 0.4f, 0.4f);
-    write_label(labels_path / "b.txt", 0, 0.25f, 0.75f, 0.4f, 0.4f);
-    write_classes(labels_path / "classes.names", {"object"});
-
-    // 32x32x3 input, 4x4 grid, one box per cell and one class: 1 * (5 + 1) = 6 head channels.
-    const Shape input_shape{32, 32, 3};
-    constexpr Index grid_size = 4;
-    constexpr Index boxes_per_cell = 1;
-    const vector<std::array<float, 2>> anchor_list{{0.4f, 0.4f}};
-
-    YoloDataset::AugmentationPolicy fixed_policy;
-    fixed_policy.enabled = false;
-
-    const auto make_network = [&]()
+    // A single affine detection cell is enough to memorize this target. Compare
+    // two training budgets from exactly the same parameter values.
+    vector<float> errors;
+    for (Index budget : {Index(1), Index(80)})
     {
-        auto network = make_unique<Network>();
+        Network detector;
+        detector.add_layer(make_unique<Convolutional>(
+            Shape{8, 8, 3}, Shape{1, 1, 3, 6}, "Identity", Shape{8, 8}, "Valid",
+            BatchNormalization::No, "prediction"));
+        detector.add_layer(make_unique<Detection>(Shape{1, 1, 6}, anchors));
+        detector.compile();
+        detector.get_parameters_map().setConstant(0.02f);
 
-        network->add_layer(make_unique<Convolutional>(
-            input_shape, Shape{3, 3, 3, 16}, "LeakyReLU", Shape{1, 1}, "Same", BatchNormalization::No, "features"));
-        network->add_layer(make_unique<Convolutional>(
-            Shape{32, 32, 16}, Shape{1, 1, 16, 6}, "Identity", Shape{1, 1}, "Same", BatchNormalization::No, "head_logits"));
-        network->add_layer(make_unique<Detection>(Shape{4, 4, 6}, anchor_list, "head_detection"));
-
-        network->compile();
-        network->get_parameters_map().setConstant(0.05f);
-        return network;
-    };
-
-    // Each run owns its dataset and network, declared before the loss and the optimizer that point to them.
-    const auto training_error_after = [&](Index epochs) -> float
-    {
-        YoloDataset dataset;
-        dataset.set_display(false);
-        dataset.set(images_path, labels_path, input_shape, grid_size, boxes_per_cell, anchor_list);
-        dataset.set_augmentation_policy(fixed_policy);
-
-        const unique_ptr<Network> network = make_network();
-
-        Loss loss(network.get(), &dataset);
-        loss.set_error(Loss::Error::Yolo);
-        loss.set_regularization(Loss::Regularization::NoRegularization);
-
-        Adam optimizer(&loss);
-        optimizer.set_display(false);
-        optimizer.set_maximum_epochs(epochs);
-
-        return optimizer.train().get_training_error();
-    };
-
-    const float brief_error = training_error_after(2);
-    const float extended_error = training_error_after(200);
-
-    EXPECT_LT(extended_error, brief_error)
-        << "Anchor-based YOLO error did not fall with longer training: 2 epochs gave "
-        << brief_error << ", 200 epochs gave " << extended_error;
-    EXPECT_LT(extended_error, 0.95f * brief_error)
-        << "Anchor-based YOLO error fell by less than 5%: 2 epochs gave "
-        << brief_error << ", 200 epochs gave " << extended_error;
+        Loss objective(&detector, &observations);
+        objective.set_error(Loss::Error::Yolo);
+        objective.set_regularization(Loss::Regularization::NoRegularization);
+        Adam fit(&objective);
+        fit.set_display(false);
+        fit.set_learning_rate(0.02f);
+        fit.set_maximum_epochs(budget);
+        errors.push_back(fit.train().get_training_error());
+    }
+    ASSERT_TRUE(isfinite(errors.front()));
+    ASSERT_TRUE(isfinite(errors.back()));
+    EXPECT_LT(errors.back(), 0.5f * errors.front());
 }
 
 TEST(YoloOverfit, SPPFGradientFlowsAndLossDecreases)

@@ -65,28 +65,31 @@ TEST(GrowingNeuronsTest, GeneralConstructor)
 
 TEST(GrowingNeuronsTest, NeuronsSelection)
 {
-    // Constant-zero target; the input repeats -0.9 and skips -0.8 on purpose.
-    MatrixR data(21, 2);
-    data.col(0) << -1.0f, -0.9f, -0.9f, -0.7f, -0.6f, -0.5f, -0.4f, -0.3f, -0.2f, -0.1f,
-                   0.0f, 0.1f, 0.2f, 0.3f, 0.4f, 0.5f, 0.6f, 0.7f, 0.8f, 0.9f, 1.0f;
-    data.col(1).setZero();
+    constexpr Index samples = 24;
+    MatrixR observations(samples, 2);
+    observations.col(0) = VectorR::LinSpaced(samples, -2.0f, 2.0f);
+    observations.col(1) = observations.col(0).array().square();
+    TabularDataset dataset(samples, {1}, {1});
+    dataset.set_data(observations);
+    dataset.split_samples_sequential(3, 1, 0);
 
-    TabularDataset dataset(21, {1}, {1});
-    dataset.set_data(data);
-    dataset.split_samples_random();
+    ApproximationNetwork candidate({1}, {2}, {1});
+    Training fit(&candidate, &dataset);
+    fit.get_optimization_algorithm()->set_display(false);
+    fit.get_optimization_algorithm()->set_maximum_epochs(25);
+    GrowingNeurons search(&fit);
+    search.set_display(false);
+    search.set_trials_number(1);
+    search.set_minimum_neurons(2);
+    search.set_maximum_neurons(6);
+    search.set_neurons_increment(2);
+    const NeuronsSelectionResult selected = search.perform_neurons_selection();
 
-    ApproximationNetwork network({1}, {3}, {1});
-
-    Training training(&network, &dataset);
-
-    GrowingNeurons growing_neurons(&training);
-    growing_neurons.set_trials_number(1);
-    growing_neurons.set_maximum_neurons(7);
-    growing_neurons.set_display(false);
-
-    NeuronsSelectionResult neuron_selection_results = growing_neurons.perform_neurons_selection();
-
-    EXPECT_GE(neuron_selection_results.optimal_neurons_number, 1);
+    EXPECT_GE(selected.optimal_neurons_number, 2);
+    EXPECT_LE(selected.optimal_neurons_number, 6);
+    EXPECT_EQ(selected.optimal_neurons_number % 2, 0);
+    EXPECT_TRUE(isfinite(selected.optimum_validation_error));
+    EXPECT_GT(selected.optimal_parameters.size(), 0);
 }
 TEST(GrowingNeuronsTest, PerformNeuronsSelection)
 {

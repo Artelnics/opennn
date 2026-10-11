@@ -330,47 +330,27 @@ VectorI Dataset::filter_data(const VectorR& minimums, const VectorR& maximums)
 {
     require_in_memory_data("Dataset::filter_data");
 
-    const vector<Index> feature_indices = get_used_feature_indices();
-    const vector<Index> sample_indices = get_used_sample_indices();
+    const vector<Index> features = get_used_feature_indices();
+    const Index limits = min({ssize(features), minimums.size(), maximums.size()});
+    Eigen::Array<bool, Eigen::Dynamic, 1> rejected(data.rows());
+    rejected.setConstant(false);
 
-    const Index checked_features = min({Index(ssize(feature_indices)),
-                                        Index(minimums.size()),
-                                        Index(maximums.size())});
-
-    const auto is_out_of_range = [&](const Index sample)
+    // Accumulate a row mask a column at a time. Comparisons leave missing
+    // values alone; either endpoint's tolerance takes precedence over rejection.
+    for (Index feature = 0; feature < limits; ++feature)
     {
-        for (Index k = 0; k < checked_features; ++k)
-        {
-            const float value = data(sample, feature_indices[size_t(k)]);
+        const auto values = data.col(features[size_t(feature)]).array();
+        const auto outside = (values < minimums(feature)) || (values > maximums(feature));
+        const auto boundary = ((values - minimums(feature)).abs() <= EPSILON)
+                            || ((values - maximums(feature)).abs() <= EPSILON);
+        rejected = rejected || (outside && !boundary);
+    }
 
-            if (isnan(value)) continue;
-
-            const float minimum = minimums(k);
-            const float maximum = maximums(k);
-
-            if (abs(value - minimum) <= EPSILON || abs(value - maximum) <= EPSILON) continue;
-
-            if (value < minimum || value > maximum) return true;
-        }
-
-        return false;
-    };
-
-    vector<Index> filtered_samples;
-
-    for (const Index sample : sample_indices)
-        if (is_out_of_range(sample))
-            filtered_samples.push_back(sample);
-
-    if (!filtered_samples.empty())
-        set_sample_roles(filtered_samples, SampleRole::None);
-
-    VectorI filtered_indices(ssize(filtered_samples));
-
-    for (Index i = 0; i < ssize(filtered_samples); ++i)
-        filtered_indices(i) = filtered_samples[size_t(i)];
-
-    return filtered_indices;
+    vector<Index> removed;
+    ranges::copy_if(get_used_sample_indices(), back_inserter(removed),
+                    [&](Index row) { return rejected(row); });
+    if (!removed.empty()) set_sample_roles(removed, SampleRole::None);
+    return Eigen::Map<const VectorI>(removed.data(), ssize(removed));
 }
 
 void Dataset::split_samples(const float training_samples_ratio,

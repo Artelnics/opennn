@@ -2,6 +2,7 @@
 #include "opennn/core/json.h"
 
 #include "opennn/dataset/yolo_dataset.h"
+#include "opennn/dataset/yolo_dataset_internal.h"
 #include "opennn/core/device_backend.h"
 
 #include "tests/test_helpers.h"
@@ -419,74 +420,63 @@ TEST(YoloDataset, RepeatedMosaicBatchesKeepWorkerScratchIndependent)
 
 TEST(YoloDataset, MultiScaleTargetsRouteBoxesToCorrectHead)
 {
-    TempDir dir("opennn_yolo_test_");
-    const filesystem::path images_dir = dir.path / "images";
-    const filesystem::path labels_dir = dir.path / "labels";
-    filesystem::create_directories(images_dir);
-    filesystem::create_directories(labels_dir);
-
-    write_classes(labels_dir / "classes.names", {"only"});
-    write_bmp_24(images_dir / "a.bmp", 16, 16, 128, 128, 128);
-
-    // write_label holds a single box and truncates, so the two-box file is
-    // written here. The scope closes the stream before the dataset reads it.
+    TempDir fixture("opennn_yolo_three_heads_");
+    const auto images = fixture.path / "images";
+    const auto labels = fixture.path / "labels";
+    filesystem::create_directories(images);
+    filesystem::create_directories(labels);
+    write_bmp_24(images / "objects.bmp", 24, 24, 90, 170, 220);
+    write_classes(labels / "classes.names", {"first", "second"});
     {
-        ofstream label_file(labels_dir / "a.txt");
-        label_file << "0 0.25 0.25 0.6 0.6\n"
-                   << "0 0.875 0.875 0.1 0.1\n";
+        ofstream annotations(labels / "objects.txt");
+        annotations << "0 0.75 0.25 0.5 0.375\n"
+                    << "1 0.375 0.625 0.25 0.1875\n"
+                    << "0 0.8125 0.4375 0.0625 0.09375\n";
     }
+    const vector<vector<std::array<float, 2>>> anchors{
+        {{0.5f, 0.375f}, {0.9f, 0.9f}},
+        {{0.4f, 0.1f}, {0.25f, 0.1875f}},
+        {{0.0625f, 0.09375f}, {0.125f, 0.03125f}}};
+    YoloDataset observations;
+    observations.set_display(false);
+    observations.set(images, labels, Shape{24, 24, 3}, 2, 2, anchors.front());
+    observations.set_multi_scale_heads({2, 4, 8}, anchors);
 
-    // The large box matches the coarse set exactly, the small one the fine set.
-    const vector<std::array<float, 2>> coarse_anchors{{0.6f, 0.6f}, {0.7f, 0.7f}};
-    const vector<std::array<float, 2>> fine_anchors{{0.1f, 0.1f}, {0.2f, 0.2f}};
+    // Two classes and two anchors give 14 values per cell. The three occupied
+    // slots are (head, row, column, anchor): (0,0,1,0), (1,2,1,1), (2,3,6,0).
+    vector<float> expected(14 * (4 + 16 + 64), 0.0f);
+    const std::array<pair<size_t, std::array<float, 7>>, 3> occupied{{
+        {14,  {0.5f, 0.5f, 0.5f, 0.375f, 1, 1, 0}},
+        {189, {0.5f, 0.5f, 0.25f, 0.1875f, 1, 0, 1}},
+        {700, {0.5f, 0.5f, 0.0625f, 0.09375f, 1, 1, 0}}}};
+    for (const auto& [offset, box] : occupied)
+        ranges::copy(box, expected.begin() + offset);
 
-    constexpr Index classes_number = 1;
-    constexpr Index anchors_per_head = 2;
-    constexpr Index values_per_anchor = 5 + classes_number;
-    constexpr Index cell_channels = anchors_per_head * values_per_anchor;
+    vector<float> actual(expected.size(), numeric_limits<float>::quiet_NaN());
+    observations.fill_targets({0}, {}, actual.data(), FillMode::Inference);
+    EXPECT_EQ(actual, expected);
+}
 
-    // Heads are concatenated: the 2 x 2 coarse grid (48 floats), then the
-    // 4 x 4 fine grid (192 floats).
-    constexpr Index coarse_grid = 2;
-    constexpr Index fine_grid = 4;
-    constexpr Index coarse_start = 0;
-    constexpr Index fine_start = coarse_start + coarse_grid * coarse_grid * cell_channels;
-    constexpr Index target_floats = fine_start + fine_grid * fine_grid * cell_channels;
-
-    YoloDataset dataset;
-    dataset.set_display(false);
-    dataset.set(images_dir, labels_dir, Shape{16, 16, 3}, coarse_grid, anchors_per_head, coarse_anchors);
-    dataset.set_multi_scale_heads({coarse_grid, fine_grid}, {coarse_anchors, fine_anchors});
-
-    // The sentinel exposes any float the encoder neither wrote nor cleared.
-    vector<float> targets(size_t(target_floats), -99.0f);
-    dataset.fill_targets({0}, {}, targets.data(), FillMode::Inference);
-
-    const auto anchor_start = [&](Index head_start, Index grid, Index x, Index y, Index anchor)
-    {
-        return head_start + (y * grid + x) * cell_channels + anchor * values_per_anchor;
-    };
-
-    const auto expect_box = [&](Index start, const std::array<float, 6>& expected)
-    {
-        for (size_t k = 0; k < expected.size(); ++k)
-            EXPECT_NEAR(targets[size_t(start) + k], expected[k], 1e-4f)
-                << "component " << k << " of the box written at offset " << start;
-    };
-
-    // First box: coarse head, cell (0, 0), anchor 0, an exact anchor match.
-    expect_box(anchor_start(coarse_start, coarse_grid, 0, 0, 0),
-               {0.5f, 0.5f, 0.6f, 0.6f, 1.0f, 1.0f});
-
-    // Second box: fine head, cell (3, 3), anchor 0, which is offset 228.
-    expect_box(anchor_start(fine_start, fine_grid, 3, 3, 0),
-               {0.5f, 0.5f, 0.1f, 0.1f, 1.0f, 1.0f});
-
-    // The second box's centre lies in coarse cell (1, 1), but the box went to
-    // the fine head, so both anchors of that cell must come out zero-filled.
-    const Index empty_cell_start = anchor_start(coarse_start, coarse_grid, 1, 1, 0);
-    for (Index k = 0; k < cell_channels; ++k)
-        EXPECT_FLOAT_EQ(targets[size_t(empty_cell_start + k)], 0.0f)
-            << "head 0 cell (1, 1) was expected to be empty, but offset "
-            << empty_cell_start + k << " holds a value";
+TEST(YoloDataset, MosaicClipsInSourceCoordinatesAndPreservesAppendOrder)
+{
+    const vector<YoloDataset::Box> boxes{
+        {2, 0.5f, 0.5f, 1.5f, 1.5f},
+        {3, 0.0f, 0.25f, 0.5f, 0.5f},
+        {4, 2.0f, 0.5f, 0.5f, 0.5f},
+        {5, 0.5f, 0.5f, 0.001f, 0.5f}};
+    vector<YoloDataset::Box> mapped{{1, 0.125f, 0.125f, 0.125f, 0.125f}};
+    yolo_detail::append_mosaic_boxes(boxes, {0.5f, 0.25f}, {0.25f, 0.5f}, mapped);
+    ASSERT_EQ(mapped.size(), 3);
+    EXPECT_EQ(mapped[0].class_id, 1);
+    EXPECT_FLOAT_EQ(mapped[0].x, 0.125f);
+    EXPECT_EQ(mapped[1].class_id, 2);
+    EXPECT_FLOAT_EQ(mapped[1].x, 0.625f);
+    EXPECT_FLOAT_EQ(mapped[1].y, 0.5f);
+    EXPECT_FLOAT_EQ(mapped[1].w, 0.25f);
+    EXPECT_FLOAT_EQ(mapped[1].h, 0.5f);
+    EXPECT_EQ(mapped[2].class_id, 3);
+    EXPECT_FLOAT_EQ(mapped[2].x, 0.53125f);
+    EXPECT_FLOAT_EQ(mapped[2].y, 0.375f);
+    EXPECT_FLOAT_EQ(mapped[2].w, 0.0625f);
+    EXPECT_FLOAT_EQ(mapped[2].h, 0.25f);
 }

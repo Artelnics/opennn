@@ -48,6 +48,14 @@ remaining limitations.
 
 ### Reliability and portability
 
+- Bind PHP export names before emitting expressions and translate identifiers
+  separately from numeric literals. Shared input/output names and names matching
+  activation functions no longer acquire duplicate variable sigils.
+  Exporters now explicitly forward values through disabled clamping layers.
+- Filter dataset rows with column masks, preserving missing values, boundary
+  tolerance, used-feature order and sample roles. Clip mosaic boxes in source
+  coordinates before mapping them into each tile; floating-point rounding may
+  differ at clipping boundaries.
 - Plan expression bindings independently of layer labels and avoid collisions
   with public variable names. Scaling honors explicit output names; its empty
   output-name shorthand remains available. Dense export handles bias-free

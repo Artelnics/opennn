@@ -3,6 +3,7 @@
 
 #include "opennn/network/model_expression.h"
 
+#include <cctype>
 #include <utility>
 #include <unordered_set>
 
@@ -411,6 +412,11 @@ string ModelExpression::build_expression(const vector<string>& input_names,
         const string layer_expression = layers[stage]->write_expression(bindings[stage], bindings[stage + 1]);
         throw_if(stage + 1 < layers.size() && layer_expression.find("Softmax") != string::npos,
                  "ModelExpression: Softmax in a hidden layer is not supported for export.");
+        // Disabled clamping emits no arithmetic, but its output bindings must
+        // still receive the preceding layer's values.
+        if (layer_expression.empty())
+            for (size_t i = 0; i < bindings[stage + 1].size(); ++i)
+                buffer << bindings[stage + 1][i] << " = " << bindings[stage][i] << ";\n";
         buffer << layer_expression << "\n";
     }
 
@@ -1574,61 +1580,49 @@ string ModelExpression::get_expression_c_embedded() const
 string ModelExpression::get_expression_php() const
 {
     const ExportNames names = collect_names();
+    const string expression = build_expression(names.fixed_inputs, names.fixed_outputs);
 
-    const vector<string>& input_names = names.inputs;
-    const vector<string>& output_names = names.outputs;
-    const vector<string>& fixed_input_names = names.fixed_inputs;
-    const vector<string>& fixed_output_names = names.fixed_outputs;
-
-    string expression = build_expression();
-
-    replace_all_word_appearances(expression, "Tanh", "OpenNNTanh");
-
-    apply_name_mapping(expression, input_names, fixed_input_names);
-    apply_name_mapping(expression, output_names, fixed_output_names);
-
-    const vector<string> output_assignments =
-        fix_output_names(expression, output_names, ProgrammingLanguage::PHP);
-
-    // Every PHP variable gets the '$' sigil. Fixed names keep their repeats;
-    // assignment targets are added once each, in order of first appearance.
-
-    vector<string> php_variables = fixed_input_names;
-    php_variables.insert(php_variables.end(), fixed_output_names.begin(), fixed_output_names.end());
-
-    unordered_set<string> known_variables(php_variables.begin(), php_variables.end());
-
-    for (const string_view segment : get_token_views(expression, '\n'))
+    // Layer writers receive valid identifiers from the outset. Translate the
+    // resulting expression as tokens: variable names get one sigil, function
+    // names and numeric literals keep their own syntax.
+    string php_expression;
+    php_expression.reserve(expression.size());
+    for (size_t cursor = 0; cursor < expression.size();)
     {
-        const size_t equal_position = segment.find('=');
-        if (equal_position == string_view::npos) continue;
+        const size_t begin = cursor;
+        const unsigned char character = static_cast<unsigned char>(expression[cursor]);
+        if (isdigit(character) || character == '.')
+        {
+            do { ++cursor; }
+            while (cursor < expression.size()
+                   && (isdigit(static_cast<unsigned char>(expression[cursor])) || expression[cursor] == '.'));
+            if (cursor < expression.size() && (expression[cursor] == 'e' || expression[cursor] == 'E'))
+            {
+                ++cursor;
+                if (cursor < expression.size() && (expression[cursor] == '+' || expression[cursor] == '-'))
+                    ++cursor;
+                while (cursor < expression.size() && isdigit(static_cast<unsigned char>(expression[cursor])))
+                    ++cursor;
+            }
+            php_expression.append(expression, begin, cursor - begin);
+        }
+        else if (isalpha(character) || character == '_')
+        {
+            do { ++cursor; }
+            while (cursor < expression.size()
+                   && (isalnum(static_cast<unsigned char>(expression[cursor])) || expression[cursor] == '_'));
 
-        const string target(trim_view(segment.substr(0, equal_position)));
-        if (target.empty()) continue;
-
-        if (known_variables.insert(target).second)
-            php_variables.push_back(target);
+            const string_view identifier(expression.data() + begin, cursor - begin);
+            const size_t next = expression.find_first_not_of(" \t\r\n", cursor);
+            const bool function_call = next != string::npos && expression[next] == '(';
+            if (!function_call) php_expression += '$';
+            php_expression += function_call && identifier == "Tanh" ? "OpenNNTanh" : identifier;
+        }
+        else
+        {
+            php_expression += expression[cursor++];
+        }
     }
-
-    // Longest names first, so that no name is prefixed inside a longer one.
-
-    ranges::stable_sort(php_variables, [](const string& a, const string& b)
-                        { return a.size() > b.size(); });
-
-    for (const string& variable : php_variables)
-        replace_all_word_appearances(expression, variable, "$" + variable);
-
-    vector<string> lines = split_expression_lines(expression);
-
-    for (string& line : lines)
-    {
-        ranges::replace(line, '[', '_');
-        ranges::replace(line, ']', '_');
-    }
-
-    rename_spaced_var_definitions(lines);
-
-    lines.insert(lines.end(), output_assignments.begin(), output_assignments.end());
 
     const bool has_softmax = expression.find("Softmax") != string::npos;
 
@@ -1636,7 +1630,7 @@ string ModelExpression::get_expression_php() const
     emit_php_prelude(buffer, names);
     emit_activations(buffer, expression, &ActivationBodies::php, {});
     emit_php_inputs_setup(buffer, names);
-    emit_php_body(buffer, lines, has_softmax, names);
+    emit_php_body(buffer, split_expression_lines(php_expression), has_softmax, names);
     emit_php_response(buffer, names);
     return buffer.str();
 }

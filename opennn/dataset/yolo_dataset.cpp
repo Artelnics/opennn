@@ -870,30 +870,9 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
                         for (const MosaicQuad& q : quads)
                         {
                             read_sample_boxes(q.si, quad_boxes, box_records);
-
-                            const float scale_x = float(q.qw) / float(W);
-                            const float scale_y = float(q.qh) / float(H);
-                            const float offset_x = float(q.dst_x) / float(W);
-                            const float offset_y = float(q.dst_y) / float(H);
-
-                            for (const Box& source : quad_boxes)
-                            {
-                                const float center_x = source.x * scale_x + offset_x;
-                                const float center_y = source.y * scale_y + offset_y;
-                                const float box_w = source.w * scale_x;
-                                const float box_h = source.h * scale_y;
-
-                                const float left   = max(center_x - 0.5f * box_w, offset_x);
-                                const float top    = max(center_y - 0.5f * box_h, offset_y);
-                                const float right  = min(center_x + 0.5f * box_w, offset_x + scale_x);
-                                const float bottom = min(center_y + 0.5f * box_h, offset_y + scale_y);
-
-                                if (right - left < 1e-3f || bottom - top < 1e-3f) continue;
-
-                                boxes.push_back({source.class_id,
-                                                 0.5f * (left + right), 0.5f * (top + bottom),
-                                                 right - left, bottom - top});
-                            }
+                            append_mosaic_boxes(quad_boxes,
+                                                {float(q.dst_x) / float(W), float(q.dst_y) / float(H)},
+                                                {float(q.qw) / float(W), float(q.qh) / float(H)}, boxes);
                         }
                     }
                     else

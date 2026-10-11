@@ -11,6 +11,55 @@
 
 using namespace opennn;
 
+TEST(Dataset, FilterDataRespectsUsedFeaturesRolesMissingValuesAndTolerance)
+{
+    TabularDataset dataset(6, {2}, {1});
+    MatrixR observations(6, 3);
+    const float missing = numeric_limits<float>::quiet_NaN();
+    observations << -0.5f * EPSILON, 1000, 1,
+                     0.5f,          1000, 3,
+                     missing,       1000, 1,
+                     0.75f,         1000, missing,
+                    -4,             1000, 1,
+                    -2 * EPSILON,   1000, 1;
+    dataset.set_data(observations);
+    dataset.set_variable_role(1, "None");
+    dataset.set_sample_roles("Training");
+    dataset.set_sample_roles({1, 3}, "Testing");
+    dataset.set_sample_roles({2}, "Validation");
+    dataset.set_sample_roles({4}, "None");
+    VectorR minimums(2), maximums(2);
+    minimums << 0, 0;
+    maximums << 1, 2;
+
+    const VectorI removed = dataset.filter_data(minimums, maximums);
+    ASSERT_EQ(removed.size(), 2);
+    EXPECT_EQ(removed(0), 1);
+    EXPECT_EQ(removed(1), 5);
+    EXPECT_EQ(dataset.get_sample_indices("None"), (vector<Index>{1, 4, 5}));
+    EXPECT_EQ(dataset.get_sample_indices("Training"), (vector<Index>{0}));
+    EXPECT_EQ(dataset.get_sample_indices("Validation"), (vector<Index>{2}));
+    EXPECT_EQ(dataset.get_sample_indices("Testing"), (vector<Index>{3}));
+    EXPECT_EQ(dataset.filter_data(minimums, maximums).size(), 0);
+}
+
+TEST(Dataset, FilterDataUsesAvailableBoundsIncludingOneSidedNanLimits)
+{
+    TabularDataset dataset(4, {1}, {1});
+    const float missing = numeric_limits<float>::quiet_NaN();
+    MatrixR observations(4, 2);
+    observations << 2, 100, missing, 100, 1, 100, 0.5f, 100;
+    dataset.set_data(observations);
+    dataset.set_sample_roles("Training");
+    EXPECT_EQ(dataset.filter_data(VectorR{}, VectorR{}).size(), 0);
+    EXPECT_EQ(dataset.get_samples_number("Training"), 4);
+
+    const VectorI removed = dataset.filter_data(VectorR::Constant(1, missing), VectorR::Constant(1, 1));
+    ASSERT_EQ(removed.size(), 1);
+    EXPECT_EQ(removed(0), 0);
+    EXPECT_EQ(dataset.get_sample_indices("Training"), (vector<Index>{1, 2, 3}));
+}
+
 TEST(Dataset, SplitRetainsUnusedRowsAndAssignsRemainderToTraining)
 {
     TabularDataset dataset(10, {1}, {1});
