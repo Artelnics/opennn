@@ -1,14 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
 
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   S M A L L   K   L I N E A R   K E R N E L
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
-
 // A first layer over tabular data contracts a handful of features into
 // hundreds or thousands of outputs: 8192 x 28 -> 1024 in bf16 does 0.5
 // GFLOP and writes 16.8 MB. The kernel is the output write, and what

@@ -295,7 +295,7 @@ InputSelectionResult GrowingInputs::perform_input_selection()
             {input_selection_results.optimum_validation_error <= validation_error_goal, StoppingCondition::ValidationErrorGoal,
              format("\nValidation error goal reached: {:g}\n", input_selection_results.optimum_validation_error)},
             {epoch >= maximum_epochs, StoppingCondition::MaximumEpochs,
-             "\nMaximum number of epochs reached.\n"},
+             "\nEpoch limit reached.\n"},
             {validation_failures >= maximum_validation_failures, StoppingCondition::MaximumValidationFailures,
              format("\nMaximum validation failures ({}) reached.\n", validation_failures)},
             {current_inputs >= maximum_inputs_number, StoppingCondition::MaximumInputs,

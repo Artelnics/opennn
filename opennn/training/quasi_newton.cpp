@@ -29,7 +29,7 @@ void QuasiNewton::calculate_inverse_hessian(OptimizerData& optimization_data) co
         optimization_data.views[ParameterDifferences].as_vector(),
         optimization_data.views[GradientDifference].as_vector(),
         optimization_data.views[InverseHessian].as_matrix(),
-        optimization_data.views[OldInverseHessianDotGradientDifference].as_vector());
+        optimization_data.views[BfgsWork].as_vector());
 }
 
 void QuasiNewton::update_full_batch_parameters(const Batch& batch,
@@ -79,7 +79,7 @@ void QuasiNewton::update_full_batch_parameters(const Batch& batch,
         else
             line_search.initial = 1.0f;
 
-        tie(line_search.learning_rate, back_propagation.metrics.loss_value) = calculate_directional_point(
+        tie(line_search.learning_rate, back_propagation.metrics.loss_value) = backtrack_along_direction(
             batch,
             forward_propagation,
             back_propagation,
@@ -123,7 +123,7 @@ TrainingResult QuasiNewton::train()
              "Use Adam or SGD on GPU.");
 
     FullBatchContext context;
-    prepare_full_batch_training(context, "Training with quasi-Newton method...");
+    prepare_full_batch_training(context, "Starting quasi-Newton (BFGS) training");
 
     BackPropagation training_back_propagation(context.training_samples_number, *loss);
 
@@ -207,7 +207,7 @@ void QuasiNewton::from_JSON(const JsonDocument& document)
     read_common_json(root_element);
 }
 
-pair<float, float> QuasiNewton::calculate_directional_point(
+pair<float, float> QuasiNewton::backtrack_along_direction(
     const Batch& batch,
     ForwardPropagation& forward_propagation,
     BackPropagation& back_propagation,

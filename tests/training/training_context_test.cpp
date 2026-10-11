@@ -1,14 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
 
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   T R A I N I N G   C O N T E X T   T E S T
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
-
 // TrainingContext exists to enforce three things its header spells out: the two
 // halves are built in the one order that works, a context laid over another
 // borrows its memory instead of allocating a second set, and a borrow that

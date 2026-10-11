@@ -1,14 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
 
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   C O N D I T I O N   T E S T S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
-
 // Every condition and objective sense a response optimization understands, stated against
 // a small untrained network and run through both solvers.
 //

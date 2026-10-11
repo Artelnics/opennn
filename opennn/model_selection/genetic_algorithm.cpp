@@ -152,45 +152,29 @@ void GeneticAlgorithm::initialize_population_correlations()
 {
     const Dataset* dataset = training->get_dataset();
 
-    const Index individuals_number = get_individuals_number();
     const Index genes_number = get_genes_number();
 
-    VectorB individual_genes(genes_number);
+    // Each input weighs its rank by mean absolute correlation with the targets:
+    // 1 for the weakest, genes_number for the strongest.
+    const VectorR mean_correlations =
+        dataset->calculate_input_target_correlation_values().array().abs().rowwise().mean();
+    const VectorI ascending = calculate_rank(mean_correlations);
 
-    const MatrixR absolute_correlations =
-        dataset->calculate_input_target_correlation_values().array().abs();
-    const VectorR absolute_mean_correlations = absolute_correlations.rowwise().mean();
-    const VectorI correlations_argsort =
-        calculate_rank(absolute_mean_correlations);
+    VectorR rank_weights(genes_number);
+    for (Index position = 0; position < genes_number; ++position)
+        rank_weights(ascending(position)) = float(position + 1);
 
-    VectorR gene_weight(genes_number);
-    for (Index p = 0; p < genes_number; ++p)
-        gene_weight(correlations_argsort(p)) = float(p + 1);
+    // Every individual activates a random number of distinct inputs, drawn with
+    // probability proportional to those weights, without replacement.
+    VectorB genes(genes_number);
 
-    const float correlations_sum = gene_weight.sum();
-
-    VectorR correlations_cumsum(genes_number);
-    partial_sum(gene_weight.data(), gene_weight.data() + genes_number, correlations_cumsum.data());
-
-    const float* begin = correlations_cumsum.data();
-    const float* end   = begin + genes_number;
-
-    for (Index i = 0; i < individuals_number; ++i)
+    for (Index individual = 0; individual < get_individuals_number(); ++individual)
     {
-        individual_genes.setConstant(false);
-
-        const Index true_count = random_integer(minimum_inputs_number, maximum_inputs_number);
-
-        while (individual_genes.count() < true_count)
-        {
-            const float arrow = random_uniform(0, correlations_sum);
-
-            const Index j = min(static_cast<Index>(upper_bound(begin, end, arrow) - begin), genes_number - 1);
-
-            individual_genes(j) = true;
-        }
-
-        population.row(i) = individual_genes;
+        genes.setConstant(false);
+        detail::fill_weighted_selection(rank_weights,
+                                        random_integer(minimum_inputs_number, maximum_inputs_number),
+                                        genes, [] { return random_uniform(0.0f, 1.0f); });
+        population.row(individual) = genes;
     }
 }
 
@@ -554,7 +538,7 @@ InputSelectionResult GeneticAlgorithm::perform_input_selection()
                  << "Generation minimum validation error: " << optimal_validation_error << "\n"
                  << "Best ever training error: " << input_selection_results.optimum_training_error << "\n"
                  << "Best ever validation error: " << input_selection_results.optimum_validation_error << "\n"
-                 << "Elapsed time: " << get_time(elapsed_time) << "\n"
+                 << "Selection time: " << get_time(elapsed_time) << "\n"
                  << "Best generation by validation error: " << best_generation << "\n";
 
         input_selection_results.stopping_condition = first_stopping_condition<StoppingCondition>(display,

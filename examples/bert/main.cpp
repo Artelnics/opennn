@@ -1,14 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
 
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   B E R T   S E N T I M E N T   E X A M P L E
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
-
 //   Fine-tunes a pretrained BERT (bert-base-uncased) on 1,000 Amazon reviews
 //   from UCI Sentiment Labelled Sentences (CC BY 4.0; see data/SOURCE.md).
 //   Model and vocabulary: Apache 2.0; preserve data/LICENSE_BERT.txt,

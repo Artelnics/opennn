@@ -1,14 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
 
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   E M O T I O N   A N A L Y S I S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
-
 // Six-class emotion classification of GoEmotions messages (CC BY 4.0;
 // see data/SOURCE.md) with a small
 // transformer encoder: token and learned positional embeddings, two post-norm

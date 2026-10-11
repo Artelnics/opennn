@@ -1,14 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
 
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   A M A Z O N   R E V I E W S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
-
 #include <iostream>
 
 #include "opennn/dataset/text_dataset.h"

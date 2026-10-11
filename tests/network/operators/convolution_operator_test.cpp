@@ -1,14 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
 
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   C O N V O L U T I O N   O P E R A T O R   T E S T
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
-
 // The convolution's forward maths is checked against cuDNN and against
 // numerical gradients elsewhere. What was not checked is its parameter
 // contract: the bias comes first when there is one and the slot vanishes when

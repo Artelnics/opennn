@@ -1,14 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
 
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   G R A D I E N T   L I N K   T E S T   S O U R C E
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
-
 // A layer writes its parameter gradients through views, so only one
 // BackPropagation's buffer is reachable at a time. Training with a remainder
 // batch keeps two contexts alive and alternates between them every epoch, and

@@ -1,14 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
 
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   E L E C T R O C A R D I O G R A M   A N O M A L Y   D E T E C T I O N
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
-
 // An autoencoder learns to reconstruct normal heartbeats. A heartbeat raises an
 // alert when its reconstruction error reaches the mean plus one standard
 // deviation of the errors on the normal training heartbeats.

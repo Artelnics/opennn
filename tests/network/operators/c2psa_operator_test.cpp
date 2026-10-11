@@ -1,14 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
 
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   C 2 P S A   O P E R A T O R   T E S T
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
-
 // C2PSA splits its input in half and attends over one half, so three of its
 // four weight matrices are sized on channels/2 and the fourth on the full
 // channel count. Nothing asserted on that split, nor on the two different

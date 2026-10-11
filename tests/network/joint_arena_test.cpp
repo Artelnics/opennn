@@ -1,11 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
 
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   J O I N T   A R E N A   T E S T
-//
 //   Pins the joint forward/delta memory arena. Both allocation paths produce
 //   identical numbers, so nothing else in the suite notices if the joint plan
 //   silently stops engaging -- only the footprint changes.

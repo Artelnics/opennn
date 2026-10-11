@@ -1,14 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
 
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   S I N G L E   O U T P U T   A C T I V A T I O N   F U S I O N   T E S T
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
-
 // A dense layer with one output runs its combination on CUDA as a warp-per-row
 // reduction rather than through cuBLASLt, and that kernel now applies the
 // layer's activation to the value it has just accumulated instead of leaving it

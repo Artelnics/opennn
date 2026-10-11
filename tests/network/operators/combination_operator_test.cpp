@@ -1,14 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
 
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   C O M B I N A T I O N   O P E R A T O R   T E S T
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
-
 // Every Dense layer runs through this operator, and it had no direct test. The
 // forward maths is covered indirectly everywhere, so these concentrate on the
 // parts that are not: the parameter-slot contract, which puts the bias FIRST

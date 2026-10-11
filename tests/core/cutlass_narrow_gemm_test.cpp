@@ -1,14 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
 
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   C U T L A S S   N A R R O W   G E M M   T E S T   S O U R C E
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
-
 // A dense forward whose contraction is at most 32 takes a CUTLASS kernel
 // instantiated for that shape instead of cuBLASLt, which can only promise
 // two-element alignment on an input 28 wide and dispatches an `align2` kernel

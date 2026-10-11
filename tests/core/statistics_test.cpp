@@ -469,6 +469,49 @@ TEST(StatisticsTest, CenteredHistogramHandlesZeroWidth)
     }
 }
 
+TEST(StatisticsTest, CenteredHistogramBinsAreContiguousAndEqual)
+{
+    // Range 10 over 5 bins gives width 2; the middle bin is centred on the requested value.
+    VectorR data(7);
+    data << -6.0f, -3.0f, -0.5f, 0.0f, 0.9f, 2.5f, 4.0f;
+
+    const Histogram result = histogram_centered(data, 0.0f, 5);
+
+    ASSERT_EQ(result.frequencies.size(), 5);
+
+    for (Index k = 0; k < 5; ++k)
+    {
+        EXPECT_NEAR(result.maximums(k) - result.minimums(k), 2.0f, 1e-6f);
+        EXPECT_NEAR(result.centers(k), 0.5f * (result.minimums(k) + result.maximums(k)), 1e-6f);
+        if (k > 0) EXPECT_NEAR(result.minimums(k), result.maximums(k - 1), 1e-6f);
+    }
+
+    EXPECT_NEAR(result.centers(2), 0.0f, 1e-6f);
+    EXPECT_NEAR(result.minimums(2), -1.0f, 1e-6f);
+    EXPECT_NEAR(result.maximums(2), 1.0f, 1e-6f);
+
+    // -6 lies below the first bin [-5, -3) and is counted there; -3 opens the second bin.
+    EXPECT_EQ(result.frequencies(0), 1.0f);
+    EXPECT_EQ(result.frequencies(1), 1.0f);
+    EXPECT_EQ(result.frequencies(2), 3.0f);
+    EXPECT_EQ(result.frequencies(3), 1.0f);
+    EXPECT_EQ(result.frequencies(4), 1.0f);
+    EXPECT_EQ(result.frequencies.sum(), 7.0f);
+}
+
+TEST(StatisticsTest, CenteredHistogramSkipsMissingValuesAndEvenBinCounts)
+{
+    VectorR data(5);
+    data << -2.0f, -1.0f, QUIET_NAN, 1.0f, 2.0f;
+
+    const Histogram result = histogram_centered(data, 0.0f, 4);
+
+    ASSERT_EQ(result.frequencies.size(), 4);
+    EXPECT_EQ(result.frequencies.sum(), 4.0f);
+    // With an even count the central bin is the lower of the two middle ones.
+    EXPECT_NEAR(result.centers(1), 0.0f, 1e-6f);
+}
+
 TEST(StatisticsTest, HistogramHandlesSubnormalBinWidth)
 {
     VectorR data(5);

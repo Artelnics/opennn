@@ -1,14 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
 
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   C O N C R E T E   R E S P O N S E   O P T I M I Z A T I O N
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
-
 //   Trains a model of concrete strength and optimizes the mix with it.
 
 #include <iostream>

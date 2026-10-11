@@ -1,14 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
 
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   A I R F O I L   S E L F   N O I S E   A P P L I C A T I O N
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
-
 #include <iostream>
 
 #include "opennn/core/random_utilities.h"

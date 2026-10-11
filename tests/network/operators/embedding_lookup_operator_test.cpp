@@ -1,14 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
 
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   E M B E D D I N G   L O O K U P   O P E R A T O R   T E S T
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
-
 // The lookup carries three conventions nothing asserted on directly: token 0 is
 // padding and produces a zero row, an out-of-range id is zeroed with a warning
 // rather than read out of bounds, and the optional sqrt(d) scaling and

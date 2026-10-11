@@ -1,14 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
 
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   S W I G L U   O P E R A T O R   T E S T
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
-
 // swiglu_forward/backward had no direct test: they were reached only through a
 // whole transformer, where a wrong gradient shows up as slightly worse training
 // rather than as anything a test asserts on. These check the closed forms

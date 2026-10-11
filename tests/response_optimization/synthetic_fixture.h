@@ -1,14 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
 
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   S Y N T H E T I C   F I X T U R E
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
-
 // Small untrained networks built on the spot, and the handful of ways the response tests
 // read them. Nothing here is trained: the weights are whatever the constructor gives, so a
 // test may ask where the response goes but never what value it takes.

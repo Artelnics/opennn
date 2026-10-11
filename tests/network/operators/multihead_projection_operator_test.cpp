@@ -1,14 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
 
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   M U L T I H E A D   P R O J E C T I O N   O P E R A T O R   T E S T
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
-
 // split_heads and concatenate_heads swap the two middle axes of a rank-4
 // tensor, between (batch, sequence, heads, dim) and (batch, heads, sequence,
 // dim). Pure index arithmetic, reached only through attention, and the kind of

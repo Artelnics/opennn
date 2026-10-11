@@ -125,7 +125,7 @@ TEST(YoloFPN, SingleHeadLargeGridNoObjectGradientMatchesNumerical)
              << "[override probe] parameter " << probed_index
              << " = " << current_parameters(probed_index) << "\n";
 
-        const float default_step = calculate_h(current_parameters(probed_index));
+        const float default_step = central_difference_step(current_parameters(probed_index));
 
         for (const float step : {default_step, 1e-4f, 1e-3f, 1e-2f})
         {

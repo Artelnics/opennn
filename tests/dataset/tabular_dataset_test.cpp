@@ -1073,6 +1073,43 @@ TEST(TabularDataset, TargetDistributionBinaryCountsUnusedSamples)
     EXPECT_EQ(distribution(0) + distribution(1), dataset.get_samples_number());
 }
 
+TEST(TabularDataset, TargetDistributionThresholdsAndMissingTargets)
+{
+    // A single target splits at 0.5 inclusive; missing targets are not counted.
+    TabularDataset binary(5, { 1 }, { 1 });
+
+    MatrixR binary_data(5, 2);
+    binary_data << type(0), type(0.5),
+                   type(1), type(0.49),
+                   type(2), type(NAN),
+                   type(3), type(0.9),
+                   type(4), type(0);
+    binary.set_data(binary_data);
+
+    const VectorI binary_distribution = binary.calculate_target_distribution();
+
+    ASSERT_EQ(binary_distribution.size(), 2);
+    EXPECT_EQ(binary_distribution(0), 2);
+    EXPECT_EQ(binary_distribution(1), 2);
+
+    // One-hot targets count a column only above 0.5; 0.5 and missing values do not count.
+    TabularDataset one_hot(4, { 1 }, { 3 });
+
+    MatrixR one_hot_data(4, 4);
+    one_hot_data << type(0), type(1),   type(0),   type(0),
+                    type(1), type(0.5), type(0.6), type(0),
+                    type(2), type(NAN), type(0),   type(1),
+                    type(3), type(0),   type(0),   type(1);
+    one_hot.set_data(one_hot_data);
+
+    const VectorI one_hot_distribution = one_hot.calculate_target_distribution();
+
+    ASSERT_EQ(one_hot_distribution.size(), 3);
+    EXPECT_EQ(one_hot_distribution(0), 1);
+    EXPECT_EQ(one_hot_distribution(1), 1);
+    EXPECT_EQ(one_hot_distribution(2), 2);
+}
+
 TEST(TabularDataset, MissingValuesUnuseMarksRowsUnused)
 {
     TabularDataset dataset(3, { 2 }, { 1 });

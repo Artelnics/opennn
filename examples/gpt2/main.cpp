@@ -1,14 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
 
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   G P T - 2   T E X T   G E N E R A T I O N   E X A M P L E
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
-
 //   Downloads GPT-2 small and generates a continuation for a prompt. Requires CUDA.
 //   The model retains OpenAI's Modified MIT License; see data/SOURCE.md.
 

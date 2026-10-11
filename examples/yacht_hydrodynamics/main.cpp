@@ -1,14 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
 
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   Y A C H T   H Y D R O D Y N A M I C S   A P P L I C A T I O N
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
-
 // Residuary resistance of sailing yachts from the Delft series towing-tank
 // experiments: select the hidden-layer width, train it with the quasi-Newton
 // method and assess the test samples with a linear regression.

@@ -1,14 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
 
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   S C A L E R   P A R I T Y   T E S T   S O U R C E
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
-
 // Scaling is the only preprocessing stage with two independent implementations:
 // scale_cpu in tensor_operations.cpp and the scale kernel in kernel_layers.cu.
 // Nothing forces them to agree, so this file walks every scaler in both

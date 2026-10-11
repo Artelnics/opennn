@@ -1,11 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
 
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   N U M E R I C A L   D E R I V A T I V E S   ( T E S T   H E L P E R )
-
 #include "tests/common/numerical_derivatives.h"
 
 #include "opennn/dataset/dataset.h"
@@ -16,6 +11,8 @@
 #include "opennn/core/device_backend.h"
 
 #include <Eigen/Dense>
+
+#include <cmath>
 
 namespace opennn
 {
@@ -73,10 +70,14 @@ struct TrainingSetup
 }
 
 
-float calculate_h(const float x)
+float central_difference_step(const float x)
 {
-    constexpr float finite_difference_step = 1e-3f;
-    return finite_difference_step * (1.0f + abs(x));
+    // 2^-10 is exactly representable and close to the point where truncation and
+    // single-precision rounding errors of a central difference balance for these
+    // checks; cbrt(epsilon), about 5e-3, was too coarse near activation kinks.
+    // The step grows with |x| beyond 1.
+    constexpr float base_step = 1.0f / 1024.0f;
+    return base_step * max(1.0f, abs(x));
 }
 
 
@@ -136,30 +137,23 @@ VectorR calculate_numerical_gradient(Loss& loss)
     const VectorMap parameters = setup.network->get_parameters_map();
     const Index parameters_number = parameters.size();
 
-    VectorR perturbed = parameters;
-    VectorR numerical_gradient = VectorR::Zero(parameters_number);
+    VectorR shifted = parameters;
+    VectorR numerical_gradient(parameters_number);
 
-    const auto error_at = [&]() -> float
+    // Error with one parameter moved by `offset`; the parameter is restored exactly afterwards.
+    const auto error_with_offset = [&](Index parameter, float offset) -> float
     {
-        setup.network->forward_propagate(setup.batch.get_inputs(),
-                                                perturbed,
-                                                setup.forward_propagation);
+        shifted(parameter) = parameters(parameter) + offset;
+        setup.network->forward_propagate(setup.batch.get_inputs(), shifted, setup.forward_propagation);
+        shifted(parameter) = parameters(parameter);
         return loss.calculate_error(setup.batch, setup.forward_propagation).error;
     };
 
-    for (Index i = 0; i < parameters_number; ++i)
+    for (Index parameter = 0; parameter < parameters_number; ++parameter)
     {
-        const float h = calculate_h(parameters(i));
-
-        perturbed(i) += h;
-        const float error_forward = error_at();
-
-        perturbed(i) -= 2.0f * h;
-        const float error_backward = error_at();
-
-        perturbed(i) += h;
-
-        numerical_gradient(i) = (error_forward - error_backward) / (2.0f * h);
+        const float step = central_difference_step(parameters(parameter));
+        numerical_gradient(parameter) = (error_with_offset(parameter, step)
+                                         - error_with_offset(parameter, -step)) / (2.0f * step);
     }
 
     return numerical_gradient;

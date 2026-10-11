@@ -1,14 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
 
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   C U T L A S S   N A R R O W   G E M M   S O U R C E
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
-
 #include "opennn/core/cuda/kernel_common.cuh"
 #include "opennn/core/cuda/cutlass_narrow_gemm.cuh"
 

@@ -1,15 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
 
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   B L A N K   E X A M P L E
-//
-//   Empty starting point for a new OpenNN application.
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// Empty starting point for a new OpenNN application.
 
 #include <iostream>
 

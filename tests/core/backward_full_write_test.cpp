@@ -1,14 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
 
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   B A C K W A R D   F U L L   W R I T E   T E S T   S O U R C E
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
-
 // average_pooling_3d_backward and upsampling_backward used to pre-zero their
 // gradient before launching, so a kernel that skipped an element still came out
 // zero and nobody noticed. Both now rely on the kernel writing every element

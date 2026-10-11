@@ -189,7 +189,7 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
             logging::info() << "Neurons number: " << neurons_number << "\n"
                  << "Training error: " << minimum_training_error << "\n"
                  << "Validation error: " << minimum_validation_error << "\n"
-                 << "Elapsed time: " << get_time(elapsed_time) << "\n";
+                 << "Selection time: " << get_time(elapsed_time) << "\n";
 
         if (previous_validation_error < minimum_validation_error)
             ++validation_failures;
@@ -210,7 +210,7 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
             {neurons_number >= maximum_neurons, StoppingCondition::MaximumNeurons,
              format("Epoch {}\nMaximum number of neurons reached: {}\n", epoch, neurons_number)},
             {epoch + 1 >= maximum_epochs, StoppingCondition::MaximumEpochs,
-             format("Epoch {}\nMaximum number of epochs reached.\n", epoch)}
+             format("Epoch {}\nEpoch limit reached.\n", epoch)}
         });
 
         if (neuron_selection_results.stopping_condition)

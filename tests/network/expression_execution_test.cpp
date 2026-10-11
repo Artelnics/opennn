@@ -1,14 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
 
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   E X P R E S S I O N   E X E C U T I O N   T E S T   S O U R C E
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
-
 // The exported model is a second implementation of the network: every layer
 // writes its own arithmetic as source text in write_expression, and nothing
 // forces that text to agree with forward_propagate. The other expression tests

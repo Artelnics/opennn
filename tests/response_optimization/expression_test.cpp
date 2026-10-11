@@ -1,14 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
 
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   E X P R E S S I O N   T E S T S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
-
 // The expression language a constraint or an objective is written in, on its own: what
 // compiling a string yields, what the compiled form says about itself, what it evaluates
 // to, and which strings are refused.

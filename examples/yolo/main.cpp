@@ -1,14 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
 
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   Y O L O   A P P L I C A T I O N
-//
-//   Artificial Intelligence Techniques SL (Artelnics)
-//   artelnics@artelnics.com
-
 #include <algorithm>
 #include <array>
 #include <cstdint>

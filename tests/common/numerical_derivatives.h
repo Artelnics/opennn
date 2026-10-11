@@ -1,11 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
 
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   N U M E R I C A L   D E R I V A T I V E S   ( T E S T   H E L P E R )
-//
 //   Test-side helpers for verifying analytical gradients against finite
 //   differences. Not part of the runtime library.
 
@@ -17,8 +12,8 @@
 namespace opennn
 {
 
-// Finite-difference step for a value: scaled so it stays meaningful for large x.
-float   calculate_h(float x);
+// Central-difference step for a value: 2^-10, scaled by |x| beyond 1.
+float   central_difference_step(float x);
 
 float   calculate_numerical_error(Loss& loss);
 VectorR calculate_gradient(Loss& loss);

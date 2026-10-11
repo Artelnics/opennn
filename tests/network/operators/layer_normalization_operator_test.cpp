@@ -1,14 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
 
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   L A Y E R   N O R M A L I Z A T I O N   O P E R A T O R   T E S T
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
-
 // The normalization kernels were reached only through a transformer, so their
 // two variants and the statistics they hand to the backward pass had no direct
 // coverage. These pin the closed forms and the invariants that make the

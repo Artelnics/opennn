@@ -240,7 +240,7 @@ TrainingResult LevenbergMarquardt::train()
              "Levenberg-Marquardt algorithm is not implemented with weighted squared error.");
 
     FullBatchContext context;
-    prepare_full_batch_training(context, "Training with Levenberg-Marquardt algorithm...");
+    prepare_full_batch_training(context, "Starting Levenberg-Marquardt training");
 
     BackPropagationLM training_back_propagation_lm(context.training_samples_number, loss);
 
@@ -284,7 +284,7 @@ TrainingResult LevenbergMarquardt::train()
 
     hooks.display_extra = [&]
     {
-        logging::info() << "Damping parameter: " << damping_parameter << "\n";
+        logging::info() << "Damping: " << damping_parameter << "\n";
     };
 
     hooks.post_step = [&]

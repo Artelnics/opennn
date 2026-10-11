@@ -1,14 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
 
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   C P U   F U S E D   A C T I V A T I O N   T E S T
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
-
 // A layer marks its activation operator "fused" from the activation alone, with
 // no device in the decision, and the operator then skips its own pass. Every
 // path that claims the fusion therefore has to apply the activation on the CPU

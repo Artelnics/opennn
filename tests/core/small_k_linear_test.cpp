@@ -1,14 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
 
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   S M A L L   K   L I N E A R   T E S T   S O U R C E
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
-
 // A bf16 dense forward whose contraction is at most 32 runs
 // small_k_linear_forward_cuda (opennn/core/cuda/kernel_small_k_linear.cu)
 // instead of cuBLASLt: the layer is an output write, and the kernel keeps it

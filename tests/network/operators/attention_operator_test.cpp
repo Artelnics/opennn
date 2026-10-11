@@ -1,14 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
 
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   A T T E N T I O N   O P E R A T O R   T E S T
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
-
 // The attention maths is covered on the GPU by the SDPA comparison tests. What
 // had no test at all is SdpaBf16Pack, whose entire reason for existing is that
 // one definition serves both the size ForwardPropagation plans and the pointers

@@ -19,8 +19,7 @@ public:
         ParameterUpdates,
         OldGradient,
         GradientDifference,
-        OldInverseHessianDotGradientDifference,
-        BFGS,
+        BfgsWork,
         InverseHessian,
         OldInverseHessian
     };
@@ -61,7 +60,7 @@ private:
         float slope = 0.0f;
     };
 
-    pair<float, float> calculate_directional_point(const Batch&,
+    pair<float, float> backtrack_along_direction(const Batch&,
                                                  ForwardPropagation&,
                                                  BackPropagation&,
                                                  float);

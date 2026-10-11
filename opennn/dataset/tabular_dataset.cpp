@@ -1319,44 +1319,21 @@ VectorI TabularDataset::calculate_target_distribution() const
 {
     require_in_memory_data("TabularDataset::calculate_target_distribution");
 
-    const Index samples_number = get_samples_number();
-    const Index targets_number = get_features_number(VariableRole::Target);
-    const vector<Index> target_feature_indices = get_feature_indices(VariableRole::Target);
+    const vector<Index> target_columns = get_feature_indices(VariableRole::Target);
 
-    VectorI class_distribution;
-
-    if (targets_number == 1)
+    // Comparisons with NaN are false, so missing targets fall in no count.
+    if (target_columns.size() == 1)
     {
-        class_distribution = VectorI::Zero(2);
-
-        const Index target_feature = target_feature_indices[0];
-
-        for (Index i = 0; i < samples_number; ++i)
-        {
-            const float value = data(i, target_feature);
-
-            if (isnan(value)) continue;
-
-            ++class_distribution(value >= 0.5f ? 1 : 0);
-        }
-    }
-    else
-    {
-        class_distribution = VectorI::Zero(targets_number);
-
-        for (Index i = 0; i < samples_number; ++i)
-        {
-            for (Index j = 0; j < targets_number; ++j)
-            {
-                const float value = data(i, target_feature_indices[j]);
-
-                if (isnan(value)) continue;
-                if (value > 0.5f) class_distribution(j)++;
-            }
-        }
+        // A single binary target: 0.5 or more is the positive class, at index 1.
+        const auto labels = data.col(target_columns.front()).array();
+        return (VectorI(2) << (labels < 0.5f).count(), (labels >= 0.5f).count()).finished();
     }
 
-    return class_distribution;
+    // One-hot targets: each class counts the samples whose column is above 0.5.
+    VectorI counts(ssize(target_columns));
+    ranges::transform(target_columns, counts.begin(),
+                      [&](Index column) { return Index((data.col(column).array() > 0.5f).count()); });
+    return counts;
 }
 
 vector<vector<Index>> TabularDataset::calculate_Tukey_outliers(const float cleaning_parameter, bool replace_with_nan)

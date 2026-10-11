@@ -855,7 +855,7 @@ void Optimizer::display_epoch_results(const Index epoch,
         else
             logging::info() << "Validation error: ---\n";
     }
-    logging::info() << "Elapsed time: " << get_time(elapsed_time) << "\n";
+    logging::info() << "Training time: " << get_time(elapsed_time) << "\n";
 }
 
 bool Optimizer::network_has_active_dropout() const
@@ -1236,7 +1236,7 @@ TrainingResult Optimizer::train_full_batch(FullBatchContext& context, const Full
             logging::info() << "Training error: " << step.displayed_error << "\n";
             if (has_validation) logging::info() << "Validation error: " << validation_error << "\n";
             if (hooks.display_extra) hooks.display_extra();
-            logging::info() << "Elapsed time: " << get_time(elapsed_time) << "\n";
+            logging::info() << "Training time: " << get_time(elapsed_time) << "\n";
         }
 
         if (epoch != 0) loss_decrease = old_loss - step.loss;
@@ -1293,7 +1293,7 @@ bool Optimizer::check_stopping_condition(TrainingResult& results,
         }
         else if (elapsed_time >= maximum_time)
         {
-            if (display) logging::info() << "Epoch " << epoch << "\nMaximum training time reached: " << get_time(elapsed_time) << "\n";
+            if (display) logging::info() << "Epoch " << epoch << "\nTime limit reached after " << get_time(elapsed_time) << "\n";
             results.stopping_condition = StoppingCondition::MaximumTime;
         }
         else
