@@ -204,7 +204,11 @@ pair<MatrixR, MatrixR> Evaluation::get_targets_and_outputs(const string& sample_
 
 Tensor3 Evaluation::calculate_error_data() const
 {
-    const auto [targets, outputs] = get_targets_and_outputs("Testing");
+    // References rather than a structured binding: Clang 17 and AppleClang crash
+    // when an OpenMP region uses a structured binding.
+    const pair<MatrixR, MatrixR> targets_and_outputs = get_targets_and_outputs("Testing");
+    const MatrixR& targets = targets_and_outputs.first;
+    const MatrixR& outputs = targets_and_outputs.second;
     const Index testing_samples_number = targets.rows();
     const Index outputs_number = outputs.cols();
 
