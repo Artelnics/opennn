@@ -238,11 +238,11 @@ TEST_F(LevenbergMarquardtTest, StoppingLossGoal)
     loss.set_regularization("None");
     LevenbergMarquardt levenberg_marquardt(&loss);
 
-    const type training_loss_goal = type(0.1);
+    const type training_loss_goal = type(0.05);
     levenberg_marquardt.set_loss_goal(training_loss_goal);
     levenberg_marquardt.set_minimum_loss_decrease(0.0f);
     levenberg_marquardt.set_maximum_epochs(10000);
-    levenberg_marquardt.set_maximum_time(1000.0);
+    levenberg_marquardt.set_maximum_time(600.0f);
     levenberg_marquardt.set_display(false);
 
     const TrainingResult training_results = levenberg_marquardt.train();

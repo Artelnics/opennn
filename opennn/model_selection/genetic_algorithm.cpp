@@ -481,11 +481,10 @@ InputSelectionResult GeneticAlgorithm::perform_input_selection()
 
     Network* network = loss->get_network();
 
-    time_t beginning_time;
     float elapsed_time = 0.0f;
     Index best_generation = 0;
 
-    time(&beginning_time);
+    const auto start = chrono::steady_clock::now();
 
     for (Index epoch = 0; epoch < maximum_epochs; ++epoch)
     {
@@ -527,7 +526,7 @@ InputSelectionResult GeneticAlgorithm::perform_input_selection()
             input_selection_results.optimum_validation_error = optimal_validation_error;
         }
 
-        elapsed_time = get_elapsed_time(beginning_time);
+        elapsed_time = get_elapsed_time(start);
 
         if (display)
             logging::info() << "\n"

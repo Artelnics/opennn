@@ -1329,10 +1329,10 @@ VectorI TabularDataset::calculate_target_distribution() const
         return (VectorI(2) << (labels < 0.5f).count(), (labels >= 0.5f).count()).finished();
     }
 
-    // One-hot targets: each class counts the samples whose column is above 0.5.
+    // One-hot targets use the same rule: a class counts the samples whose column is 0.5 or more.
     VectorI counts(ssize(target_columns));
     ranges::transform(target_columns, counts.begin(),
-                      [&](Index column) { return Index((data.col(column).array() > 0.5f).count()); });
+                      [&](Index column) { return Index((data.col(column).array() >= 0.5f).count()); });
     return counts;
 }
 

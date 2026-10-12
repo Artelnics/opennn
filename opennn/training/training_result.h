@@ -9,11 +9,12 @@
 namespace opennn
 {
 
-enum class StoppingCondition {MinimumLossDecrease,
-                              LossGoal,
+// Listed in reporting priority: convergence, early stopping, then the budgets.
+enum class StoppingCondition {LossGoal,
+                              MinimumLossDecrease,
                               MaximumValidationErrorIncreases,
-                              MaximumEpochsNumber,
-                              MaximumTime};
+                              MaximumTime,
+                              MaximumEpochsNumber};
 
 struct TrainingResult
 {

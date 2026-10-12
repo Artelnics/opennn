@@ -364,9 +364,9 @@ string get_first_word(const string& line)
     return line.substr(0, line.find_first_of(" ="));
 }
 
-float get_elapsed_time(const time_t& beginning_time)
+float get_elapsed_time(const chrono::steady_clock::time_point start)
 {
-    return float(difftime(time(nullptr), beginning_time));
+    return chrono::duration<float>(chrono::steady_clock::now() - start).count();
 }
 
 string get_time(float time)

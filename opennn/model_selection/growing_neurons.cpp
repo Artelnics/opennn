@@ -93,11 +93,9 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
 
     Index validation_failures = 0;
 
-    time_t beginning_time;
-
     float elapsed_time = 0.0f;
 
-    time(&beginning_time);
+    const auto start = chrono::steady_clock::now();
 
     const vector<vector<Index>> fold_partition =
         folds_number > 1 ? build_fold_partition(training, folds_number) : vector<vector<Index>>{};
@@ -183,7 +181,7 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
                      << "-fold CV validation error " << minimum_validation_error << "\n";
         }
 
-        elapsed_time = get_elapsed_time(beginning_time);
+        elapsed_time = get_elapsed_time(start);
 
         if (display)
             logging::info() << "Neurons number: " << neurons_number << "\n"

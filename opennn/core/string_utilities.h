@@ -6,6 +6,7 @@
 #include "opennn/core/opennn_types.h"
 
 #include <charconv>
+#include <chrono>
 #include <cctype>
 #include <initializer_list>
 #include <limits>
@@ -150,7 +151,8 @@ namespace opennn
 
     void display_progress_bar(Index, Index);
 
-    float get_elapsed_time(const time_t& beginning_time);
+    // Seconds on the monotonic clock since start.
+    float get_elapsed_time(chrono::steady_clock::time_point start);
 
     string get_time(float);
 

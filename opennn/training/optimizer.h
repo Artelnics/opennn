@@ -162,9 +162,23 @@ protected:
     void set_names();
     void prepare_training_artifacts();
 
-    bool check_stopping_condition(TrainingResult& results,
-        Index epoch, float elapsed_time, float training_error,
-        Index validation_failures, float training_loss, bool has_validation) const;
+    // Training always runs at least one epoch, even when the limit is zero.
+    Index get_epoch_budget() const noexcept { return max<Index>(maximum_epochs, 1); }
+
+    struct EpochReport
+    {
+        Index completed_epochs = 0;
+        float seconds = 0.0f;
+        float training_error = 0.0f;
+        float loss = 0.0f;
+        optional<float> loss_decrease;
+        Index validation_failures = 0;
+    };
+
+    optional<StoppingCondition> find_stopping_condition(const EpochReport&,
+                                                        float minimum_loss_decrease = -MAX) const;
+
+    void close_training_result(TrainingResult&, const EpochReport&, bool has_validation) const;
 
     struct BestModelSnapshot
     {

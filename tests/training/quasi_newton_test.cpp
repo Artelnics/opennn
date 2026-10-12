@@ -229,11 +229,11 @@ TEST_F(QuasiNewtonTest, StoppingLossGoal)
     loss.set_error(Loss::Error::MeanSquaredError);
     QuasiNewton quasi_newton(&loss);
 
-    const type training_loss_goal = type(0.1);
+    const type training_loss_goal = type(0.05);
     quasi_newton.set_loss_goal(training_loss_goal);
     quasi_newton.set_minimum_loss_decrease(0.0f);
     quasi_newton.set_maximum_epochs(10000);
-    quasi_newton.set_maximum_time(1000.0);
+    quasi_newton.set_maximum_time(600.0f);
     quasi_newton.set_display(false);
 
     const TrainingResult training_results = quasi_newton.train();

@@ -69,15 +69,15 @@ TEST(StatisticsTest, Mean)
     EXPECT_NEAR(mean(matrix)(1), type(1), EPSILON);
     EXPECT_NEAR(mean(matrix)(2), type(4), EPSILON);
 
-    VectorR vector(2);
-    vector <<  type(1), type(1);
+    VectorR vector(3);
+    vector << type(0.5), type(2.5), type(6);
 
-    EXPECT_NEAR(mean(vector), type(1), EPSILON);
+    EXPECT_NEAR(mean(vector), type(3), EPSILON);
 
     vector.resize(2);
-    vector <<  type(-1), type(1) ;
+    vector << type(-3), type(5);
 
-    EXPECT_NEAR(mean(vector), type(0), EPSILON);
+    EXPECT_NEAR(mean(vector), type(1), EPSILON);
 
     vector.resize(5);
     vector <<  type(1), type(NAN), type(2.0), type(3.0), type(4.0);
@@ -118,19 +118,13 @@ TEST(StatisticsTest, StandardDeviation)
 
     EXPECT_NEAR(opennn::standard_deviation(vector), 0, EPSILON);
 
+    // Two values 4 apart: the sample variance is 4^2 / 2 = 8.
     vector.resize(2);
-    vector <<  type(1), type(1);
+    vector << type(3), type(7);
 
     standard_deviation = opennn::standard_deviation(vector);
 
-    EXPECT_NEAR(standard_deviation, 0, EPSILON);
-
-    vector.resize(2);
-    vector <<  type(-1.0), type(1) ;
-
-    standard_deviation = opennn::standard_deviation(vector);
-
-    EXPECT_NEAR(standard_deviation, std::sqrt(type(2)), EPSILON);
+    EXPECT_NEAR(standard_deviation, std::sqrt(type(8)), EPSILON);
 
     vector.resize(1);
     vector[0] = type(NAN);
@@ -546,27 +540,22 @@ TEST(StatisticsTest, Histograms)
 
 TEST(StatisticsTest, MinimalIndex)
 {
-    VectorR vector;
+    EXPECT_EQ(minimal_index(VectorR()), 0);
 
-    EXPECT_EQ(minimal_index(vector), 0);
+    VectorR vector(4);
+    vector << type(4), type(-2.5), type(3), type(-2);
 
-    vector.resize(3);
-    vector <<  type(1),type(0),type(-1);
-
-    EXPECT_EQ(minimal_index(vector), 2);
+    EXPECT_EQ(minimal_index(vector), 1);
 }
 
 TEST(StatisticsTest, MaximalIndex)
 {
+    EXPECT_EQ(maximal_index(VectorR()), 0);
 
-    VectorR vector(0);
+    VectorR vector(4);
+    vector << type(-3), type(2), type(8.5), type(8);
 
-    EXPECT_EQ(maximal_index(vector), 0);
-
-    vector.resize(3);
-    vector <<  type(1),type(0),type(-1);
-
-    EXPECT_EQ(maximal_index(vector), 0);
+    EXPECT_EQ(maximal_index(vector), 2);
 }
 
 TEST(StatisticsTest, MaximalIndices)
@@ -576,10 +565,10 @@ TEST(StatisticsTest, MaximalIndices)
 
     EXPECT_EQ(maximal_indices(vector,0).rows(), 0);
 
-    vector.resize(3);
-    vector <<  type(-1),type(0),type(1) ;
+    vector.resize(4);
+    vector << type(0.2), type(9), type(-4), type(3);
 
-    EXPECT_EQ(maximal_indices(vector, 1)[0], 2);
+    EXPECT_EQ(maximal_indices(vector, 1)[0], 1);
 
     vector.resize(4);
     vector <<  type(1),type(1),type(1),type(1) ;

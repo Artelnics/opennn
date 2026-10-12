@@ -1,14 +1,14 @@
 {
   "limits": {
     "files": 213,
-    "nloc": 59276,
-    "functions": 3559,
+    "nloc": 59217,
+    "functions": 3561,
     "functions_nloc_100": 37,
     "functions_ccn_25": 33,
     "maximum_function_nloc": 297,
     "maximum_function_ccn": 47,
     "duplicate_percent": 0.68,
-    "physical_lines": 76758,
+    "physical_lines": 76691,
     "cuda_files": 44,
     "cuda_nloc": 6202,
     "cuda_functions": 332,
@@ -17,7 +17,7 @@
     "cuda_maximum_function_nloc": 119,
     "cuda_maximum_function_ccn": 28,
     "cuda_duplicate_percent": 3.05,
-    "cuda_physical_lines": 8290,
+    "cuda_physical_lines": 8122,
     "combined_duplicate_percent": 0.94
   }
 }

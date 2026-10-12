@@ -875,7 +875,8 @@ bool Optimizer::network_has_active_dropout() const
 
 TrainingResult Optimizer::train()
 {
-    TrainingResult results(maximum_epochs + 1);
+    const Index epoch_budget = get_epoch_budget();
+    TrainingResult results(epoch_budget);
     cuda_graph_capture_failed = false;
 
     if (!loss || !loss->get_network() || !loss->get_dataset())
@@ -886,8 +887,8 @@ TrainingResult Optimizer::train()
 
     const bool on_gpu = network->is_gpu();
 
-    if (display) logging::info() << "Training with " << get_display_name()
-                     << (on_gpu ? " CUDA" : "") << "...\n";
+    if (display) logging::info() << "Starting " << get_display_name() << " training"
+                                 << (on_gpu ? " on CUDA" : "") << "\n";
 
     Dataset* dataset = loss->get_dataset();
 
@@ -978,7 +979,7 @@ TrainingResult Optimizer::train()
     float training_accuracy = 0.0f;
     float validation_error = 0.0f;
     float validation_accuracy = 0.0f;
-    Index validation_failures = 0;
+    EpochReport report;
     BestModelSnapshot best_model;
 
     const bool is_token_cross_entropy = (loss->get_error() == Loss::Error::CrossEntropy3d);
@@ -1022,11 +1023,8 @@ TrainingResult Optimizer::train()
         && validation_batch_size > 0
         && validation_samples_number % validation_batch_size != 0;
 
-    time_t beginning_time;
-    time(&beginning_time);
     const auto measured_training_start = chrono::steady_clock::now();
     double measured_validation_seconds = 0.0;
-    float elapsed_time = 0.0f;
 
     {
         device::CudaAllocationGrowthGuard steady_state_guard(
@@ -1035,7 +1033,7 @@ TrainingResult Optimizer::train()
         vector<vector<Index>> next_training_batches;
         future<void> next_training_batches_ready;
 
-        for (Index epoch = 0; epoch <= maximum_epochs; ++epoch)
+        for (Index epoch = 0; epoch < epoch_budget; ++epoch)
         {
             if (should_display(epoch)) logging::info() << "Epoch: " << epoch << "\n";
 
@@ -1048,7 +1046,7 @@ TrainingResult Optimizer::train()
                 dataset->get_batches(training_sample_indices, training_batch_size,
                                      training_shuffle, training_batches);
 
-            if (on_gpu && epoch + 1 < maximum_epochs)
+            if (on_gpu && epoch + 1 < epoch_budget)
             {
                 const unsigned shuffle_seed =
                     unsigned(random_integer(0, numeric_limits<int>::max()));
@@ -1094,30 +1092,31 @@ TrainingResult Optimizer::train()
                 results.validation_error_history(epoch) = validation_error;
 
                 update_best_parameters(network, validation_error, epoch,
-                                       validation_failures, best_model);
+                                       report.validation_failures, best_model);
 
                 if (on_gpu) device::synchronize(device::get_compute_stream());
                 measured_validation_seconds += chrono::duration<double>(
                     chrono::steady_clock::now() - measured_validation_start).count();
             }
 
-            elapsed_time = get_elapsed_time(beginning_time);
+            report.completed_epochs = epoch + 1;
+            report.seconds = get_elapsed_time(measured_training_start);
+            report.training_error = training_error;
+            report.loss = training_back_propagation.metrics.loss_value;
 
             display_epoch_results(epoch, training_error, training_accuracy,
                                   validation_error, validation_accuracy,
-                                  has_validation, val_fresh, is_token_cross_entropy, elapsed_time);
+                                  has_validation, val_fresh, is_token_cross_entropy, report.seconds);
 
             if (post_epoch_callback)
                 post_epoch_callback(epoch, training_error, validation_error, network);
 
-            if (check_stopping_condition(results, epoch, elapsed_time,
-                                         results.training_error_history(epoch),
-                                         validation_failures,
-                                         training_back_propagation.metrics.loss_value,
-                                         has_validation))
-                break;
+            results.stopping_condition = find_stopping_condition(report);
+            if (results.stopping_condition) break;
         }
     }
+
+    close_training_result(results, report, has_validation);
 
     if (on_gpu) device::synchronize(device::get_compute_stream());
     results.training_seconds = max(0.0, chrono::duration<double>(
@@ -1184,24 +1183,21 @@ void Optimizer::prepare_full_batch_training(FullBatchContext& context, const cha
 
 TrainingResult Optimizer::train_full_batch(FullBatchContext& context, const FullBatchHooks& hooks)
 {
-    TrainingResult results(maximum_epochs + 1);
+    const Index epoch_budget = get_epoch_budget();
+    TrainingResult results(epoch_budget);
 
     Network* network = context.network;
     const bool has_validation = context.validation_forward_propagation != nullptr;
 
-    Index validation_failures = 0;
     BestModelSnapshot best_model;
+    EpochReport report;
+    optional<float> previous_loss;
 
-    float old_loss = 0.0f;
-    float loss_decrease = MAX;
-
-    time_t beginning_time;
-    time(&beginning_time);
-    float elapsed_time = 0.0f;
+    const auto start = chrono::steady_clock::now();
 
     if (hooks.setup_state) hooks.setup_state();
 
-    for (Index epoch = 0; epoch <= maximum_epochs; ++epoch)
+    for (Index epoch = 0; epoch < epoch_budget; ++epoch)
     {
         if (should_display(epoch)) logging::info() << "Epoch: " << epoch << "\n";
 
@@ -1226,39 +1222,31 @@ TrainingResult Optimizer::train_full_batch(FullBatchContext& context, const Full
             results.validation_error_history(epoch) = validation_error;
 
             update_best_parameters(network, validation_error, epoch,
-                                   validation_failures, best_model);
+                                   report.validation_failures, best_model);
         }
 
-        elapsed_time = get_elapsed_time(beginning_time);
+        report.completed_epochs = epoch + 1;
+        report.seconds = get_elapsed_time(start);
+        report.training_error = step.training_error;
+        report.loss = step.loss;
+        report.loss_decrease = previous_loss ? optional<float>(*previous_loss - step.loss) : nullopt;
+        previous_loss = step.loss;
 
         if (should_display(epoch))
         {
             logging::info() << "Training error: " << step.displayed_error << "\n";
             if (has_validation) logging::info() << "Validation error: " << validation_error << "\n";
             if (hooks.display_extra) hooks.display_extra();
-            logging::info() << "Training time: " << get_time(elapsed_time) << "\n";
+            logging::info() << "Training time: " << get_time(report.seconds) << "\n";
         }
 
-        if (epoch != 0) loss_decrease = old_loss - step.loss;
-
-        old_loss = step.loss;
-
-        if (loss_decrease < hooks.minimum_loss_decrease)
-        {
-            if (display) logging::info() << "Epoch " << epoch << "\nMinimum loss decrease reached: " << loss_decrease << "\n";
-            results.stopping_condition = StoppingCondition::MinimumLossDecrease;
-        }
-
-        if (check_stopping_condition(results, epoch, elapsed_time,
-                                     results.training_error_history(epoch),
-                                     validation_failures,
-                                     step.loss,
-                                     has_validation))
-            break;
+        results.stopping_condition = find_stopping_condition(report, hooks.minimum_loss_decrease);
+        if (results.stopping_condition) break;
 
         if (hooks.post_step) hooks.post_step();
     }
 
+    close_training_result(results, report, has_validation);
     restore_best_parameters(network, results, best_model);
 
     if (display) results.print();
@@ -1266,46 +1254,35 @@ TrainingResult Optimizer::train_full_batch(FullBatchContext& context, const Full
     return results;
 }
 
-bool Optimizer::check_stopping_condition(TrainingResult& results,
-                                          const Index epoch,
-                                          const float elapsed_time,
-                                          const float training_error,
-                                          const Index validation_failures,
-                                          const float training_loss,
-                                          const bool has_validation) const
+optional<StoppingCondition> Optimizer::find_stopping_condition(const EpochReport& report,
+                                                               const float minimum_loss_decrease) const
 {
-    if (!results.stopping_condition)
+    const pair<bool, StoppingCondition> conditions[] =
     {
-        if (training_error < training_loss_goal)
-        {
-            if (display) logging::info() << "Epoch " << epoch << "\nLoss goal reached: " << training_error << "\n";
-            results.stopping_condition = StoppingCondition::LossGoal;
-        }
-        else if (validation_failures >= maximum_validation_failures)
-        {
-            if (display) logging::info() << "Epoch " << epoch << "\nMaximum validation failures reached: " << validation_failures << "\n";
-            results.stopping_condition = StoppingCondition::MaximumValidationErrorIncreases;
-        }
-        else if (epoch + 1 >= maximum_epochs)
-        {
-            if (display) logging::info() << "Epoch " << epoch << "\nMaximum epochs number reached: " << epoch + 1 << "\n";
-            results.stopping_condition = StoppingCondition::MaximumEpochsNumber;
-        }
-        else if (elapsed_time >= maximum_time)
-        {
-            if (display) logging::info() << "Epoch " << epoch << "\nTime limit reached after " << get_time(elapsed_time) << "\n";
-            results.stopping_condition = StoppingCondition::MaximumTime;
-        }
-        else
-            return false;
-    }
+        {report.training_error < training_loss_goal, StoppingCondition::LossGoal},
+        {report.loss_decrease.has_value() && *report.loss_decrease < minimum_loss_decrease,
+         StoppingCondition::MinimumLossDecrease},
+        {report.validation_failures >= maximum_validation_failures,
+         StoppingCondition::MaximumValidationErrorIncreases},
+        {report.seconds >= maximum_time, StoppingCondition::MaximumTime},
+        {report.completed_epochs >= get_epoch_budget(), StoppingCondition::MaximumEpochsNumber}
+    };
 
-    results.loss = training_loss;
-    results.resize_training_error_history(epoch + 1);
-    results.resize_validation_error_history(has_validation ? epoch + 1 : 0);
-    results.elapsed_time = get_time(elapsed_time);
+    for (const auto& [reached, condition] : conditions)
+        if (reached) return condition;
 
-    return true;
+    return nullopt;
+}
+
+void Optimizer::close_training_result(TrainingResult& results,
+                                      const EpochReport& report,
+                                      const bool has_validation) const
+{
+    // Histories were sized for the whole budget; keep the epochs that ran.
+    results.resize_training_error_history(report.completed_epochs);
+    results.resize_validation_error_history(has_validation ? report.completed_epochs : 0);
+    results.loss = report.loss;
+    results.elapsed_time = get_time(report.seconds);
 }
 
 void Optimizer::update_best_parameters(Network* network,

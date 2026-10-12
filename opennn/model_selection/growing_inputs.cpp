@@ -130,9 +130,8 @@ InputSelectionResult GrowingInputs::perform_input_selection()
 
     Index validation_failures = 0;
 
-    time_t beginning_time;
     float elapsed_time = 0.0f;
-    time(&beginning_time);
+    const auto start = chrono::steady_clock::now();
 
     Index epoch = 0;
 
@@ -284,7 +283,7 @@ InputSelectionResult GrowingInputs::perform_input_selection()
         }
 
         ++variable_index;
-        elapsed_time = get_elapsed_time(beginning_time);
+        elapsed_time = get_elapsed_time(start);
 
         const Index current_inputs = dataset->get_variables_number(VariableRole::Input);
 
