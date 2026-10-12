@@ -315,6 +315,12 @@ applicable notices and source records; see `examples/yolo/data/SOURCE.md`.
 
 ## 26.0 release notes and migration
 
+### 26.0.1
+
+A patch release with one fix: `Evaluation::calculate_error_data` no longer uses
+a structured binding inside an OpenMP region, which crashed Clang 17 and
+AppleClang. Results are unchanged.
+
 ### What's new in 26.0
 
 OpenNN now numbers its major versions by year: 26.0 follows 8.x, and there is
@@ -516,7 +522,8 @@ Before promotion:
 - Check the [release notes](#whats-new-in-260). The GitHub release notes can start from that summary and the itemized
   changelog linked there.
 - After the owner's decision, merge `dev` into `master`, create the annotated
-  `v26.0.0` tag on the reviewed commit, and publish the artifacts with their
+  `v26.0.x` tag on the reviewed commit, only after every `ci.yml` job has
+  passed on it, and publish the artifacts with their
   checksums and verification record.
 
 ### Installation packages
