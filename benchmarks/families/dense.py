@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: AGPL-3.0-only
-# Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
+# Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 """PyTorch dense benchmark matching dense.cpp. Modes: train, infer, capacity and quality.
 Inputs are normalized HIGGS CSV files from prepare.py. FP32 permits TF32; BF16 uses

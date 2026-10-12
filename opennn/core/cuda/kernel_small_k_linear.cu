@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 // A first layer over tabular data contracts a handful of features into
 // hundreds or thousands of outputs: 8192 x 28 -> 1024 in bf16 does 0.5

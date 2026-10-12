@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 // Above 16,384 rows the dense forward issues its GEMM in chunks of rows rather
 // than as one cuBLASLt call, because cuBLASLt loses throughput on a very tall

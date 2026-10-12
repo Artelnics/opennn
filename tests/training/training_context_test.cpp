@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 // TrainingContext exists to enforce three things its header spells out: the two
 // halves are built in the one order that works, a context laid over another

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 // The attention maths is covered on the GPU by the SDPA comparison tests. What
 // had no test at all is SdpaBf16Pack, whose entire reason for existing is that

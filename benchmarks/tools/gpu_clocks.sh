@@ -1,6 +1,6 @@
 #!/bin/bash
 # SPDX-License-Identifier: AGPL-3.0-only
-# Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
+# Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 # Lock a sustainable graphics clock chosen for the GPU under test.
 # Usage: sudo ./gpu_clocks.sh lock MHz | unlock | status

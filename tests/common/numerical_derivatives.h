@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 //   Test-side helpers for verifying analytical gradients against finite
 //   differences. Not part of the runtime library.

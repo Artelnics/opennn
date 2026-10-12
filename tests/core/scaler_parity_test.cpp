@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 // Scaling is the only preprocessing stage with two independent implementations:
 // scale_cpu in tensor_operations.cpp and the scale kernel in kernel_layers.cu.

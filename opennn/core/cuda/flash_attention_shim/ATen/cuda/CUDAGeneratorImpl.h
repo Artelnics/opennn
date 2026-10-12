@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 // Stand-in for the two ATen entities FlashAttention-2 touches, so its kernels
 // build without PyTorch. Only the non-captured path is provided, which is all a

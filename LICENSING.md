@@ -1,7 +1,8 @@
 # OpenNN licensing
 
-OpenNN is Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L.
-(Artelnics) and Roberto Lopez. You may use it under either of two licences.
+OpenNN is Copyright (C) 2026 Artificial Intelligence Techniques, S.L.
+(Artelnics) and Roberto López González. You may use it under either of two
+licences.
 
 ## Open source: GNU Affero General Public License, version 3
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: AGPL-3.0-only
-# Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
+# Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 # Usage: check_headers.sh <c++-compiler> <repo-root> [eigen-include-dirs(;-separated)]
 # Compiles every opennn/**/*.h in isolation (-fsyntax-only, CPU mode) so that

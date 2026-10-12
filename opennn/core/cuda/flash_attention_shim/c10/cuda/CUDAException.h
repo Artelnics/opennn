@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 // Stand-in for the two launch-check macros FlashAttention-2 uses, so its
 // kernels build without PyTorch: both turn a CUDA error into an abort naming

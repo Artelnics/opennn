@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 //   Downloads a pretrained Qwen3-4B model and starts an interactive chat.
 //   Model and tokenizer: Apache 2.0; preserve data/LICENSE_QWEN3.txt,

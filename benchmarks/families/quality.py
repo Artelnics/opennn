@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: AGPL-3.0-only
-# Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
+# Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 """PyTorch Python counterpart of quality.cpp; scoring lives in quality_runner.py."""
 

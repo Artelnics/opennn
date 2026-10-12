@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 //   Fine-tunes a pretrained BERT (bert-base-uncased) on 1,000 Amazon reviews
 //   from UCI Sentiment Labelled Sentences (CC BY 4.0; see data/SOURCE.md).

@@ -119,8 +119,8 @@ configuration, reproduction command and error, and file it in
 
 ## License
 
-OpenNN is Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L.
-(Artelnics) and Roberto Lopez, and is dual-licensed:
+OpenNN is Copyright (C) 2026 Artificial Intelligence Techniques, S.L.
+(Artelnics) and Roberto López González, and is dual-licensed:
 
 - **Open source:** the GNU Affero General Public License, version 3 only
   ([LICENSE.txt](LICENSE.txt)), with additional permissions for linking with

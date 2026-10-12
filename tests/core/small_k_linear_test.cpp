@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 // A bf16 dense forward whose contraction is at most 32 runs
 // small_k_linear_forward_cuda (opennn/core/cuda/kernel_small_k_linear.cu)
