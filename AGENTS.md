@@ -2,7 +2,7 @@
 
 [README.md](README.md) is the user guide: first build, installed package and
 example-data licences. This file covers where things are, build options, how to
-verify changes, CI, example data, the 9.0 release notes and migration,
+verify changes, CI, example data, the 26.0 release notes and migration,
 and releases. Keep rules here repository-wide; workstation paths belong in
 environment variables, not in repository files.
 
@@ -313,12 +313,17 @@ before redistributing `darknet53.conv.74` or `yolov3-tiny.weights`. Optional
 external datasets and Ultralytics conversions need their file manifests and
 applicable notices and source records; see `examples/yolo/data/SOURCE.md`.
 
-## 9.0 release notes and migration
+## 26.0 release notes and migration
 
-### What's new in 9.0
+### What's new in 26.0
 
-Keep the candidate at 9.0.0 during licensing preparation. The planned 26.0
-number is deferred until the licence change has been completed.
+OpenNN now numbers its major versions by year: 26.0 follows 8.x, and there is
+no 9.x release.
+
+- A new licence. OpenNN 26.0 and later are offered under the GNU AGPL
+  version 3 only, with additional permissions for NVIDIA and Intel libraries
+  and for exported models, or under a commercial licence from Artelnics. 8.x
+  and earlier keep the LGPL 2.1 or later. See [LICENSING.md](LICENSING.md).
 
 - Levenberg-Marquardt now evaluates damped steps against an immutable curvature
   matrix and commits only accepted candidate metrics. Its damping factor must
@@ -350,11 +355,11 @@ number is deferred until the licence change has been completed.
 The itemized list, including internal refactoring, is in
 [CHANGELOG.md at `af6ee7ef5`](https://github.com/Artelnics/opennn/blob/af6ee7ef5157a48b2aa23689136dbd2976124239/CHANGELOG.md).
 
-### Migrating from 8.x to 9.0
+### Migrating from 8.x to 26.0
 
-9.0 is a major source and model-format migration. Recompile consumers;
+26.0 is a major source and model-format migration. Recompile consumers;
 replacing an 8.x shared library in place is not supported. The package version
-file requires the same major version, so request `find_package(OpenNN 9.0 ...)`.
+file requires the same major version, so request `find_package(OpenNN 26.0 ...)`.
 There are no old-name aliases or forwarding headers, and former JSON root and
 factory names are rejected. The renames below do not change tensor layouts,
 weights, numerical algorithms or memory ownership.
@@ -432,7 +437,7 @@ corpus.read_txt("corpus.txt");
 #### Time-series windows
 
 8.x treated sample `i` as the present instant: inputs were rows `[i-past, i-1]`
-and targets began at `i+1`. 9.0 treats the sample index as the window start:
+and targets began at `i+1`. 26.0 treats the sample index as the window start:
 inputs are `[i, i+past-1]` and targets begin at `i+past`. With a single target
 window the target is `i+past+future-1`; multi-target windows include every future
 step. Regenerate chronological splits and compare windows explicitly; do not
@@ -440,7 +445,7 @@ reuse old sample indices or action-conditioned optimization constraints.
 
 #### Models and parameters
 
-9.0 uses JSON configuration with binary parameter storage. There is no general
+26.0 uses JSON configuration with binary parameter storage. There is no general
 8.x XML/NDM converter; migrate each production model as follows:
 
 1. Keep the original artifacts and an 8.x environment that can load them.
@@ -485,9 +490,9 @@ network.from_JSON(load_json_file(path));
 - Re-export HTML/JavaScript models to obtain the export fixes.
 - Select CPU execution with `Configuration::instance().set(Device::CPU, Type::FP32)`.
 
-#### Earlier 9.0 development snapshots
+#### Earlier development snapshots
 
-Code written against earlier 9.0 development snapshots must also move
+Code written against earlier development snapshots (numbered 9.0) must also move
 `opennn/neural_network/`, `opennn/training_strategy/` and `opennn/testing_analysis/`
 includes to `opennn/network/`, `opennn/training/` and `opennn/evaluation/`. JSON
 saved by those snapshots only needs the root keys renamed (`"NeuralNetwork"` to
@@ -508,10 +513,10 @@ Before promotion:
   earlier passes do not certify a new candidate.
 - If a complete production 8.x model becomes available, follow the
   [migration procedure](#models-and-parameters) and compare its reference predictions.
-- Check the [release notes](#whats-new-in-90). The GitHub release notes can start from that summary and the itemized
+- Check the [release notes](#whats-new-in-260). The GitHub release notes can start from that summary and the itemized
   changelog linked there.
 - After the owner's decision, merge `dev` into `master`, create the annotated
-  `v9.0.0` tag on the reviewed commit, and publish the artifacts with their
+  `v26.0.0` tag on the reviewed commit, and publish the artifacts with their
   checksums and verification record.
 
 ### Installation packages

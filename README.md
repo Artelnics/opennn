@@ -11,7 +11,7 @@ standalone source code for supported architectures.
 | Choose CPU/CUDA backends and build options | [Build options](AGENTS.md#build-options) |
 | Use OpenNN in my C++ application | [Install and link](#use-opennn-in-your-application) |
 | Train, evaluate or export a model | [Examples](examples/README.md) |
-| Update an 8.x application or model | [Migration](AGENTS.md#migrating-from-8x-to-90) |
+| Update an 8.x application or model | [Migration](AGENTS.md#migrating-from-8x-to-260) |
 | Understand the source folders | [Repository contents](#repository-contents) |
 | Run or review performance comparisons | [Benchmarks](benchmarks/README.md) |
 | Contribute or run the tests | [Contributing](#contributing-and-support) |
@@ -75,7 +75,7 @@ In your application's `CMakeLists.txt`, consume the installed target:
 ```cmake
 cmake_minimum_required(VERSION 3.24)
 project(MyApplication LANGUAGES CXX)
-find_package(OpenNN 9.0 CONFIG REQUIRED)
+find_package(OpenNN 26.0 CONFIG REQUIRED)
 add_executable(my_application main.cpp)
 target_link_libraries(my_application PRIVATE OpenNN::opennn)
 target_compile_features(my_application PRIVATE cxx_std_20)
