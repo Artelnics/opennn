@@ -204,13 +204,9 @@ pair<MatrixR, MatrixR> Evaluation::get_targets_and_outputs(const string& sample_
 
 Tensor3 Evaluation::calculate_error_data() const
 {
-    // References rather than a structured binding: Clang 17 and AppleClang crash
-    // when an OpenMP region uses a structured binding.
-    const pair<MatrixR, MatrixR> targets_and_outputs = get_targets_and_outputs("Testing");
-    const MatrixR& targets = targets_and_outputs.first;
-    const MatrixR& outputs = targets_and_outputs.second;
-    const Index testing_samples_number = targets.rows();
-    const Index outputs_number = outputs.cols();
+    const auto testing = get_targets_and_outputs("Testing"); // A structured binding crashes Clang 17 in the loop.
+    const Index testing_samples_number = testing.first.rows();
+    const Index outputs_number = testing.second.cols();
 
     const VectorR ranges = get_scaling_ranges(
         get_output_scaling(*network), outputs_number);
@@ -223,7 +219,7 @@ Tensor3 Evaluation::calculate_error_data() const
         // Each sample owns one contiguous 3-by-outputs block of the row-major tensor.
         Eigen::Map<MatrixR> channels(error_data.data() + sample * 3 * outputs_number,
                                      3, outputs_number);
-        channels.row(0) = (targets.row(sample) - outputs.row(sample)).cwiseAbs();
+        channels.row(0) = (testing.first.row(sample) - testing.second.row(sample)).cwiseAbs();
         channels.row(1) = channels.row(0).array() / ranges.transpose().array();
         channels.row(2) = channels.row(1) * 100.0f;
     }
