@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, S.L. and Roberto Lopez
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 #include "tests/common/pch.h"
 #include "tests/common/numerical_derivatives.h"
@@ -279,6 +279,14 @@ TEST(ActivationsTest, DenseFanoutFoldedResidualGradientCPU)
 #ifdef OPENNN_HAS_CUDA
 TEST(ActivationsTest, DenseFanoutFoldedResidualGradientGPU)
 {
+    // The numerical gradient is checked to 1e-3, about TF32's 10-bit mantissa,
+    // so whether it passed depended on the GEMM engine picked; run IEEE fp32.
+    struct Fp32Guard
+    {
+        Fp32Guard()  { opennn::device::set_allow_tf32(false); }
+        ~Fp32Guard() { opennn::device::set_allow_tf32(true); }
+    } fp32_guard;
+
     expect_dense_fanout_gradient(Device::CUDA);
 }
 #endif
