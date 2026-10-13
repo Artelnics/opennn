@@ -134,7 +134,9 @@ VectorR calculate_numerical_gradient(Loss& loss)
 
     setup.network->copy_parameters_host();
 
-    const VectorMap parameters = setup.network->get_parameters_map();
+    // Forward propagation migrates CUDA parameters to the device and restores
+    // them on the host, invalidating views into the original host allocation.
+    const VectorR parameters = setup.network->get_parameters_map();
     const Index parameters_number = parameters.size();
 
     VectorR shifted = parameters;
