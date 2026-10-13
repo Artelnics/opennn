@@ -1,5 +1,5 @@
 # Hosted CPU tests and CUDA compilation. Nothing here needs a GPU: run the CUDA
-# test suite locally with tools/verify.sh before merging GPU changes.
+# test suite locally with the verify-cuda preset before merging GPU changes.
 #
 # Every job builds the library and the tests from a clean checkout with the
 # dependencies CMake fetches itself (Eigen, libjpeg-turbo, zlib, GoogleTest),

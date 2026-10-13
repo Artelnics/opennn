@@ -86,7 +86,7 @@ Choose one of the four concrete classes:
 
 | Task | Entry point |
 | --- | --- |
-| Incremental CPU/CUDA verification | `tools/verify.sh`; shared logic in `tools/verify.cmake` |
+| Incremental CPU/CUDA verification | Configure, build and test presets in `CMakePresets.json` |
 | Size, complexity and dependency checks | `tools/check_code_quality.py`, `tools/check_architecture.py` |
 | Coverage and public-header checks | `tools/check_coverage.py`, `tools/check_headers.sh` |
 | JSON fuzzing | `tools/fuzz/` |
@@ -159,39 +159,45 @@ reads these variables before `main`, so OpenNN cannot set them for you.
 
 ## Build and verify
 
-Use the repository wrapper for routine verification on Linux or WSL. It creates
-persistent build trees outside the checkout and supports focused GoogleTest
-filters:
-
-```bash
-./tools/verify.sh quick --filter 'Dense.*:DenseNoBiasTest.*'
-./tools/verify.sh quick --backend cuda --filter '*Gpu*:*CUDA*'
-./tools/verify.sh full
-```
-
-Use focused checks while editing and `full` as the final gate for a completed
-batch. `full` builds and runs the unit tests on CPU and CUDA. A library change is not complete until the relevant
-CPU and CUDA suites pass, or an unavailable backend is reported clearly; a CPU
-fallback never counts as a CUDA pass. Run the wrapper with `--help` for CUDA
-selection, cache locations and compiler-cache support.
-
-For non-standard CUDA installations, configure the wrapper through
-`OPENNN_CUDA_ARCHITECTURES`, `OPENNN_CUDNN_INCLUDE_DIR` and
-`OPENNN_CUDNN_LIBRARY`. On Linux (including WSL), put the intended CUDA
-toolkit's `bin` directory on `PATH`; the wrapper checks that `nvcc` and its host
-compiler support C++20.
-
-On Windows, use the CMake presets from a Visual Studio developer prompt. The
-presets `verify-cpu`, `verify-cuda` and `verify-sanitizers` (Linux Clang)
-require Ninja and build into `../opennn-build/<preset>`. Passing another
+Use the CMake presets for routine verification on Linux, WSL and Windows.
+On Windows, run them from a Visual Studio developer prompt. The presets
+`verify-cpu`, `verify-cuda` and `verify-sanitizers` (Linux Clang) require Ninja
+and keep persistent build trees in `../opennn-build/<preset>`. Passing another
 directory with `-B` requires the same directory in later `cmake --build` and
-`ctest --test-dir` commands.
+`ctest --test-dir` commands instead of the build and test presets.
 
 ```sh
 cmake --preset verify-cpu
 cmake --build --preset verify-cpu --parallel
 ctest --preset verify-cpu
+
+cmake --preset verify-cuda
+cmake --build --preset verify-cuda --parallel
+ctest --preset verify-cuda
 ```
+
+For focused checks after building, pass a GoogleTest filter for that command
+only. These commands work in Bash and PowerShell:
+
+```sh
+cmake -E env "GTEST_FILTER=Dense.*:DenseNoBiasTest.*" GTEST_FAIL_IF_NO_TEST_SELECTED=1 ctest --preset verify-cpu
+cmake -E env "GTEST_FILTER=*Gpu*:*GPU*:*CUDA*" GTEST_FAIL_IF_NO_TEST_SELECTED=1 ctest --preset verify-cuda
+```
+
+Use focused checks while editing and the complete CPU and CUDA suites as the
+final gate for a completed batch of library changes. Run the full suites without
+`GTEST_FILTER` set. A library change is not complete until the relevant CPU and
+CUDA suites pass, or an unavailable backend is reported clearly; a CPU fallback
+never counts as a CUDA pass. The CUDA preset requires CUDA at configuration and
+a working GPU when running tests.
+
+For non-standard CUDA installations, pass CMake cache options with `-D`:
+`CMAKE_CUDA_COMPILER`, `CMAKE_CUDA_ARCHITECTURES`, `CUDNN_INCLUDE_DIR` and
+`CUDNN_LIBRARY`. Select a CUDA toolkit and host compiler that support C++20.
+Make the CUDA and cuDNN runtime libraries available through `PATH` on Windows
+or the dynamic loader search path on Linux. Optional compiler caches such as
+sccache can be selected with `CMAKE_CXX_COMPILER_LAUNCHER` and
+`CMAKE_CUDA_COMPILER_LAUNCHER`.
 
 ### Python for checks and export tests
 
@@ -260,9 +266,10 @@ and the source checkers. It also runs:
   non-CUDA sources, plus the per-module floors in `tools/check_coverage.py`.
   Raise thresholds as tests are added.
 
-CI has no GPU: it compiles CUDA but never runs CUDA tests. Run
-`./tools/verify.sh full` (or `quick --backend cuda`) on a machine with a GPU
-before merging changes that touch CUDA or shared code, and report the result.
+CI has no GPU: it compiles CUDA but never runs CUDA tests. Configure and build
+the `verify-cuda` preset, then run `ctest --preset verify-cuda` on a machine with
+a GPU before merging changes that touch CUDA or shared code, and report the
+result. Changes to shared code also require the `verify-cpu` suite.
 
 `python benchmarks/compare.py baseline.json candidate.json` gates performance
 changes: it allows 5% throughput/memory variation and rejects lower confirmed
