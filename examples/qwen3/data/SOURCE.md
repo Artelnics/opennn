@@ -57,16 +57,16 @@ definitions use a vocabulary size of 151936.
 
 The conversion cards describe the BF16 representation as lossless and the
 FP32 representation as widening the same values. This records the converter's
-description; a complete tensor comparison was not performed during this
-licence review. The cards do not pin the exact original revision used for
+description, not an independently verified tensor-by-tensor comparison. The
+cards do not pin the exact original revision used for
 conversion, so the original revisions above identify the inspected sources
 and licence, not a claimed conversion input commit.
 
 ### Weight identification
 
 The following sizes and SHA-256 digests come from the pinned Hugging Face
-LFS metadata. These full weight files were not downloaded or independently
-hashed during this review.
+LFS metadata; they are publisher-provided identifiers, not independently
+computed hashes of downloaded weight files.
 
 | Conversion | File | Bytes | SHA-256 |
 | --- | --- | ---: | --- |

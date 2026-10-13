@@ -363,20 +363,18 @@ int main(int argc, char* argv[])
         // YOLOv3 (anchor-based FPN):  use_v8=false, use_c11=false, use_csp=false
         //                             → Darknet53 + 3-head FPN, ~61M params
         //                             → loads darknet53.conv.74 pretrained backbone
-        //                             → VOC benchmark: ~54.9% mAP@0.5
         //
         // YOLOv8 (anchor-free FPNv8): use_v8=true, use_c11=true
         //                             → CSPDarknet53v11 + FPNv8 + DFL, ~50M params
         //                             → trains from scratch (no pretrained weights)
-        //                             → VOC benchmark: Phase 5b, expected ≥54%
         // ─────────────────────────────────────────────────────────────────────
         const bool use_v8      = use_v8_exp;  // set by experiment arg
         const bool use_c11     = use_v8;  // CSPDarknet53v11 backbone for YOLOv8; Darknet53 for v3
         const bool use_csp     = use_c11; // use_c11 implies CSP
         const bool use_panet   = false;
-        // SPPF: tested on VOC 2007 — 48.9% mAP vs 54.9% plain FPN (-6pp). Disabled.
+        // Enable spatial pyramid pooling for the YOLOv8 architecture.
         const bool use_sppf    = use_v8;
-        // reg_max=1: sigmoid box (Phase 5a). reg_max=16: DFL (Phase 5b, default).
+        // reg_max=1 uses sigmoid boxes; reg_max=16 uses distribution focal loss.
         const Index reg_max    = 16;
 
         const auto backbone = use_c11 ? Yolo::Backbone::CSPDarknet53v11
@@ -599,11 +597,9 @@ int main(int argc, char* argv[])
         else if (use_bccd)
         {
             images_dir = resolve_data_path("BCCD_IMAGES",
-                {"/home/alvaromartin/Documents/BCCD_yolo/images",
-                 "BCCD_yolo/images"});
+                {"BCCD_yolo/images"});
             labels_dir = resolve_data_path("BCCD_LABELS",
-                {"/home/alvaromartin/Documents/BCCD_yolo/labels",
-                 "BCCD_yolo/labels"});
+                {"BCCD_yolo/labels"});
 
             grid_size      = 20;
             boxes_per_cell = 3;

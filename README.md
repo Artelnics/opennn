@@ -88,8 +88,11 @@ the package still works after moving the install prefix.
 
 Fetched Eigen and zlib are installed with the library. OpenMP, oneTBB, oneDNN,
 MKL and NVIDIA runtimes are not copied into the installation; supply those
-selected by the build. Use a compiler compatible with the one that built the
-package. Installation packages exclude example datasets and models.
+selected by the build. The installed package locates oneDNN and macOS libomp
+on the consuming machine; use `CMAKE_PREFIX_PATH`, `OpenNN_ONEDNN_ROOT`, or
+`LIBOMP_INCLUDE_DIR` and `LIBOMP_LIBRARY` for nonstandard installations.
+Use a compiler compatible with the one that built the package. Installation
+packages exclude example datasets and models.
 
 Include the public module headers directly, for example
 `#include "opennn/network/network.h"`. Do not include the private precompiled

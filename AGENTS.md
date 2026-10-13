@@ -13,7 +13,7 @@ environment variables, not in repository files.
 - Keep development and release preparation on `dev`. Merge into `master` only
   when the user explicitly decides the work is ready for release.
 - Preserve uncommitted work and saved stashes when switching or consolidating
-  branches. A folder cleanup does not authorize publishing a release.
+  branches.
 - Contributors base changes on `dev` and open a pull request describing the
   resulting behavior and the validation run.
 
@@ -27,7 +27,8 @@ environment variables, not in repository files.
 - Preserve unrelated working-tree changes. Build products, downloaded models,
   generated data and raw benchmark results must remain outside Git.
 - Keep `README.md` independent of the branch and release state, so it can be
-  promoted to `master` unchanged. Put candidate status and pending work here.
+  promoted to `master` unchanged. Record verification status and outstanding
+  checks in the pull request or release record.
 
 ## Where things are
 
@@ -89,7 +90,7 @@ Choose one of the four concrete classes:
 | Size, complexity and dependency checks | `tools/check_code_quality.py`, `tools/check_architecture.py` |
 | Coverage and public-header checks | `tools/check_coverage.py`, `tools/check_headers.sh` |
 | JSON fuzzing | `tools/fuzz/` |
-| Installed-package checks and C++ consumer | `tools/check_installed_package.py`, `tools/package_smoke/` |
+| Installed-package checks and C++ consumer | `tools/check_installed_package.py`, `tools/package_smoke/` (including dependency relocation checks) |
 | Full example/device matrix | `tools/run-opennn-examples/SKILL.md` |
 | Benchmark preparation and execution | `benchmarks/prepare.py`, `benchmarks/run.py`, `benchmarks/compare.py`; procedure in `tools/run-opennn-benchmarks/SKILL.md` |
 
@@ -305,11 +306,11 @@ notice with its data.
 - The GPT-2 and BERT files were first published as the GitHub release assets
   `gpt2-weights-v1` and `bert-weights-v1`; the Hugging Face files are
   byte-identical. Only `dev` snapshots before `3a7e45b41` download from GitHub,
-  and removing those assets breaks them. `master` (8.x) uses neither.
+  and removing those assets breaks them. OpenNN 8.x releases use neither.
 
-Pending licence work: `yolo` needs a dataset with recorded provenance to replace
-the default external synthetic images, and checkpoint-specific confirmation
-before redistributing `darknet53.conv.74` or `yolov3-tiny.weights`. Optional
+YOLO datasets must have recorded provenance, including externally supplied
+synthetic images. Obtain checkpoint-specific confirmation before redistributing
+`darknet53.conv.74` or `yolov3-tiny.weights`. Optional
 external datasets and Ultralytics conversions need their file manifests and
 applicable notices and source records; see `examples/yolo/data/SOURCE.md`.
 
@@ -509,21 +510,22 @@ table above; its parameter file stays paired and unchanged.
 
 Installation packages exclude example data. Do not create Git tags or GitHub
 releases without the owner's approval. Historical 8.x model compatibility is not
-claimed, and Neural Designer compatibility was not evaluated. Engineering
-verification and the release decision are separate statuses.
+claimed. Record downstream compatibility checks, including Neural Designer,
+for each release. Engineering verification and the release decision are
+separate statuses.
 
 Before promotion:
 
 - Verify the exact candidate commit on every `ci.yml` job and run the CUDA
   suite locally on a GPU machine. Report skips and disabled tests separately;
   earlier passes do not certify a new candidate.
-- If a complete production 8.x model becomes available, follow the
+- When validating an 8.x production model, follow the
   [migration procedure](#models-and-parameters) and compare its reference predictions.
-- Check the [release notes](#whats-new-in-260). The GitHub release notes can start from that summary and the itemized
-  changelog linked there.
+- Update the release notes for the version being published, including behavior
+  changes and migration requirements.
 - After the owner's decision, merge `dev` into `master`, create the annotated
-  `v26.0.x` tag on the reviewed commit, only after every `ci.yml` job has
-  passed on it, and publish the artifacts with their
+  `v<version>` tag matching `project(OpenNN VERSION ...)` on the reviewed commit
+  after every `ci.yml` job has passed on it. Publish the artifacts with their
   checksums and verification record.
 
 ### Installation packages
@@ -532,18 +534,20 @@ Configure with `OpenNN_INSTALL=ON` and `OpenNN_CPU_TARGET=PORTABLE`, build the
 library, and write packages outside the checkout:
 
 ```sh
-cpack --config /absolute/path/to/build/CPackConfig.cmake -C Release -G ZIP -B ../candidate-packages
-cpack --config /absolute/path/to/build/CPackConfig.cmake -C Release -G TGZ -B ../candidate-packages
+cpack --config /absolute/path/to/build/CPackConfig.cmake -C Release -G ZIP -B ../opennn-packages
+cpack --config /absolute/path/to/build/CPackConfig.cmake -C Release -G TGZ -B ../opennn-packages
 ```
 
 The archive name records the version, system, processor, CPU target and backend,
-and each archive gets a SHA-256 file. `share/doc/OpenNN/build-info.json` records
+and each archive gets a SHA-256 file. Stable package names contain no
+prerelease suffix. `share/doc/OpenNN/build-info.json` records
 the compiler, configuration, CUDA, shared-library and LTO settings. The package
 installs `README.md`, `LICENSE.txt`, `THIRD_PARTY_NOTICES.txt` and the
 libjpeg-turbo, zlib, Eigen, cuDNN frontend and FlashAttention notices that apply. Extract it into a new directory and check it:
 
 ```sh
 python tools/check_installed_package.py /absolute/path/to/extracted-prefix
+python -B tools/package_smoke/check_dependency_relocation.py
 cmake -S tools/package_smoke -B ../archive-consumer -DCMAKE_PREFIX_PATH=/absolute/path/to/extracted-prefix -DCMAKE_FIND_USE_PACKAGE_REGISTRY=OFF
 cmake --build ../archive-consumer --config Release
 ```
@@ -559,9 +563,11 @@ description. Keep raw evidence outside Git.
 
 ## Documentation
 
-- Only `README.md` (users) and `AGENTS.md` (agents and maintainers) live at the
-  root. Do not add Markdown files for individual tasks, audits or sessions;
-  update these two or the guides below.
+- Root Markdown documents are `README.md` (users), `AGENTS.md` (agents and
+  maintainers), `CONTRIBUTING.md` (contributions), `CLA.md` (contributor agreement)
+  and `LICENSING.md` (licensing terms). Keep task-specific notes and verification
+  records in issues, pull requests or releases; update the relevant guide for
+  repository-wide instructions.
 - Subfolder guides: `examples/README.md` (example catalog),
   `benchmarks/README.md`, `benchmarks/PROTOCOL.md`,
   `tools/run-opennn-examples/SKILL.md` and `tools/run-opennn-benchmarks/SKILL.md`.

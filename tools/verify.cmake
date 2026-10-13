@@ -131,7 +131,7 @@ function(_prepare_cuda configure_args_out run_preflight)
 
     if(WIN32)
         file(GLOB _cuda_roots LIST_DIRECTORIES true
-            "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v*")
+            "$ENV{ProgramFiles}/NVIDIA GPU Computing Toolkit/CUDA/v*")
         if(_cuda_roots)
             list(SORT _cuda_roots COMPARE NATURAL ORDER DESCENDING)
             foreach(_cuda_root IN LISTS _cuda_roots)
@@ -175,7 +175,7 @@ function(_prepare_cuda configure_args_out run_preflight)
                 "OPENNN_CUDNN_INCLUDE_DIR and OPENNN_CUDNN_LIBRARY.")
         endif()
         file(GLOB _cudnn_headers
-            "C:/Program Files/NVIDIA/CUDNN/v*/include/*/cudnn.h")
+            "$ENV{ProgramFiles}/NVIDIA/CUDNN/v*/include/*/cudnn.h")
         set(_matching_cudnn_headers)
         foreach(_candidate IN LISTS _cudnn_headers)
             get_filename_component(_candidate_include "${_candidate}" DIRECTORY)

@@ -50,6 +50,7 @@ jobs:
           python -m pip install -r tools/code-quality-requirements.txt
           python tools/check_code_quality.py
           python tools/check_architecture.py
+          python -B tools/package_smoke/check_dependency_relocation.py
 
       - name: Reject a toolchain without OpenMP
         run: |
