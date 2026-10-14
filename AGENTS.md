@@ -323,6 +323,20 @@ applicable notices and source records; see `examples/yolo/data/SOURCE.md`.
 
 ## 26.0 release notes and migration
 
+### 26.0.2
+
+- Installed CMake packages rediscover oneDNN and macOS libomp on the consumer's
+  machine instead of exporting paths from the build machine. Package names no
+  longer contain a candidate suffix.
+- Documentation and example defaults use general configuration and relative
+  paths. Verification uses the CMake presets directly.
+- Numerical-gradient tests retain their own parameter snapshot across CPU/CUDA
+  memory migration, fixing intermittent failures without changing tolerances.
+- Pull requests check that their author is covered by the contributor licence
+  agreement.
+
+The public API, model format and library algorithms are unchanged.
+
 ### 26.0.1
 
 A patch release with one fix: `Evaluation::calculate_error_data` no longer uses
