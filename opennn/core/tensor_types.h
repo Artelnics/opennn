@@ -387,24 +387,26 @@ struct Buffer
     Index size_in_floats() const noexcept { return allocated_bytes / Index(sizeof(float)); }
     bool  empty() const noexcept { return allocated_bytes == 0; }
 
-    VectorMap as_vector() &
+    template<typename T = VectorMap>
+    T as_vector() &
     {
         validate_state("Buffer::as_vector");
         throw_if(allocation_device != Device::CPU,
                  "Buffer::as_vector requires host storage.");
         throw_if(allocated_bytes % Index(sizeof(float)) != 0,
                  "Buffer::as_vector requires a whole number of floats.");
-        return VectorMap(static_cast<float*>(pointer), size_in_floats());
+        return T(static_cast<float*>(pointer), size_in_floats());
     }
 
-    ConstVectorMap as_vector() const &
+    template<typename T = ConstVectorMap>
+    T as_vector() const &
     {
         validate_state("Buffer::as_vector");
         throw_if(allocation_device != Device::CPU,
                  "Buffer::as_vector requires host storage.");
         throw_if(allocated_bytes % Index(sizeof(float)) != 0,
                  "Buffer::as_vector requires a whole number of floats.");
-        return ConstVectorMap(static_cast<const float*>(pointer), size_in_floats());
+        return T(static_cast<const float*>(pointer), size_in_floats());
     }
 
     void resize_bytes(Index byte_count, Device new_device)
@@ -612,17 +614,19 @@ struct TensorView
         return TensorView(data, new_shape, type, device);
     }
 
-    MatrixMap as_matrix() const
+    template<typename T = MatrixMap>
+    T as_matrix() const
     {
         require_host_fp32_data("TensorView::as_matrix");
         throw_if(shape.get_rank() < 2, "TensorView::as_matrix requires rank >= 2.");
 
         const Index row_count = shape[0];
         const Index column_count = row_count == 0 ? 0 : shape.size() / row_count;
-        return MatrixMap(reinterpret_cast<float*>(data), row_count, column_count);
+        return T(reinterpret_cast<float*>(data), row_count, column_count);
     }
 
-    MatrixMap as_matrix(Index matrix_index) const
+    template<typename T = MatrixMap>
+    T as_matrix(Index matrix_index) const
     {
         require_host_fp32_data("TensorView::as_matrix(matrix_index)");
         throw_if(shape.get_rank() < 2,
@@ -639,23 +643,25 @@ struct TensorView
                  "TensorView::as_matrix(matrix_index): matrix index {} out of range [0, {}).",
                         matrix_index, matrix_count);
 
-        return MatrixMap(reinterpret_cast<float*>(data) + matrix_index * matrix_element_count,
+        return T(reinterpret_cast<float*>(data) + matrix_index * matrix_element_count,
                          row_count,
                          column_count);
     }
 
-    MatrixMap as_flat_matrix() const
+    template<typename T = MatrixMap>
+    T as_flat_matrix() const
     {
         require_host_fp32_data("TensorView::as_flat_matrix");
         throw_if(shape.get_rank() < 1, "TensorView::as_flat_matrix requires rank >= 1.");
 
-        return MatrixMap(reinterpret_cast<float*>(data), flat_rows(), flat_columns());
+        return T(reinterpret_cast<float*>(data), flat_rows(), flat_columns());
     }
 
-    VectorMap as_vector() const
+    template<typename T = VectorMap>
+    T as_vector() const
     {
         require_host_fp32_data("TensorView::as_vector");
-        return VectorMap(reinterpret_cast<float*>(data), shape.size());
+        return T(reinterpret_cast<float*>(data), shape.size());
     }
 
     template<int Rank>
