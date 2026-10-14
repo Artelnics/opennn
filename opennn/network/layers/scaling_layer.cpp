@@ -132,14 +132,14 @@ static void scale_cpu(const TensorView& input,
                TensorView& output, bool inverse)
 {
     const Index features = scalers.size();
-    if (features == 0) { output.as_matrix().noalias() = input.as_matrix(); return; }
+    if (features == 0) { output.as_matrix<UnalignedMatrixMap>().noalias() = input.as_matrix<UnalignedMatrixMap>(); return; }
 
-    const MatrixMap input_matrix = input.as_flat_matrix();
-    const VectorMap minimums_vector = minimums.as_vector();
-    const VectorMap maximums_vector = maximums.as_vector();
-    const VectorMap means_vector  = means.as_vector();
-    const VectorMap standard_deviations_vector  = standard_deviations.as_vector();
-    const VectorMap scalers_vector   = scalers.as_vector();
+    const UnalignedMatrixMap input_matrix = input.as_flat_matrix<UnalignedMatrixMap>();
+    const UnalignedVectorMap minimums_vector = minimums.as_vector<UnalignedVectorMap>();
+    const UnalignedVectorMap maximums_vector = maximums.as_vector<UnalignedVectorMap>();
+    const UnalignedVectorMap means_vector  = means.as_vector<UnalignedVectorMap>();
+    const UnalignedVectorMap standard_deviations_vector  = standard_deviations.as_vector<UnalignedVectorMap>();
+    const UnalignedVectorMap scalers_vector   = scalers.as_vector<UnalignedVectorMap>();
 
     MatrixMap output_matrix = output.as_flat_matrix();
 

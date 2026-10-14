@@ -973,9 +973,9 @@ static void multiply_cpu(const TensorView& input_a, bool transpose_a,
     #pragma omp parallel for schedule(static) if(parallel)
     for (Index batch_index = 0; batch_index < batch_count; ++batch_index)
     {
-        const MatrixMap matrix_a = input_a.as_matrix(batch_index);
-        const MatrixMap matrix_b = input_b.as_matrix(batch_index);
-        MatrixMap matrix_output = output.as_matrix(batch_index);
+        const UnalignedMatrixMap matrix_a = input_a.as_matrix<UnalignedMatrixMap>(batch_index);
+        const UnalignedMatrixMap matrix_b = input_b.as_matrix<UnalignedMatrixMap>(batch_index);
+        UnalignedMatrixMap matrix_output = output.as_matrix<UnalignedMatrixMap>(batch_index);
 
         auto gemm_like = [&](auto A, auto B)
         {
@@ -1285,11 +1285,11 @@ static void linear_forward_cpu(const TensorView& input, const TensorView& weight
 
     if (try_linear_forward(input, weights, bias, output, fuse_relu)) return;
 
-    auto output_matrix = output.as_flat_matrix();
+    auto output_matrix = output.as_flat_matrix<UnalignedMatrixMap>();
 
     {
         PROFILE_SCOPE_HOST("cpu:eigen_gemm");
-        output_matrix.noalias() = input.as_flat_matrix() * weights.as_matrix();
+        output_matrix.noalias() = input.as_flat_matrix<UnalignedMatrixMap>() * weights.as_matrix<UnalignedMatrixMap>();
     }
 
     const bool has_bias = !bias.empty();
@@ -1577,8 +1577,8 @@ void linear_forward_transposed(const TensorView& input, const TensorView& embed_
 #endif
 
     if (input.is_cuda()) { multiply(input, Transpose::No, embed_weight, Transpose::Yes, output, 1.0f, 0.0f); return; }
-    output.as_flat_matrix().noalias() =
-        input.as_flat_matrix() * embed_weight.as_matrix().transpose();
+    output.as_flat_matrix<UnalignedMatrixMap>().noalias() =
+        input.as_flat_matrix<UnalignedMatrixMap>() * embed_weight.as_matrix<UnalignedMatrixMap>().transpose();
 }
 
 #ifdef OPENNN_HAS_CUDA
