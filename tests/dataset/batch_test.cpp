@@ -210,4 +210,37 @@ TEST(BatchTest, CudaPrefetchBatchKeepsDeviceIdentityWithoutDeviceStorage)
     EXPECT_EQ(batch.input.buffer.byte_size(), 0);
 }
 
+TEST(BatchTest, CudaDeviceOnlyBatchReceivesUploadsWithoutHostStaging)
+{
+    if (!device::has_cuda_device()) GTEST_SKIP() << "CUDA device unavailable.";
+    TabularDataset dataset(2, {1}, {1});
+    MatrixR raw(2, 2);
+    raw << 1.0f, 10.0f, 2.0f, 20.0f;
+    dataset.set_data(raw);
+    const FeatureSelection features = dataset.get_feature_selection();
+    for (const Type dtype : {Type::FP32, Type::BF16})
+    {
+        if (dtype == Type::BF16 && device::cuda_compute_capability() < 80) continue;
+        SCOPED_TRACE(dtype == Type::BF16 ? "BF16" : "FP32");
+        const EffectiveConfig config{Device::CUDA, dtype, 0};
+        Batch staged(2, &dataset, config, true);
+        Batch destination(2, &dataset, config, BatchStorage::DeviceOnly);
+        EXPECT_TRUE(destination.input.has_data() && destination.target.has_data());
+        EXPECT_FALSE(destination.input.host || destination.target.host || destination.input_host_bf16);
+        EXPECT_THROW(destination.fill({0, 1}, features), runtime_error);
+
+        staged.fill({0, 1}, features, FillMode::Inference);
+        staged.upload_to_device_batch_async(destination, device::get_transfer_stream());
+        staged.wait_h2d_on_compute_stream();
+        const DeviceStream stream = device::get_compute_stream();
+        std::array<float, 4> values{};
+        copy_device_to_host_float(destination.input.buffer.data(), destination.input.type, 2,
+                                  values.data(), stream);
+        device::copy_async(values.data() + 2, destination.target.buffer.data(), 2 * sizeof(float),
+                           device::CopyKind::DeviceToHost, stream);
+        device::synchronize(stream);
+        EXPECT_EQ(values, (std::array<float, 4>{1.0f, 2.0f, 10.0f, 20.0f}));
+    }
+}
+
 #endif

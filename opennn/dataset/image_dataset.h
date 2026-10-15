@@ -68,6 +68,14 @@ public:
                       FillMode,
                       ColumnContiguity column_contiguity = ColumnContiguity::Unknown) const override;
 
+    void fill_batch(Batch&, const vector<Index>&, const FeatureSelection&, FillMode) const override;
+
+    bool supports_byte_inputs() const override
+    {
+        return storage_mode == StorageMode::BinaryFile && !augmentation_policy.enabled
+            && input_shape.get_rank() == 3 && get_channels_number() >= 1 && get_channels_number() <= 4;
+    }
+
     void augment_inputs(span<float>, Index) const;
 
 private:

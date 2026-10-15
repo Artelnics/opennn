@@ -22,15 +22,15 @@ bool bf16_host_input_cast_enabled() noexcept
 Batch::Batch(const Index new_batch_size,
              const Dataset* new_dataset,
              const EffectiveConfig& new_config,
-             const bool new_prefetch_only)
+             const BatchStorage storage)
 {
-    set(new_batch_size, new_dataset, new_config, new_prefetch_only);
+    set(new_batch_size, new_dataset, new_config, storage);
 }
 
 void Batch::set(const Index new_batch_size,
                 const Dataset* new_dataset,
                 const EffectiveConfig& new_config,
-                const bool new_prefetch_only)
+                const BatchStorage storage)
 {
     throw_if(!new_dataset, "dataset is not set.");
 
@@ -48,6 +48,9 @@ void Batch::set(const Index new_batch_size,
     target.column_contiguity = ColumnContiguity::Unknown;
 
     device_gather.reset();
+    packed_image_input.reset();
+    pack_image_input = false;
+    packed_input_staging.resize_bytes(0, Device::CUDA);
 
     input_views_host_cache.clear();
     target_view_host_cache = {};
@@ -88,7 +91,7 @@ void Batch::set(const Index new_batch_size,
         const Index device_bytes = slot.shape.size() * element_bytes;
 
         const Index allocated_device_bytes =
-            on_gpu && new_prefetch_only ? Index(0) : device_bytes;
+            on_gpu && storage == BatchStorage::HostOnly ? Index(0) : device_bytes;
 
         slot.buffer.resize_bytes(allocated_device_bytes, batch_device);
 
@@ -99,6 +102,12 @@ void Batch::set(const Index new_batch_size,
             format("samples={}", batch_size));
 
         if (!on_gpu) return;
+
+        if (storage == BatchStorage::DeviceOnly)
+        {
+            slot.host.resize_bytes(0);
+            return;
+        }
 
         const Index host_bytes = slot.shape.size() * Index(sizeof(float));
 
@@ -153,11 +162,16 @@ void Batch::set(const Index new_batch_size,
         input.type == Type::BF16
         && bf16_host_input_cast_enabled();
 
+    // The uploading batch converts on the host, never its device destination.
+    const bool host_bf16_staging =
+        host_bf16_input_cast
+        && storage != BatchStorage::DeviceOnly;
+
     const Index input_host_values = input.shape.size();
     const Index input_host_bf16_bytes =
         input_host_values * Index(sizeof(uint16_t));
 
-    if (host_bf16_input_cast
+    if (host_bf16_staging
         && input_host_bf16_bytes > input_host_bf16.byte_size())
     {
         input_host_bf16.grow_to(input_host_bf16_bytes);
@@ -168,13 +182,13 @@ void Batch::set(const Index new_batch_size,
             input_host_bf16_bytes,
             format("samples={}", batch_size));
     }
-    else if (!host_bf16_input_cast && input_host_bf16)
+    else if (!host_bf16_staging && input_host_bf16)
         input_host_bf16.resize_bytes(0);
 
     const bool needs_fp32_staging =
         input.type == Type::BF16
         && !host_bf16_input_cast
-        && !new_prefetch_only
+        && storage != BatchStorage::HostOnly
         && !dataset->uses_device_residency();
 
     const Index fp32_staging_bytes = needs_fp32_staging
@@ -248,6 +262,9 @@ void Batch::fill(const vector<Index>& sample_indices,
 {
     if (!uses_cuda())
         return dataset->fill_batch(*this, sample_indices, features, mode);
+
+    throw_if(input.has_data() && !input.host,
+             "Batch::fill: device-only batches receive uploads and cannot be filled.");
 
     // Prefetch workers already run concurrently. Avoid giving each one a
     // full OpenMP team that keeps spinning while its batch is on the GPU.
@@ -333,7 +350,14 @@ void Batch::upload_to_device_batch_async(Batch& destination, DeviceStream stream
         return record_h2d_done(stream);
     }
 
-    if (destination.input.type == Type::BF16)
+    if (packed_image_input)
+    {
+        if (destination.packed_input_staging.byte_size() < input_values_count)
+            destination.packed_input_staging.resize_bytes(input_values_count, Device::CUDA);
+        device::copy_async(destination.packed_input_staging.data(), input.host.data(),
+                           input_values_count, device::CopyKind::HostToDevice, stream);
+    }
+    else if (destination.input.type == Type::BF16)
     {
         if (input_host_bf16)
         {
@@ -392,6 +416,18 @@ void Batch::upload_to_device_batch_async(Batch& destination, DeviceStream stream
                        device::CopyKind::HostToDevice, stream);
 
     record_h2d_done(stream);
+
+    if (!packed_image_input) return;
+
+    // Convert on the compute stream, ahead of the step that reads the pixels.
+    // A kernel between copies on the transfer stream switches engines and
+    // delays the completion event, which costs short steps more than the copy.
+    const PackedImageInput& image = *packed_image_input;
+    wait_h2d_on_compute_stream();
+    unpack_image_pixels_cuda(destination.packed_input_staging.as<uint8_t>(),
+                             destination.input.buffer.data(), destination.input.type == Type::BF16,
+                             input_values_count, image.channels,
+                             image.scale.data(), image.offset.data(), device::get_compute_stream());
 }
 
 #else

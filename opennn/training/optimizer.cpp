@@ -289,6 +289,21 @@ void Optimizer::load(const filesystem::path& file_name)
     from_JSON(load_json_file(file_name));
 }
 
+void Optimizer::TrainingSession::prepare_eager_batches(Index batch_size, Dataset& dataset,
+                                                       const EffectiveConfig& config, int capacity)
+{
+    // Eager slots only receive uploads, so they keep no pinned host staging.
+    pipelines[0].slots[0] = make_unique<Batch>(batch_size, &dataset, config, BatchStorage::DeviceOnly);
+    if (batch_size <= 0) return;
+    const Index slots = min(Index(capacity), dataset.get_samples_number(SampleRole::Training) / batch_size);
+    for (Index slot = 1; slot < slots; ++slot)
+        transfer_batches.push_back(make_unique<Batch>(batch_size, &dataset, config, BatchStorage::DeviceOnly));
+    if (dataset.supports_byte_inputs())
+        for (Index slot = 0; slot < slots; ++slot)
+            eager_batch(slot)->packed_input_staging.resize_bytes(
+                batch_size * dataset.get_input_shape().size(), Device::CUDA);
+}
+
 void Optimizer::setup_batch_pools(BatchPools& pools,
                                   Dataset& dataset,
                                   Network& network,
@@ -299,6 +314,7 @@ void Optimizer::setup_batch_pools(BatchPools& pools,
 {
     const int pool_size = get_batch_pool_size(network);
     const auto& config = network.get_config();
+    const bool packed_pool = network.is_gpu() && !can_use_cuda_graph();
 
     auto fill_pool = [&](ThreadSafeQueue<Batch*>& queue,
                          vector<unique_ptr<Batch>>& pool,
@@ -308,6 +324,7 @@ void Optimizer::setup_batch_pools(BatchPools& pools,
         for (int i = 0; i < pool_size; ++i)
         {
             pool.push_back(make_unique<Batch>(batch_size, &dataset, config, prefetch_only));
+            pool.back()->pack_image_input = packed_pool;
             queue.push(pool.back().get());
         }
     };
@@ -325,18 +342,13 @@ void Optimizer::setup_batch_pools(BatchPools& pools,
 
     if (network.is_gpu() && device::is_cuda_build())
     {
-        training_session.pipelines[0].slots[0] = make_unique<Batch>(training_batch_size, &dataset, config);
-
-        if (!can_use_cuda_graph() && training_batch_size > 0)
+        if (!can_use_cuda_graph())
+            training_session.prepare_eager_batches(training_batch_size, dataset, config, device_batch_pool_size);
+        else
         {
-            const Index slots = min(Index(TrainingSession::prefetch_slots_count),
-                dataset.get_samples_number(SampleRole::Training) / training_batch_size);
-            for (Index slot = 1; slot < slots; ++slot)
-                training_session.transfer_batches.push_back(make_unique<Batch>(training_batch_size, &dataset, config));
-        }
+            // Graph slots stage host copies before their captured uploads.
+            training_session.pipelines[0].slots[0] = make_unique<Batch>(training_batch_size, &dataset, config);
 
-        if (can_use_cuda_graph())
-        {
             const Index training_batches = training_batch_size > 0
                 ? dataset.get_samples_number(SampleRole::Training) / training_batch_size
                 : 0;
@@ -595,7 +607,7 @@ Index Optimizer::get_maximum_batch_size() const
         // Bound the ring's total samples without the downward jumps caused by
         // floor(samples / batch): the capacity search requires monotonic sizes.
         const Index stored_samples = on_gpu
-            ? (can_use_cuda_graph() ? batch : min(batch * TrainingSession::prefetch_slots_count,
+            ? (can_use_cuda_graph() ? batch : min(batch * device_batch_pool_size,
                                                  training_samples_number))
             : batch * get_batch_pool_size(*network);
 
@@ -612,6 +624,9 @@ Index Optimizer::get_maximum_batch_size() const
 
         if(fp32_input_staging && !input_shape.empty())
             bytes += get_aligned_bytes(stored_samples * input_shape.size(), Type::FP32);
+
+        if (on_gpu && !can_use_cuda_graph() && dataset->supports_byte_inputs())
+            bytes += stored_samples * input_shape.size();
 
         return bytes;
     };
@@ -1064,6 +1079,9 @@ TrainingResult Optimizer::train()
 
                 next_training_batches_ready = async(launch::async, [&, shuffle_seed]
                 {
+                    // This background task has a whole GPU epoch to prepare
+                    // indices. Avoid a new OpenMP team for simple row copies.
+                    omp_set_num_threads(1);
                     dataset->get_batches(training_sample_indices, training_batch_size,
                                          training_shuffle, next_training_batches, shuffle_seed);
                 });

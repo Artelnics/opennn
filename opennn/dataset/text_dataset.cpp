@@ -2,6 +2,7 @@
 // Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 #include "opennn/dataset/text_dataset.h"
+#include "opennn/dataset/batch.h"
 #include "opennn/dataset/field_parsing.h"
 #include "opennn/core/log.h"
 #include "opennn/core/string_utilities.h"
@@ -895,6 +896,35 @@ void TextDataset::fill_sequences(VariableRole role, const vector<Index>& samples
         else
             read_int32_batch(cache_reader, samples, get_samples_number(), uint64_t(record_tokens),
                 segment.offset + local - shift, 1, output, width, column, "TextDataset feature selection");
+    }
+}
+
+void TextDataset::fill_batch(Batch& batch, const vector<Index>& samples,
+                              const FeatureSelection& features, FillMode mode) const
+{
+    const Index inputs = get_sequence_length(VariableRole::Input);
+    const Index targets = get_sequence_length(VariableRole::Target);
+    const auto complete = [](const vector<Index>& indices, Index offset, Index count)
+    {
+        return ssize(indices) == count && !indices.empty()
+            && indices.front() == offset && is_contiguous(indices);
+    };
+    if (!batch.uses_cuda() || storage_mode != StorageMode::BinaryFile
+        || options.task != Task::Classification || options.input_layout != InputLayout::Tokens
+        || !complete(features.inputs, 0, inputs) || !complete(features.targets, inputs, targets))
+        return Dataset::fill_batch(batch, samples, features, mode);
+
+    throw_if(ssize(samples) != batch.batch_size, "fill_batch sample count does not match the batch size.");
+    batch.device_gather.reset();
+    vector<int32_t> record(size_t(record_tokens), 0);
+    for (Index i = 0; i < batch.batch_size; ++i)
+    {
+        const Index sample = samples[size_t(i)];
+        throw_if(sample < 0 || sample >= get_samples_number(), "TextDataset: sample index is out of range.");
+        // Read tokens and labels together rather than issuing two reads per sample.
+        cache_reader.read_at(span(record), uint64_t(sample) * uint64_t(record_tokens) * sizeof(int32_t));
+        ranges::copy(record | views::take(inputs), batch.input.host.as<float>() + i * inputs);
+        ranges::copy(record | views::drop(record_tokens - targets), batch.target.host.as<float>() + i * targets);
     }
 }
 

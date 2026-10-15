@@ -429,13 +429,14 @@ static void expect_prefetch_matches_synchronized_training(Type dtype)
         set_seed(41);
         ApproximationNetwork reference({2}, {7}, {1});
         const VectorR initial_parameters = reference.get_parameters_map();
-        const auto train = [&](ApproximationNetwork& network, int pool, bool synchronize)
+        const auto train = [&](ApproximationNetwork& network, int pool, int device_pool, bool synchronize)
         {
             Loss loss(&network, &dataset);
             loss.set_error(Loss::Error::MeanSquaredError);
             Adam optimizer(&loss);
             optimizer.set_batch_size(4);
             optimizer.set_batch_pool_size(pool);
+            optimizer.set_device_batch_pool_size(device_pool);
             optimizer.set_maximum_epochs(3);
             optimizer.set_display(false);
             optimizer.set_shuffle(false);
@@ -446,13 +447,13 @@ static void expect_prefetch_matches_synchronized_training(Type dtype)
                 { device::synchronize(device::get_compute_stream()); };
             return optimizer.train();
         };
-        const TrainingResult expected = train(reference, 1, true);
-        for (int pool : {1, 2, 3})
+        const TrainingResult expected = train(reference, 1, 1, true);
+        for (const auto [pool, device_pool] : {pair{1, 1}, pair{2, 3}, pair{3, 2}, pair{3, 6}, pair{6, 3}})
         {
-            SCOPED_TRACE(testing::Message() << "pool=" << pool);
+            SCOPED_TRACE(testing::Message() << "pool=" << pool << " device_pool=" << device_pool);
             ApproximationNetwork pipelined({2}, {7}, {1});
             pipelined.set_parameters(initial_parameters);
-            const TrainingResult actual = train(pipelined, pool, false);
+            const TrainingResult actual = train(pipelined, pool, device_pool, false);
             ASSERT_EQ(actual.get_epochs_number(), expected.get_epochs_number());
             EXPECT_TRUE(actual.training_error_history.isApprox(expected.training_error_history, 1.0e-4f));
             EXPECT_TRUE(actual.validation_error_history.isApprox(expected.validation_error_history, 1.0e-4f));

@@ -67,6 +67,9 @@ public:
 
     void set_batch_pool_size(int size) { batch_pool_size_override = size; }
 
+    // Eager CUDA slots, including the batch in use; graph slots are independent.
+    void set_device_batch_pool_size(int size) { device_batch_pool_size = max(1, size); }
+
     void set_maximum_epochs(const Index new_maximum_epochs) { maximum_epochs = new_maximum_epochs; }
     Index get_maximum_epochs() const noexcept { return maximum_epochs; }
     void set_maximum_time(const float new_maximum_time) { maximum_time = new_maximum_time; }
@@ -136,6 +139,8 @@ protected:
             const size_t slot = size_t(iteration) % (transfer_batches.size() + 1);
             return slot == 0 ? fixed_batch() : transfer_batches[slot - 1].get();
         }
+
+        void prepare_eager_batches(Index, Dataset&, const EffectiveConfig&, int);
 
         bool has_graph_batches() const
         {
@@ -362,18 +367,11 @@ protected:
     bool shuffle_samples = true;
 
     int batch_pool_size_override = 0;
+    int device_batch_pool_size = TrainingSession::prefetch_slots_count;
 
-    // How many threads prepare batches ahead of the device. Two was a bare
-    // literal that nothing outside the tests ever changed, so it is measured
-    // here rather than left to look arbitrary: on the CNN family, whose fill
-    // decodes and resizes an image per sample and is the most expensive one in
-    // the suite, six workers were slower than two in every run and in both
-    // orders -- medians 378 against 406 samples/s, 7% down. The fills are not
-    // waiting on anything the extra threads could overlap with, so the workers
-    // only take the cores the main thread wants.
-    //
-    // OPENNN_BATCH_WORKERS overrides it, which is how the above was run. The
-    // batch pool sizes itself from this, so raising it widens the queue too.
+    // Workers prepare batches concurrently. The automatic host pool leaves
+    // room for transfer as well as preparation; its capacity is not a worker
+    // count. OPENNN_BATCH_WORKERS overrides the default.
     static const int default_workers_number;
 
     int workers_number = default_workers_number;
