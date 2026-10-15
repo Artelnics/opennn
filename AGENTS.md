@@ -157,6 +157,42 @@ barriers, so every fork/join sleeps in the kernel. Set `GOMP_SPINCOUNT=300000`
 or `OMP_WAIT_POLICY=active` before running latency-sensitive work. The runtime
 reads these variables before `main`, so OpenNN cannot set them for you.
 
+### CUDA batch preparation
+
+CUDA training prepares batches with two workers by default
+(`OPENNN_BATCH_WORKERS`), each with one OpenMP thread (`OPENNN_BATCH_THREADS`),
+separate from the general CPU thread limit. A larger thread budget, up to the
+caller's OpenMP limit, can help expensive preprocessing; the caller's setting
+is restored after each fill, including failures. CPU batch preparation keeps
+its normal thread budget.
+
+Workers fill reusable pinned host buffers: `max(workers + 1, 3)` for GPU
+execution and one for CPU execution. A worker waits while none is free, and more
+buffers do not create more workers. Eager CUDA training rotates through three
+device buffers by default, including the batch being processed, so uploads can
+overlap computation; these buffers only receive uploads and keep no host copy.
+Events protect host data until its upload finishes and each device buffer until
+its previous step finishes, and host waits sleep instead of spinning. Configure
+the capacities independently:
+
+```cpp
+optimizer.set_workers_number(2);
+optimizer.set_batch_pool_size(3);
+optimizer.set_device_batch_pool_size(3);
+```
+
+The device-pool setting applies to eager CUDA training; CUDA Graphs keep their
+own pipeline. Automatic batch sizing accounts for the device pool and transfer
+staging memory. More buffers consume memory and can absorb preparation delays,
+but cannot compensate for a sustained input bottleneck. Measure throughput and
+CPU time before increasing workers or either pool.
+
+For binary image data without augmentation, eager training transfers byte
+pixels and converts and scales them on the GPU; validation and other image paths
+keep their float host preparation. CUDA text classification with ordinary token
+inputs reads each binary record's tokens and labels together. These
+optimizations preserve the binary formats, input values and sample order.
+
 ## Build and verify
 
 Use the CMake presets for routine verification on Linux, WSL and Windows.

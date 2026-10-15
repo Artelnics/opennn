@@ -93,6 +93,8 @@ public:
     void fill_decoder(const vector<Index>&, const vector<Index>&, float*, FillMode,
                       ColumnContiguity = ColumnContiguity::Unknown) const override;
 
+    void fill_batch(Batch&, const vector<Index>&, const FeatureSelection&, FillMode) const override;
+
 private:
     struct Segment
     {

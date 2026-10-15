@@ -178,6 +178,14 @@ void CudaEvent::create()
     handle = create_event_handle();
 }
 
+void CudaEvent::create_blocking()
+{
+    reset();
+#ifdef OPENNN_HAS_CUDA
+    handle = create_event_handle(cudaEventDisableTiming | cudaEventBlockingSync);
+#endif
+}
+
 void CudaEvent::reset() noexcept
 {
     destroy_event_handle(handle);

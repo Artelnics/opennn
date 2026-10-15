@@ -61,6 +61,8 @@ cmake --build ../opennn-build/cuda --config Release --target opennn --parallel
 ```
 
 Require CUDA explicitly to make missing GPU build dependencies an error.
+See [CUDA batch preparation](AGENTS.md#cuda-batch-preparation) to configure
+workers and host/device buffers independently.
 
 ## Use OpenNN in your application
 
