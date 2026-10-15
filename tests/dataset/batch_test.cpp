@@ -6,6 +6,7 @@
 #include "opennn/dataset/batch.h"
 #include "opennn/core/configuration.h"
 #include "opennn/dataset/tabular_dataset.h"
+#include "tests/common/test_helpers.h"
 
 using namespace opennn;
 
@@ -67,6 +68,21 @@ TEST(BatchTest, PrefetchSessionWakesWaitersWithTheWorkerError)
 namespace
 {
 
+class ThreadRecordingDataset : public TabularDataset
+{
+public:
+    ThreadRecordingDataset() : TabularDataset(2, {1}, {1}) { set_data_constant(0.5f); }
+    void fill_batch(Batch& batch, const vector<Index>& indices,
+                    const FeatureSelection& features, FillMode mode) const override
+    {
+        threads_seen = omp_get_max_threads();
+        if (fail) throw runtime_error("test fill failure");
+        TabularDataset::fill_batch(batch, indices, features, mode);
+    }
+    mutable int threads_seen = 0;
+    bool fail = false;
+};
+
 std::array<float, 4> read_cuda_dataset_batch(TabularDataset& dataset)
 {
     const EffectiveConfig config{Device::CUDA, Type::FP32, 0};
@@ -83,6 +99,23 @@ std::array<float, 4> read_cuda_dataset_batch(TabularDataset& dataset)
                        device::CopyKind::DeviceToHost, stream);
     device::synchronize(stream);
     return values;
+}
+
+TEST(BatchTest, CudaFillRestoresCallerThreadsAfterSuccessAndFailure)
+{
+    if (!device::has_cuda_device()) GTEST_SKIP() << "CUDA device unavailable.";
+    const opennn_test::ScopedEnvironmentVariable threads("OPENNN_BATCH_THREADS", "2");
+    ThreadRecordingDataset dataset;
+    Batch batch(2, &dataset, {Device::CUDA, Type::FP32, 0}, true);
+    const int previous = omp_get_max_threads();
+    ScopeExit restore([previous] { omp_set_num_threads(previous); });
+    omp_set_num_threads(4);
+    batch.fill({0, 1}, dataset.get_feature_selection());
+    EXPECT_EQ(dataset.threads_seen, 2);
+    EXPECT_EQ(omp_get_max_threads(), 4);
+    dataset.fail = true;
+    EXPECT_THROW(batch.fill({0, 1}, dataset.get_feature_selection()), runtime_error);
+    EXPECT_EQ(omp_get_max_threads(), 4);
 }
 
 }

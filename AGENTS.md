@@ -152,6 +152,18 @@ hardware concurrency, with OpenMP as a fallback. The same count is given to
 Eigen, OpenMP and MKL. `OPENNN_THREADS=n` overrides it, and
 `OPENNN_OMP_DYNAMIC=1` re-enables dynamic OpenMP teams.
 
+CUDA batch preparation uses one OpenMP thread per prefetch worker by default.
+`OPENNN_BATCH_THREADS=n` can raise that budget, up to the caller's OpenMP limit,
+for more expensive preprocessing. The caller's thread setting is restored
+after each fill, including failures; CPU batch preparation retains its normal
+thread budget. Prefer measuring throughput before increasing this setting.
+
+Eager CUDA training rotates through up to three device input buffers so uploads
+can overlap computation. Events protect both the host data until its upload
+finishes and each device buffer until its previous step finishes. Host waits
+on batch events sleep instead of spinning. Automatic batch sizing includes the
+additional device buffers; CUDA Graphs retain their separate pipeline.
+
 On hybrid Intel CPUs (P- and E-cores), GCC 14's libgomp stops spinning at
 barriers, so every fork/join sleeps in the kernel. Set `GOMP_SPINCOUNT=300000`
 or `OMP_WAIT_POLICY=active` before running latency-sensitive work. The runtime

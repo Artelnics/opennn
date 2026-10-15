@@ -327,6 +327,14 @@ void Optimizer::setup_batch_pools(BatchPools& pools,
     {
         training_session.pipelines[0].slots[0] = make_unique<Batch>(training_batch_size, &dataset, config);
 
+        if (!can_use_cuda_graph() && training_batch_size > 0)
+        {
+            const Index slots = min(Index(TrainingSession::prefetch_slots_count),
+                dataset.get_samples_number(SampleRole::Training) / training_batch_size);
+            for (Index slot = 1; slot < slots; ++slot)
+                training_session.transfer_batches.push_back(make_unique<Batch>(training_batch_size, &dataset, config));
+        }
+
         if (can_use_cuda_graph())
         {
             const Index training_batches = training_batch_size > 0
@@ -581,24 +589,31 @@ Index Optimizer::get_maximum_batch_size() const
     const Shape output_shape = network->get_output_shape();
 
     const Type compute_dtype = bf16_train ? Type::BF16 : Type::FP32;
-    const Index batch_copies = on_gpu ? 1 : get_batch_pool_size(*network);
-
     const auto batch_data_bytes = [&](const Index batch)
     {
         Index bytes = 0;
+        // Bound the ring's total samples without the downward jumps caused by
+        // floor(samples / batch): the capacity search requires monotonic sizes.
+        const Index stored_samples = on_gpu
+            ? (can_use_cuda_graph() ? batch : min(batch * TrainingSession::prefetch_slots_count,
+                                                 training_samples_number))
+            : batch * get_batch_pool_size(*network);
 
         if(!input_shape.empty())
-            bytes += batch * input_shape.size()
+            bytes += stored_samples * input_shape.size()
                    * (bf16_input ? Index(sizeof(bfloat16))
                                  : Index(sizeof(float)));
 
         if(!target_shape.empty())
-            bytes += batch * target_shape.size() * Index(sizeof(float));
+            bytes += stored_samples * target_shape.size() * Index(sizeof(float));
 
         if(!decoder_shape.empty())
-            bytes += batch * decoder_shape.size() * Index(sizeof(float));
+            bytes += stored_samples * decoder_shape.size() * Index(sizeof(float));
 
-        return batch_copies * bytes;
+        if(fp32_input_staging && !input_shape.empty())
+            bytes += get_aligned_bytes(stored_samples * input_shape.size(), Type::FP32);
+
+        return bytes;
     };
 
     const auto run_bytes = [&](const Index batch)
@@ -613,10 +628,6 @@ Index Optimizer::get_maximum_batch_size() const
         if(!output_shape.empty())
             bytes += get_aligned_bytes(batch * output_shape.size(),
                                        compute_dtype);
-
-        if(fp32_input_staging && !input_shape.empty())
-            bytes += get_aligned_bytes(batch * input_shape.size(),
-                                       Type::FP32);
 
         return bytes;
     };
@@ -1427,7 +1438,7 @@ void Optimizer::sync_device(const bool on_gpu,
     if (slot)
         device::synchronize_event(slot.get());
     else
-        slot.create();
+        slot.create_blocking();
 
     device::record_event(slot.get(), device::get_compute_stream());
 }
@@ -1843,7 +1854,10 @@ Loss::EvaluationResult Optimizer::run_epoch_loop(EpochLoopContext& context)
 
     Batch* const fixed_device_batch = context.fixed_device_batch;
     const bool use_fixed_device_batch = fixed_device_batch && fixed_device_batch->uses_cuda();
-    bool fixed_device_batch_in_use = false;
+    const auto device_batch_for = [&](Index iteration)
+    {
+        return context.training_session->eager_batch(iteration);
+    };
 
     Batch* next_batch = nullptr;
     auto fetch_and_issue = [&](Index iteration)
@@ -1854,10 +1868,13 @@ Loss::EvaluationResult Optimizer::run_epoch_loop(EpochLoopContext& context)
         if (use_fixed_device_batch)
         {
             PROFILE_SCOPE_HOST("step:fixed_h2d_issue");
-            if (fixed_device_batch_in_use)
-                device::stream_wait_event(device::get_transfer_stream(), fixed_device_batch->h2d_done_event.get());
+            Batch* destination = device_batch_for(iteration);
+            // Only this slot's previous computation gates its next upload.
+            // Copies into other slots can overlap the current training step.
+            if (destination->h2d_done_recorded)
+                device::stream_wait_event(device::get_transfer_stream(), destination->h2d_done_event.get());
 
-            return next_batch->upload_to_device_batch_async(*fixed_device_batch, device::get_transfer_stream());
+            return next_batch->upload_to_device_batch_async(*destination, device::get_transfer_stream());
         }
 
         PROFILE_SCOPE_HOST("step:prefetch_h2d_issue");
@@ -1875,15 +1892,12 @@ Loss::EvaluationResult Optimizer::run_epoch_loop(EpochLoopContext& context)
             fetch_and_issue(iteration + 1);
 
         if (on_gpu) current_batch->wait_h2d_on_compute_stream();
-        Batch& compute_batch = use_fixed_device_batch ? *fixed_device_batch : *current_batch;
+        Batch& compute_batch = use_fixed_device_batch ? *device_batch_for(iteration) : *current_batch;
 
         context.step(compute_batch, epoch_result);
 
         if (use_fixed_device_batch)
-        {
-            device::record_event(fixed_device_batch->h2d_done_event.get(), device::get_compute_stream());
-            fixed_device_batch_in_use = true;
-        }
+            compute_batch.record_h2d_done(device::get_compute_stream());
 
         {
             PROFILE_SCOPE("step:sync_device");

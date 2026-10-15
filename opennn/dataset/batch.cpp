@@ -239,13 +239,23 @@ void Batch::set(const Index new_batch_size,
     }
 
     if (!h2d_done_event)
-        h2d_done_event.create();
+        h2d_done_event.create_blocking();
 }
 
 void Batch::fill(const vector<Index>& sample_indices,
                  const FeatureSelection& features,
                  FillMode mode)
 {
+    if (!uses_cuda())
+        return dataset->fill_batch(*this, sample_indices, features, mode);
+
+    // Prefetch workers already run concurrently. Avoid giving each one a
+    // full OpenMP team that keeps spinning while its batch is on the GPU.
+    const int previous_threads = omp_get_max_threads();
+    const int batch_threads = int(clamp(env_int_or("OPENNN_BATCH_THREADS", 1),
+                                        1LL, static_cast<long long>(previous_threads)));
+    omp_set_num_threads(batch_threads);
+    ScopeExit restore_threads([previous_threads] { omp_set_num_threads(previous_threads); });
     dataset->fill_batch(*this, sample_indices, features, mode);
 }
 
@@ -393,7 +403,7 @@ void Batch::upload_to_device_batch_async(Batch&, DeviceStream) OPENNN_CUDA_STUB_
 void Batch::record_h2d_done(DeviceStream stream)
 {
     if (!h2d_done_event)
-        h2d_done_event.create();
+        h2d_done_event.create_blocking();
 
     device::record_event(h2d_done_event.get(), stream);
     h2d_done_recorded = true;

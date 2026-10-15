@@ -119,6 +119,7 @@ protected:
         static constexpr int group_size = 8;
         static constexpr int slots_count = 2 * group_size;
         static constexpr int pipelines_count = 2;
+        static constexpr int prefetch_slots_count = 3;
 
         struct GraphPipeline
         {
@@ -129,6 +130,12 @@ protected:
         };
 
         Batch* fixed_batch() const { return pipelines[0].slots[0].get(); }
+
+        Batch* eager_batch(Index iteration) const
+        {
+            const size_t slot = size_t(iteration) % (transfer_batches.size() + 1);
+            return slot == 0 ? fixed_batch() : transfer_batches[slot - 1].get();
+        }
 
         bool has_graph_batches() const
         {
@@ -152,6 +159,7 @@ protected:
         };
 
         array<GraphPipeline, pipelines_count> pipelines;
+        vector<unique_ptr<Batch>> transfer_batches;
         TailContext tail;
         Buffer device_metrics{Device::CUDA};
         array<device::CudaEvent, 4> throttle_events;
