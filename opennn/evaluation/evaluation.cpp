@@ -140,10 +140,16 @@ pair<MatrixR, MatrixR> Evaluation::get_targets_and_outputs(const string& sample_
     const FeatureSelection features = dataset->get_feature_selection();
     const Index target_width = dataset->get_target_shape().size();
 
-    // Bound inference memory independently of the number of evaluated samples.
+    // Bound inference memory independently of the number of evaluated samples
+    // and of their size: an image or a long sequence can need megabytes of
+    // activations per sample.
     constexpr Index maximum_cpu_batch_size = 4096;
-    const Index default_batch_size =
-        network->is_gpu() ? Index(256) : maximum_cpu_batch_size;
+    constexpr Index maximum_cpu_batch_bytes = Index(512) << 20;
+    const Index sample_bytes = get_aligned_bytes(network->get_forward_specs(1))
+                             + dataset->get_shape(VariableRole::Input).size() * Index(sizeof(float));
+    const Index default_batch_size = network->is_gpu()
+        ? Index(256)
+        : clamp(maximum_cpu_batch_bytes / max(sample_bytes, Index(1)), Index(1), maximum_cpu_batch_size);
     const Index current_batch_size =
         min(batch_size <= 0 ? default_batch_size : batch_size, samples_number);
 
