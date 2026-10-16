@@ -14,6 +14,15 @@ project(OpenNNPackageSmoke LANGUAGES CXX)
 
 find_package(OpenNN 26.0 CONFIG REQUIRED)
 
+# Dependencies must be resolved on the consumer machine, not exported as paths
+# to libraries on the machine that built OpenNN.
+get_target_property(_opennn_links OpenNN::opennn INTERFACE_LINK_LIBRARIES)
+foreach(_opennn_link IN LISTS _opennn_links)
+    if(IS_ABSOLUTE "${_opennn_link}")
+        message(FATAL_ERROR "OpenNN exports an absolute dependency path: ${_opennn_link}")
+    endif()
+endforeach()
+
 add_executable(opennn_package_smoke main.cpp)
 target_link_libraries(opennn_package_smoke PRIVATE OpenNN::opennn)
 target_compile_features(opennn_package_smoke PRIVATE cxx_std_20)

@@ -80,6 +80,30 @@ TEST(Evaluation, BatchedInferenceReadsTargetsOnceAndPreservesSampleOrderAndShape
     }
 }
 
+TEST(Evaluation, CpuInferenceBatchesAreBoundedByActivationMemory)
+{
+    const ScopeExit reset_configuration([] { Configuration::instance().set(Device::CPU, Type::FP32); });
+    Configuration::instance().set(Device::CPU, Type::FP32);
+    // Tiny data, wide activations: a sample-count cap alone would evaluate all
+    // 3000 samples at once and allocate over a gigabyte for the hidden layer.
+    constexpr Index samples = 3000, hidden = 100000;
+    CountingEvaluationDataset dataset(samples, {1}, {1});
+    dataset.set_data_constant(type(0.5));
+    dataset.set_sample_roles("Testing");
+    Network network;
+    network.add_layer(make_unique<opennn::Dense>(Shape{1}, Shape{hidden}, "ReLU", BatchNormalization::No, "hidden"));
+    network.add_layer(make_unique<opennn::Dense>(Shape{hidden}, Shape{1}, "Identity", BatchNormalization::No, "output"));
+    network.compile();
+
+    const auto [targets, outputs] = Evaluation(&network, &dataset).get_targets_and_outputs("Testing");
+
+    EXPECT_EQ(outputs.rows(), samples);
+    ASSERT_GT(dataset.target_batches.size(), 1u);
+    const size_t memory_bound = (size_t(512) << 20) / (hidden * sizeof(float));
+    for (const vector<Index>& batch : dataset.target_batches)
+        EXPECT_LE(batch.size(), memory_bound);
+}
+
 TEST(Evaluation, RegressionAnalysisRequiresNetworkDatasetAndTestingSamples)
 {
     ApproximationNetwork network({1}, {}, {1});

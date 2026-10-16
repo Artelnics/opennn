@@ -4,6 +4,48 @@
 #include "opennn/core/cuda/kernel_common.cuh"
 #include "opennn/dataset/kernel_gather.cuh"
 
+#include <stdexcept>
+
+struct ImageAffine
+{
+    float scale[4];
+    float offset[4];
+};
+
+template <typename T>
+__global__ void unpack_image_pixels_kernel(const uint8_t* input, T* output,
+                                            int count, int channels, ImageAffine affine)
+{
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i >= count) return;
+    const int channel = i % channels;
+    // Match the separate multiply and add used by the host scaling path.
+    output[i] = static_cast<T>(__fadd_rn(__fmul_rn(float(input[i]), affine.scale[channel]),
+                                        affine.offset[channel]));
+}
+
+void unpack_image_pixels_cuda(const uint8_t* input, void* output, bool output_bf16,
+                               Index count, int channels, const float* scale,
+                               const float* offset, cudaStream_t stream)
+{
+    if (count == 0) return;
+    if (channels < 1 || channels > 4)
+        throw std::invalid_argument("Packed image input requires one to four channels.");
+    ImageAffine affine{};
+    for (int i = 0; i < channels; ++i)
+    {
+        affine.scale[i] = scale[i];
+        affine.offset[i] = offset[i];
+    }
+    const int n = checked_int(count);
+    dispatch_float_bf16(output_bf16, [&]<typename T>()
+    {
+        OPENNN_CUDA_LAUNCH(unpack_image_pixels_kernel<T>
+            <<<(n + block_size - 1) / block_size, block_size, 0, stream>>>(
+                input, static_cast<T*>(output), n, channels, affine));
+    });
+}
+
 static inline int row_threads(const int cols)
 {
     return cols < block_size ? ((cols + 31) / 32) * 32 : block_size;

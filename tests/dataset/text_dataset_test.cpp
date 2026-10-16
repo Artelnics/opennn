@@ -57,6 +57,38 @@ TEST(TextDatasetClassification, DefaultConstructorIsEmpty)
     EXPECT_EQ(dataset.get_sequence_length(VariableRole::Target), 0);
 }
 
+TEST(TextDatasetClassification, CudaBinaryBatchMatchesSeparateReads)
+{
+    if (!device::has_cuda_device()) GTEST_SKIP() << "No CUDA device.";
+    const string path = temp_language_file("opennn_text_combined_batch.txt",
+        sentiment_content + "some ordinary words\tNeutral\n");
+    ScopeExit cleanup([&] { remove_language_file(path); });
+    TextDataset dataset(TextDataset::Options{.sequence_length = 11});
+    dataset.set_display(false);
+    dataset.read_txt(path);
+    ASSERT_EQ(dataset.get_storage_mode(), Dataset::StorageMode::BinaryFile);
+    Batch actual(3, &dataset, {Device::CUDA, Type::FP32, 0}, true);
+    Batch expected(3, &dataset, {Device::CUDA, Type::FP32, 0}, true);
+    const vector<Index> samples{4, 0, 4};
+    FeatureSelection features = dataset.get_feature_selection();
+    for (bool reordered : {false, true})
+    {
+        if (reordered)
+        {
+            ranges::reverse(features.inputs);
+            ranges::reverse(features.targets);
+        }
+        actual.fill(samples, features);
+        dataset.Dataset::fill_batch(expected, samples, features, FillMode::Training);
+        for (Index i = 0; i < actual.input.shape.size(); ++i)
+            EXPECT_EQ(actual.input.host.as<float>()[i], expected.input.host.as<float>()[i]);
+        for (Index i = 0; i < actual.target.shape.size(); ++i)
+            EXPECT_EQ(actual.target.host.as<float>()[i], expected.target.host.as<float>()[i]);
+        EXPECT_THROW(actual.fill({0, 1}, features), runtime_error);
+        EXPECT_THROW(actual.fill({0, 1, 99}, features), runtime_error);
+    }
+}
+
 TEST(TextDatasetClassification, ClassificationLabelsRemainAtomicAndInputLengthIsCapped)
 {
     const string file_path = temp_language_file("opennn_atomic_labels.txt",

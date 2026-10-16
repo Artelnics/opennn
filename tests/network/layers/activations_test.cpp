@@ -268,7 +268,11 @@ static void expect_dense_fanout_gradient(Device device)
     const VectorR gradient = calculate_gradient(loss);
     const VectorR numerical_gradient = calculate_numerical_gradient(loss);
 
-    EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(1.0e-3));
+    Index worst = 0;
+    const float difference = (gradient - numerical_gradient).array().abs().maxCoeff(&worst);
+    EXPECT_LT(difference, type(1.0e-3))
+        << "parameter " << worst << " analytical " << gradient(worst)
+        << " numerical " << numerical_gradient(worst);
 }
 
 TEST(ActivationsTest, DenseFanoutFoldedResidualGradientCPU)

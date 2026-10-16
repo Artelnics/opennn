@@ -2,6 +2,7 @@
 // Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 #include "opennn/dataset/image_dataset.h"
+#include "opennn/dataset/batch.h"
 #include "opennn/core/log.h"
 
 #include <utility>
@@ -532,6 +533,40 @@ void ImageDataset::write_image_cache(const vector<filesystem::path>& paths, cons
     writer.write(span(trailer));
 
     writer.finish_with_rename(cache_path);
+}
+
+void ImageDataset::fill_batch(Batch& batch,
+                               const vector<Index>& sample_indices,
+                               const FeatureSelection& features,
+                               FillMode mode) const
+{
+    batch.packed_image_input.reset();
+    if (!batch.pack_image_input || !batch.uses_cuda() || !supports_byte_inputs()
+        || mode != FillMode::Training)
+        return Dataset::fill_batch(batch, sample_indices, features, mode);
+
+    throw_if(ssize(sample_indices) != batch.batch_size,
+             "fill_batch sample count does not match the batch size.");
+    batch.device_gather.reset();
+    PackedImageInput& packed = batch.packed_image_input.emplace();
+    packed.channels = int(get_channels_number());
+    // Training always scales: the configured affine map, or bytes to [0, 1].
+    const bool configured = ssize(input_scale) == packed.channels
+                         && ssize(input_offset) == packed.channels;
+    for (int channel = 0; channel < packed.channels; ++channel)
+    {
+        packed.scale[size_t(channel)] = configured ? input_scale[size_t(channel)] : 1.0f / 255.0f;
+        packed.offset[size_t(channel)] = configured ? input_offset[size_t(channel)] : 0.0f;
+    }
+    for (Index i = 0; i < batch.batch_size; ++i)
+    {
+        const Index index = sample_indices[size_t(i)];
+        throw_if(index < 0 || index >= ssize(sample_labels),
+                 "ImageDataset input sample index is out of range.");
+        cache_reader.read_at(span(batch.input.host.as<uint8_t>() + size_t(i) * pixel_number,
+                                  size_t(pixel_number)), uint64_t(index) * pixel_number);
+    }
+    fill_targets(sample_indices, features.targets, batch.target.host.as<float>(), mode);
 }
 
 void ImageDataset::fill_inputs(const vector<Index>& sample_indices,

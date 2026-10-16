@@ -1,5 +1,5 @@
 # Hosted CPU tests and CUDA compilation. Nothing here needs a GPU: run the CUDA
-# test suite locally with tools/verify.sh before merging GPU changes.
+# test suite locally with the verify-cuda preset before merging GPU changes.
 #
 # Every job builds the library and the tests from a clean checkout with the
 # dependencies CMake fetches itself (Eigen, libjpeg-turbo, zlib, GoogleTest),
@@ -7,9 +7,10 @@
 name: CI
 
 # Commits that only change Markdown documentation skip CI.
+# Validate development changes through their PR; pushes validate published master.
 on:
   push:
-    branches: [dev, master]
+    branches: [master]
     paths-ignore: ["**.md"]
   pull_request:
     branches: [dev, master]
@@ -50,6 +51,7 @@ jobs:
           python -m pip install -r tools/code-quality-requirements.txt
           python tools/check_code_quality.py
           python tools/check_architecture.py
+          python -B tools/package_smoke/check_dependency_relocation.py
 
       - name: Reject a toolchain without OpenMP
         run: |

@@ -6,6 +6,9 @@
 #include "opennn/dataset/batch.h"
 #include "opennn/core/configuration.h"
 #include "opennn/dataset/tabular_dataset.h"
+#include "tests/common/test_helpers.h"
+
+#include <omp.h>
 
 using namespace opennn;
 
@@ -67,6 +70,21 @@ TEST(BatchTest, PrefetchSessionWakesWaitersWithTheWorkerError)
 namespace
 {
 
+class ThreadRecordingDataset : public TabularDataset
+{
+public:
+    ThreadRecordingDataset() : TabularDataset(2, {1}, {1}) { set_data_constant(0.5f); }
+    void fill_batch(Batch& batch, const vector<Index>& indices,
+                    const FeatureSelection& features, FillMode mode) const override
+    {
+        threads_seen = omp_get_max_threads();
+        if (fail) throw runtime_error("test fill failure");
+        TabularDataset::fill_batch(batch, indices, features, mode);
+    }
+    mutable int threads_seen = 0;
+    bool fail = false;
+};
+
 std::array<float, 4> read_cuda_dataset_batch(TabularDataset& dataset)
 {
     const EffectiveConfig config{Device::CUDA, Type::FP32, 0};
@@ -83,6 +101,23 @@ std::array<float, 4> read_cuda_dataset_batch(TabularDataset& dataset)
                        device::CopyKind::DeviceToHost, stream);
     device::synchronize(stream);
     return values;
+}
+
+TEST(BatchTest, CudaFillRestoresCallerThreadsAfterSuccessAndFailure)
+{
+    if (!device::has_cuda_device()) GTEST_SKIP() << "CUDA device unavailable.";
+    const opennn_test::ScopedEnvironmentVariable threads("OPENNN_BATCH_THREADS", "2");
+    ThreadRecordingDataset dataset;
+    Batch batch(2, &dataset, {Device::CUDA, Type::FP32, 0}, true);
+    const int previous = omp_get_max_threads();
+    ScopeExit restore([previous] { omp_set_num_threads(previous); });
+    omp_set_num_threads(4);
+    batch.fill({0, 1}, dataset.get_feature_selection());
+    EXPECT_EQ(dataset.threads_seen, 2);
+    EXPECT_EQ(omp_get_max_threads(), 4);
+    dataset.fail = true;
+    EXPECT_THROW(batch.fill({0, 1}, dataset.get_feature_selection()), runtime_error);
+    EXPECT_EQ(omp_get_max_threads(), 4);
 }
 
 }
@@ -175,6 +210,39 @@ TEST(BatchTest, CudaPrefetchBatchKeepsDeviceIdentityWithoutDeviceStorage)
     EXPECT_TRUE(batch.uses_cuda());
     EXPECT_EQ(batch.input.buffer.get_device(), Device::CUDA);
     EXPECT_EQ(batch.input.buffer.byte_size(), 0);
+}
+
+TEST(BatchTest, CudaDeviceOnlyBatchReceivesUploadsWithoutHostStaging)
+{
+    if (!device::has_cuda_device()) GTEST_SKIP() << "CUDA device unavailable.";
+    TabularDataset dataset(2, {1}, {1});
+    MatrixR raw(2, 2);
+    raw << 1.0f, 10.0f, 2.0f, 20.0f;
+    dataset.set_data(raw);
+    const FeatureSelection features = dataset.get_feature_selection();
+    for (const Type dtype : {Type::FP32, Type::BF16})
+    {
+        if (dtype == Type::BF16 && device::cuda_compute_capability() < 80) continue;
+        SCOPED_TRACE(dtype == Type::BF16 ? "BF16" : "FP32");
+        const EffectiveConfig config{Device::CUDA, dtype, 0};
+        Batch staged(2, &dataset, config, true);
+        Batch destination(2, &dataset, config, BatchStorage::DeviceOnly);
+        EXPECT_TRUE(destination.input.has_data() && destination.target.has_data());
+        EXPECT_FALSE(destination.input.host || destination.target.host || destination.input_host_bf16);
+        EXPECT_THROW(destination.fill({0, 1}, features), runtime_error);
+
+        staged.fill({0, 1}, features, FillMode::Inference);
+        staged.upload_to_device_batch_async(destination, device::get_transfer_stream());
+        staged.wait_h2d_on_compute_stream();
+        const DeviceStream stream = device::get_compute_stream();
+        std::array<float, 4> values{};
+        copy_device_to_host_float(destination.input.buffer.data(), destination.input.type, 2,
+                                  values.data(), stream);
+        device::copy_async(values.data() + 2, destination.target.buffer.data(), 2 * sizeof(float),
+                           device::CopyKind::DeviceToHost, stream);
+        device::synchronize(stream);
+        EXPECT_EQ(values, (std::array<float, 4>{1.0f, 2.0f, 10.0f, 20.0f}));
+    }
 }
 
 #endif

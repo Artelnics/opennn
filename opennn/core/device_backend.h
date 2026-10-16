@@ -310,6 +310,7 @@ public:
     ~CudaEvent() noexcept;
 
     void create();
+    void create_blocking();
 
     DeviceEvent get() const noexcept { return handle; }
     explicit operator bool() const noexcept { return handle != nullptr; }
