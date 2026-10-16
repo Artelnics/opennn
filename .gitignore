@@ -90,11 +90,13 @@ __pycache__/
 .vs/
 .vscode/
 .idea/
+.kdev4/
 .claude/
 .DS_Store
 ._*
 *~
 *.swp
+*.kdev4
 
 # Analysis and local tooling
 /.backups/
