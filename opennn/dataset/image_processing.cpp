@@ -568,6 +568,12 @@ void copy_image_to_expected_shape(const Tensor3& source,
 
 bool is_supported_image_file(const filesystem::path& path)
 {
+    // A hidden file is never an image. macOS writes an AppleDouble "._name.jpg"
+    // next to every file it copies to an exFAT, FAT or network volume: it keeps
+    // the image's extension but holds metadata, and load_image rejects it.
+    if (path.filename().string().starts_with('.'))
+        return false;
+
     string extension = path.extension().string();
     ranges::transform(extension, extension.begin(),
                       [](unsigned char c) { return char(tolower(c)); });
