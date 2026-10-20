@@ -294,7 +294,8 @@ interfaces may not expose CUDA vendor types; `.cuh` implementation headers may.
 CI runs for pull requests targeting `dev` or `master`, and for pushes to
 `master`. Updating a development PR runs its integration checks once, without
 another run for the push to `dev`. For `dev` work without an open PR, use the
-manual `workflow_dispatch` trigger. Markdown-only changes skip automatic CI.
+manual `workflow_dispatch` trigger. Changes limited to Markdown or to the
+benchmarks' pinned Python packages (`benchmarks/manifests/`) skip automatic CI.
 
 `ci.yml` runs on hosted machines: Linux and Windows CPU builds, CUDA compilation
 on Linux, package consumers (static and shared on Linux, portable AppleClang on

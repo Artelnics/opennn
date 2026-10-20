@@ -4,7 +4,8 @@
 # A pull request can be merged only when its author is covered by the Contributor License
 # Agreement (CLA.md) or by an agreement with Artificial Intelligence Techniques, S.L.
 # Covered GitHub accounts are listed in .github/cla-signers.txt. The job reads the list from
-# the base branch and never checks out or runs the pull request's code.
+# the base branch and never checks out or runs the pull request's code. Bots such as
+# Dependabot cannot sign an agreement, so their pull requests skip the check.
 name: CLA
 
 on:
@@ -18,6 +19,7 @@ permissions:
 jobs:
   cla:
     name: Contributor License Agreement
+    if: github.event.pull_request.user.type != 'Bot'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

@@ -18,7 +18,8 @@ You sign it once. If your employer may own what you write, your employer must
 authorise the contribution, as section 4 of the agreement explains.
 
 Employees and interns of Artificial Intelligence Techniques, S.L. contribute
-under their own agreements with the company and do not sign the CLA.
+under their own agreements with the company and do not sign the CLA. Pull
+requests opened by bots, such as Dependabot's dependency updates, skip the check.
 
 ## Reporting problems
 
