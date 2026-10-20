@@ -108,6 +108,11 @@ public:
         return get_variables(VariableRole::Input);
     }
 
+    virtual vector<Variable> get_model_target_variables() const
+    {
+        return get_variables(VariableRole::Target);
+    }
+
     virtual bool sample_order_matters() const noexcept { return false; }
 
     virtual MatrixR calculate_input_target_correlation_values() const { throw runtime_error("Dataset does not support input-target correlations."); }
