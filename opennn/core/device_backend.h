@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: LGPL-2.1-or-later
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 #pragma once
 
@@ -310,6 +310,7 @@ public:
     ~CudaEvent() noexcept;
 
     void create();
+    void create_blocking();
 
     DeviceEvent get() const noexcept { return handle; }
     explicit operator bool() const noexcept { return handle != nullptr; }

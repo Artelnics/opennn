@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
+
 # Consumer smoke test: a separate project that finds an installed OpenNN
 # with find_package and links a one-file program against it. It is not part
 # of the main build; CI installs the library to a prefix and configures this
@@ -9,7 +12,16 @@
 cmake_minimum_required(VERSION 3.24)
 project(OpenNNPackageSmoke LANGUAGES CXX)
 
-find_package(OpenNN 9.0 CONFIG REQUIRED)
+find_package(OpenNN 26.0 CONFIG REQUIRED)
+
+# Dependencies must be resolved on the consumer machine, not exported as paths
+# to libraries on the machine that built OpenNN.
+get_target_property(_opennn_links OpenNN::opennn INTERFACE_LINK_LIBRARIES)
+foreach(_opennn_link IN LISTS _opennn_links)
+    if(IS_ABSOLUTE "${_opennn_link}")
+        message(FATAL_ERROR "OpenNN exports an absolute dependency path: ${_opennn_link}")
+    endif()
+endforeach()
 
 add_executable(opennn_package_smoke main.cpp)
 target_link_libraries(opennn_package_smoke PRIVATE OpenNN::opennn)

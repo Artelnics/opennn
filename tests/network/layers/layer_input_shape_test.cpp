@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   L A Y E R   I N P U T   S H A P E   T E S T   S O U R C E
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 // set_input_shape used to react five different ways to a rank a layer cannot
 // represent: check_rank threw, throw_if threw, two layers returned silently
@@ -104,7 +99,3 @@ TEST(LayerInputShape, EmptyShapeIsStillAccepted)
 
     EXPECT_NO_THROW(dense.set_input_shape(Shape{}));
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

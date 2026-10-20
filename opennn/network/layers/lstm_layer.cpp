@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: LGPL-2.1-or-later
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 #include "opennn/network/layers/lstm_layer.h"
 #include "opennn/network/layers/layer_registry.h"
@@ -1025,14 +1025,28 @@ void LSTMOperator::apply(const TensorView& input,
     float* hidden = hidden_state.as<float>();
     float* cell_act = cell_activation.as<float>();
 
-    // Use ordinary pointer variables: Apple Clang cannot capture structured
-    // bindings in the OpenMP regions below.
-    const auto bias_data = gate_data<const float>(gate_biases());
-    const float* const bf = bias_data[0], * const bi = bias_data[1], * const bg = bias_data[2], * const bo = bias_data[3];
-    const auto weight_data = gate_data<const float>(gate_weights());
-    const float* const Wf = weight_data[0], * const Wi = weight_data[1], * const Wg = weight_data[2], * const Wo = weight_data[3];
-    const auto recurrent_data = gate_data<const float>(gate_recurrent_weights());
-    const float* const Uf = recurrent_data[0], * const Ui = recurrent_data[1], * const Ug = recurrent_data[2], * const Uo = recurrent_data[3];
+    // Plain named pointers, one per gate parameter, picked out of the Gate-
+    // ordered arrays by index. They are deliberately not a structured binding
+    // over those arrays: the OpenMP regions below capture them, and Apple Clang
+    // cannot capture a structured binding inside an OpenMP region.
+    const array<const float*, GateCount> bias_data = gate_data<const float>(gate_biases());
+    const array<const float*, GateCount> weight_data = gate_data<const float>(gate_weights());
+    const array<const float*, GateCount> recurrent_data = gate_data<const float>(gate_recurrent_weights());
+
+    const float* const bf = bias_data[Forget];
+    const float* const bi = bias_data[Input];
+    const float* const bg = bias_data[Candidate];
+    const float* const bo = bias_data[Output];
+
+    const float* const Wf = weight_data[Forget];
+    const float* const Wi = weight_data[Input];
+    const float* const Wg = weight_data[Candidate];
+    const float* const Wo = weight_data[Output];
+
+    const float* const Uf = recurrent_data[Forget];
+    const float* const Ui = recurrent_data[Input];
+    const float* const Ug = recurrent_data[Candidate];
+    const float* const Uo = recurrent_data[Output];
 
     if (H >= 96)
     {
@@ -1425,16 +1439,42 @@ void LSTMOperator::apply_delta(const TensorView& input,
     const float* hidden = hidden_state.as<float>();
     const float* cell_act = cell_activation.as<float>();
 
-    const auto weight_data = gate_data<const float>(gate_weights());
-    const float* const Wf = weight_data[0], * const Wi = weight_data[1], * const Wg = weight_data[2], * const Wo = weight_data[3];
-    const auto recurrent_data = gate_data<const float>(gate_recurrent_weights());
-    const float* const Uf = recurrent_data[0], * const Ui = recurrent_data[1], * const Ug = recurrent_data[2], * const Uo = recurrent_data[3];
-    const auto bias_gradient_data = gate_data<float>(gate_bias_gradients());
-    float* const gbf = bias_gradient_data[0], * const gbi = bias_gradient_data[1], * const gbg = bias_gradient_data[2], * const gbo = bias_gradient_data[3];
-    const auto weight_gradient_data = gate_data<float>(gate_weight_gradients());
-    float* const gWf = weight_gradient_data[0], * const gWi = weight_gradient_data[1], * const gWg = weight_gradient_data[2], * const gWo = weight_gradient_data[3];
-    const auto recurrent_gradient_data = gate_data<float>(gate_recurrent_weight_gradients());
-    float* const gUf = recurrent_gradient_data[0], * const gUi = recurrent_gradient_data[1], * const gUg = recurrent_gradient_data[2], * const gUo = recurrent_gradient_data[3];
+    // Named pointers into the gate weights (read) and the gate gradients
+    // (accumulated into by the scalar path's threads). Declared one by one
+    // rather than as a structured binding, because the OpenMP regions below
+    // capture them and Apple Clang rejects capturing a structured binding.
+    // Nothing is touched here: the gradients were zeroed above.
+    const array<const float*, GateCount> weight_data = gate_data<const float>(gate_weights());
+    const array<const float*, GateCount> recurrent_data = gate_data<const float>(gate_recurrent_weights());
+
+    const array<float*, GateCount> bias_gradient_data = gate_data<float>(gate_bias_gradients());
+    const array<float*, GateCount> weight_gradient_data = gate_data<float>(gate_weight_gradients());
+    const array<float*, GateCount> recurrent_gradient_data = gate_data<float>(gate_recurrent_weight_gradients());
+
+    const float* const Wf = weight_data[Forget];
+    const float* const Wi = weight_data[Input];
+    const float* const Wg = weight_data[Candidate];
+    const float* const Wo = weight_data[Output];
+
+    const float* const Uf = recurrent_data[Forget];
+    const float* const Ui = recurrent_data[Input];
+    const float* const Ug = recurrent_data[Candidate];
+    const float* const Uo = recurrent_data[Output];
+
+    float* const gbf = bias_gradient_data[Forget];
+    float* const gbi = bias_gradient_data[Input];
+    float* const gbg = bias_gradient_data[Candidate];
+    float* const gbo = bias_gradient_data[Output];
+
+    float* const gWf = weight_gradient_data[Forget];
+    float* const gWi = weight_gradient_data[Input];
+    float* const gWg = weight_gradient_data[Candidate];
+    float* const gWo = weight_gradient_data[Output];
+
+    float* const gUf = recurrent_gradient_data[Forget];
+    float* const gUi = recurrent_gradient_data[Input];
+    float* const gUg = recurrent_gradient_data[Candidate];
+    float* const gUo = recurrent_gradient_data[Output];
 
     if (H >= 96)
     {

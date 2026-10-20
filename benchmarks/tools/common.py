@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
+
 """Shared provenance, binary discovery, monitoring and scoring for PROTOCOL.md."""
 
 from __future__ import annotations
@@ -226,12 +229,9 @@ class ForeignActivity:
     """CPU time spent by everything that is not the launch, second by second.
 
     `cpu_busy_fraction` reads the machine before the first launch and after
-    the last, and nothing in between -- the one place a long window can be
-    hurt. That was found the expensive way: on 2026-09-02 an editor drawing a
-    conversation on the E-cores, while a 2.4 s dense-training window ran on
-    the P-cores, cost the launch-bound step 4-12% on both engines and left
-    both edge samples quiet. This watches every second of a launch and keeps
-    the worst one.
+    the last. Background activity during a launch can distort measurements
+    even when both boundary samples are quiet. Sample throughout each launch
+    and retain the highest observed activity.
 
     Foreign means outside the launch: not the runner, not the launched
     process, not its descendants (PyTorch's compile workers are children of
@@ -239,10 +239,9 @@ class ForeignActivity:
     driver's interrupt work for the launch itself. Charging by process rather
     than reading /proc/stat is what makes that separation possible. Only
     live processes are charged, so one that starts and exits between two
-    samples is missed -- at a second per sample that is under 1/28 of the
-    machine for under a second, well below the threshold. For a pinned CPU
-    cell only work last seen on the watched cores counts, as with the edge
-    samples. The cost is one pass over /proc a second, a few milliseconds.
+    samples is missed; the sampling interval limits which bursts can be
+    detected. For a pinned CPU cell only work last seen on the watched cores
+    counts, as with the edge samples. The cost is one pass over /proc a second, a few milliseconds.
     """
 
     KERNEL_THREAD = 0x00200000                           # PF_KTHREAD

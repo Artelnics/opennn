@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
+
 #include "tests/common/pch.h"
 
 #include "opennn/dataset/dataset.h"
@@ -926,8 +929,12 @@ TEST(TabularDataset, InputVariableCorrelations)
     {
         EXPECT_EQ(input_correlations(i,i).coefficient, 1);
 
-        for(Index j = 0; i < j ; j++)
-            EXPECT_TRUE(-1 < input_correlations(i,j).coefficient && input_correlations(i,j).coefficient < 1);
+        for(Index j = 0; j < i; j++)
+        {
+            const type coefficient = input_correlations(i,j).coefficient;
+
+            EXPECT_TRUE(coefficient > type(-1) && coefficient < type(1));
+        }
     }
 
     data.resize(3, 4);
@@ -1022,8 +1029,9 @@ TEST(TabularDataset, UnuseUncorrelatedVariables)
     dataset.set_variable_names({ "A", "B", "C", "T" });
     dataset.set_data(data);
 
-    vector<Index> input_indices = { 0, 1, 2 };
-    vector<Index> target_indices = { 3 };
+    const vector<Index> input_indices = { 0, 1, 2 };
+    const vector<Index> target_indices = { 3 };
+
     dataset.set_variable_indices(input_indices, target_indices);
 
     type min_correlation = 0.25;
@@ -1062,7 +1070,43 @@ TEST(TabularDataset, TargetDistributionBinaryCountsUnusedSamples)
     ASSERT_EQ(distribution.size(), 2);
     EXPECT_EQ(distribution(0), 2);
     EXPECT_EQ(distribution(1), 2);
-    EXPECT_EQ(distribution(0) + distribution(1), dataset.get_samples_number());
+}
+
+TEST(TabularDataset, TargetDistributionThresholdsAndMissingTargets)
+{
+    // A single target splits at 0.5 inclusive; missing targets are not counted.
+    TabularDataset binary(5, { 1 }, { 1 });
+
+    MatrixR binary_data(5, 2);
+    binary_data << type(0), type(0.5),
+                   type(1), type(0.49),
+                   type(2), type(NAN),
+                   type(3), type(0.9),
+                   type(4), type(0);
+    binary.set_data(binary_data);
+
+    const VectorI binary_distribution = binary.calculate_target_distribution();
+
+    ASSERT_EQ(binary_distribution.size(), 2);
+    EXPECT_EQ(binary_distribution(0), 2);
+    EXPECT_EQ(binary_distribution(1), 2);
+
+    // One-hot targets use the same inclusive 0.5 threshold; missing values do not count.
+    TabularDataset one_hot(4, { 1 }, { 3 });
+
+    MatrixR one_hot_data(4, 4);
+    one_hot_data << type(0), type(1),   type(0),    type(0),
+                    type(1), type(0.5), type(0.49), type(0),
+                    type(2), type(NAN), type(0),    type(1),
+                    type(3), type(0),   type(0.7),  type(0.3);
+    one_hot.set_data(one_hot_data);
+
+    const VectorI one_hot_distribution = one_hot.calculate_target_distribution();
+
+    ASSERT_EQ(one_hot_distribution.size(), 3);
+    EXPECT_EQ(one_hot_distribution(0), 2);
+    EXPECT_EQ(one_hot_distribution(1), 1);
+    EXPECT_EQ(one_hot_distribution(2), 1);
 }
 
 TEST(TabularDataset, MissingValuesUnuseMarksRowsUnused)

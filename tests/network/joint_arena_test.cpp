@@ -1,8 +1,6 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   J O I N T   A R E N A   T E S T
-//
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
+
 //   Pins the joint forward/delta memory arena. Both allocation paths produce
 //   identical numbers, so nothing else in the suite notices if the joint plan
 //   silently stops engaging -- only the footprint changes.
@@ -188,7 +186,3 @@ TEST(JointArenaTest, JointArenaOverheadStaysBounded)
         << "joint arena " << joint_bytes << " B vs separate " << separate_bytes
         << " B, over the known " << known_gap << " B gap";
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

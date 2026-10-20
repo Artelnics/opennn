@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
+
 #include "tests/common/pch.h"
 #include "opennn/core/json.h"
 
@@ -529,76 +532,63 @@ TEST(YoloDataset, RepeatedMosaicBatchesKeepWorkerScratchIndependent)
 
 TEST(YoloDataset, MultiScaleTargetsRouteBoxesToCorrectHead)
 {
-
-    TempDir dir("opennn_yolo_test_");
-    const filesystem::path images_dir = dir.path / "images";
-    const filesystem::path labels_dir = dir.path / "labels";
-    filesystem::create_directories(images_dir);
-    filesystem::create_directories(labels_dir);
-    write_classes(labels_dir / "classes.names", {"only"});
-
-    constexpr int W = 16;
-    constexpr int H = 16;
-    write_bmp_24(images_dir / "a.bmp", W, H, 128, 128, 128);
-
+    TempDir fixture("opennn_yolo_three_heads_");
+    const auto images = fixture.path / "images";
+    const auto labels = fixture.path / "labels";
+    filesystem::create_directories(images);
+    filesystem::create_directories(labels);
+    write_bmp_24(images / "objects.bmp", 24, 24, 90, 170, 220);
+    write_classes(labels / "classes.names", {"first", "second"});
     {
-        ofstream lf(labels_dir / "a.txt");
-        lf << "0 0.25 0.25 0.6 0.6\n";
-        lf << "0 0.875 0.875 0.1 0.1\n";
+        ofstream annotations(labels / "objects.txt");
+        annotations << "0 0.75 0.25 0.5 0.375\n"
+                    << "1 0.375 0.625 0.25 0.1875\n"
+                    << "0 0.8125 0.4375 0.0625 0.09375\n";
     }
+    const vector<vector<std::array<float, 2>>> anchors{
+        {{0.5f, 0.375f}, {0.9f, 0.9f}},
+        {{0.4f, 0.1f}, {0.25f, 0.1875f}},
+        {{0.0625f, 0.09375f}, {0.125f, 0.03125f}}};
+    YoloDataset observations;
+    observations.set_display(false);
+    observations.set(images, labels, Shape{24, 24, 3}, 2, 2, anchors.front());
+    observations.set_multi_scale_heads({2, 4, 8}, anchors);
 
-    const vector<std::array<float, 2>> anchors_large{{0.6f, 0.6f}, {0.7f, 0.7f}};
-    const vector<std::array<float, 2>> anchors_small{{0.1f, 0.1f}, {0.2f, 0.2f}};
+    // Two classes and two anchors give 14 values per cell. The three occupied
+    // slots are (head, row, column, anchor): (0,0,1,0), (1,2,1,1), (2,3,6,0).
+    vector<float> expected(14 * (4 + 16 + 64), 0.0f);
+    const std::array<pair<size_t, std::array<float, 7>>, 3> occupied{{
+        {14,  {0.5f, 0.5f, 0.5f, 0.375f, 1, 1, 0}},
+        {189, {0.5f, 0.5f, 0.25f, 0.1875f, 1, 0, 1}},
+        {700, {0.5f, 0.5f, 0.0625f, 0.09375f, 1, 1, 0}}}};
+    for (const auto& [offset, box] : occupied)
+        ranges::copy(box, expected.begin() + offset);
 
-    constexpr Index C = 1;
-    constexpr Index B = 2;
-    constexpr Index values_per_box = 5 + C;
-    constexpr Index head_channels = B * values_per_box;
-    constexpr Index grid0 = 2;
-    constexpr Index grid1 = 4;
-    const Index head0_floats = grid0 * grid0 * head_channels;
-    const Index head1_floats = grid1 * grid1 * head_channels;
-    const Index total_floats = head0_floats + head1_floats;
+    vector<float> actual(expected.size(), numeric_limits<float>::quiet_NaN());
+    observations.fill_targets({0}, {}, actual.data(), FillMode::Inference);
+    EXPECT_EQ(actual, expected);
+}
 
-    YoloDataset dataset;
-    dataset.set_display(false);
-    dataset.set(images_dir, labels_dir, Shape{H, W, 3},
-                              grid0,                    B, anchors_large);
-    dataset.set_multi_scale_heads({grid0, grid1}, {anchors_large, anchors_small});
-
-    vector<float> target(static_cast<size_t>(total_floats), -99.0f);
-    dataset.fill_targets({0}, {}, target.data(), FillMode::Inference);
-
-    {
-        const Index col = 0, row = 0, anchor = 0;
-        const Index base = (row * grid0 + col) * head_channels + anchor * values_per_box;
-        EXPECT_NEAR(target[base + 0], 0.25f * grid0 - float(col), 1e-4f);
-        EXPECT_NEAR(target[base + 1], 0.25f * grid0 - float(row), 1e-4f);
-        EXPECT_NEAR(target[base + 2], 0.6f, 1e-4f);
-        EXPECT_NEAR(target[base + 3], 0.6f, 1e-4f);
-        EXPECT_NEAR(target[base + 4], 1.0f, 1e-4f);
-        EXPECT_NEAR(target[base + 5], 1.0f, 1e-4f);
-    }
-
-    {
-        const Index col = 3, row = 3, anchor = 0;
-        const Index base_in_head1 = (row * grid1 + col) * head_channels + anchor * values_per_box;
-        const Index base = head0_floats + base_in_head1;
-        EXPECT_NEAR(target[base + 0], 0.875f * grid1 - float(col), 1e-4f);
-        EXPECT_NEAR(target[base + 1], 0.875f * grid1 - float(row), 1e-4f);
-        EXPECT_NEAR(target[base + 2], 0.1f, 1e-4f);
-        EXPECT_NEAR(target[base + 3], 0.1f, 1e-4f);
-        EXPECT_NEAR(target[base + 4], 1.0f, 1e-4f);
-        EXPECT_NEAR(target[base + 5], 1.0f, 1e-4f);
-    }
-
-    {
-        const Index col = 1, row = 1;
-        for (Index anchor = 0; anchor < B; ++anchor)
-        {
-            const Index base = (row * grid0 + col) * head_channels + anchor * values_per_box;
-            for (Index k = 0; k < values_per_box; ++k)
-                EXPECT_FLOAT_EQ(target[base + k], 0.0f) << "head0 cell(1,1) should be empty";
-        }
-    }
+TEST(YoloDataset, MosaicClipsInSourceCoordinatesAndPreservesAppendOrder)
+{
+    const vector<YoloDataset::Box> boxes{
+        {2, 0.5f, 0.5f, 1.5f, 1.5f},
+        {3, 0.0f, 0.25f, 0.5f, 0.5f},
+        {4, 2.0f, 0.5f, 0.5f, 0.5f},
+        {5, 0.5f, 0.5f, 0.001f, 0.5f}};
+    vector<YoloDataset::Box> mapped{{1, 0.125f, 0.125f, 0.125f, 0.125f}};
+    yolo_detail::append_mosaic_boxes(boxes, {0.5f, 0.25f}, {0.25f, 0.5f}, mapped);
+    ASSERT_EQ(mapped.size(), 3);
+    EXPECT_EQ(mapped[0].class_id, 1);
+    EXPECT_FLOAT_EQ(mapped[0].x, 0.125f);
+    EXPECT_EQ(mapped[1].class_id, 2);
+    EXPECT_FLOAT_EQ(mapped[1].x, 0.625f);
+    EXPECT_FLOAT_EQ(mapped[1].y, 0.5f);
+    EXPECT_FLOAT_EQ(mapped[1].w, 0.25f);
+    EXPECT_FLOAT_EQ(mapped[1].h, 0.5f);
+    EXPECT_EQ(mapped[2].class_id, 3);
+    EXPECT_FLOAT_EQ(mapped[2].x, 0.53125f);
+    EXPECT_FLOAT_EQ(mapped[2].y, 0.375f);
+    EXPECT_FLOAT_EQ(mapped[2].w, 0.0625f);
+    EXPECT_FLOAT_EQ(mapped[2].h, 0.25f);
 }

@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: LGPL-2.1-or-later
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 #pragma once
 
@@ -21,6 +21,8 @@ void weighted_squared_error(const TensorView&, const TensorView&, float, float, 
 void weighted_squared_error_gradient(const TensorView&, const TensorView&, float, float, float, const TensorView&);
 
 void binary_cross_entropy(const TensorView&, const TensorView&, float&, float*);
+void binary_cross_entropy_logits(const TensorView&, const TensorView&, float&, float*);
+void binary_cross_entropy_logits_gradient(const TensorView&, const TensorView&, const TensorView&);
 void categorical_cross_entropy(const TensorView&, const TensorView&, float&, float*);
 void cross_entropy(const TensorView&, const TensorView&, float&, float*, bool);
 void cross_entropy_gradient(const TensorView&, const TensorView&, const TensorView&, bool);

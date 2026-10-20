@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: LGPL-2.1-or-later
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 #include "opennn/training/optimizer.h"
 
@@ -132,6 +132,7 @@ InferenceShapePolicy loss_inference_policy(const Loss& loss)
 {
     InferenceShapePolicy policy;
     policy.retained_output_layers = loss.get_output_delta_layer_indices();
+    policy.capture_binary_logits = loss.get_error() == Loss::Error::CrossEntropy;
     return policy;
 }
 
@@ -288,6 +289,21 @@ void Optimizer::load(const filesystem::path& file_name)
     from_JSON(load_json_file(file_name));
 }
 
+void Optimizer::TrainingSession::prepare_eager_batches(Index batch_size, Dataset& dataset,
+                                                       const EffectiveConfig& config, int capacity)
+{
+    // Eager slots only receive uploads, so they keep no pinned host staging.
+    pipelines[0].slots[0] = make_unique<Batch>(batch_size, &dataset, config, BatchStorage::DeviceOnly);
+    if (batch_size <= 0) return;
+    const Index slots = min(Index(capacity), dataset.get_samples_number(SampleRole::Training) / batch_size);
+    for (Index slot = 1; slot < slots; ++slot)
+        transfer_batches.push_back(make_unique<Batch>(batch_size, &dataset, config, BatchStorage::DeviceOnly));
+    if (dataset.supports_byte_inputs())
+        for (Index slot = 0; slot < slots; ++slot)
+            eager_batch(slot)->packed_input_staging.resize_bytes(
+                batch_size * dataset.get_input_shape().size(), Device::CUDA);
+}
+
 void Optimizer::setup_batch_pools(BatchPools& pools,
                                   Dataset& dataset,
                                   Network& network,
@@ -298,6 +314,7 @@ void Optimizer::setup_batch_pools(BatchPools& pools,
 {
     const int pool_size = get_batch_pool_size(network);
     const auto& config = network.get_config();
+    const bool packed_pool = network.is_gpu() && !can_use_cuda_graph();
 
     auto fill_pool = [&](ThreadSafeQueue<Batch*>& queue,
                          vector<unique_ptr<Batch>>& pool,
@@ -307,6 +324,7 @@ void Optimizer::setup_batch_pools(BatchPools& pools,
         for (int i = 0; i < pool_size; ++i)
         {
             pool.push_back(make_unique<Batch>(batch_size, &dataset, config, prefetch_only));
+            pool.back()->pack_image_input = packed_pool;
             queue.push(pool.back().get());
         }
     };
@@ -324,10 +342,13 @@ void Optimizer::setup_batch_pools(BatchPools& pools,
 
     if (network.is_gpu() && device::is_cuda_build())
     {
-        training_session.pipelines[0].slots[0] = make_unique<Batch>(training_batch_size, &dataset, config);
-
-        if (can_use_cuda_graph())
+        if (!can_use_cuda_graph())
+            training_session.prepare_eager_batches(training_batch_size, dataset, config, device_batch_pool_size);
+        else
         {
+            // Graph slots stage host copies before their captured uploads.
+            training_session.pipelines[0].slots[0] = make_unique<Batch>(training_batch_size, &dataset, config);
+
             const Index training_batches = training_batch_size > 0
                 ? dataset.get_samples_number(SampleRole::Training) / training_batch_size
                 : 0;
@@ -485,24 +506,30 @@ Index Optimizer::get_maximum_batch_size() const
     {
 #if defined(__APPLE__)
 
-        const mach_port_t host = mach_host_self();
-        vm_size_t page_size = 0;
-        vm_statistics64_data_t statistics{};
-        mach_msg_type_number_t count = HOST_VM_INFO64_COUNT;
+        // VM counters are in the kernel's page unit, so the page size must come
+        // from the same host port (it differs from sysconf under Rosetta 2).
 
-        const kern_return_t page_result = host_page_size(host, &page_size);
-        const kern_return_t statistics_result = host_statistics64(
-            host, HOST_VM_INFO64, reinterpret_cast<host_info64_t>(&statistics), &count);
+        const mach_port_t host = mach_host_self();
+
+        vm_size_t page_size = 0;
+        const kern_return_t page_size_status = host_page_size(host, &page_size);
+
+        vm_statistics64_data_t vm_statistics{};
+        mach_msg_type_number_t statistics_count = HOST_VM_INFO64_COUNT;
+        const kern_return_t statistics_status =
+            host_statistics64(host, HOST_VM_INFO64,
+                              reinterpret_cast<host_info64_t>(&vm_statistics),
+                              &statistics_count);
+
         mach_port_deallocate(mach_task_self(), host);
 
-        throw_if(page_result != KERN_SUCCESS || statistics_result != KERN_SUCCESS
-                     || page_size == 0,
-                 "Optimizer::get_maximum_batch_size: Mach failed to query available RAM.");
+        throw_if(page_size_status != KERN_SUCCESS
+                 || statistics_status != KERN_SUCCESS
+                 || page_size == 0,
+                 "Optimizer::get_maximum_batch_size: could not query available RAM from Mach.");
 
-        // Estimate reclaimable physical RAM; speculative pages are already
-        // included in free_count. Keep the existing memory-fraction margin below.
-        available_bytes = (Index(statistics.free_count) + Index(statistics.inactive_count))
-                          * Index(page_size);
+        available_bytes = (Index(vm_statistics.free_count) + Index(vm_statistics.inactive_count))
+                        * Index(page_size);
 
 #elif defined(__linux__) || defined(__unix__)
 
@@ -574,24 +601,34 @@ Index Optimizer::get_maximum_batch_size() const
     const Shape output_shape = network->get_output_shape();
 
     const Type compute_dtype = bf16_train ? Type::BF16 : Type::FP32;
-    const Index batch_copies = on_gpu ? 1 : get_batch_pool_size(*network);
-
     const auto batch_data_bytes = [&](const Index batch)
     {
         Index bytes = 0;
+        // Bound the ring's total samples without the downward jumps caused by
+        // floor(samples / batch): the capacity search requires monotonic sizes.
+        const Index stored_samples = on_gpu
+            ? (can_use_cuda_graph() ? batch : min(batch * device_batch_pool_size,
+                                                 training_samples_number))
+            : batch * get_batch_pool_size(*network);
 
         if(!input_shape.empty())
-            bytes += batch * input_shape.size()
+            bytes += stored_samples * input_shape.size()
                    * (bf16_input ? Index(sizeof(bfloat16))
                                  : Index(sizeof(float)));
 
         if(!target_shape.empty())
-            bytes += batch * target_shape.size() * Index(sizeof(float));
+            bytes += stored_samples * target_shape.size() * Index(sizeof(float));
 
         if(!decoder_shape.empty())
-            bytes += batch * decoder_shape.size() * Index(sizeof(float));
+            bytes += stored_samples * decoder_shape.size() * Index(sizeof(float));
 
-        return batch_copies * bytes;
+        if(fp32_input_staging && !input_shape.empty())
+            bytes += get_aligned_bytes(stored_samples * input_shape.size(), Type::FP32);
+
+        if (on_gpu && !can_use_cuda_graph() && dataset->supports_byte_inputs())
+            bytes += stored_samples * input_shape.size();
+
+        return bytes;
     };
 
     const auto run_bytes = [&](const Index batch)
@@ -606,10 +643,6 @@ Index Optimizer::get_maximum_batch_size() const
         if(!output_shape.empty())
             bytes += get_aligned_bytes(batch * output_shape.size(),
                                        compute_dtype);
-
-        if(fp32_input_staging && !input_shape.empty())
-            bytes += get_aligned_bytes(batch * input_shape.size(),
-                                       Type::FP32);
 
         return bytes;
     };
@@ -848,7 +881,7 @@ void Optimizer::display_epoch_results(const Index epoch,
         else
             logging::info() << "Validation error: ---\n";
     }
-    logging::info() << "Elapsed time: " << get_time(elapsed_time) << "\n";
+    logging::info() << "Training time: " << get_time(elapsed_time) << "\n";
 }
 
 bool Optimizer::network_has_active_dropout() const
@@ -868,7 +901,8 @@ bool Optimizer::network_has_active_dropout() const
 
 TrainingResult Optimizer::train()
 {
-    TrainingResult results(maximum_epochs + 1);
+    const Index epoch_budget = get_epoch_budget();
+    TrainingResult results(epoch_budget);
     cuda_graph_capture_failed = false;
 
     if (!loss || !loss->get_network() || !loss->get_dataset())
@@ -879,8 +913,8 @@ TrainingResult Optimizer::train()
 
     const bool on_gpu = network->is_gpu();
 
-    if (display) logging::info() << "Training with " << get_display_name()
-                     << (on_gpu ? " CUDA" : "") << "...\n";
+    if (display) logging::info() << "Starting " << get_display_name() << " training"
+                                 << (on_gpu ? " on CUDA" : "") << "\n";
 
     Dataset* dataset = loss->get_dataset();
 
@@ -971,7 +1005,7 @@ TrainingResult Optimizer::train()
     float training_accuracy = 0.0f;
     float validation_error = 0.0f;
     float validation_accuracy = 0.0f;
-    Index validation_failures = 0;
+    EpochReport report;
     BestModelSnapshot best_model;
 
     const bool is_token_cross_entropy = (loss->get_error() == Loss::Error::CrossEntropy3d);
@@ -1015,11 +1049,8 @@ TrainingResult Optimizer::train()
         && validation_batch_size > 0
         && validation_samples_number % validation_batch_size != 0;
 
-    time_t beginning_time;
-    time(&beginning_time);
     const auto measured_training_start = chrono::steady_clock::now();
     double measured_validation_seconds = 0.0;
-    float elapsed_time = 0.0f;
 
     {
         device::CudaAllocationGrowthGuard steady_state_guard(
@@ -1028,7 +1059,7 @@ TrainingResult Optimizer::train()
         vector<vector<Index>> next_training_batches;
         future<void> next_training_batches_ready;
 
-        for (Index epoch = 0; epoch <= maximum_epochs; ++epoch)
+        for (Index epoch = 0; epoch < epoch_budget; ++epoch)
         {
             if (should_display(epoch)) logging::info() << "Epoch: " << epoch << "\n";
 
@@ -1041,13 +1072,16 @@ TrainingResult Optimizer::train()
                 dataset->get_batches(training_sample_indices, training_batch_size,
                                      training_shuffle, training_batches);
 
-            if (on_gpu && epoch + 1 < maximum_epochs)
+            if (on_gpu && epoch + 1 < epoch_budget)
             {
                 const unsigned shuffle_seed =
                     unsigned(random_integer(0, numeric_limits<int>::max()));
 
                 next_training_batches_ready = async(launch::async, [&, shuffle_seed]
                 {
+                    // This background task has a whole GPU epoch to prepare
+                    // indices. Avoid a new OpenMP team for simple row copies.
+                    omp_set_num_threads(1);
                     dataset->get_batches(training_sample_indices, training_batch_size,
                                          training_shuffle, next_training_batches, shuffle_seed);
                 });
@@ -1087,30 +1121,31 @@ TrainingResult Optimizer::train()
                 results.validation_error_history(epoch) = validation_error;
 
                 update_best_parameters(network, validation_error, epoch,
-                                       validation_failures, best_model);
+                                       report.validation_failures, best_model);
 
                 if (on_gpu) device::synchronize(device::get_compute_stream());
                 measured_validation_seconds += chrono::duration<double>(
                     chrono::steady_clock::now() - measured_validation_start).count();
             }
 
-            elapsed_time = get_elapsed_time(beginning_time);
+            report.completed_epochs = epoch + 1;
+            report.seconds = get_elapsed_time(measured_training_start);
+            report.training_error = training_error;
+            report.loss = training_back_propagation.metrics.loss_value;
 
             display_epoch_results(epoch, training_error, training_accuracy,
                                   validation_error, validation_accuracy,
-                                  has_validation, val_fresh, is_token_cross_entropy, elapsed_time);
+                                  has_validation, val_fresh, is_token_cross_entropy, report.seconds);
 
             if (post_epoch_callback)
                 post_epoch_callback(epoch, training_error, validation_error, network);
 
-            if (check_stopping_condition(results, epoch, elapsed_time,
-                                         results.training_error_history(epoch),
-                                         validation_failures,
-                                         training_back_propagation.metrics.loss_value,
-                                         has_validation))
-                break;
+            results.stopping_condition = find_stopping_condition(report);
+            if (results.stopping_condition) break;
         }
     }
+
+    close_training_result(results, report, has_validation);
 
     if (on_gpu) device::synchronize(device::get_compute_stream());
     results.training_seconds = max(0.0, chrono::duration<double>(
@@ -1177,24 +1212,21 @@ void Optimizer::prepare_full_batch_training(FullBatchContext& context, const cha
 
 TrainingResult Optimizer::train_full_batch(FullBatchContext& context, const FullBatchHooks& hooks)
 {
-    TrainingResult results(maximum_epochs + 1);
+    const Index epoch_budget = get_epoch_budget();
+    TrainingResult results(epoch_budget);
 
     Network* network = context.network;
     const bool has_validation = context.validation_forward_propagation != nullptr;
 
-    Index validation_failures = 0;
     BestModelSnapshot best_model;
+    EpochReport report;
+    optional<float> previous_loss;
 
-    float old_loss = 0.0f;
-    float loss_decrease = MAX;
-
-    time_t beginning_time;
-    time(&beginning_time);
-    float elapsed_time = 0.0f;
+    const auto start = chrono::steady_clock::now();
 
     if (hooks.setup_state) hooks.setup_state();
 
-    for (Index epoch = 0; epoch <= maximum_epochs; ++epoch)
+    for (Index epoch = 0; epoch < epoch_budget; ++epoch)
     {
         if (should_display(epoch)) logging::info() << "Epoch: " << epoch << "\n";
 
@@ -1219,39 +1251,31 @@ TrainingResult Optimizer::train_full_batch(FullBatchContext& context, const Full
             results.validation_error_history(epoch) = validation_error;
 
             update_best_parameters(network, validation_error, epoch,
-                                   validation_failures, best_model);
+                                   report.validation_failures, best_model);
         }
 
-        elapsed_time = get_elapsed_time(beginning_time);
+        report.completed_epochs = epoch + 1;
+        report.seconds = get_elapsed_time(start);
+        report.training_error = step.training_error;
+        report.loss = step.loss;
+        report.loss_decrease = previous_loss ? optional<float>(*previous_loss - step.loss) : nullopt;
+        previous_loss = step.loss;
 
         if (should_display(epoch))
         {
             logging::info() << "Training error: " << step.displayed_error << "\n";
             if (has_validation) logging::info() << "Validation error: " << validation_error << "\n";
             if (hooks.display_extra) hooks.display_extra();
-            logging::info() << "Elapsed time: " << get_time(elapsed_time) << "\n";
+            logging::info() << "Training time: " << get_time(report.seconds) << "\n";
         }
 
-        if (epoch != 0) loss_decrease = old_loss - step.loss;
-
-        old_loss = step.loss;
-
-        if (loss_decrease < hooks.minimum_loss_decrease)
-        {
-            if (display) logging::info() << "Epoch " << epoch << "\nMinimum loss decrease reached: " << loss_decrease << "\n";
-            results.stopping_condition = StoppingCondition::MinimumLossDecrease;
-        }
-
-        if (check_stopping_condition(results, epoch, elapsed_time,
-                                     results.training_error_history(epoch),
-                                     validation_failures,
-                                     step.loss,
-                                     has_validation))
-            break;
+        results.stopping_condition = find_stopping_condition(report, hooks.minimum_loss_decrease);
+        if (results.stopping_condition) break;
 
         if (hooks.post_step) hooks.post_step();
     }
 
+    close_training_result(results, report, has_validation);
     restore_best_parameters(network, results, best_model);
 
     if (display) results.print();
@@ -1259,46 +1283,35 @@ TrainingResult Optimizer::train_full_batch(FullBatchContext& context, const Full
     return results;
 }
 
-bool Optimizer::check_stopping_condition(TrainingResult& results,
-                                          const Index epoch,
-                                          const float elapsed_time,
-                                          const float training_error,
-                                          const Index validation_failures,
-                                          const float training_loss,
-                                          const bool has_validation) const
+optional<StoppingCondition> Optimizer::find_stopping_condition(const EpochReport& report,
+                                                               const float minimum_loss_decrease) const
 {
-    if (!results.stopping_condition)
+    const pair<bool, StoppingCondition> conditions[] =
     {
-        if (training_error < training_loss_goal)
-        {
-            if (display) logging::info() << "Epoch " << epoch << "\nLoss goal reached: " << training_error << "\n";
-            results.stopping_condition = StoppingCondition::LossGoal;
-        }
-        else if (validation_failures >= maximum_validation_failures)
-        {
-            if (display) logging::info() << "Epoch " << epoch << "\nMaximum validation failures reached: " << validation_failures << "\n";
-            results.stopping_condition = StoppingCondition::MaximumValidationErrorIncreases;
-        }
-        else if (epoch + 1 >= maximum_epochs)
-        {
-            if (display) logging::info() << "Epoch " << epoch << "\nMaximum epochs number reached: " << epoch + 1 << "\n";
-            results.stopping_condition = StoppingCondition::MaximumEpochsNumber;
-        }
-        else if (elapsed_time >= maximum_time)
-        {
-            if (display) logging::info() << "Epoch " << epoch << "\nMaximum training time reached: " << get_time(elapsed_time) << "\n";
-            results.stopping_condition = StoppingCondition::MaximumTime;
-        }
-        else
-            return false;
-    }
+        {report.training_error < training_loss_goal, StoppingCondition::LossGoal},
+        {report.loss_decrease.has_value() && *report.loss_decrease < minimum_loss_decrease,
+         StoppingCondition::MinimumLossDecrease},
+        {report.validation_failures >= maximum_validation_failures,
+         StoppingCondition::MaximumValidationErrorIncreases},
+        {report.seconds >= maximum_time, StoppingCondition::MaximumTime},
+        {report.completed_epochs >= get_epoch_budget(), StoppingCondition::MaximumEpochsNumber}
+    };
 
-    results.loss = training_loss;
-    results.resize_training_error_history(epoch + 1);
-    results.resize_validation_error_history(has_validation ? epoch + 1 : 0);
-    results.elapsed_time = get_time(elapsed_time);
+    for (const auto& [reached, condition] : conditions)
+        if (reached) return condition;
 
-    return true;
+    return nullopt;
+}
+
+void Optimizer::close_training_result(TrainingResult& results,
+                                      const EpochReport& report,
+                                      const bool has_validation) const
+{
+    // Histories were sized for the whole budget; keep the epochs that ran.
+    results.resize_training_error_history(report.completed_epochs);
+    results.resize_validation_error_history(has_validation ? report.completed_epochs : 0);
+    results.loss = report.loss;
+    results.elapsed_time = get_time(report.seconds);
 }
 
 void Optimizer::update_best_parameters(Network* network,
@@ -1443,7 +1456,7 @@ void Optimizer::sync_device(const bool on_gpu,
     if (slot)
         device::synchronize_event(slot.get());
     else
-        slot.create();
+        slot.create_blocking();
 
     device::record_event(slot.get(), device::get_compute_stream());
 }
@@ -1859,7 +1872,10 @@ Loss::EvaluationResult Optimizer::run_epoch_loop(EpochLoopContext& context)
 
     Batch* const fixed_device_batch = context.fixed_device_batch;
     const bool use_fixed_device_batch = fixed_device_batch && fixed_device_batch->uses_cuda();
-    bool fixed_device_batch_in_use = false;
+    const auto device_batch_for = [&](Index iteration)
+    {
+        return context.training_session->eager_batch(iteration);
+    };
 
     Batch* next_batch = nullptr;
     auto fetch_and_issue = [&](Index iteration)
@@ -1870,10 +1886,13 @@ Loss::EvaluationResult Optimizer::run_epoch_loop(EpochLoopContext& context)
         if (use_fixed_device_batch)
         {
             PROFILE_SCOPE_HOST("step:fixed_h2d_issue");
-            if (fixed_device_batch_in_use)
-                device::stream_wait_event(device::get_transfer_stream(), fixed_device_batch->h2d_done_event.get());
+            Batch* destination = device_batch_for(iteration);
+            // Only this slot's previous computation gates its next upload.
+            // Copies into other slots can overlap the current training step.
+            if (destination->h2d_done_recorded)
+                device::stream_wait_event(device::get_transfer_stream(), destination->h2d_done_event.get());
 
-            return next_batch->upload_to_device_batch_async(*fixed_device_batch, device::get_transfer_stream());
+            return next_batch->upload_to_device_batch_async(*destination, device::get_transfer_stream());
         }
 
         PROFILE_SCOPE_HOST("step:prefetch_h2d_issue");
@@ -1891,15 +1910,12 @@ Loss::EvaluationResult Optimizer::run_epoch_loop(EpochLoopContext& context)
             fetch_and_issue(iteration + 1);
 
         if (on_gpu) current_batch->wait_h2d_on_compute_stream();
-        Batch& compute_batch = use_fixed_device_batch ? *fixed_device_batch : *current_batch;
+        Batch& compute_batch = use_fixed_device_batch ? *device_batch_for(iteration) : *current_batch;
 
         context.step(compute_batch, epoch_result);
 
         if (use_fixed_device_batch)
-        {
-            device::record_event(fixed_device_batch->h2d_done_event.get(), device::get_compute_stream());
-            fixed_device_batch_in_use = true;
-        }
+            compute_batch.record_h2d_done(device::get_compute_stream());
 
         {
             PROFILE_SCOPE("step:sync_device");

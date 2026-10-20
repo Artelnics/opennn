@@ -1,8 +1,10 @@
 OpenNN third-party software notices
 ===================================
 
-OpenNN is licensed under the GNU Lesser General Public License, version 2.1 or
-(at your option) any later version (LICENSE.txt).
+OpenNN is available under the GNU Affero General Public License, version 3 only
+(LICENSE.txt), with the additional permissions in LICENSING.md, or under a
+commercial licence from Artelnics. Neither replaces the terms of the components
+below.
 
 The build uses or can use the following third-party components, each under its
 own license. Components marked "fetched" are downloaded by CMake at configure
@@ -144,7 +146,7 @@ and imported weights have their own terms. Ultralytics declares its package
 and trained checkpoints subject to AGPL-3.0, with a commercial licence option.
 The yolo example can also import a supplied yolov8s.onnx. Exporting these
 weights to ONNX or OpenNN binary format does not replace their upstream licence
-with LGPL. Preserve applicable notices and satisfy corresponding-source and
+with OpenNN's licence. Preserve applicable notices and satisfy corresponding-source and
 deployment requirements, or the actual terms of a separate commercial licence.
 Neither converted output nor YOLOv8 checkpoints are distributed with OpenNN.
 The complete original AGPL text is in examples/yolo/data/LICENSE_ULTRALYTICS.txt;

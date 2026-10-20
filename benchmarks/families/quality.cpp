@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
+
 // Paired training-quality driver. The Python runner owns scoring and provenance.
 // Arguments: manifest output_directory epochs batch seed device precision learning_rate
 #include "../tools/quality_dataset.h"

@@ -1,8 +1,8 @@
 # YOLO external data and pretrained weights
 
-Review date: 2026-09-30. OpenNN bundles no YOLO training images, annotations,
-pretrained weights, ONNX models or converted checkpoints. This directory holds
-notices only. OpenNN's LGPL software licence does not license external assets.
+Provenance information recorded on 2026-09-30. OpenNN bundles no YOLO training
+images, annotations, pretrained weights, ONNX models or converted checkpoints. This directory holds
+notices only. OpenNN's software licence does not license external assets.
 
 ## What the example actually uses
 
@@ -60,7 +60,7 @@ no digest. `LICENSE_DARKNET.txt`: 515 bytes, SHA-256
 Keep the original licence and this provenance record beside redistributed
 YOLOv4 weights or OpenNN conversions. Record the source file's digest,
 conversion command, transferred layers and modifications with each conversion.
-Do not describe third-party weights as licensed by OpenNN's LGPL.
+Do not describe third-party weights as licensed under OpenNN's licence.
 
 ## Optional Ultralytics YOLOv8 conversion
 
@@ -68,7 +68,7 @@ Ultralytics declares its package and trained models subject to **AGPL-3.0**,
 with a separate commercial licence option:
 [official licensing guidance](https://www.ultralytics.com/license).
 AGPL is a free copyleft licence; it is not a permissive licence and is not
-replaced by OpenNN's LGPL when weights are exported to ONNX or OpenNN binary
+replaced by OpenNN's licence when weights are exported to ONNX or OpenNN binary
 format. Being an open-source project alone does not establish compliance with
 the corresponding-source and licence requirements for a derivative work.
 
@@ -96,17 +96,19 @@ No Ultralytics checkpoint or converted output is bundled with OpenNN.
 
 ## External datasets
 
-No local dataset was supplied or identified by a file manifest in this review.
-These are requirements for the example's supported input paths, not clearance
-of arbitrary files that happen to have matching directory names.
+Datasets are supplied by the user and are not bundled with this example.
+The requirements below apply to the supported input paths; directory names
+alone do not establish the provenance or permissions of their contents.
+BCCD paths come from `BCCD_IMAGES` and `BCCD_LABELS`, with relative fallbacks
+`BCCD_yolo/images` and `BCCD_yolo/labels`.
 
 | Input | Current selection | Source and redistribution requirements |
 | --- | --- | --- |
 | External synthetic shapes | Default; `SYNTHETIC_YOLO_IMAGES` and `SYNTHETIC_YOLO_LABELS`, falling back to `synthetic_yolo/images` and `synthetic_yolo/labels` | Expected 416 x 416 images with circle/square/triangle labels. Creator, generator and licence are unrecorded. Obtain those records or use a reproducible generator owned by the project. The internal coloured-block generator in `main.cpp` is currently unused and does not establish provenance for these external files. |
-| PASCAL VOC 2007/2012 | Experiment name contains `voc`; `VOC_ROOT` and optional `VOC12_ROOT` | [Original project](http://host.robots.ox.ac.uk/pascal/VOC/). No blanket redistribution grant was confirmed in this review. Identify the selected images, owners and terms, preserve the annotation/source records, and confirm rights before bundling a subset. |
+| PASCAL VOC 2007/2012 | Experiment name contains `voc`; `VOC_ROOT` and optional `VOC12_ROOT` | [Original project](http://host.robots.ox.ac.uk/pascal/VOC/). This notice does not establish a blanket redistribution grant. Identify the selected images, owners and terms, preserve the annotation/source records, and confirm rights before bundling a subset. |
 | COCO | Disabled by `use_coco = false`; enabling it uses `COCO_IMAGES` and `COCO_LABELS` | [Official terms at 5e1c4da72464b1c6f068df0c02c91e3000ea62c4](https://github.com/cocodataset/cocodataset.github.io/blob/5e1c4da72464b1c6f068df0c02c91e3000ea62c4/dataset/termsofuse.htm): annotations are CC BY 4.0; the consortium does not own the images. Preserve annotation attribution and an image-by-image author/source/licence manifest. Do not apply the annotation licence to all photographs. |
 | Raccoon | Disabled by `use_raccoon = false`; `RACCOON_IMAGES` and `RACCOON_LABELS` | [Dat Tran's repository at 27f269ab4d4da6c38ebb16b4a95c5c912a9f1c49](https://github.com/experiencor/raccoon_dataset/tree/27f269ab4d4da6c38ebb16b4a95c5c912a9f1c49) has MIT terms, but its README says images came from Google and Pixabay. The repository licence does not establish permission from every photograph's owner. Record those permissions before redistributing images. |
-| BCCD | Experiment name contains `bccd`; `BCCD_IMAGES` and `BCCD_LABELS` | [Shenggan's original BCCD dataset](https://github.com/Shenggan/BCCD_Dataset/tree/d272fb14cdff6e473fafeeeba32aba5f560e9e43) explicitly declares the dataset MIT. Preserve its full `LICENSE` (Copyright (c) 2017 shenggan), credits to cosmicad and akshaylamba, source revision, selected-image manifest and conversion details. The unprovided local `BCCD_yolo` derivative has not been compared with that source. |
+| BCCD | Experiment name contains `bccd`; `BCCD_IMAGES` and `BCCD_LABELS` | [Shenggan's original BCCD dataset](https://github.com/Shenggan/BCCD_Dataset/tree/d272fb14cdff6e473fafeeeba32aba5f560e9e43) explicitly declares the dataset MIT. Preserve its full `LICENSE` (Copyright (c) 2017 shenggan), credits to cosmicad and akshaylamba, source revision, selected-image manifest and conversion details. User-supplied `BCCD_yolo` derivatives require their own source and conversion records. |
 
 ## Remaining resolution
 

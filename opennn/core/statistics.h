@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: LGPL-2.1-or-later
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 #pragma once
 
@@ -64,8 +64,15 @@ struct Histogram
 
     VectorR frequencies;
 
-    Index calculate_minimum_frequency() const { return frequencies.size() ? (Index)frequencies.minCoeff() : 0; }
-    Index calculate_maximum_frequency() const { return frequencies.size() ? (Index)frequencies.maxCoeff() : 0; }
+    Index calculate_minimum_frequency() const
+    {
+        return frequencies.size() == 0 ? Index(0) : Index(frequencies.minCoeff());
+    }
+
+    Index calculate_maximum_frequency() const
+    {
+        return frequencies.size() == 0 ? Index(0) : Index(frequencies.maxCoeff());
+    }
 
     VectorR calculate_minimal_centers() const
     {
@@ -81,11 +88,23 @@ private:
 
     VectorR centers_with_frequency(Index frequency) const
     {
-        if(frequencies.size() == 0) return {};
-        vector<float> v;
-        for(Index k = 0; k < frequencies.size(); k++)
-            if((Index)frequencies(k) == frequency) v.push_back(centers.size() > k ? centers(k) : float(k));
-        return Map<VectorR>(v.data(), (Index)v.size());
+        const Index bins_number = frequencies.size();
+
+        Index matches_number = 0;
+
+        for (Index j = 0; j < bins_number; ++j)
+            if (Index(frequencies(j)) == frequency)
+                ++matches_number;
+
+        VectorR selected_centers(matches_number);
+
+        Index position = 0;
+
+        for (Index j = 0; j < bins_number; ++j)
+            if (Index(frequencies(j)) == frequency)
+                selected_centers(position++) = centers.size() > j ? centers(j) : float(j);
+
+        return selected_centers;
     }
 };
 float minimum(const MatrixR&);

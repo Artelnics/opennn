@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
+
 """
 Convert official YOLOv8s backbone + neck weights into the opennn binary format.
 
-This converter is OpenNN code under LGPL-2.1-or-later. Ultralytics checkpoints
+This converter is OpenNN code (see LICENSING.md). Ultralytics checkpoints
 and dependencies retain their upstream terms (AGPL-3.0 unless separately
-licensed); conversion does not relicense the output as LGPL. See data/SOURCE.md
+licensed); conversion does not relicense the output under OpenNN's licence. See data/SOURCE.md
 and data/LICENSE_ULTRALYTICS.txt for provenance and redistribution requirements.
 When the requested checkpoint file is missing, the converter uses Ultralytics
 to download yolov8s.pt.
@@ -23,8 +26,8 @@ What is zeroed / prior-init (architecture differences vs official):
 Kernel layout conversion: Ultralytics [N,C,H,W] → opennn [N,H,W,C] (permute 0,2,3,1).
 C2f cv1 split: official cv1 [2*half, in, 1,1] → first half → cv1a, second half → cv1b.
 
-Output: versioned OPENNNP binary with correct header (so layout fingerprint is checked).
-        Written as LEGACY raw FP32 (no header) so it loads via the size-match path.
+Output: legacy raw FP32 parameters without a header. The loader checks the
+        buffer size; the architecture and parameter layout must match.
 
 Usage:
     python3 yolov8s_to_nd.py [--pt yolov8s.pt] [--out yolo_data_v8-pretrained] [--classes N]
@@ -38,7 +41,7 @@ from pathlib import Path
 import numpy as np
 
 
-ALIGN_ELEMENTS = 16  # EIGEN_MAX_ALIGN_BYTES / sizeof(float) = 64/4 on this machine
+ALIGN_ELEMENTS = 16  # OpenNN uses 64-byte alignment for FP32 parameter buffers (64 / 4).
 
 
 def align_up(n, a=ALIGN_ELEMENTS):

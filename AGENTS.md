@@ -2,7 +2,7 @@
 
 [README.md](README.md) is the user guide: first build, installed package and
 example-data licences. This file covers where things are, build options, how to
-verify changes, CI, example data, the 9.0 release notes and migration,
+verify changes, CI, example data, the 26.0 release notes and migration,
 and releases. Keep rules here repository-wide; workstation paths belong in
 environment variables, not in repository files.
 
@@ -13,7 +13,7 @@ environment variables, not in repository files.
 - Keep development and release preparation on `dev`. Merge into `master` only
   when the user explicitly decides the work is ready for release.
 - Preserve uncommitted work and saved stashes when switching or consolidating
-  branches. A folder cleanup does not authorize publishing a release.
+  branches.
 - Contributors base changes on `dev` and open a pull request describing the
   resulting behavior and the validation run.
 
@@ -27,7 +27,8 @@ environment variables, not in repository files.
 - Preserve unrelated working-tree changes. Build products, downloaded models,
   generated data and raw benchmark results must remain outside Git.
 - Keep `README.md` independent of the branch and release state, so it can be
-  promoted to `master` unchanged. Put candidate status and pending work here.
+  promoted to `master` unchanged. Record verification status and outstanding
+  checks in the pull request or release record.
 
 ## Where things are
 
@@ -43,8 +44,11 @@ environment variables, not in repository files.
 `CMakePresets.json` holds the repeatable configure/build/test settings, and
 `tools/CODE_QUALITY.json` the reviewed maintainability limits (ratchet).
 
-`LICENSE.txt` (LGPL 2.1, matching the `LGPL-2.1-or-later` SPDX headers) and
-`THIRD_PARTY_NOTICES.txt` are installed with every package.
+`LICENSE.txt` (AGPL 3.0, matching the `AGPL-3.0-only` SPDX headers),
+`LICENSING.md` (dual licensing and the section 7 additional permissions) and
+`THIRD_PARTY_NOTICES.txt` are installed with every package. Every source file
+starts with the two-line SPDX and copyright header that
+`tools/check_code_quality.py` enforces.
 
 ### Library modules and dependencies
 
@@ -82,11 +86,11 @@ Choose one of the four concrete classes:
 
 | Task | Entry point |
 | --- | --- |
-| Incremental CPU/CUDA verification | `tools/verify.sh`; shared logic in `tools/verify.cmake` |
+| Incremental CPU/CUDA verification | Configure, build and test presets in `CMakePresets.json` |
 | Size, complexity and dependency checks | `tools/check_code_quality.py`, `tools/check_architecture.py` |
 | Coverage and public-header checks | `tools/check_coverage.py`, `tools/check_headers.sh` |
 | JSON fuzzing | `tools/fuzz/` |
-| Installed-package checks and C++ consumer | `tools/check_installed_package.py`, `tools/package_smoke/` |
+| Installed-package checks and C++ consumer | `tools/check_installed_package.py`, `tools/package_smoke/` (including dependency relocation checks) |
 | Full example/device matrix | `tools/run-opennn-examples/SKILL.md` |
 | Benchmark preparation and execution | `benchmarks/prepare.py`, `benchmarks/run.py`, `benchmarks/compare.py`; procedure in `tools/run-opennn-benchmarks/SKILL.md` |
 
@@ -175,41 +179,83 @@ barriers, so every fork/join sleeps in the kernel. Set `GOMP_SPINCOUNT=300000`
 or `OMP_WAIT_POLICY=active` before running latency-sensitive work. The runtime
 reads these variables before `main`, so OpenNN cannot set them for you.
 
-## Build and verify
+### CUDA batch preparation
 
-Use the repository wrapper for routine verification on Linux or WSL. It creates
-persistent build trees outside the checkout and supports focused GoogleTest
-filters:
+CUDA training prepares batches with two workers by default
+(`OPENNN_BATCH_WORKERS`), each with one OpenMP thread (`OPENNN_BATCH_THREADS`),
+separate from the general CPU thread limit. A larger thread budget, up to the
+caller's OpenMP limit, can help expensive preprocessing; the caller's setting
+is restored after each fill, including failures. CPU batch preparation keeps
+its normal thread budget.
 
-```bash
-./tools/verify.sh quick --filter 'Dense.*:DenseNoBiasTest.*'
-./tools/verify.sh quick --backend cuda --filter '*Gpu*:*CUDA*'
-./tools/verify.sh full
+Workers fill reusable pinned host buffers: `max(workers + 1, 3)` for GPU
+execution and one for CPU execution. A worker waits while none is free, and more
+buffers do not create more workers. Eager CUDA training rotates through three
+device buffers by default, including the batch being processed, so uploads can
+overlap computation; these buffers only receive uploads and keep no host copy.
+Events protect host data until its upload finishes and each device buffer until
+its previous step finishes, and host waits sleep instead of spinning. Configure
+the capacities independently:
+
+```cpp
+optimizer.set_workers_number(2);
+optimizer.set_batch_pool_size(3);
+optimizer.set_device_batch_pool_size(3);
 ```
 
-Use focused checks while editing and `full` as the final gate for a completed
-batch. `full` builds and runs the unit tests on CPU and CUDA. A library change is not complete until the relevant
-CPU and CUDA suites pass, or an unavailable backend is reported clearly; a CPU
-fallback never counts as a CUDA pass. Run the wrapper with `--help` for CUDA
-selection, cache locations and compiler-cache support.
+The device-pool setting applies to eager CUDA training; CUDA Graphs keep their
+own pipeline. Automatic batch sizing accounts for the device pool and transfer
+staging memory. More buffers consume memory and can absorb preparation delays,
+but cannot compensate for a sustained input bottleneck. Measure throughput and
+CPU time before increasing workers or either pool.
 
-For non-standard CUDA installations, configure the wrapper through
-`OPENNN_CUDA_ARCHITECTURES`, `OPENNN_CUDNN_INCLUDE_DIR` and
-`OPENNN_CUDNN_LIBRARY`. On Linux (including WSL), put the intended CUDA
-toolkit's `bin` directory on `PATH`; the wrapper checks that `nvcc` and its host
-compiler support C++20.
+For binary image data without augmentation, eager training transfers byte
+pixels and converts and scales them on the GPU; validation and other image paths
+keep their float host preparation. CUDA text classification with ordinary token
+inputs reads each binary record's tokens and labels together. These
+optimizations preserve the binary formats, input values and sample order.
 
-On Windows, use the CMake presets from a Visual Studio developer prompt. The
-presets `verify-cpu`, `verify-cuda` and `verify-sanitizers` (Linux Clang)
-require Ninja and build into `../opennn-build/<preset>`. Passing another
+## Build and verify
+
+Use the CMake presets for routine verification on Linux, WSL and Windows.
+On Windows, run them from a Visual Studio developer prompt. The presets
+`verify-cpu`, `verify-cuda` and `verify-sanitizers` (Linux Clang) require Ninja
+and keep persistent build trees in `../opennn-build/<preset>`. Passing another
 directory with `-B` requires the same directory in later `cmake --build` and
-`ctest --test-dir` commands.
+`ctest --test-dir` commands instead of the build and test presets.
 
 ```sh
 cmake --preset verify-cpu
 cmake --build --preset verify-cpu --parallel
 ctest --preset verify-cpu
+
+cmake --preset verify-cuda
+cmake --build --preset verify-cuda --parallel
+ctest --preset verify-cuda
 ```
+
+For focused checks after building, pass a GoogleTest filter for that command
+only. These commands work in Bash and PowerShell:
+
+```sh
+cmake -E env "GTEST_FILTER=Dense.*:DenseNoBiasTest.*" GTEST_FAIL_IF_NO_TEST_SELECTED=1 ctest --preset verify-cpu
+cmake -E env "GTEST_FILTER=*Gpu*:*GPU*:*CUDA*" GTEST_FAIL_IF_NO_TEST_SELECTED=1 ctest --preset verify-cuda
+```
+
+Use focused checks while editing and the complete CPU and CUDA suites as the
+final gate for a completed batch of library changes. Run the full suites without
+`GTEST_FILTER` set. A library change is not complete until the relevant CPU and
+CUDA suites pass, or an unavailable backend is reported clearly; a CPU fallback
+never counts as a CUDA pass. The CUDA preset requires CUDA at configuration and
+a working GPU when running tests.
+
+For non-standard CUDA installations, pass CMake cache options with `-D`:
+`CMAKE_CUDA_COMPILER`, `CMAKE_CUDA_ARCHITECTURES`, `CUDNN_INCLUDE_DIR` and
+`CUDNN_LIBRARY`. Select a CUDA toolkit and host compiler that support C++20.
+Make the CUDA and cuDNN runtime libraries available through `PATH` on Windows
+or the dynamic loader search path on Linux. Optional compiler caches such as
+sccache can be selected with `CMAKE_CXX_COMPILER_LAUNCHER` and
+`CMAKE_CUDA_COMPILER_LAUNCHER`.
 
 ### Python for checks and export tests
 
@@ -267,6 +313,11 @@ interfaces may not expose CUDA vendor types; `.cuh` implementation headers may.
 
 ## CI and quality gates
 
+CI runs for pull requests targeting `dev` or `master`, and for pushes to
+`master`. Updating a development PR runs its integration checks once, without
+another run for the push to `dev`. For `dev` work without an open PR, use the
+manual `workflow_dispatch` trigger. Markdown-only changes skip automatic CI.
+
 `ci.yml` runs on hosted machines: Linux and Windows CPU builds, CUDA compilation
 on Linux, package consumers (static and shared on Linux, portable AppleClang on
 macOS, static GCC, Clang and MSVC), ASan/UBSan, 20,000 JSON fuzzing mutations
@@ -278,9 +329,10 @@ and the source checkers. It also runs:
   non-CUDA sources, plus the per-module floors in `tools/check_coverage.py`.
   Raise thresholds as tests are added.
 
-CI has no GPU: it compiles CUDA but never runs CUDA tests. Run
-`./tools/verify.sh full` (or `quick --backend cuda`) on a machine with a GPU
-before merging changes that touch CUDA or shared code, and report the result.
+CI has no GPU: it compiles CUDA but never runs CUDA tests. Configure and build
+the `verify-cuda` preset, then run `ctest --preset verify-cuda` on a machine with
+a GPU before merging changes that touch CUDA or shared code, and report the
+result. Changes to shared code also require the `verify-cpu` suite.
 
 `python benchmarks/compare.py baseline.json candidate.json` gates performance
 changes: it allows 5% throughput/memory variation and rejects lower confirmed
@@ -324,17 +376,51 @@ notice with its data.
 - The GPT-2 and BERT files were first published as the GitHub release assets
   `gpt2-weights-v1` and `bert-weights-v1`; the Hugging Face files are
   byte-identical. Only `dev` snapshots before `3a7e45b41` download from GitHub,
-  and removing those assets breaks them. `master` (8.x) uses neither.
+  and removing those assets breaks them. OpenNN 8.x releases use neither.
 
-Pending licence work: `yolo` needs a dataset with recorded provenance to replace
-the default external synthetic images, and checkpoint-specific confirmation
-before redistributing `darknet53.conv.74` or `yolov3-tiny.weights`. Optional
+YOLO datasets must have recorded provenance, including externally supplied
+synthetic images. Obtain checkpoint-specific confirmation before redistributing
+`darknet53.conv.74` or `yolov3-tiny.weights`. Optional
 external datasets and Ultralytics conversions need their file manifests and
 applicable notices and source records; see `examples/yolo/data/SOURCE.md`.
 
-## 9.0 release notes and migration
+## 26.0 release notes and migration
 
-### What's new in 9.0
+### 26.0.2
+
+- Installed CMake packages rediscover oneDNN and macOS libomp on the consumer's
+  machine instead of exporting paths from the build machine. Package names no
+  longer contain a candidate suffix.
+- Documentation and example defaults use general configuration and relative
+  paths. Verification uses the CMake presets directly.
+- Numerical-gradient tests retain their own parameter snapshot across CPU/CUDA
+  memory migration, fixing intermittent failures without changing tolerances.
+- Pull requests check that their author is covered by the contributor licence
+  agreement.
+
+The public API, model format and library algorithms are unchanged.
+
+### 26.0.1
+
+A patch release with one fix: `Evaluation::calculate_error_data` no longer uses
+a structured binding inside an OpenMP region, which crashed Clang 17 and
+AppleClang. Results are unchanged.
+
+### What's new in 26.0
+
+OpenNN now numbers its major versions by year: 26.0 follows 8.x, and there is
+no 9.x release.
+
+- A new licence. OpenNN 26.0 and later are offered under the GNU AGPL
+  version 3 only, with additional permissions for NVIDIA and Intel libraries
+  and for exported models, or under a commercial licence from Artelnics. 8.x
+  and earlier keep the LGPL 2.1 or later. See [LICENSING.md](LICENSING.md).
+
+- Levenberg-Marquardt now evaluates damped steps against an immutable curvature
+  matrix and commits only accepted candidate metrics. Its damping factor must
+  be finite and greater than one; invalid factors are rejected instead of
+  allowing a retry loop that cannot advance. Binary classification keeps its
+  15-field result format and existing degenerate-case conventions.
 
 - A module layout under `opennn/<module>/` and shorter public names: `Network`,
   `Training`, `Evaluation`, `Adam`, `SGD`, `LSTM`, `LevenbergMarquardt`,
@@ -360,11 +446,11 @@ applicable notices and source records; see `examples/yolo/data/SOURCE.md`.
 The itemized list, including internal refactoring, is in
 [CHANGELOG.md at `af6ee7ef5`](https://github.com/Artelnics/opennn/blob/af6ee7ef5157a48b2aa23689136dbd2976124239/CHANGELOG.md).
 
-### Migrating from 8.x to 9.0
+### Migrating from 8.x to 26.0
 
-9.0 is a major source and model-format migration. Recompile consumers;
+26.0 is a major source and model-format migration. Recompile consumers;
 replacing an 8.x shared library in place is not supported. The package version
-file requires the same major version, so request `find_package(OpenNN 9.0 ...)`.
+file requires the same major version, so request `find_package(OpenNN 26.0 ...)`.
 There are no old-name aliases or forwarding headers, and former JSON root and
 factory names are rejected. The renames below do not change tensor layouts,
 weights, numerical algorithms or memory ownership.
@@ -442,7 +528,7 @@ corpus.read_txt("corpus.txt");
 #### Time-series windows
 
 8.x treated sample `i` as the present instant: inputs were rows `[i-past, i-1]`
-and targets began at `i+1`. 9.0 treats the sample index as the window start:
+and targets began at `i+1`. 26.0 treats the sample index as the window start:
 inputs are `[i, i+past-1]` and targets begin at `i+past`. With a single target
 window the target is `i+past+future-1`; multi-target windows include every future
 step. Regenerate chronological splits and compare windows explicitly; do not
@@ -450,7 +536,7 @@ reuse old sample indices or action-conditioned optimization constraints.
 
 #### Models and parameters
 
-9.0 uses JSON configuration with binary parameter storage. There is no general
+26.0 uses JSON configuration with binary parameter storage. There is no general
 8.x XML/NDM converter; migrate each production model as follows:
 
 1. Keep the original artifacts and an 8.x environment that can load them.
@@ -495,9 +581,9 @@ network.from_JSON(load_json_file(path));
 - Re-export HTML/JavaScript models to obtain the export fixes.
 - Select CPU execution with `Configuration::instance().set(Device::CPU, Type::FP32)`.
 
-#### Earlier 9.0 development snapshots
+#### Earlier development snapshots
 
-Code written against earlier 9.0 development snapshots must also move
+Code written against earlier development snapshots (numbered 9.0) must also move
 `opennn/neural_network/`, `opennn/training_strategy/` and `opennn/testing_analysis/`
 includes to `opennn/network/`, `opennn/training/` and `opennn/evaluation/`. JSON
 saved by those snapshots only needs the root keys renamed (`"NeuralNetwork"` to
@@ -527,20 +613,22 @@ of the numerical tolerance and feasibility margin.
 
 Installation packages exclude example data. Do not create Git tags or GitHub
 releases without the owner's approval. Historical 8.x model compatibility is not
-claimed, and Neural Designer compatibility was not evaluated. Engineering
-verification and the release decision are separate statuses.
+claimed. Record downstream compatibility checks, including Neural Designer,
+for each release. Engineering verification and the release decision are
+separate statuses.
 
 Before promotion:
 
 - Verify the exact candidate commit on every `ci.yml` job and run the CUDA
   suite locally on a GPU machine. Report skips and disabled tests separately;
   earlier passes do not certify a new candidate.
-- If a complete production 8.x model becomes available, follow the
+- When validating an 8.x production model, follow the
   [migration procedure](#models-and-parameters) and compare its reference predictions.
-- Check the [release notes](#whats-new-in-90). The GitHub release notes can start from that summary and the itemized
-  changelog linked there.
+- Update the release notes for the version being published, including behavior
+  changes and migration requirements.
 - After the owner's decision, merge `dev` into `master`, create the annotated
-  `v9.0.0` tag on the reviewed commit, and publish the artifacts with their
+  `v<version>` tag matching `project(OpenNN VERSION ...)` on the reviewed commit
+  after every `ci.yml` job has passed on it. Publish the artifacts with their
   checksums and verification record.
 
 ### Installation packages
@@ -549,18 +637,20 @@ Configure with `OpenNN_INSTALL=ON` and `OpenNN_CPU_TARGET=PORTABLE`, build the
 library, and write packages outside the checkout:
 
 ```sh
-cpack --config /absolute/path/to/build/CPackConfig.cmake -C Release -G ZIP -B ../candidate-packages
-cpack --config /absolute/path/to/build/CPackConfig.cmake -C Release -G TGZ -B ../candidate-packages
+cpack --config /absolute/path/to/build/CPackConfig.cmake -C Release -G ZIP -B ../opennn-packages
+cpack --config /absolute/path/to/build/CPackConfig.cmake -C Release -G TGZ -B ../opennn-packages
 ```
 
 The archive name records the version, system, processor, CPU target and backend,
-and each archive gets a SHA-256 file. `share/doc/OpenNN/build-info.json` records
+and each archive gets a SHA-256 file. Stable package names contain no
+prerelease suffix. `share/doc/OpenNN/build-info.json` records
 the compiler, configuration, CUDA, shared-library and LTO settings. The package
 installs `README.md`, `LICENSE.txt`, `THIRD_PARTY_NOTICES.txt` and the
 libjpeg-turbo, zlib, Eigen, cuDNN frontend and FlashAttention notices that apply. Extract it into a new directory and check it:
 
 ```sh
 python tools/check_installed_package.py /absolute/path/to/extracted-prefix
+python -B tools/package_smoke/check_dependency_relocation.py
 cmake -S tools/package_smoke -B ../archive-consumer -DCMAKE_PREFIX_PATH=/absolute/path/to/extracted-prefix -DCMAKE_FIND_USE_PACKAGE_REGISTRY=OFF
 cmake --build ../archive-consumer --config Release
 ```
@@ -576,9 +666,11 @@ description. Keep raw evidence outside Git.
 
 ## Documentation
 
-- Only `README.md` (users) and `AGENTS.md` (agents and maintainers) live at the
-  root. Do not add Markdown files for individual tasks, audits or sessions;
-  update these two or the guides below.
+- Root Markdown documents are `README.md` (users), `AGENTS.md` (agents and
+  maintainers), `CONTRIBUTING.md` (contributions), `CLA.md` (contributor agreement)
+  and `LICENSING.md` (licensing terms). Keep task-specific notes and verification
+  records in issues, pull requests or releases; update the relevant guide for
+  repository-wide instructions.
 - Subfolder guides: `examples/README.md` (example catalog),
   `benchmarks/README.md`, `benchmarks/PROTOCOL.md`,
   `tools/run-opennn-examples/SKILL.md` and `tools/run-opennn-benchmarks/SKILL.md`.

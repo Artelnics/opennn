@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: LGPL-2.1-or-later
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 #include "opennn/training/error_functions.h"
 #include "opennn/core/device_backend.h"
@@ -81,11 +81,12 @@ OPENNN_CUDA_STUBS(OPENNN_CUDA_STUB)
 
 OPENNN_CUDA_TEMPLATE_STUB(weighted_squared_error_cuda)
 OPENNN_CUDA_TEMPLATE_STUB(scaled_diff_cuda_typed)
-OPENNN_CUDA_TEMPLATE_STUB(mean_absolute_error_gradient_cuda)
 OPENNN_CUDA_TEMPLATE_STUB(minkowski_error_cuda)
 OPENNN_CUDA_TEMPLATE_STUB(minkowski_error_gradient_cuda)
 OPENNN_CUDA_TEMPLATE_STUB(weighted_squared_error_gradient_cuda)
 OPENNN_CUDA_TEMPLATE_STUB(binary_cross_entropy_cuda)
+OPENNN_CUDA_TEMPLATE_STUB(binary_cross_entropy_logits_cuda)
+OPENNN_CUDA_TEMPLATE_STUB(binary_cross_entropy_logits_gradient_cuda)
 OPENNN_CUDA_TEMPLATE_STUB(binary_cross_entropy_gradient_cuda)
 OPENNN_CUDA_TEMPLATE_STUB(categorical_cross_entropy_cuda)
 OPENNN_CUDA_TEMPLATE_STUB(categorical_cross_entropy_gradient_cuda)
@@ -153,12 +154,13 @@ void mean_absolute_error_gradient(const TensorView& input,
 
     const float scale = 1.0f / to_type(input.size());
 
+    // On the GPU this is the Minkowski gradient with power 1, since |d|^0 = 1.
     if (input.is_cuda())
     {
         input.dispatch([&]<typename T>()
         {
-            mean_absolute_error_gradient_cuda<T>(input.size(), input_delta.as<T>(),
-                                                 target.as<float>(), input.as<T>(), scale);
+            minkowski_error_gradient_cuda<T>(input.size(), input_delta.as<T>(),
+                                             target.as<float>(), input.as<T>(), 1.0f, scale);
         });
         return;
     }
@@ -244,6 +246,57 @@ void binary_cross_entropy(const TensorView& input, const TensorView& target, flo
     error = -(targets.array() * (outputs.array() + EPSILON).log()
             + (1.0f - targets.array()) * (1.0f - outputs.array() + EPSILON).log()).sum()
             / to_type(samples_number);
+}
+
+void binary_cross_entropy_logits(const TensorView& logits, const TensorView& target,
+                                  float& error, float* workspace_device)
+{
+    if (logits.is_cuda())
+    {
+        logits.dispatch([&]<typename T>() {
+            binary_cross_entropy_logits_cuda<T>(logits.size(), workspace_device,
+                target.as<float>(), logits.as<T>());
+        });
+        error = sum_abs_cuda(workspace_device, logits.size()) / logits.get_shape()[0];
+        return;
+    }
+    double total = 0.0;
+    const float* values = logits.as<float>();
+    const float* targets = target.as<float>();
+    for (Index i = 0; i < logits.size(); ++i)
+    {
+        const double x = values[i], y = targets[i];
+        total += max(x, 0.0) - x * y + log1p(exp(-abs(x)));
+    }
+    error = float(total / logits.get_shape()[0]);
+}
+
+void binary_cross_entropy_logits_gradient(const TensorView& logits, const TensorView& target,
+                                           const TensorView& delta)
+{
+    const float scale = 1.0f / float(logits.get_shape()[0]);
+    if (logits.is_cuda())
+    {
+        visit_type_pair<Type::FP32, Type::BF16>(logits.get_type(), delta.get_type(),
+            [&]<typename TIn, typename TOut>() {
+                binary_cross_entropy_logits_gradient_cuda<TIn, TOut>(logits.size(),
+                    logits.as<TIn>(), target.as<float>(), scale, delta.as<TOut>());
+            });
+        return;
+    }
+    const float* values = logits.as<float>();
+    const float* targets = target.as<float>();
+    float* gradients = delta.as<float>();
+    for (Index i = 0; i < logits.size(); ++i)
+    {
+        const float exponential = exp(-abs(values[i]));
+        const float y = targets[i];
+        // Preserve small derivatives even when the sigmoid rounds to one.
+        const float residual = values[i] >= 0.0f
+            ? ((1.0f - y) - y * exponential) / (1.0f + exponential)
+            : ((1.0f - y) * exponential - y) / (1.0f + exponential);
+        gradients[i] = residual * scale;
+    }
 }
 
 void categorical_cross_entropy(const TensorView& input, const TensorView& target, float& error,

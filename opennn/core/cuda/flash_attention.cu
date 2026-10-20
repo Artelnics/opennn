@@ -1,11 +1,5 @@
-// SPDX-License-Identifier: LGPL-2.1-or-later
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   F L A S H   A T T E N T I O N
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 #include "opennn/core/cuda/flash_attention.cuh"
 

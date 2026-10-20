@@ -1,11 +1,5 @@
-// SPDX-License-Identifier: LGPL-2.1-or-later
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   S M A L L   K   L I N E A R   K E R N E L
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 // A first layer over tabular data contracts a handful of features into
 // hundreds or thousands of outputs: 8192 x 28 -> 1024 in bf16 does 0.5
@@ -322,7 +316,3 @@ bool small_k_linear_forward_cuda(Index rows, Index contraction, Index out_featur
     return relu ? launch<__nv_bfloat16, true>(rows_int, contraction_int, columns, a, w, b, y, stream)
                 : launch<__nv_bfloat16, false>(rows_int, contraction_int, columns, a, w, b, y, stream);
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

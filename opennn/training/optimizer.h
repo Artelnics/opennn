@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: LGPL-2.1-or-later
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 #pragma once
 
@@ -67,6 +67,9 @@ public:
 
     void set_batch_pool_size(int size) { batch_pool_size_override = size; }
 
+    // Eager CUDA slots, including the batch in use; graph slots are independent.
+    void set_device_batch_pool_size(int size) { device_batch_pool_size = max(1, size); }
+
     void set_maximum_epochs(const Index new_maximum_epochs) { maximum_epochs = new_maximum_epochs; }
     Index get_maximum_epochs() const noexcept { return maximum_epochs; }
     void set_maximum_time(const float new_maximum_time) { maximum_time = new_maximum_time; }
@@ -119,6 +122,7 @@ protected:
         static constexpr int group_size = 8;
         static constexpr int slots_count = 2 * group_size;
         static constexpr int pipelines_count = 2;
+        static constexpr int prefetch_slots_count = 3;
 
         struct GraphPipeline
         {
@@ -129,6 +133,14 @@ protected:
         };
 
         Batch* fixed_batch() const { return pipelines[0].slots[0].get(); }
+
+        Batch* eager_batch(Index iteration) const
+        {
+            const size_t slot = size_t(iteration) % (transfer_batches.size() + 1);
+            return slot == 0 ? fixed_batch() : transfer_batches[slot - 1].get();
+        }
+
+        void prepare_eager_batches(Index, Dataset&, const EffectiveConfig&, int);
 
         bool has_graph_batches() const
         {
@@ -152,6 +164,7 @@ protected:
         };
 
         array<GraphPipeline, pipelines_count> pipelines;
+        vector<unique_ptr<Batch>> transfer_batches;
         TailContext tail;
         Buffer device_metrics{Device::CUDA};
         array<device::CudaEvent, 4> throttle_events;
@@ -162,9 +175,23 @@ protected:
     void set_names();
     void prepare_training_artifacts();
 
-    bool check_stopping_condition(TrainingResult& results,
-        Index epoch, float elapsed_time, float training_error,
-        Index validation_failures, float training_loss, bool has_validation) const;
+    // Training always runs at least one epoch, even when the limit is zero.
+    Index get_epoch_budget() const noexcept { return max<Index>(maximum_epochs, 1); }
+
+    struct EpochReport
+    {
+        Index completed_epochs = 0;
+        float seconds = 0.0f;
+        float training_error = 0.0f;
+        float loss = 0.0f;
+        optional<float> loss_decrease;
+        Index validation_failures = 0;
+    };
+
+    optional<StoppingCondition> find_stopping_condition(const EpochReport&,
+                                                        float minimum_loss_decrease = -MAX) const;
+
+    void close_training_result(TrainingResult&, const EpochReport&, bool has_validation) const;
 
     struct BestModelSnapshot
     {
@@ -340,18 +367,11 @@ protected:
     bool shuffle_samples = true;
 
     int batch_pool_size_override = 0;
+    int device_batch_pool_size = TrainingSession::prefetch_slots_count;
 
-    // How many threads prepare batches ahead of the device. Two was a bare
-    // literal that nothing outside the tests ever changed, so it is measured
-    // here rather than left to look arbitrary: on the CNN family, whose fill
-    // decodes and resizes an image per sample and is the most expensive one in
-    // the suite, six workers were slower than two in every run and in both
-    // orders -- medians 378 against 406 samples/s, 7% down. The fills are not
-    // waiting on anything the extra threads could overlap with, so the workers
-    // only take the cores the main thread wants.
-    //
-    // OPENNN_BATCH_WORKERS overrides it, which is how the above was run. The
-    // batch pool sizes itself from this, so raising it widens the queue too.
+    // Workers prepare batches concurrently. The automatic host pool leaves
+    // room for transfer as well as preparation; its capacity is not a worker
+    // count. OPENNN_BATCH_WORKERS overrides the default.
     static const int default_workers_number;
 
     int workers_number = default_workers_number;

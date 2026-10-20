@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   S C A L E R   P A R I T Y   T E S T   S O U R C E
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 // Scaling is the only preprocessing stage with two independent implementations:
 // scale_cpu in tensor_operations.cpp and the scale kernel in kernel_layers.cu.
@@ -299,7 +294,3 @@ TEST(ScalerParity, CpuRoundTripRecoversInvertibleFeatures)
                 << "round trip lost feature '" << feature.name << "'";
         }
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

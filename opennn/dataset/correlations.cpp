@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: LGPL-2.1-or-later
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 #include "opennn/dataset/correlations.h"
 #include "opennn/core/log.h"
@@ -147,10 +147,10 @@ Correlation correlation(const MatrixR& x, const MatrixR& y)
         if (x_binary && y_binary)
             return opennn::linear_correlation(x_vector, y_vector);
 
-        if (y_binary)
-            return opennn::logistic_correlation(x_vector, y_vector);
-
-        return opennn::logistic_correlation(y_vector, x_vector);
+        // Exactly one side is binary: it is the target, the other the predictor.
+        return x_binary
+            ? opennn::logistic_correlation(y_vector, x_vector)
+            : opennn::logistic_correlation(x_vector, y_vector);
     }
 
     return logistic_correlation(x, y);
@@ -161,27 +161,27 @@ Correlation correlation_spearman(const MatrixR& x, const MatrixR& y)
     if (is_constant(x) || is_constant(y))
         return Correlation();
 
-    if (x.cols() == 1 && y.cols() == 1)
-    {
-        const VectorR x_vector = x.col(0);
-        const VectorR y_vector = y.col(0);
+    if (x.cols() != 1 || y.cols() != 1)
+        return correlation(x, y);
 
-        const bool x_binary = is_binary(x);
-        const bool y_binary = is_binary(y);
+    const VectorR x_vector = x.col(0);
+    const VectorR y_vector = y.col(0);
 
-        Correlation result;
+    const bool x_binary = is_binary(x_vector);
+    const bool y_binary = is_binary(y_vector);
 
-        if (x_binary != y_binary)
-            result = y_binary ? logistic_correlation_spearman(x_vector, y_vector)
-                              : logistic_correlation_spearman(y_vector, x_vector);
-        else
-            result = linear_correlation_spearman(x_vector, y_vector);
+    Correlation spearman_correlation;
 
-        result.method = Correlation::Method::Spearman;
-        return result;
-    }
+    if (x_binary == y_binary)
+        spearman_correlation = linear_correlation_spearman(x_vector, y_vector);
+    else if (x_binary)
+        spearman_correlation = logistic_correlation_spearman(y_vector, x_vector);
+    else
+        spearman_correlation = logistic_correlation_spearman(x_vector, y_vector);
 
-    return correlation(x, y);
+    spearman_correlation.method = Correlation::Method::Spearman;
+
+    return spearman_correlation;
 }
 
 VectorR cross_correlations(const VectorR& x,
@@ -307,9 +307,8 @@ VectorR calculate_spearman_ranks(const VectorR& x)
 
     iota(sorted_indices.data(), sorted_indices.data() + size, 0);
 
-    sort_parallel_if_large(
-        sorted_indices.data(), sorted_indices.data() + size,
-        [&](Index i, Index j) { return x(i) < x(j); });
+    sort_parallel_if_large(sorted_indices.data(), sorted_indices.data() + size,
+                           [&x](Index left, Index right) { return x(left) < x(right); });
 
     VectorR ranks(size);
 
@@ -386,20 +385,22 @@ static Correlation fit_logistic_correlation(const VectorR& input, const VectorR&
 
     try
     {
+        const auto train_silently = [](Optimizer& optimizer)
+        {
+            optimizer.set_display(false);
+            optimizer.train();
+        };
+
         if (input.size() > maximum_levenberg_marquardt_samples)
         {
             QuasiNewton quasi_newton(&loss);
-            quasi_newton.set_display(false);
-
             quasi_newton.set_minimum_loss_decrease(1.0e-6f);
-
-            quasi_newton.train();
+            train_silently(quasi_newton);
         }
         else
         {
             LevenbergMarquardt levenberg_marquardt(&loss);
-            levenberg_marquardt.set_display(false);
-            levenberg_marquardt.train();
+            train_silently(levenberg_marquardt);
         }
     }
     catch (const exception&)
@@ -435,10 +436,12 @@ static Correlation fit_logistic_correlation(const VectorR& input, const VectorR&
 
     if (correlation.slope < 0.0f)
     {
-        correlation.coefficient *= -1.0f;
-        const float old_lower = correlation.lower_confidence;
-        correlation.lower_confidence = -correlation.upper_confidence;
-        correlation.upper_confidence = -old_lower;
+        const float lower_bound = correlation.lower_confidence;
+        const float upper_bound = correlation.upper_confidence;
+
+        correlation.coefficient = -correlation.coefficient;
+        correlation.lower_confidence = -upper_bound;
+        correlation.upper_confidence = -lower_bound;
     }
 
     return correlation;
@@ -448,13 +451,12 @@ Correlation logistic_correlation(const VectorR& x, const VectorR& y)
 {
     const auto [x_filter, y_filter] = filter_missing_values(x, y);
 
-    if (x_filter.size() < 2 || is_constant(x_filter) || is_constant(y_filter))
-    {
-        Correlation correlation;
-        correlation.coefficient = QUIET_NAN;
-        correlation.form = Correlation::Form::Sigmoid;
-        return correlation;
-    }
+    const bool informative = x_filter.size() >= 2
+                          && !is_constant(x_filter)
+                          && !is_constant(y_filter);
+
+    if (!informative)
+        return {.coefficient = QUIET_NAN, .form = Correlation::Form::Sigmoid};
 
     return fit_logistic_correlation(x_filter, y_filter, "MeanStandardDeviation");
 }

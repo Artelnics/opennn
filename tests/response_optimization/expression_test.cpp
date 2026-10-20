@@ -1,5 +1,15 @@
-// SPDX-License-Identifier: LGPL-2.1-or-later
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
+
+// The expression language a constraint or an objective is written in, on its own: what
+// compiling a string yields, what the compiled form says about itself, what it evaluates
+// to, and which strings are refused.
+//
+// Most cases here compile against a bare list of named columns, with no network at all,
+// so what they check is the parser and nothing else. The residual cases follow, since a
+// residual is an expression read through a condition.
+//
+// What the optimizers then do with those expressions is checked in conditions_test.cpp.
 
 #include "tests/common/pch.h"
 

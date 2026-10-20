@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
+
 """The transformer family in PyTorch, defined once, driven four ways.
 
 The counterpart of transformer.cpp. Encoder-decoder, d_model 512, 8

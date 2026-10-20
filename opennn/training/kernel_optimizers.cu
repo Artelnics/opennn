@@ -1,11 +1,5 @@
-// SPDX-License-Identifier: LGPL-2.1-or-later
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   O P T I M I Z E R   K E R N E L S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 #include "opennn/core/cuda/kernel_common.cuh"
 #include "opennn/training/kernel_optimizers.cuh"
@@ -421,7 +415,3 @@ void sum_squared_norms_cuda(const Index n, const float* values, float* total)
         1, block_size, 0, opennn::device::get_compute_stream()>>>(
             checked_int(n), values, total));
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

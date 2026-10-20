@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: LGPL-2.1-or-later
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 #include "opennn/core/device_backend.h"
 #include "opennn/core/log.h"
@@ -176,6 +176,14 @@ void CudaEvent::create()
 {
     reset();
     handle = create_event_handle();
+}
+
+void CudaEvent::create_blocking()
+{
+    reset();
+#ifdef OPENNN_HAS_CUDA
+    handle = create_event_handle(cudaEventDisableTiming | cudaEventBlockingSync);
+#endif
 }
 
 void CudaEvent::reset() noexcept

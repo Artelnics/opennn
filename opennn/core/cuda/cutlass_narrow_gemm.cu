@@ -1,11 +1,5 @@
-// SPDX-License-Identifier: LGPL-2.1-or-later
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   C U T L A S S   N A R R O W   G E M M   S O U R C E
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 #include "opennn/core/cuda/kernel_common.cuh"
 #include "opennn/core/cuda/cutlass_narrow_gemm.cuh"
@@ -399,7 +393,3 @@ bool narrow_k_linear_forward_cutlass(Index, Index, Index,
 }
 
 #endif
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

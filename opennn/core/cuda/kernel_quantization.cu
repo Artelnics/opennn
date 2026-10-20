@@ -1,11 +1,5 @@
-// SPDX-License-Identifier: LGPL-2.1-or-later
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   Q U A N T I Z A T I O N   K E R N E L S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 #include "opennn/core/cuda/kernel_common.cuh"
 #include "opennn/core/cuda/kernel_quantization.cuh"
@@ -229,7 +223,3 @@ template void w8_dequant_cuda<__nv_bfloat16>(const Index, const Index, const boo
     template void embedding_forward_w8_cuda<T>(const Index, const float*, const int8_t*, const float*, const float*, T*, const int, const int, const int, const bool);
 OPENNN_INSTANTIATE_FLOAT_BF16(INSTANTIATE)
 #undef INSTANTIATE
-
-// OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: LGPL-2.1-or-later
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 #include "opennn/dataset/dataset.h"
 #include "opennn/core/memory_debug.h"
@@ -330,42 +330,27 @@ VectorI Dataset::filter_data(const VectorR& minimums, const VectorR& maximums)
 {
     require_in_memory_data("Dataset::filter_data");
 
-    const vector<Index> used_feature_indices = get_used_feature_indices();
-    const vector<Index> used_sample_indices = get_used_sample_indices();
+    const vector<Index> features = get_used_feature_indices();
+    const Index limits = min({ssize(features), minimums.size(), maximums.size()});
+    Eigen::Array<bool, Eigen::Dynamic, 1> rejected(data.rows());
+    rejected.setConstant(false);
 
-    const Index bound = std::min({Index(used_feature_indices.size()), minimums.size(), maximums.size()});
-
-    vector<Index> filtered;
-
-    for (const Index sample_index : used_sample_indices)
+    // Accumulate a row mask a column at a time. Comparisons leave missing
+    // values alone; either endpoint's tolerance takes precedence over rejection.
+    for (Index feature = 0; feature < limits; ++feature)
     {
-        bool out_of_range = false;
-
-        for (Index i = 0; i < bound && !out_of_range; i++)
-        {
-            const type value = data(sample_index, used_feature_indices[size_t(i)]);
-
-            if (isnan(value)) continue;
-
-            if (abs(value - minimums(i)) <= EPSILON
-             || abs(value - maximums(i)) <= EPSILON)
-                continue;
-
-            out_of_range = value < minimums(i) || value > maximums(i);
-        }
-
-        if (out_of_range)
-            filtered.push_back(sample_index);
+        const auto values = data.col(features[size_t(feature)]).array();
+        const auto outside = (values < minimums(feature)) || (values > maximums(feature));
+        const auto boundary = ((values - minimums(feature)).abs() <= EPSILON)
+                            || ((values - maximums(feature)).abs() <= EPSILON);
+        rejected = rejected || (outside && !boundary);
     }
 
-    if (!filtered.empty())
-        set_sample_roles(filtered, "None");
-
-    VectorI filtered_samples_indices(Index(filtered.size()));
-    for (Index i = 0; i < Index(filtered.size()); i++)
-        filtered_samples_indices(i) = filtered[size_t(i)];
-
-    return filtered_samples_indices;
+    vector<Index> removed;
+    ranges::copy_if(get_used_sample_indices(), back_inserter(removed),
+                    [&](Index row) { return rejected(row); });
+    if (!removed.empty()) set_sample_roles(removed, SampleRole::None);
+    return Eigen::Map<const VectorI>(removed.data(), ssize(removed));
 }
 
 void Dataset::split_samples(const float training_samples_ratio,
@@ -377,39 +362,40 @@ void Dataset::split_samples(const float training_samples_ratio,
 
     if (used_samples_number == 0) return;
 
+    for (const float ratio : {training_samples_ratio, validation_samples_ratio, testing_samples_ratio})
+        throw_if(!isfinite(ratio) || ratio < 0.0f,
+                 "Dataset::split_samples: ratios must be finite and nonnegative.");
+
     const float total_ratio = training_samples_ratio + validation_samples_ratio + testing_samples_ratio;
+    throw_if(!isfinite(total_ratio) || total_ratio <= 0.0f,
+             "Dataset::split_samples: the sum of ratios must be finite and positive.");
 
-    const Index validation_samples_number = Index((validation_samples_ratio * used_samples_number) / total_ratio);
-    const Index testing_samples_number = Index((testing_samples_ratio * used_samples_number) / total_ratio);
-    const Index training_samples_number = used_samples_number - validation_samples_number - testing_samples_number;
+    const auto quota = [=](float ratio)
+    {
+        // Retain FP32 rounding for existing splits; widen only an overflowing product.
+        const float count = (ratio * used_samples_number) / total_ratio;
+        const double bounded = min(double(used_samples_number), isfinite(count)
+            ? double(count) : double(ratio) * double(used_samples_number) / double(total_ratio));
+        return Index(bounded);
+    };
+    const Index validation_count = quota(validation_samples_ratio);
+    const Index testing_count = quota(testing_samples_ratio);
+    throw_if(validation_count > used_samples_number - testing_count,
+             "Dataset::split_samples: rounded quotas exceed the used sample count.");
+    const Index training_end = used_samples_number - validation_count - testing_count;
+    const Index validation_end = used_samples_number - testing_count;
 
-    const Index samples_number = get_samples_number();
-
-    vector<Index> indices(samples_number);
+    vector<Index> indices(get_samples_number());
     iota(indices.begin(), indices.end(), 0);
 
     if (shuffle)
         shuffle_vector(indices);
 
-    const auto assign_role = [this, &indices](SampleRole role, Index count, Index& i)
-    {
-        Index assigned = 0;
-
-        while (assigned < count)
-        {
-            if (const Index idx = indices[i++]; sample_roles[idx] != SampleRole::None)
-            {
-                sample_roles[idx] = role;
-                ++assigned;
-            }
-        }
-    };
-
-    Index index = 0;
-
-    assign_role(SampleRole::Training, training_samples_number, index);
-    assign_role(SampleRole::Validation, validation_samples_number, index);
-    assign_role(SampleRole::Testing, testing_samples_number, index);
+    // Compact after shuffling to preserve the seeded order, including unused rows.
+    erase_if(indices, [this](Index sample) { return sample_roles[sample] == SampleRole::None; });
+    for (Index position = 0; position < ssize(indices); ++position)
+        sample_roles[indices[position]] = position < training_end ? SampleRole::Training
+            : position < validation_end ? SampleRole::Validation : SampleRole::Testing;
 }
 
 void Dataset::split_samples_random(const float training_ratio,
@@ -923,93 +909,108 @@ void Dataset::load(const filesystem::path& file_name)
 
 void Dataset::read_data_file_preview(const vector<string_view>& all_lines, char file_separator, bool has_quotes)
 {
-    if (all_lines.empty())
-        return;
-
-    const Index num_first_rows_to_show = 3;
+    if (all_lines.empty()) return;
 
     data_file_preview.clear();
 
-    const Index first_rows = Index(min(static_cast<size_t>(num_first_rows_to_show), all_lines.size()));
-
     string scratch;
 
-    for (Index i = 0; i < first_rows; ++i)
+    const auto append_row = [&](const string_view line)
     {
-        const vector<string_view> tokens = get_token_views_maybe_quoted(all_lines[i], file_separator, has_quotes, scratch);
-        data_file_preview.emplace_back(tokens.begin(), tokens.end());
-    }
+        const vector<string_view> cells =
+            get_token_views_maybe_quoted(line, file_separator, has_quotes, scratch);
 
-    if (all_lines.size() > num_first_rows_to_show)
-    {
-        const vector<string_view> tokens = get_token_views_maybe_quoted(all_lines.back(), file_separator, has_quotes, scratch);
-        data_file_preview.emplace_back(tokens.begin(), tokens.end());
-    }
+        data_file_preview.emplace_back(cells.begin(), cells.end());
+    };
+
+    const size_t lines_number = all_lines.size();
+    const size_t leading_lines = min(lines_number, size_t(3));
+
+    for (size_t i = 0; i < leading_lines; ++i)
+        append_row(all_lines[i]);
+
+    if (lines_number > leading_lines)
+        append_row(all_lines.back());
 }
 
 void Dataset::check_separators(string_view line) const
 {
     const string separator_string = get_separator_string();
     const string separator_name = get_separator_name();
-    const char sep_char = separator_string.empty() ? ',' : separator_string[0];
 
-    bool in_quote = false;
-    bool found_expected = false;
-    char found_other = 0;
-    string_view found_other_name;
+    const char expected_character = separator_string.empty() ? ',' : separator_string.front();
 
-    char found_in_number = 0;
-    string_view found_in_number_name;
-
-    for (size_t position = 0; position < line.size(); ++position)
+    const auto is_foreign_delimiter = [this](const Separator candidate, const string& text)
     {
-        const char c = line[position];
+        return candidate != separator && candidate != Separator::Space && !text.empty();
+    };
 
-        if (c == '"') { in_quote = !in_quote; continue; }
-        if (in_quote) continue;
+    string delimiter_characters;
 
-        if (c == sep_char) { found_expected = true; continue; }
+    for (const auto& [sep, str, name] : separator_map)
+        if (is_foreign_delimiter(sep, str))
+            delimiter_characters.push_back(str.front());
 
-        if (found_other != 0 && found_in_number != 0) continue;
-
-        const bool between_digits =
-            c == ','
-            && position > 0
-            && position + 1 < line.size()
-            && isdigit(static_cast<unsigned char>(line[position - 1]))
-            && isdigit(static_cast<unsigned char>(line[position + 1]));
-
+    const auto delimiter_name = [&](const char character) -> string_view
+    {
         for (const auto& [sep, str, name] : separator_map)
+            if (is_foreign_delimiter(sep, str) && str.front() == character)
+                return name;
+
+        return {};
+    };
+
+    const auto is_digit_at = [line](const size_t position)
+    {
+        return position < line.size() && isdigit(static_cast<unsigned char>(line[position]));
+    };
+
+    bool inside_quotes = false;
+    bool expected_found = false;
+    bool decimal_comma_found = false;
+    bool conflict_found = false;
+    char conflicting_character = '\0';
+    string_view conflicting_name;
+
+    for (size_t i = 0; i < line.size(); ++i)
+    {
+        const char character = line[i];
+
+        if (character == '"')
         {
-            if (sep == separator || sep == Separator::Space) continue;
-            if (str.empty() || str[0] != c) continue;
+            inside_quotes = !inside_quotes;
+            continue;
+        }
 
-            if (between_digits)
-            {
-                if (found_in_number == 0) { found_in_number = c; found_in_number_name = name; }
-            }
-            else if (found_other == 0) { found_other = c; found_other_name = name; }
+        if (inside_quotes) continue;
 
-            break;
+        if (character == expected_character)
+        {
+            expected_found = true;
+            continue;
+        }
+
+        if (delimiter_characters.find(character) == string::npos) continue;
+
+        if (character == ',' && i > 0 && is_digit_at(i - 1) && is_digit_at(i + 1))
+        {
+            decimal_comma_found = true;
+        }
+        else if (!conflict_found)
+        {
+            conflict_found = true;
+            conflicting_character = character;
+            conflicting_name = delimiter_name(character);
         }
     }
 
-    if (found_other == 0 && !found_expected)
-    {
-        found_other = found_in_number;
-        found_other_name = found_in_number_name;
-    }
-
-    if (!found_expected)
-    {
-        throw_if(found_other != 0,
-                 "Separator '{}' not found in line {}.\n", separator_string, line);
-        return;
-    }
-
-    throw_if(found_other != 0,
+    throw_if(expected_found && conflict_found,
              "Found {} ('{}') in data file {}, but separator is {} ('{}').",
-                    found_other_name, found_other, data_path.string(), separator_name, separator_string);
+             conflicting_name, conflicting_character, data_path.string(), separator_name, separator_string);
+
+    throw_if(!expected_found && (conflict_found || decimal_comma_found),
+             "Separator '{}' not found in line {}.\n",
+             separator_string, line);
 }
 
 void Dataset::fill_inputs(const vector<Index>&, const vector<Index>&, float*, FillMode, ColumnContiguity) const

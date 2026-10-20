@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
+
 """Train paired models on shared tensors and score held-out predictions.
 
 Runs use a fixed epoch budget, no training warm-up, all tail samples, fixed

@@ -1,6 +1,4 @@
-<div align="center">
-  <img src="https://www.opennn.net/images/opennn_git_logo.svg" alt="OpenNN">
-</div>
+# OpenNN
 
 OpenNN is a C++20 library for building, training and running neural networks.
 It supports tabular data, images, time series and text, with CPU and optional
@@ -13,10 +11,11 @@ standalone source code for supported architectures.
 | Choose CPU/CUDA backends and build options | [Build options](AGENTS.md#build-options) |
 | Use OpenNN in my C++ application | [Install and link](#use-opennn-in-your-application) |
 | Train, evaluate or export a model | [Examples](examples/README.md) |
-| Update an 8.x application or model | [Migration](AGENTS.md#migrating-from-8x-to-90) |
+| Update an 8.x application or model | [Migration](AGENTS.md#migrating-from-8x-to-260) |
 | Understand the source folders | [Repository contents](#repository-contents) |
 | Run or review performance comparisons | [Benchmarks](benchmarks/README.md) |
 | Contribute or run the tests | [Contributing](#contributing-and-support) |
+| Use OpenNN under the AGPL or a commercial licence | [License](#license) |
 
 Tutorials are available on [opennn.net](https://www.opennn.net/).
 
@@ -62,6 +61,8 @@ cmake --build ../opennn-build/cuda --config Release --target opennn --parallel
 ```
 
 Require CUDA explicitly to make missing GPU build dependencies an error.
+See [CUDA batch preparation](AGENTS.md#cuda-batch-preparation) to configure
+workers and host/device buffers independently.
 
 ## Use OpenNN in your application
 
@@ -76,7 +77,7 @@ In your application's `CMakeLists.txt`, consume the installed target:
 ```cmake
 cmake_minimum_required(VERSION 3.24)
 project(MyApplication LANGUAGES CXX)
-find_package(OpenNN 9.0 CONFIG REQUIRED)
+find_package(OpenNN 26.0 CONFIG REQUIRED)
 add_executable(my_application main.cpp)
 target_link_libraries(my_application PRIVATE OpenNN::opennn)
 target_compile_features(my_application PRIVATE cxx_std_20)
@@ -89,8 +90,11 @@ the package still works after moving the install prefix.
 
 Fetched Eigen and zlib are installed with the library. OpenMP, oneTBB, oneDNN,
 MKL and NVIDIA runtimes are not copied into the installation; supply those
-selected by the build. Use a compiler compatible with the one that built the
-package. Installation packages exclude example datasets and models.
+selected by the build. The installed package locates oneDNN and macOS libomp
+on the consuming machine; use `CMAKE_PREFIX_PATH`, `OpenNN_ONEDNN_ROOT`, or
+`LIBOMP_INCLUDE_DIR` and `LIBOMP_LIBRARY` for nonstandard installations.
+Use a compiler compatible with the one that built the package. Installation
+packages exclude example datasets and models.
 
 Include the public module headers directly, for example
 `#include "opennn/network/network.h"`. Do not include the private precompiled
@@ -110,7 +114,9 @@ header `opennn/core/pch.h` in an application.
 ## Contributing and support
 
 Base contributions on `dev`, include the validation you ran, and describe the
-resulting behavior in the pull request. [AGENTS.md](AGENTS.md) holds the
+resulting behavior in the pull request. A pull request can be merged only after
+its author has accepted the [Contributor License Agreement](CLA.md); see
+[CONTRIBUTING.md](CONTRIBUTING.md). [AGENTS.md](AGENTS.md) holds the
 engineering rules, verification commands and release procedure. For a bug
 report, include the OpenNN commit, operating system, compiler, CPU/CUDA
 configuration, reproduction command and error, and file it in
@@ -118,8 +124,20 @@ configuration, reproduction command and error, and file it in
 
 ## License
 
-OpenNN is distributed under the GNU Lesser General Public License, version 2.1 or
-(at your option) any later version; see [LICENSE.txt](LICENSE.txt) and the
-per-file notices. Dependencies and downloadable pre-trained weights keep their own
+OpenNN is Copyright (C) 2026 Artificial Intelligence Techniques, S.L.
+(Artelnics) and Roberto López González, and is dual-licensed:
+
+- **Open source:** the GNU Affero General Public License, version 3 only
+  ([LICENSE.txt](LICENSE.txt)), with additional permissions for linking with
+  NVIDIA CUDA, cuDNN and Intel oneMKL and for the code and model files that
+  OpenNN generates.
+- **Commercial:** a licence from Artelnics for closed-source products and
+  hosted services that cannot meet the AGPL's terms. Write to
+  artelnics@artelnics.com.
+
+[LICENSING.md](LICENSING.md) gives the details. OpenNN 8.x and earlier, and the
+development snapshots published before this change, were distributed under the
+GNU Lesser General Public License, version 2.1 or later, and copies of them keep
+those terms. Dependencies and downloadable pre-trained weights keep their own
 terms, listed in [THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt). Example data
 keeps its publishers' terms, recorded in the `SOURCE.md` notice of each data folder.

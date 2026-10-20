@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
+
 #include "tests/common/pch.h"
 #include "opennn/network/model_expression.h"
 #include "opennn/network/network.h"
@@ -104,10 +107,18 @@ TEST_F(ModelExpressionTest, BuildExpressionContainsScalingAndActivations)
 
     const string expression = model_expression.build_expression();
 
-    EXPECT_TRUE(contains_token(expression, "scaled_alpha"));
-    EXPECT_TRUE(contains_token(expression, "scaled_beta"));
+    EXPECT_TRUE(contains_token(expression, " = alpha;"));
+    EXPECT_TRUE(contains_token(expression, " = beta;"));
     EXPECT_TRUE(contains_token(expression, "Tanh"));
     EXPECT_TRUE(contains_token(expression, "Identity"));
+}
+
+TEST_F(ModelExpressionTest, InternalBindingsAreIndependentOfLayerLabels)
+{
+    const string before = ModelExpression(network.get()).build_expression();
+    for (const auto& layer : network->get_layers())
+        layer->set_label("same label with spaces");
+    EXPECT_EQ(ModelExpression(network.get()).build_expression(), before);
 }
 
 TEST_F(ModelExpressionTest, BuildExpressionHasOneLinePerNonInputNeuron)

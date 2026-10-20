@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: LGPL-2.1-or-later
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 #pragma once
 
@@ -32,15 +32,36 @@ inline const auto check_status = [](auto status, const string& what) {
 
 inline int device_sm_version()
 {
-    static const int sm = [] {
-        int device = 0;
-        cudaGetDevice(&device);
-        int major = 0, minor = 0;
-        cudaDeviceGetAttribute(&major, cudaDevAttrComputeCapabilityMajor, device);
-        cudaDeviceGetAttribute(&minor, cudaDevAttrComputeCapabilityMinor, device);
-        return major * 100 + minor * 10;
-    }();
-    return sm;
+    // Encoded as 100 * major + 10 * minor (8.6 -> 860, 12.0 -> 1200); the
+    // plan-cache directory name embeds it, so the encoding must stay fixed.
+    // The device current on the first caller's thread is queried once and the
+    // static serves every later call, since frontend_enabled() sits on hot
+    // paths. A failed query leaves a zero component and disables the frontend.
+    struct QueriedCapability
+    {
+        int encoded = 0;
+
+        static int component_of(const int device_ordinal, const cudaDeviceAttr attribute)
+        {
+            int component = 0;
+            cudaDeviceGetAttribute(&component, attribute, device_ordinal);
+            return component;
+        }
+
+        QueriedCapability()
+        {
+            int device_ordinal = 0;
+            cudaGetDevice(&device_ordinal);
+
+            const int major = component_of(device_ordinal, cudaDevAttrComputeCapabilityMajor);
+            const int minor = component_of(device_ordinal, cudaDevAttrComputeCapabilityMinor);
+
+            encoded = major * 100 + minor * 10;
+        }
+    };
+
+    static const QueriedCapability capability;
+    return capability.encoded;
 }
 
 inline bool frontend_enabled()
@@ -57,6 +78,15 @@ inline bool frontend_verbose()
 inline bool bn_frontend_enabled()
 {
     return frontend_enabled() && device_sm_version() >= 800;
+}
+
+// Reproducibility runs must reject cuDNN engines whose reductions can change
+// between identical launches. Keep this opt-in because deterministic plans
+// can be slower than the normal heuristic choice.
+inline bool deterministic_algorithms_enabled()
+{
+    static const bool enabled = env_flag_enabled("OPENNN_DETERMINISTIC", false);
+    return enabled;
 }
 
 // The convolution autotune's second stage. cuDNN's engines for one shape
@@ -438,6 +468,7 @@ inline std::filesystem::path plan_cache_file(const graph::Graph& graph)
         selection = selection * 31 + size_t(autotune_candidate_limit(kind));
     for (const HeurMode_t mode : heuristic_modes()) selection = selection * 31 + size_t(mode) + 1;
     for (const NumericalNote_t note : conv_engine_notes()) selection = selection * 31 + size_t(note) + 7;
+    selection = selection * 31 + (deterministic_algorithms_enabled() ? 11u : 0u);
 
     selection = selection * 31 + (sdpa_autotune_enabled() ? 3u : 0u);
 
@@ -690,6 +721,8 @@ inline bool finalize(graph::Graph& graph, int64_t& workspace_bytes, const string
             graph.deselect_numeric_notes({NumericalNote_t::TENSOR_CORE,
                                           NumericalNote_t::DOWN_CONVERT_INPUTS,
                                           NumericalNote_t::REDUCED_PRECISION_REDUCTION});
+        if (deterministic_algorithms_enabled())
+            graph.deselect_numeric_notes({NumericalNote_t::NONDETERMINISTIC});
         if (restrict_notes)
             graph.select_numeric_notes(conv_engine_notes());
     };

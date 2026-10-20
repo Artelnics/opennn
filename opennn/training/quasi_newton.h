@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: LGPL-2.1-or-later
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 #pragma once
 
@@ -19,8 +19,7 @@ public:
         ParameterUpdates,
         OldGradient,
         GradientDifference,
-        OldInverseHessianDotGradientDifference,
-        BFGS,
+        BfgsWork,
         InverseHessian,
         OldInverseHessian
     };
@@ -61,7 +60,7 @@ private:
         float slope = 0.0f;
     };
 
-    pair<float, float> calculate_directional_point(const Batch&,
+    pair<float, float> backtrack_along_direction(const Batch&,
                                                  ForwardPropagation&,
                                                  BackPropagation&,
                                                  float);

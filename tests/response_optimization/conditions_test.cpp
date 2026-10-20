@@ -1,5 +1,19 @@
-// SPDX-License-Identifier: LGPL-2.1-or-later
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
+
+// Every condition and objective sense a response optimization understands, stated against
+// a small untrained network and run through both solvers.
+//
+// The networks carry no training, so no case asks what response comes back. Each one asks
+// only where the result may sit: inside the box, on a hyperplane, on a lattice, one hot
+// across a categorical block. That holds whatever the weights are.
+//
+// Cases that are refused before any search starts are grouped first, under
+// ResponseOptimizationSetup. The ones that run are parameterised over both solvers, so a
+// condition that only one of them honours fails here.
+//
+// The expression language the conditions are written in is tested in
+// expression_test.cpp.
 
 #include "tests/common/pch.h"
 

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 #include "tests/common/pch.h"
 
@@ -98,13 +100,9 @@ TEST_F(CorrelationsTest, LogisticCorrelation)
 
     size = 100;
 
-    vector<Index> x_vector(100);
-
     x.resize(size);
 
-    iota(x_vector.begin(), x_vector.end(),0);
-    for(Index i = 0; i < x.size(); i++)
-        x(i) = type(x_vector[i]);
+    for (Index i = 0; i < size; i++) x[i] = type(i);
 
     y.resize(size);
 
@@ -143,10 +141,7 @@ TEST_F(CorrelationsTest, LogisticCorrelation)
 
     x.resize(size);
 
-    for (Index i = 0; i < size; i++)
-    {
-        x[i] = i;
-    }
+    for (Index i = 0; i < size; i++) x[i] = type(i);
 
     y.resize(size);
 
@@ -192,9 +187,7 @@ TEST_F(CorrelationsTest, LogarithmicCorrelation)
 
     x << type(1), type(2), type(3), type(4), type(5), type(6), type(7), type(8), type(9), type(10);
     for (Index i = 0; i < size; i++)
-    {
         y[i] = type(4) * std::log(x[i]);
-    }
 
     correlation = logarithmic_correlation(x, y);
 
@@ -219,8 +212,8 @@ TEST_F(CorrelationsTest, ExponentialCorrelation)
 
     for (Index i = 0; i < size; i++)
     {
-        x[i] = i;
-        y[i] = type(1) * std::exp(type(0.5) * x[i]);
+        x[i] = type(i);
+        y[i] = std::exp(type(0.5) * x[i]);
     }
 
     correlation = exponential_correlation(x, y);
@@ -261,10 +254,10 @@ TEST_F(CorrelationsTest, PowerCorrelation)
     x.resize(size);
     y.resize(size);
 
-    for(Index i = 0; i < size; i++)
+    for (Index i = 0; i < size; i++)
     {
         x[i] = type(i + 1);
-        y[i] = type(1) * std::pow(x[i], type(2));
+        y[i] = x[i] * x[i];
     }
 
     correlation = power_correlation(x, y);
@@ -283,10 +276,7 @@ TEST_F(CorrelationsTest, Autocorrelation)
     VectorR y;
     VectorR correlation;
 
-    for(Index i = 0; i < size; i++)
-    {
-        x[i] = i;
-    }
+    for (Index i = 0; i < size; i++) x[i] = type(i);
 
     correlation = autocorrelations(x, size/100);
 
@@ -302,11 +292,9 @@ TEST_F(CorrelationsTest, CrossCorrelation)
     VectorR y(size);
     VectorR cross_correlation;
 
-    for (Index i = 0; i < size; i++)
-    {
-        x[i] = i;
-        y[i] = i;
-    }
+    for (Index i = 0; i < size; i++) x[i] = type(i);
+
+    y = x;
 
     cross_correlation = cross_correlations(x, y, 10);
 

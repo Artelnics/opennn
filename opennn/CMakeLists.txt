@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
+
 option(OpenNN_BUILD_VISION "Build vision/seq layers, networks, and datasets" ON)
 option(OpenNN_BUILD_SHARED "Build OpenNN as a shared library (DLL) instead of static" OFF)
 option(OpenNN_INSTALL "Generate install rules for the OpenNN library" ON)
@@ -18,12 +21,8 @@ if(NOT OpenNN_CPU_TARGET STREQUAL "NATIVE" AND NOT OpenNN_CPU_TARGET STREQUAL "P
     message(FATAL_ERROR "OpenNN_CPU_TARGET must be NATIVE or PORTABLE, not '${OpenNN_CPU_TARGET}'")
 endif()
 set(OpenNN_MKL_ROOT "" CACHE PATH "Intel MKL root prefix (e.g. /opt/intel/oneapi/mkl/latest or extracted /usr prefix)")
-# AUTO, ON or OFF. AUTO uses oneDNN when it can be found and says so either way;
-# ON fails the configure if it cannot; OFF never looks. Defaulting to AUTO
-# rather than OFF because forgetting the flag is expensive and silent: the CPU
-# recurrent layers fall back to the built-in path, which measured 2.9x slower
-# on the benchmark LSTM(15->128) training cell and 1.9x on inference, against a
-# PyTorch whose wheel bundles oneDNN either way.
+# AUTO enables optimized recurrent primitives when oneDNN is installed.
+# ON requires it; OFF uses the built-in implementation without searching.
 set(OpenNN_ENABLE_ONEDNN "AUTO" CACHE STRING
     "Use oneDNN optimized CPU recurrent primitives: AUTO, ON or OFF")
 set_property(CACHE OpenNN_ENABLE_ONEDNN PROPERTY STRINGS AUTO ON OFF)
@@ -31,22 +30,15 @@ set(OpenNN_ONEDNN_ROOT "" CACHE PATH "oneDNN prefix (for example /usr or an extr
 option(OpenNN_DISABLE_CUDA "Disable CUDA even if the toolkit is found" OFF)
 option(OpenNN_REQUIRE_CUDA "Fail configuration unless CUDA is enabled" OFF)
 
-list(PREPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/core/cuda")
+list(PREPEND CMAKE_MODULE_PATH
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake"
+    "${CMAKE_CURRENT_SOURCE_DIR}/core/cuda")
 
 include(FetchContent)
 include(CheckLanguage)
 
 if(APPLE)
-    find_path(LIBOMP_INCLUDE_DIR omp.h
-        PATHS /opt/homebrew/opt/libomp/include /usr/local/opt/libomp/include)
-    find_library(LIBOMP_LIBRARY NAMES omp libomp.dylib
-        PATHS /opt/homebrew/opt/libomp/lib /usr/local/opt/libomp/lib)
-    if(NOT LIBOMP_INCLUDE_DIR OR NOT LIBOMP_LIBRARY)
-        message(FATAL_ERROR
-            "OpenNN requires OpenMP C++ support. Install libomp (for example, "
-            "with 'brew install libomp') or set LIBOMP_INCLUDE_DIR and "
-            "LIBOMP_LIBRARY to an existing libomp installation.")
-    endif()
+    find_package(OpenNNLibomp REQUIRED)
 else()
     find_package(OpenMP QUIET COMPONENTS CXX)
     if(NOT OpenMP_CXX_FOUND)
@@ -312,30 +304,12 @@ endif()
 set(OpenNN_ONEDNN_FOUND OFF CACHE INTERNAL "oneDNN was found and linked")
 
 if(NOT OpenNN_ENABLE_ONEDNN STREQUAL "OFF")
-    # $ENV{ONEDNN_ROOT} and $ENV{DNNLROOT} are what oneDNN's own vars scripts
-    # export, so a machine that has sourced one is already findable. A prefix
-    # in neither a standard location nor those variables still needs
-    # OpenNN_ONEDNN_ROOT or CMAKE_PREFIX_PATH -- AUTO finds an installed
-    # oneDNN, it does not go looking through home directories.
-    find_path(OpenNN_ONEDNN_INCLUDE_DIR
-        NAMES oneapi/dnnl/dnnl.hpp
-        HINTS
-            "${OpenNN_ONEDNN_ROOT}/include"
-            "$ENV{ONEDNN_ROOT}/include"
-            "$ENV{DNNLROOT}/include")
-    find_library(OpenNN_ONEDNN_LIBRARY
-        NAMES dnnl
-        HINTS
-            "${OpenNN_ONEDNN_ROOT}/lib"
-            "${OpenNN_ONEDNN_ROOT}/lib64"
-            "${OpenNN_ONEDNN_ROOT}/lib/x86_64-linux-gnu"
-            "$ENV{ONEDNN_ROOT}/lib"
-            "$ENV{DNNLROOT}/lib")
+    find_package(OpenNNOneDNN QUIET)
 
-    if(OpenNN_ONEDNN_INCLUDE_DIR AND OpenNN_ONEDNN_LIBRARY)
+    if(OpenNNOneDNN_FOUND)
         target_compile_definitions(opennn PRIVATE OPENNN_HAS_ONEDNN)
         target_include_directories(opennn SYSTEM PRIVATE "${OpenNN_ONEDNN_INCLUDE_DIR}")
-        target_link_libraries(opennn PUBLIC "${OpenNN_ONEDNN_LIBRARY}")
+        target_link_libraries(opennn PUBLIC OpenNN::oneDNN)
         set(OpenNN_ONEDNN_FOUND ON CACHE INTERNAL "oneDNN was found and linked")
         message(STATUS "OpenNN: oneDNN CPU recurrent backend (${OpenNN_ONEDNN_LIBRARY})")
 
@@ -375,7 +349,7 @@ if(APPLE)
     target_compile_options(opennn PRIVATE -Xpreprocessor -fopenmp)
     target_include_directories(opennn SYSTEM PUBLIC
         $<BUILD_INTERFACE:${LIBOMP_INCLUDE_DIR}>)
-    target_link_libraries(opennn PUBLIC "${LIBOMP_LIBRARY}")
+    target_link_libraries(opennn PUBLIC OpenNN::libomp)
 else()
     # MSVC's plain -openmp is OpenMP 2.0 and rejects `#pragma omp simd` with
     # C7660, which stops the whole build the first time a kernel uses one.
@@ -438,8 +412,7 @@ if(OPENNN_HAS_CUDA)
     # CUTLASS is optional and header-only. Without it the narrow-contraction
     # dense forward compiles to a stub that declines every shape and cuBLASLt
     # runs everything, which is what the library did before. With it, a first
-    # layer whose contraction is at most 32 is 1.03x to 1.48x faster - see
-    # opennn/core/cuda/cutlass_narrow_gemm.cu for the measurement.
+    # layer whose contraction is at most 32 can use specialized kernels.
     if(OpenNN_CUTLASS_INCLUDE_DIR)
         if(NOT EXISTS "${OpenNN_CUTLASS_INCLUDE_DIR}/cutlass/cutlass.h")
             message(FATAL_ERROR
@@ -534,6 +507,7 @@ if(OpenNN_INSTALL)
 
     install(FILES
         ${PROJECT_SOURCE_DIR}/LICENSE.txt
+        ${PROJECT_SOURCE_DIR}/LICENSING.md
         ${PROJECT_SOURCE_DIR}/THIRD_PARTY_NOTICES.txt
         ${PROJECT_SOURCE_DIR}/README.md
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/OpenNN)
@@ -625,5 +599,7 @@ if(OpenNN_INSTALL)
         ${CMAKE_CURRENT_BINARY_DIR}/OpenNNConfig.cmake
         ${CMAKE_CURRENT_BINARY_DIR}/OpenNNConfigVersion.cmake
         ${CMAKE_CURRENT_SOURCE_DIR}/core/cuda/FindCUDNN.cmake
+        ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindOpenNNLibomp.cmake
+        ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindOpenNNOneDNN.cmake
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenNN)
 endif()

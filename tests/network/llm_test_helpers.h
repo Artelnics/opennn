@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   L L M   T E S T   H E L P E R S   H E A D E R
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 #pragma once
 

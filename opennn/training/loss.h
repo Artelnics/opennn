@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: LGPL-2.1-or-later
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 #pragma once
 
@@ -198,6 +198,7 @@ private:
     float* ensure_error_workspace(Buffer&, const TensorView&,
                                   Index batch_samples,
                                   Index reduction_floats = 0) const;
+    float* ensure_metrics_workspace(Buffer&, const TensorView&, Index batch_samples) const;
 
     float get_weighted_coefficient(const Batch& batch) const { return get_batch_scale(batch) / (normalization_coefficient + EPSILON); }
 

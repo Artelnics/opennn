@@ -1,6 +1,10 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
+
 #include "tests/common/pch.h"
 
 #include "opennn/dataset/image_dataset.h"
+#include "opennn/dataset/batch.h"
 #include "opennn/dataset/dataset.h"
 #include "opennn/core/device_backend.h"
 #include "opennn/core/json.h"
@@ -94,6 +98,62 @@ TEST(ImageDataset, DefaultConstructorIsEmpty)
     EXPECT_EQ(image_dataset.get_samples_number(), 0);
     EXPECT_EQ(image_dataset.get_variables_number(), 0);
     EXPECT_TRUE(image_dataset.is_empty());
+}
+
+TEST(ImageDataset, PackedCudaBatchesMatchHostScalingAndAugmentationFallback)
+{
+    if (!device::has_cuda_device()) GTEST_SKIP() << "No CUDA device.";
+    ImageFixtureThreeClasses fixture(7, 5, 2);
+    ImageDataset dataset(fixture.root);
+    const vector<Index> indices{5, 0, 3};
+    const FeatureSelection features = dataset.get_feature_selection();
+    for (Type dtype : {Type::FP32, Type::BF16})
+    {
+        if (dtype == Type::BF16 && device::cuda_compute_capability() < 80) continue;
+        Batch host(3, &dataset, {Device::CPU, Type::FP32, 0});
+        Batch staged(3, &dataset, {Device::CUDA, dtype, 0}, true);
+        Batch destination(3, &dataset, {Device::CUDA, dtype, 0});
+        staged.pack_image_input = true;
+        for (bool configured : {false, true})
+        {
+            dataset.clear_training_scaling();
+            if (configured)
+            {
+                vector<Descriptives> descriptives(3);
+                for (int i = 0; i < 3; ++i)
+                {
+                    descriptives[size_t(i)].minimum = float(i * 7);
+                    descriptives[size_t(i)].maximum = float(255 - i * 11);
+                }
+                dataset.set_input_scaling(descriptives, vector<ScalerMethod>(3, ScalerMethod::MinimumMaximum),
+                                          -0.5f, 1.5f);
+            }
+            for (bool augmentation : {false, true})
+            {
+                dataset.set_augmentation_policy({.enabled = augmentation});
+                for (FillMode mode : {FillMode::Training, FillMode::Validation, FillMode::Inference})
+                {
+                    staged.wait_h2d_complete();
+                    host.fill(indices, features, mode);
+                    staged.fill(indices, features, mode);
+                    EXPECT_EQ(staged.packed_image_input.has_value(), !augmentation && mode == FillMode::Training);
+                    staged.upload_to_device_batch_async(destination, device::get_transfer_stream());
+                    staged.wait_h2d_on_compute_stream();
+                    vector<float> actual(size_t(host.input.shape.size()));
+                    copy_device_to_host_float(destination.input.buffer.data(), destination.input.type,
+                                              host.input.shape.size(), actual.data(), device::get_compute_stream());
+                    device::synchronize(device::get_compute_stream());
+                    for (size_t i = 0; i < actual.size(); ++i)
+                    {
+                        const float expected = dtype == Type::BF16
+                            ? float(Eigen::bfloat16(host.input.buffer.as<float>()[i])) : host.input.buffer.as<float>()[i];
+                        EXPECT_NEAR(actual[i], expected, 1.0e-6f);
+                    }
+                    EXPECT_THROW(staged.fill({99, 0, 1}, features, mode), runtime_error);
+                }
+            }
+        }
+    }
 }
 
 TEST(ImageDataset, ConstructFromPathTwoClasses)

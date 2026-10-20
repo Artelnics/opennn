@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   C U T L A S S   N A R R O W   G E M M   T E S T   S O U R C E
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 // A dense forward whose contraction is at most 32 takes a CUTLASS kernel
 // instantiated for that shape instead of cuBLASLt, which can only promise
@@ -154,7 +149,3 @@ TEST(CutlassNarrowGemm, Fp32FallsThroughAndIsStillCorrect)
 
     check_narrow_forward(1024, 1024, Type::FP32, 1e-4f);
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   C O M B I N A T I O N   O P E R A T O R   T E S T
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 // Every Dense layer runs through this operator, and it had no direct test. The
 // forward maths is covered indirectly everywhere, so these concentrate on the
@@ -137,7 +132,3 @@ TEST(CombinationOperatorTest, GlorotInitialisationStaysInsideItsLimit)
     for (Index i = 0; i < bias_storage.size(); ++i)
         EXPECT_FLOAT_EQ(bias_storage(i), 0.0f) << "at index " << i;
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

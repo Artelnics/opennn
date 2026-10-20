@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   C 2 P S A   O P E R A T O R   T E S T
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 // C2PSA splits its input in half and attends over one half, so three of its
 // four weight matrices are sized on channels/2 and the fourth on the full
@@ -118,7 +113,3 @@ TEST(C2PSAOperatorTest, GlorotUsesTheHalfLimitForQkvAndTheFullOneForOutput)
     for (Index i = 0; i < wout.size(); ++i)
         EXPECT_LE(abs(wout.data()[i]), out_limit + 1.0e-5f) << "at index " << i;
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

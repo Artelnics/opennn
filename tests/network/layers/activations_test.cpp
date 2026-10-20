@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
+
 #include "tests/common/pch.h"
 #include "tests/common/numerical_derivatives.h"
 
@@ -265,7 +268,11 @@ static void expect_dense_fanout_gradient(Device device)
     const VectorR gradient = calculate_gradient(loss);
     const VectorR numerical_gradient = calculate_numerical_gradient(loss);
 
-    EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), type(1.0e-3));
+    Index worst = 0;
+    const float difference = (gradient - numerical_gradient).array().abs().maxCoeff(&worst);
+    EXPECT_LT(difference, type(1.0e-3))
+        << "parameter " << worst << " analytical " << gradient(worst)
+        << " numerical " << numerical_gradient(worst);
 }
 
 TEST(ActivationsTest, DenseFanoutFoldedResidualGradientCPU)
@@ -276,6 +283,14 @@ TEST(ActivationsTest, DenseFanoutFoldedResidualGradientCPU)
 #ifdef OPENNN_HAS_CUDA
 TEST(ActivationsTest, DenseFanoutFoldedResidualGradientGPU)
 {
+    // The numerical gradient is checked to 1e-3, about TF32's 10-bit mantissa,
+    // so whether it passed depended on the GEMM engine picked; run IEEE fp32.
+    struct Fp32Guard
+    {
+        Fp32Guard()  { opennn::device::set_allow_tf32(false); }
+        ~Fp32Guard() { opennn::device::set_allow_tf32(true); }
+    } fp32_guard;
+
     expect_dense_fanout_gradient(Device::CUDA);
 }
 #endif

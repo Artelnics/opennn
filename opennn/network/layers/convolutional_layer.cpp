@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: LGPL-2.1-or-later
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 #include "opennn/network/layers/convolutional_layer.h"
 #include "opennn/network/layers/layer_registry.h"
@@ -344,45 +344,44 @@ void Convolutional::write_JSON_body(JsonWriter& printer) const
 
 void Convolutional::load_darknet_weights(FILE* f)
 {
-    throw_if(!f, "load_darknet_weights: file handle is null.");
+    throw_if(!f, "Convolutional::load_darknet_weights: the weights file is not open.");
 
-    const Index O  = convolution.kernels_number;
-    const Index kH = convolution.kernel_height;
-    const Index kW = convolution.kernel_width;
-    const Index I  = convolution.kernel_channels;
-    const Index total_weights = O * kH * kW * I;
+    const auto read_floats = [f](float* destination, Index count, const char* part)
+    {
+        throw_if(fread(destination, sizeof(float), size_t(count), f) != size_t(count),
+                 "Convolutional::load_darknet_weights: cannot read the {} of the Darknet record.",
+                 part);
+    };
+
+    const Index filters  = convolution.kernels_number;
+    const Index height   = convolution.kernel_height;
+    const Index width    = convolution.kernel_width;
+    const Index channels = convolution.kernel_channels;
 
     if (batch_norm.active())
     {
-        const size_t n = static_cast<size_t>(batch_norm.features);
-        const auto read_bn = [&](TensorView& tv)
-        {
-            throw_if(fread(tv.as<float>(), sizeof(float), n, f) != n,
-                     "load_darknet_weights: short read on BN parameters.");
-        };
-        read_bn(batch_norm.beta);
-        read_bn(batch_norm.gamma);
-        read_bn(batch_norm.running_mean);
-        read_bn(batch_norm.running_variance);
-        batch_norm.running_mean.as_vector().setZero();
-        batch_norm.running_variance.as_vector().setOnes();
-        batch_norm.invalidate_inference_cache();
+        const Index features = batch_norm.features;
+
+        read_floats(batch_norm.beta.as<float>(),             features, "batch normalization shifts");
+        read_floats(batch_norm.gamma.as<float>(),            features, "batch normalization scales");
+        read_floats(batch_norm.running_mean.as<float>(),     features, "batch normalization running means");
+        read_floats(batch_norm.running_variance.as<float>(), features, "batch normalization running variances");
+
+        // Pretrained running statistics describe the source domain, not ours, and
+        // produced NaN on the first validation pass; the EMA re-learns them.
+        fill_n(batch_norm.running_mean.as<float>(), features, 0.0f);
+        fill_n(batch_norm.running_variance.as<float>(), features, 1.0f);
     }
     else
-    {
-        const size_t n_out = static_cast<size_t>(O);
-        throw_if(fread(convolution.bias.as<float>(), sizeof(float), n_out, f) != n_out,
-                 "load_darknet_weights: short read on bias.");
-    }
+        read_floats(convolution.bias.as<float>(), filters, "biases");
 
-    const size_t n_weights = static_cast<size_t>(total_weights);
-    vector<float> tmp(n_weights, 0.0f);
-    throw_if(fread(tmp.data(), sizeof(float), n_weights, f) != n_weights,
-             "load_darknet_weights: short read on conv weights.");
+    // Darknet stores kernels as [F][C][R][S]; OpenNN keeps them as [F][R][S][C].
+    vector<float> darknet_weights(size_t(filters * channels * height * width));
+    read_floats(darknet_weights.data(), ssize(darknet_weights), "weights");
 
-    float* const dst = convolution.weights.as<float>();
+    float* const weights = convolution.weights.as<float>();
     for_each_kernel_weight(convolution, [&](Index ohwi, Index oihw, Index)
-                           { dst[ohwi] = tmp[static_cast<size_t>(oihw)]; });
+                           { weights[ohwi] = darknet_weights[size_t(oihw)]; });
 
     if (batch_norm.active())
         batch_norm.invalidate_inference_cache();

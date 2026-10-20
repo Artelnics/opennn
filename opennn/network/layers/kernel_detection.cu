@@ -1,11 +1,5 @@
-// SPDX-License-Identifier: LGPL-2.1-or-later
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   D E T E C T I O N   K E R N E L S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 #include "opennn/core/cuda/kernel_common.cuh"
 #include "opennn/network/layers/kernel_detection.cuh"
@@ -61,8 +55,8 @@ __global__ void detection_forward_kernel(const int n,
 
         dst[base + 0] = sigmoid_f(src[base + 0]);
         dst[base + 1] = sigmoid_f(src[base + 1]);
-        dst[base + 2] = __expf(fminf(fmaxf(src[base + 2], -4.0f), 4.0f)) * aw;
-        dst[base + 3] = __expf(fminf(fmaxf(src[base + 3], -4.0f), 4.0f)) * ah;
+        dst[base + 2] = aw * __expf(fminf(fmaxf(src[base + 2], -4.0f), 4.0f));
+        dst[base + 3] = ah * __expf(fminf(fmaxf(src[base + 3], -4.0f), 4.0f));
         dst[base + 4] = sigmoid_f(src[base + 4]);
 
         if (class_activation == class_activation_sigmoid)
@@ -241,7 +235,3 @@ void detection_v8_backward_cuda(const Index batch_size,
                                checked_int(grid_size), checked_int(grid_width), channels, box_ch,
                                output, output_delta, input_delta);
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

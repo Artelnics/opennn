@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: LGPL-2.1-or-later
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 #include "opennn/dataset/yolo_dataset.h"
 #include "opennn/dataset/yolo_dataset_internal.h"
@@ -240,16 +240,16 @@ void resize_bilinear_into(const uint8_t* src, Index src_h, Index src_w,
     for (Index oy = 0; oy < out_h; ++oy)
     {
         const float sy_f = (float(oy) + 0.5f) * float(src_h) / float(out_h) - 0.5f;
-        const Index sy0 = max<Index>(0, min(src_h - 1, Index(sy_f)));
-        const Index sy1 = min(sy0 + 1, src_h - 1);
-        const float dy  = sy_f - float(sy0);
+        const Index sy0 = min<Index>(src_h - 1, max<Index>(0, Index(floor(sy_f))));
+        const Index sy1 = min<Index>(sy0 + 1, src_h - 1);
+        const float dy = sy_f - float(sy0);
 
         for (Index ox = 0; ox < out_w; ++ox)
         {
             const float sx_f = (float(ox) + 0.5f) * float(src_w) / float(out_w) - 0.5f;
-            const Index sx0 = max<Index>(0, min(src_w - 1, Index(sx_f)));
-            const Index sx1 = min(sx0 + 1, src_w - 1);
-            const float dx  = sx_f - float(sx0);
+            const Index sx0 = min<Index>(src_w - 1, max<Index>(0, Index(floor(sx_f))));
+            const Index sx1 = min<Index>(sx0 + 1, src_w - 1);
+            const float dx = sx_f - float(sx0);
 
             const Index destination_offset =
                 ((dst_y + oy) * destination_w + (dst_x + ox)) * channels;
@@ -656,26 +656,31 @@ struct MosaicParams
 MosaicParams derive_mosaic_params(uint64_t epoch_seed, uint64_t sample_index,
                                   Index samples_number)
 {
-    uint64_t state = splitmix64(
-        splitmix64(epoch_seed * 0x9E3779B97F4A7C15ull + sample_index)
-        + 0xCAFEBABEDEADBEEFull);
+    // Salted re-mix of the per-sample seed: the mosaic draws from its own stream,
+    // independent of the one sample_augmentation_transform consumes.
+    uint64_t state = splitmix64(splitmix64(epoch_seed * 0x9E3779B97F4A7C15ull + sample_index)
+                                + 0xCAFEBABEDEADBEEFull);
 
-    auto rand_idx = [&]() -> Index {
+    const auto next_value = [&state]()
+    {
         state = splitmix64(state);
-        return Index(state % uint64_t(samples_number));
-    };
-    auto rand_frac = [&](float lo, float hi) -> float {
-        state = splitmix64(state);
-        return lo + (hi - lo) * float(state >> 40) / float(1ull << 24);
+        return state;
     };
 
-    MosaicParams mp{};
-    mp.companions[0] = rand_idx();
-    mp.companions[1] = rand_idx();
-    mp.companions[2] = rand_idx();
-    mp.cx_frac = rand_frac(0.3f, 0.7f);
-    mp.cy_frac = rand_frac(0.3f, 0.7f);
-    return mp;
+    const auto next_fraction = [&]()
+    {
+        return 0.3f + (0.7f - 0.3f) * float(next_value() >> 40) / 16777216.0f;
+    };
+
+    MosaicParams params{};
+
+    for (Index& companion : params.companions)
+        companion = Index(next_value() % uint64_t(samples_number));
+
+    params.cx_frac = next_fraction();
+    params.cy_frac = next_fraction();
+
+    return params;
 }
 
 struct MosaicQuad
@@ -895,33 +900,9 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
                         for (const MosaicQuad& q : quads)
                         {
                             read_sample_boxes(q.si, quad_boxes, box_records);
-                            const float qw_frac = float(q.qw) / float(W);
-                            const float qh_frac = float(q.qh) / float(H);
-                            const float ox_frac = float(q.dst_x) / float(W);
-                            const float oy_frac = float(q.dst_y) / float(H);
-
-                            for (const Box& src : quad_boxes)
-                            {
-                                const float raw_cx = src.x * qw_frac + ox_frac;
-                                const float raw_cy = src.y * qh_frac + oy_frac;
-                                const float raw_w  = src.w * qw_frac;
-                                const float raw_h  = src.h * qh_frac;
-
-                                const float x0 = max(raw_cx - raw_w * 0.5f, ox_frac);
-                                const float y0 = max(raw_cy - raw_h * 0.5f, oy_frac);
-                                const float x1 = min(raw_cx + raw_w * 0.5f, ox_frac + qw_frac);
-                                const float y1 = min(raw_cy + raw_h * 0.5f, oy_frac + qh_frac);
-
-                                if (x1 - x0 < 1e-3f || y1 - y0 < 1e-3f) continue;
-
-                                Box transformed;
-                                transformed.class_id = src.class_id;
-                                transformed.x = 0.5f * (x0 + x1);
-                                transformed.y = 0.5f * (y0 + y1);
-                                transformed.w = x1 - x0;
-                                transformed.h = y1 - y0;
-                                boxes.push_back(transformed);
-                            }
+                            append_mosaic_boxes(quad_boxes,
+                                                {float(q.dst_x) / float(W), float(q.dst_y) / float(H)},
+                                                {float(q.qw) / float(W), float(q.qh) / float(H)}, boxes);
                         }
                     }
                     else

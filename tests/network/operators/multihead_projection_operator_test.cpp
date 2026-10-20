@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   M U L T I H E A D   P R O J E C T I O N   O P E R A T O R   T E S T
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 // split_heads and concatenate_heads swap the two middle axes of a rank-4
 // tensor, between (batch, sequence, heads, dim) and (batch, heads, sequence,
@@ -122,7 +117,3 @@ TEST(MultiHeadProjectionOperatorTest, SingleHeadIsAPlainCopy)
     for (Index i = 0; i < single_total; ++i)
         EXPECT_FLOAT_EQ(destination(i), source(i)) << "at index " << i;
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

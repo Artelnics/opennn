@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
+
 #include "tests/common/pch.h"
 
 #include "opennn/network/network.h"
@@ -71,6 +74,18 @@ TEST(ScalingLayerTest, ScalingAndUnscalingExpressionsShareAffineFormatting)
               "scaled_x = x*0.5-2.5;\n");
     EXPECT_EQ(unscaling.write_expression({"x"}, {"y"}),
               "y=x*2.0+5.0;\n");
+}
+
+TEST(ScalingLayerTest, ExpressionUsesExplicitOutputsAndRejectsMissingBindings)
+{
+    Scaling scaling({2});
+    scaling.set_scalers("None");
+    EXPECT_EQ(scaling.write_expression({"x", "y"}, {"left", "right"}),
+              "left = x;\nright = y;\n");
+    EXPECT_THROW(scaling.write_expression({"x"}, {"left", "right"}), runtime_error);
+    EXPECT_THROW(scaling.write_expression({"x", "y"}, {"left"}), runtime_error);
+    Unscaling unscaling({2});
+    EXPECT_THROW(unscaling.write_expression({"x", "y"}, {}), runtime_error);
 }
 
 TEST(ScalingLayerTest, ForwardPropagate)

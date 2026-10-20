@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   S M A L L   K   L I N E A R   T E S T   S O U R C E
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 // A bf16 dense forward whose contraction is at most 32 runs
 // small_k_linear_forward_cuda (opennn/core/cuda/kernel_small_k_linear.cu)
@@ -277,10 +272,6 @@ TEST(SmallKLinear, DeclinedShapesFallThrough)
     check_forward(1000, 28, 96, "ReLU", Type::BF16, 4e-2f);     // outputs not a multiple of 64
     check_forward(1000, 28, 1024, "ReLU", Type::FP32, 1e-4f);   // fp32
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.
 
 // The fp32-bias instantiations, reached only through linear_forward itself.
 TEST(SmallKLinear, Fp32BiasFromDeviceViews)

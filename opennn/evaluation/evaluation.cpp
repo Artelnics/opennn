@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: LGPL-2.1-or-later
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 #include "opennn/evaluation/evaluation.h"
 
@@ -140,10 +140,16 @@ pair<MatrixR, MatrixR> Evaluation::get_targets_and_outputs(const string& sample_
     const FeatureSelection features = dataset->get_feature_selection();
     const Index target_width = dataset->get_target_shape().size();
 
-    // Bound inference memory independently of the number of evaluated samples.
+    // Bound inference memory independently of the number of evaluated samples
+    // and of their size: an image or a long sequence can need megabytes of
+    // activations per sample.
     constexpr Index maximum_cpu_batch_size = 4096;
-    const Index default_batch_size =
-        network->is_gpu() ? Index(256) : maximum_cpu_batch_size;
+    constexpr Index maximum_cpu_batch_bytes = Index(512) << 20;
+    const Index sample_bytes = get_aligned_bytes(network->get_forward_specs(1))
+                             + dataset->get_shape(VariableRole::Input).size() * Index(sizeof(float));
+    const Index default_batch_size = network->is_gpu()
+        ? Index(256)
+        : clamp(maximum_cpu_batch_bytes / max(sample_bytes, Index(1)), Index(1), maximum_cpu_batch_size);
     const Index current_batch_size =
         min(batch_size <= 0 ? default_batch_size : batch_size, samples_number);
 
@@ -204,30 +210,24 @@ pair<MatrixR, MatrixR> Evaluation::get_targets_and_outputs(const string& sample_
 
 Tensor3 Evaluation::calculate_error_data() const
 {
-    const auto [targets, outputs] = get_targets_and_outputs("Testing");
-    const Index testing_samples_number = targets.rows();
-    const Index outputs_number = outputs.cols();
+    const auto testing = get_targets_and_outputs("Testing"); // A structured binding crashes Clang 17 in the loop.
+    const Index testing_samples_number = testing.first.rows();
+    const Index outputs_number = testing.second.cols();
 
     const VectorR ranges = get_scaling_ranges(
         get_output_scaling(*network), outputs_number);
 
     Tensor3 error_data(testing_samples_number, 3, outputs_number);
 
-    const MatrixR absolute_errors = (targets - outputs).array().abs();
-
 #pragma omp parallel for
-    for (Index i = 0; i < outputs_number; ++i)
+    for (Index sample = 0; sample < testing_samples_number; ++sample)
     {
-        const float range = ranges(i);
-
-        for (Index j = 0; j < testing_samples_number; ++j)
-        {
-            const float abs_err = absolute_errors(j, i);
-            const float scaled = abs_err / range;
-            error_data(j, 0, i) = abs_err;
-            error_data(j, 1, i) = scaled;
-            error_data(j, 2, i) = scaled * 100.0f;
-        }
+        // Each sample owns one contiguous 3-by-outputs block of the row-major tensor.
+        Eigen::Map<MatrixR> channels(error_data.data() + sample * 3 * outputs_number,
+                                     3, outputs_number);
+        channels.row(0) = (testing.first.row(sample) - testing.second.row(sample)).cwiseAbs();
+        channels.row(1) = channels.row(0).array() / ranges.transpose().array();
+        channels.row(2) = channels.row(1) * 100.0f;
     }
 
     return error_data;
@@ -609,37 +609,44 @@ MatrixR Evaluation::calculate_cumulative_gain(const MatrixR& targets, const Matr
     throw_if(total_positives == 0,
              "Number of positive samples ({}) must be greater than zero.\n", total_positives);
 
-    const Index testing_samples_number = targets.rows();
+    const Index samples_number = targets.rows();
 
-    vector<Index> sorted_indices(static_cast<size_t>(testing_samples_number));
-    iota(sorted_indices.begin(), sorted_indices.end(), Index(0));
+    // Ranking: descending score, ascending index on ties, NaN scores last.
+    // The key (is NaN, -score, index) is a strict total order for every input.
 
-    stable_sort_parallel_if_large(
-        sorted_indices.begin(), sorted_indices.end(),
-        [&outputs](Index i, Index j) { return outputs(i, 0) > outputs(j, 0); });
+    vector<Index> ranking(static_cast<size_t>(samples_number));
+    iota(ranking.begin(), ranking.end(), Index(0));
 
-    const Index points_number = 21;
-    const Index buckets_number = points_number - 1;
-
-    MatrixR cumulative_gain(points_number, 2);
-
-    cumulative_gain(0, 0) = 0.0f;
-    cumulative_gain(0, 1) = 0.0f;
-
-    Index positives = 0;
-    Index next_row = 0;
-
-    for (Index i = 0; i < buckets_number; ++i)
+    sort_parallel_if_large(ranking.begin(), ranking.end(), [&outputs](Index a, Index b)
     {
-        const Index maximum_index = min((i + 1) * testing_samples_number / buckets_number,
-                                        testing_samples_number);
+        const float score_a = outputs(a, 0);
+        const float score_b = outputs(b, 0);
+        const bool nan_a = isnan(score_a);
+        const bool nan_b = isnan(score_b);
 
-        for (; next_row < maximum_index; ++next_row)
-            if (targets(sorted_indices[size_t(next_row)], 0) >= 0.5f)
-                ++positives;
+        if (nan_a != nan_b) return nan_b;
+        if (!nan_a && score_a != score_b) return score_a > score_b;
+        return a < b;
+    });
 
-        cumulative_gain(i + 1, 0) = float(i + 1) / float(buckets_number);
-        cumulative_gain(i + 1, 1) = float(positives) / float(total_positives);
+    constexpr Index steps_number = 20;
+
+    MatrixR cumulative_gain(steps_number + 1, 2);
+    cumulative_gain.row(0) << 0.0f, 0.0f;
+
+    Index ranked = 0;
+    Index positives_found = 0;
+
+    for (Index step = 1; step <= steps_number; ++step)
+    {
+        const Index depth = step * samples_number / steps_number;
+
+        for (; ranked < depth; ++ranked)
+            if (targets(ranking[size_t(ranked)], 0) >= 0.5f)
+                ++positives_found;
+
+        cumulative_gain(step, 0) = float(step) / float(steps_number);
+        cumulative_gain(step, 1) = float(positives_found) / float(total_positives);
     }
 
     return cumulative_gain;
@@ -748,68 +755,50 @@ VectorR Evaluation::calculate_binary_classification_tests(const MatrixR& targets
     check_classification_data(targets, outputs, true);
     const MatrixI confusion = calculate_confusion(targets, outputs, decision_threshold);
 
-    const Index true_positive = confusion(0,0);
-    const Index false_positive = confusion(1,0);
-    const Index false_negative = confusion(0,1);
-    const Index true_negative = confusion(1,1);
+    const Index tp = confusion(0, 0), fn = confusion(0, 1);
+    const Index fp = confusion(1, 0), tn = confusion(1, 1);
+    const Index actual_positive = tp + fn, actual_negative = fp + tn;
+    const Index predicted_positive = tp + fp, predicted_negative = fn + tn;
+    const Index count = actual_positive + actual_negative;
 
-    const Index total = true_positive + true_negative + false_positive + false_negative;
+    // Positions are part of the public result format. Define the simple rates
+    // together, then derive composite measures from those rates.
+    struct Ratio { Index position; float numerator; Index denominator; };
+    const std::array<Ratio, 10> ratios{{
+        {0, float(tp + tn), count},
+        {1, float(fp + fn), count},
+        {2, float(tp), actual_positive},
+        {3, float(tn), actual_negative},
+        {4, float(tp), predicted_positive},
+        {7, 2.0f * float(tp), 2 * tp + fp + fn},
+        {8, float(fp), actual_negative},
+        {9, float(fp), predicted_positive},
+        {10, float(fn), actual_positive},
+        {11, float(tn), predicted_negative}
+    }};
+    VectorR result = VectorR::Zero(15);
+    for (const auto& ratio : ratios)
+        result(ratio.position) = classification_ratio(ratio.numerator, ratio.denominator);
 
-    const float classification_accuracy = classification_ratio(float(true_positive + true_negative), total);
-    const Index tp_plus_fn = true_positive + false_negative;
-    const Index fp_plus_tn = false_positive + true_negative;
-    const Index tp_plus_fp = true_positive + false_positive;
+    // Preserve OpenNN's conventions at perfect accuracy and zero denominators.
+    if (abs(result(0) - 1.0f) < EPSILON)
+        result.segment<2>(5).setOnes();
+    else
+    {
+        if (abs(1.0f - result(3)) >= EPSILON)
+            result(5) = result(2) / (1.0f - result(3));
+        if (result(3) >= EPSILON)
+            result(6) = (1.0f - result(2)) / result(3);
+    }
 
-    const float sensitivity = classification_ratio(float(true_positive), tp_plus_fn);
-    const float specificity = classification_ratio(float(true_negative), fp_plus_tn);
-    const float precision = classification_ratio(float(true_positive), tp_plus_fp);
-
-    const bool accuracy_is_one = abs(classification_accuracy - 1.0f) < EPSILON;
-
-    const float positive_likelihood = accuracy_is_one ? 1.0f
-        : (abs(1.0f - specificity) < EPSILON) ? 0.0f
-        : sensitivity / (1.0f - specificity);
-
-    const float negative_likelihood = accuracy_is_one ? 1.0f
-        : (specificity < EPSILON) ? 0.0f
-        : (1.0f - sensitivity) / specificity;
-
-    const Index f1_denominator = 2 * true_positive + false_positive + false_negative;
-    const Index tn_plus_fn = true_negative + false_negative;
-    const float negative_predictive_value = classification_ratio(float(true_negative), tn_plus_fn);
-
-    const double matthews_denominator = sqrt(double(tp_plus_fp) * double(tp_plus_fn)
-                                           * double(fp_plus_tn) * double(tn_plus_fn));
-
-    const float Matthews_correlation_coefficient = (matthews_denominator == 0.0)
-                                                      ? 0.0f
-                                                      : float((double(true_positive) * double(true_negative)
-                                                             - double(false_positive) * double(false_negative))
-                                                              / matthews_denominator);
-
-    const float markedness = (fp_plus_tn == 0)
-                                ? precision - 1.0f
-                                : precision + negative_predictive_value - 1.0f;
-
-    VectorR binary_classification_test(15);
-
-    binary_classification_test << classification_accuracy,
-                                  classification_ratio(float(false_positive + false_negative), total), // Error rate
-                                  sensitivity,
-                                  specificity,
-                                  precision,
-                                  positive_likelihood,
-                                  negative_likelihood,
-                                  classification_ratio(2.0f * float(true_positive), f1_denominator), // F1 score
-                                  classification_ratio(float(false_positive), fp_plus_tn), // False positive rate
-                                  classification_ratio(float(false_positive), tp_plus_fp), // False discovery rate
-                                  classification_ratio(float(false_negative), tp_plus_fn), // False negative rate
-                                  negative_predictive_value,
-                                  Matthews_correlation_coefficient,
-                                  sensitivity + specificity - 1.0f, // Informedness
-                                  markedness;
-
-    return binary_classification_test;
+    // MCC, informedness and markedness: Powers, arXiv:2010.16061.
+    const double normalization = sqrt(double(predicted_positive) * double(actual_positive)
+                                      * double(actual_negative) * double(predicted_negative));
+    if (normalization != 0.0)
+        result(12) = float((double(tp) * double(tn) - double(fp) * double(fn)) / normalization);
+    result(13) = result(2) + result(3) - 1.0f;
+    result(14) = result(4) + (actual_negative == 0 ? 0.0f : result(11)) - 1.0f;
+    return result;
 }
 
 void Evaluation::print_binary_classification_tests() const

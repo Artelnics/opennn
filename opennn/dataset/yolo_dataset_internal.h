@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: LGPL-2.1-or-later
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 #pragma once
 
@@ -13,6 +13,31 @@ inline float clamp_unit(const float value)
 {
     return min(1.0f, max(0.0f, value));
 }
+
+inline void append_mosaic_boxes(span<const YoloDataset::Box> source,
+                                const array<float, 2>& tile_origin,
+                                const array<float, 2>& tile_size,
+                                vector<YoloDataset::Box>& destination)
+{
+    // Intersect each interval with the source image before placing it in the
+    // mosaic. Work in source coordinates so clipping is independent of the tile.
+    const auto project_interval = [](float center, float length, float origin, float scale)
+    {
+        const float first = max(0.0f, center - length / 2.0f);
+        const float last = min(1.0f, center + length / 2.0f);
+        return pair{origin + (first + last) * scale / 2.0f, (last - first) * scale};
+    };
+
+    for (const YoloDataset::Box& box : source)
+    {
+        const auto horizontal = project_interval(box.x, box.w, tile_origin[0], tile_size[0]);
+        const auto vertical = project_interval(box.y, box.h, tile_origin[1], tile_size[1]);
+        if (horizontal.second < 1e-3f || vertical.second < 1e-3f) continue;
+        destination.push_back({box.class_id, horizontal.first, vertical.first,
+                               horizontal.second, vertical.second});
+    }
+}
+
 #pragma pack(push, 1)
 struct YoloImageCacheHeader
 {
@@ -121,6 +146,9 @@ inline void mark_ignored_anchors(const YoloDataset::Box& box,
     for (Index j = 0; j < ssize(anchors); ++j)
     {
         if (j == skip_anchor) continue;
+        // YOLOv3 ignore rule: only anchors whose shape overlaps the box by at
+        // least 0.5 are masked. Written as "< 0.5 -> skip" so a NaN IoU still
+        // reaches the marking code.
         if (yolo_iou_wh({box.w, box.h}, anchors[size_t(j)]) < 0.5f) continue;
         const Index col = grid_cell(box.x, grid);
         const Index row = grid_cell(box.y, grid);

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
+
 #include "tests/common/pch.h"
 #include "tests/common/numerical_derivatives.h"
 
@@ -82,9 +85,12 @@ TEST(C2PSA, GpuGradientMatchesNumerical)
     const VectorR numerical  = calculate_numerical_gradient(*loss);
 
     ASSERT_EQ(analytical.size(), numerical.size());
-    const float max_diff = (analytical - numerical).array().abs().maxCoeff();
+    Index worst = 0;
+    const float max_diff = (analytical - numerical).array().abs().maxCoeff(&worst);
     EXPECT_LT(max_diff, 1e-3f)
-        << "Max element-wise diff (CUDA): " << max_diff;
+        << "Max element-wise diff (CUDA): " << max_diff
+        << " parameter " << worst << " analytical " << analytical(worst)
+        << " numerical " << numerical(worst);
 }
 
 TEST(C2PSA, CpuAndGpuForwardOutputsMatch)

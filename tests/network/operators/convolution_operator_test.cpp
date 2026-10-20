@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   C O N V O L U T I O N   O P E R A T O R   T E S T
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 // The convolution's forward maths is checked against cuDNN and against
 // numerical gradients elsewhere. What was not checked is its parameter
@@ -195,7 +190,3 @@ TEST(ConvolutionOperatorTest, RectangularStridedPatchGradientsWithAndWithoutPadd
         EXPECT_LT((gradient - numerical).cwiseAbs().maxCoeff(), 1.0e-4f);
     }
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

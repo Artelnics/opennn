@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: LGPL-2.1-or-later
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 #include "opennn/model_selection/growing_neurons.h"
 
@@ -93,11 +93,9 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
 
     Index validation_failures = 0;
 
-    time_t beginning_time;
-
     float elapsed_time = 0.0f;
 
-    time(&beginning_time);
+    const auto start = chrono::steady_clock::now();
 
     const vector<vector<Index>> fold_partition =
         folds_number > 1 ? build_fold_partition(training, folds_number) : vector<vector<Index>>{};
@@ -183,13 +181,13 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
                      << "-fold CV validation error " << minimum_validation_error << "\n";
         }
 
-        elapsed_time = get_elapsed_time(beginning_time);
+        elapsed_time = get_elapsed_time(start);
 
         if (display)
             logging::info() << "Neurons number: " << neurons_number << "\n"
                  << "Training error: " << minimum_training_error << "\n"
                  << "Validation error: " << minimum_validation_error << "\n"
-                 << "Elapsed time: " << get_time(elapsed_time) << "\n";
+                 << "Selection time: " << get_time(elapsed_time) << "\n";
 
         if (previous_validation_error < minimum_validation_error)
             ++validation_failures;
@@ -210,7 +208,7 @@ NeuronsSelectionResult GrowingNeurons::perform_neurons_selection()
             {neurons_number >= maximum_neurons, StoppingCondition::MaximumNeurons,
              format("Epoch {}\nMaximum number of neurons reached: {}\n", epoch, neurons_number)},
             {epoch + 1 >= maximum_epochs, StoppingCondition::MaximumEpochs,
-             format("Epoch {}\nMaximum number of epochs reached.\n", epoch)}
+             format("Epoch {}\nEpoch limit reached.\n", epoch)}
         });
 
         if (neuron_selection_results.stopping_condition)

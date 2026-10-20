@@ -1,11 +1,5 @@
-// SPDX-License-Identifier: LGPL-2.1-or-later
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   P O O L 3 D   K E R N E L S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 #include "opennn/core/cuda/kernel_common.cuh"
 #include "opennn/core/device_backend.h"
@@ -219,7 +213,3 @@ void average_pooling_3d_backward_cuda(const Index n, const T* in, const T* delta
 
 OPENNN_INSTANTIATE_FLOAT_BF16(INSTANTIATE)
 #undef INSTANTIATE
-
-// OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

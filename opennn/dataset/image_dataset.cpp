@@ -1,7 +1,8 @@
-// SPDX-License-Identifier: LGPL-2.1-or-later
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 #include "opennn/dataset/image_dataset.h"
+#include "opennn/dataset/batch.h"
 #include "opennn/core/log.h"
 
 #include <utility>
@@ -234,19 +235,17 @@ void ImageDataset::from_JSON(const JsonDocument& data_set_document)
 
     set_has_ids(read_json_bool(data_source_element, "HasSamplesId"));
 
-    const Index requested_height   = read_json_index(data_source_element, "Height");
-    const Index requested_width    = read_json_index(data_source_element, "Width");
+    const Index requested_height = read_json_index(data_source_element, "Height");
+    const Index requested_width = read_json_index(data_source_element, "Width");
     const Index requested_channels = read_json_index(data_source_element, "Channels");
 
-    if (requested_height > 0 || requested_width > 0 || requested_channels > 0)
-    {
+    if (max({ requested_height, requested_width, requested_channels }) > 0)
         requested_input_shape = { requested_height, requested_width, requested_channels };
-
-        if (requested_height > 0 && requested_width > 0 && requested_channels > 0)
-            set_shape(VariableRole::Input, requested_input_shape);
-    }
     else
         requested_input_shape.clear();
+
+    if (min({ requested_height, requested_width, requested_channels }) > 0)
+        set_shape(VariableRole::Input, requested_input_shape);
 
     set_codification(read_json_string(data_source_element, "Codification"));
     set_storage_mode(data_source_element->has("StorageMode")
@@ -267,29 +266,35 @@ void ImageDataset::from_JSON(const JsonDocument& data_set_document)
                           : has_configured_augmentation(parsed_policy);
     set_augmentation_policy(parsed_policy);
 
-    if (!data_path.empty() && !filesystem::exists(data_path)
-     && image_dataset_element->has("Variables")
-     && requested_input_shape.get_rank() == 3)
+    const auto restore_without_samples = [this, image_dataset_element]()
     {
-        logging::warning() << "Warning: image folder not found (" << data_path.string()
-             << ") - continuing without samples (deployment mode)." << "\n";
-
         read_json_blocks(image_dataset_element);
 
-        pixel_number = uint64_t(input_shape[0])*uint64_t(input_shape[1])*uint64_t(input_shape[2]);
-
-        target_shape = { get_features_number(VariableRole::Target) };
-
-        const vector<Variable> target_variables = get_variables(VariableRole::Target);
-
-        classes_number = target_variables.empty()
-                       ? 0
-                       : uint32_t(target_variables[0].get_categories_number());
-
-        data.resize(0, 0);
-        sample_labels.clear();
         sample_roles.clear();
+        sample_labels.clear();
+        data.resize(0, 0);
 
+        set_shape(VariableRole::Target, { get_features_number(VariableRole::Target) });
+
+        classes_number = 0;
+        if (const vector<Variable> targets = get_variables(VariableRole::Target); !targets.empty())
+            classes_number = uint32_t(targets.front().get_categories_number());
+
+        pixel_number = 1;
+        for (size_t axis = 0; axis < 3; ++axis)
+            pixel_number *= uint64_t(input_shape[axis]);
+    };
+
+    const bool images_missing = requested_input_shape.get_rank() == 3
+        && image_dataset_element->has("Variables")
+        && !data_path.empty()
+        && !filesystem::exists(data_path);
+
+    if (images_missing)
+    {
+        logging::warning() << "ImageDataset: image directory \"" << data_path.string()
+                           << "\" is missing; loading the dataset without samples for deployment use.\n";
+        restore_without_samples();
         return;
     }
 
@@ -376,12 +381,15 @@ void ImageDataset::read_images()
         throw_if(requested_input_shape.get_rank() != 3,
                  "ImageDataset: requested input shape must be {height, width, channels}.");
 
-        if (requested_input_shape[0] > 0) height   = requested_input_shape[0];
-        if (requested_input_shape[1] > 0) width    = requested_input_shape[1];
-        if (requested_input_shape[2] > 0) channels = requested_input_shape[2];
+        Index* const geometry[] = { &height, &width, &channels };
 
-        throw_if(height <= 0 || width <= 0 || channels <= 0,
-                 "ImageDataset: image dimensions must be positive.");
+        for (size_t axis = 0; axis < 3; ++axis)
+            if (const Index requested = requested_input_shape[axis]; requested > 0)
+                *geometry[axis] = requested;
+
+        throw_if(min({ height, width, channels }) <= 0,
+                 "ImageDataset: image dimensions must be positive, got {}x{}x{}.",
+                 height, width, channels);
     }
 
     const Index pixels_number = height * width * channels;
@@ -436,9 +444,11 @@ void ImageDataset::read_images()
     }
     else
     {
-        cache_path = cache_directory.empty()
-            ? data_path / ".cache" / "images.bin"
-            : cache_directory / (data_path.filename().string() + ".cache") / "images.bin";
+        const filesystem::path cache_folder = cache_directory.empty()
+            ? data_path / ".cache"
+            : cache_directory / (data_path.filename().string() + ".cache");
+
+        cache_path = cache_folder / "images.bin";
 
         const string signature = image_cache_signature(samples_number, height, width, channels,
                                                        directory_path, newest_write_time);
@@ -523,6 +533,40 @@ void ImageDataset::write_image_cache(const vector<filesystem::path>& paths, cons
     writer.write(span(trailer));
 
     writer.finish_with_rename(cache_path);
+}
+
+void ImageDataset::fill_batch(Batch& batch,
+                               const vector<Index>& sample_indices,
+                               const FeatureSelection& features,
+                               FillMode mode) const
+{
+    batch.packed_image_input.reset();
+    if (!batch.pack_image_input || !batch.uses_cuda() || !supports_byte_inputs()
+        || mode != FillMode::Training)
+        return Dataset::fill_batch(batch, sample_indices, features, mode);
+
+    throw_if(ssize(sample_indices) != batch.batch_size,
+             "fill_batch sample count does not match the batch size.");
+    batch.device_gather.reset();
+    PackedImageInput& packed = batch.packed_image_input.emplace();
+    packed.channels = int(get_channels_number());
+    // Training always scales: the configured affine map, or bytes to [0, 1].
+    const bool configured = ssize(input_scale) == packed.channels
+                         && ssize(input_offset) == packed.channels;
+    for (int channel = 0; channel < packed.channels; ++channel)
+    {
+        packed.scale[size_t(channel)] = configured ? input_scale[size_t(channel)] : 1.0f / 255.0f;
+        packed.offset[size_t(channel)] = configured ? input_offset[size_t(channel)] : 0.0f;
+    }
+    for (Index i = 0; i < batch.batch_size; ++i)
+    {
+        const Index index = sample_indices[size_t(i)];
+        throw_if(index < 0 || index >= ssize(sample_labels),
+                 "ImageDataset input sample index is out of range.");
+        cache_reader.read_at(span(batch.input.host.as<uint8_t>() + size_t(i) * pixel_number,
+                                  size_t(pixel_number)), uint64_t(index) * pixel_number);
+    }
+    fill_targets(sample_indices, features.targets, batch.target.host.as<float>(), mode);
 }
 
 void ImageDataset::fill_inputs(const vector<Index>& sample_indices,

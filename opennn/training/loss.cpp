@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: LGPL-2.1-or-later
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 #include "opennn/training/loss.h"
 
@@ -15,6 +15,7 @@
 #include "opennn/network/detection_head.h"
 #include "opennn/network/forward_propagation.h"
 #include "opennn/network/network.h"
+#include "opennn/network/operators/activation_operator.h"
 #include "opennn/training/error_functions.h"
 #include "opennn/training/kernel_losses.cuh"
 
@@ -166,10 +167,13 @@ GIoUResult yolo_loss_giou_grad(const float* pred, const float* gt)
     r.w_gradient  += -t.rho2 * 2.0f*t.enclosing_width*dew_dw * ic4;
     r.h_gradient  += -t.rho2 * 2.0f*t.enclosing_height*deh_dh * ic4;
 
-    const float wh2   = predicted_width*predicted_width + predicted_height*predicted_height + EPSILON;
-    const float coeff = t.alpha * INV_PI2 * 2.0f * t.v_diff;
-    r.w_gradient  += coeff * (-predicted_height / wh2);
-    r.h_gradient  += coeff * (predicted_width  / wh2);
+    // Aspect-ratio penalty alpha*v with alpha held constant (Zheng et al.):
+    // dv/dw = -2*INV_PI2*dtheta*h/D and dv/dh = +2*INV_PI2*dtheta*w/D.
+    const float aspect_denominator = predicted_width * predicted_width
+                                   + predicted_height * predicted_height + EPSILON;
+    const float aspect_factor = 2.0f * INV_PI2 * t.alpha * t.v_diff / aspect_denominator;
+    r.w_gradient -= aspect_factor * predicted_height;
+    r.h_gradient += aspect_factor * predicted_width;
 
     return r;
 }
@@ -227,7 +231,6 @@ float yolo_error_kernel(const TensorView& output,
 {
     const float lambda_giou      = lam.giou;
     const float lambda_noobject  = lam.noobj;
-    const float lambda_class     = lam.cls;
 
     const Index values_per_box = 5 + classes_number;
     const Index batch_size = output.get_shape()[0];
@@ -255,15 +258,25 @@ float yolo_error_kernel(const TensorView& output,
 
                     if (tgt[base + 4] >= 0.5f)
                     {
-                        const float inv_grid = 1.0f / float(grid_size);
-                        const float output_box[4] = {(out[base + 0] + float(col)) * inv_grid, (out[base + 1] + float(row)) * inv_grid, out[base + 2], out[base + 3]};
-                        const float target_box[4] = {(tgt[base + 0] + float(col)) * inv_grid, (tgt[base + 1] + float(row)) * inv_grid, tgt[base + 2], tgt[base + 3]};
+                        const float inverse_grid = 1.0f / float(grid_size);
+                        const float cell_x = float(col);
+                        const float cell_y = float(row);
+                        const float output_box[4] = {(out[base + 0] + cell_x) * inverse_grid,
+                                                     (out[base + 1] + cell_y) * inverse_grid,
+                                                     out[base + 2],
+                                                     out[base + 3]};
+                        const float target_box[4] = {(tgt[base + 0] + cell_x) * inverse_grid,
+                                                     (tgt[base + 1] + cell_y) * inverse_grid,
+                                                     tgt[base + 2],
+                                                     tgt[base + 3]};
                         const GIoUResult g = yolo_loss_giou_forward(output_box, target_box);
 
                         coordinate_loss += 1.0f - g.giou;
 
-                        const float iou_t = tgt[base + 4];
-                        object_loss -= iou_t * log(out[base + 4] + EPSILON) + (1.0f - iou_t) * log(1.0f - out[base + 4] + EPSILON);
+                        const float objectness = out[base + 4];
+                        const float objectness_target = tgt[base + 4];
+                        object_loss -= objectness_target * log(objectness + EPSILON)
+                                     + (1.0f - objectness_target) * log(1.0f - objectness + EPSILON);
 
                         if (sigmoid_classes)
                         {
@@ -271,9 +284,10 @@ float yolo_error_kernel(const TensorView& output,
                             {
                                 const float p = out[base + 5 + c];
                                 const float t = tgt[base + 5 + c];
-                                const float p_t   = (t > 0.5f) ? p : (1.0f - p);
-                                const float focal = pow(1.0f - p_t, lam.focal_gamma);
-                                class_loss -= focal * (t * log(p + EPSILON) + (1.0f - t) * log(1.0f - p + EPSILON));
+                                const float target_probability = (t > 0.5f) ? p : 1.0f - p;
+                                const float modulation = powf(1.0f - target_probability, lam.focal_gamma);
+                                class_loss -= modulation * (t * logf(p + EPSILON)
+                                                            + (1.0f - t) * logf(1.0f - p + EPSILON));
                             }
                         }
                         else
@@ -285,21 +299,26 @@ float yolo_error_kernel(const TensorView& output,
                     }
                     else if (tgt[base + 4] > -0.5f)
                     {
-                        const float c4 = out[base + 4];
-                        const float w_bg = (lam.obj_focal_gamma > 0.0f)
-                                           ? pow(c4, lam.obj_focal_gamma) : 1.0f;
+                        const float objectness = out[base + 4];
+                        const float weight = (lam.obj_focal_gamma > 0.0f)
+                                           ? powf(objectness, lam.obj_focal_gamma)
+                                           : 1.0f;
+                        const float term = -weight * logf(1.0f - objectness + EPSILON);
 
-                        const float term = w_bg * log(1.0f - c4 + EPSILON);
-                        const float kahan_y = -term - noobject_comp;
-                        const float kahan_t = noobject_loss + kahan_y;
-                        noobject_comp = (kahan_t - noobject_loss) - kahan_y;
-                        noobject_loss = kahan_t;
+                        // Kahan compensated summation: thousands of small
+                        // background terms would otherwise lose float precision.
+                        const float corrected_term = term - noobject_comp;
+                        const float running_sum = noobject_loss + corrected_term;
+                        noobject_comp = (running_sum - noobject_loss) - corrected_term;
+                        noobject_loss = running_sum;
                     }
                 }
             }
 
-    return lambda_giou * coordinate_loss + object_loss
-         + lambda_noobject * noobject_loss + lambda_class * class_loss;
+    return lambda_giou * coordinate_loss
+         + object_loss
+         + lambda_noobject * noobject_loss
+         + lam.cls * class_loss;
 }
 
 #ifdef _MSC_VER
@@ -316,7 +335,6 @@ void yolo_gradient_kernel(const TensorView& output,
 {
     const float lambda_giou      = lam.giou;
     const float lambda_noobject  = lam.noobj;
-    const float lambda_class     = lam.cls;
     constexpr float grad_clip = 10.0f;
 
     const Index values_per_box = 5 + classes_number;
@@ -343,20 +361,27 @@ void yolo_gradient_kernel(const TensorView& output,
 
                     if (tgt[base + 4] >= 0.5f)
                     {
-                        const float inv_grid = 1.0f / float(grid_size);
-                        const float output_box[4] = {(out[base + 0] + float(col)) * inv_grid, (out[base + 1] + float(row)) * inv_grid, out[base + 2], out[base + 3]};
-                        const float target_box[4] = {(tgt[base + 0] + float(col)) * inv_grid, (tgt[base + 1] + float(row)) * inv_grid, tgt[base + 2], tgt[base + 3]};
+                        const float output_box[4] = {(out[base + 0] + float(col)) / float(grid_size),
+                                                     (out[base + 1] + float(row)) / float(grid_size),
+                                                     out[base + 2],
+                                                     out[base + 3]};
+                        const float target_box[4] = {(tgt[base + 0] + float(col)) / float(grid_size),
+                                                     (tgt[base + 1] + float(row)) / float(grid_size),
+                                                     tgt[base + 2],
+                                                     tgt[base + 3]};
                         const GIoUResult g = yolo_loss_giou_grad(output_box, target_box);
 
                         const float scale = lambda_giou * inv_batch;
-                        delta[base + 0] = scale * inv_grid * clamp(g.cx_gradient, -grad_clip, grad_clip);
-                        delta[base + 1] = scale * inv_grid * clamp(g.cy_gradient, -grad_clip, grad_clip);
+                        delta[base + 0] = scale * clamp(g.cx_gradient, -grad_clip, grad_clip) / float(grid_size);
+                        delta[base + 1] = scale * clamp(g.cy_gradient, -grad_clip, grad_clip) / float(grid_size);
                         delta[base + 2] = scale * clamp(g.w_gradient,  -grad_clip, grad_clip);
                         delta[base + 3] = scale * clamp(g.h_gradient,  -grad_clip, grad_clip);
                         {
-                            const float c4 = out[base + 4];
-                            const float iou_t = tgt[base + 4];
-                            delta[base + 4] = (c4 - iou_t) / (c4 * (1.0f - c4) + EPSILON) * inv_batch;
+                            const float objectness = out[base + 4];
+                            const float objectness_target = tgt[base + 4];
+                            delta[base + 4] = (objectness - objectness_target)
+                                            / (objectness * (1.0f - objectness) + EPSILON)
+                                            * inv_batch;
                         }
 
                         if (sigmoid_classes)
@@ -365,32 +390,44 @@ void yolo_gradient_kernel(const TensorView& output,
                             {
                                 const float p = out[base + 5 + c];
                                 const float t = tgt[base + 5 + c];
-                                const float p_t   = (t > 0.5f) ? p : (1.0f - p);
-                                const float focal = pow(1.0f - p_t, lam.focal_gamma);
-                                delta[base + 5 + c] = lambda_class * focal * (p - t) / (p * (1.0f - p) + EPSILON) * inv_batch;
+                                const float target_probability = (t > 0.5f) ? p : 1.0f - p;
+                                const float modulation = powf(1.0f - target_probability, lam.focal_gamma);
+                                delta[base + 5 + c] = lam.cls * modulation * (p - t)
+                                                    / (p * (1.0f - p) + EPSILON)
+                                                    * inv_batch;
                             }
                         }
                         else
                         {
                             for (Index c = 0; c < classes_number; ++c)
-                                if (tgt[base + 5 + c] > 0.0f)
-                                    delta[base + 5 + c] = lambda_class * (-tgt[base + 5 + c] / (out[base + 5 + c] + EPSILON)) * inv_batch;
+                            {
+                                const float class_target = tgt[base + 5 + c];
+                                if (class_target > 0.0f)
+                                    delta[base + 5 + c] = lam.cls
+                                                        * (-class_target / (out[base + 5 + c] + EPSILON))
+                                                        * inv_batch;
+                            }
                         }
                     }
                     else if (tgt[base + 4] > -0.5f)
                     {
-                        const float c4 = out[base + 4];
-                        float d4;
-                        if (lam.obj_focal_gamma == 0.0f) {
-                            d4 = lambda_noobject * c4 / (c4 * (1.0f - c4) + EPSILON);
-                        } else {
+                        const float objectness = out[base + 4];
+                        const float focal_exponent = lam.obj_focal_gamma;
 
-                            const float g   = lam.obj_focal_gamma;
-                            const float omc = max(1.0f - c4, EPSILON);
-                            d4 = lambda_noobject * pow(max(c4, EPSILON), g - 1.0f)
-                                 * (-g * log(omc) + c4 / omc);
+                        float probability_gradient;
+                        if (focal_exponent == 0.0f)
+                            probability_gradient = lambda_noobject * objectness
+                                                 / (objectness * (1.0f - objectness) + EPSILON);
+                        else
+                        {
+                            const float complement = max(1.0f - objectness, EPSILON);
+                            const float floored_objectness = max(objectness, EPSILON);
+                            probability_gradient = lambda_noobject
+                                                 * powf(floored_objectness, focal_exponent - 1.0f)
+                                                 * (-focal_exponent * logf(complement) + objectness / complement);
                         }
-                        delta[base + 4] = d4 * inv_batch;
+
+                        delta[base + 4] = probability_gradient * inv_batch;
                     }
                 }
             }
@@ -1269,12 +1306,14 @@ void Loss::set_normalization_coefficient()
         positives_weight = total / (2.0f * float(positives));
         negatives_weight = total / (2.0f * float(negatives));
 
-        const float p = float(positives) / total;
-        const float mean_model_error =
-            0.5f * (float(positives) * positives_weight * (1.0f - p) * (1.0f - p)
-                  + float(negatives) * negatives_weight * p * p);
+        // Error of the constant model predicting the prior pi = P/T:
+        // (1/2) sum w(y)(y - pi)^2 = (P^2 + N^2)/(4T) = T/4 * (pi^2 + (1 - pi)^2).
+        const float positive_prior = float(positives) / total;
+        const float negative_prior = float(negatives) / total;
+        const float baseline_error = 0.25f * total
+                                   * (positive_prior * positive_prior + negative_prior * negative_prior);
 
-        normalization_coefficient = (mean_model_error < EPSILON) ? 1.0f : mean_model_error;
+        normalization_coefficient = (baseline_error < EPSILON) ? 1.0f : baseline_error;
     }
 
     if (error == Error::CrossEntropy && network
@@ -1404,6 +1443,24 @@ float* Loss::ensure_error_workspace(Buffer& storage,
     return storage.as<float>();
 }
 
+// Every error writes its per-element terms and reduces them into the three
+// floats after them. The fused 3-D cross-entropy metrics kernel reduces
+// directly into those three scalars: its per-token scratch was left in this
+// allocation by the generic error path, but is neither read nor written here.
+float* Loss::ensure_metrics_workspace(Buffer& storage,
+                                      const TensorView& input,
+                                      Index batch_samples) const
+{
+    if (error != Error::CrossEntropy3d)
+        return ensure_error_workspace(storage, input, batch_samples, 3);
+
+    storage.grow_to(3 * Index(sizeof(float)));
+    memory_debug::record("loss", "ForwardPropagation::loss_workspace",
+                         3 * Index(sizeof(float)),
+                         format("batch={}", batch_samples));
+    return storage.as<float>();
+}
+
 Loss::EvaluationResult Loss::calculate_error(const Batch& batch,
                                               const ForwardPropagation& forward_propagation) const
 {
@@ -1439,7 +1496,9 @@ Loss::EvaluationResult Loss::calculate_error(const Batch& batch,
         result.error *= get_weighted_coefficient(batch);
         break;
     case CrossEntropy:
-        cross_entropy(input, target, result.error, workspace_device, uses_binary_cross_entropy(input));
+        if (!forward_propagation.binary_logits.empty())
+            binary_cross_entropy_logits(forward_propagation.binary_logits, target, result.error, workspace_device);
+        else cross_entropy(input, target, result.error, workspace_device, uses_binary_cross_entropy(input));
         break;
     case CrossEntropy3d:
     {
@@ -1489,29 +1548,10 @@ bool Loss::calculate_error_device_metrics(const Batch& batch,
     const TensorView target = batch.get_targets();
     if (input.empty() || target.empty()) return false;
 
-    // The fused 3-D cross-entropy metrics kernel reduces directly into three
-    // scalars.  Its per-token scratch was left in this allocation from the
-    // generic error path, but is neither read nor written here.
-    const Index workspace_floats =
-        error == Error::CrossEntropy3d ? 0 : error_workspace_floats(input);
-    float* workspace = nullptr;
-    if(error == Error::CrossEntropy3d)
-    {
-        forward_propagation.loss_workspace.grow_to(3 * Index(sizeof(float)));
-        workspace = forward_propagation.loss_workspace.as<float>();
-        memory_debug::record("loss", "ForwardPropagation::loss_workspace",
-                             3 * Index(sizeof(float)),
-                             format("batch={}", batch.get_batch_size()));
-    }
-    else
-    {
-        workspace = ensure_error_workspace(
-            forward_propagation.loss_workspace,
-            input,
-            batch.get_batch_size(),
-            3);
-    }
-    float* const results_device = workspace + workspace_floats;
+    float* const workspace = ensure_metrics_workspace(forward_propagation.loss_workspace,
+                                                      input, batch.get_batch_size());
+    float* const results_device =
+        workspace + (error == Error::CrossEntropy3d ? 0 : error_workspace_floats(input));
     cublasHandle_t handle = device::get_cublas_handle();
 
     enum class Reduction { Absolute, Squared };
@@ -1556,6 +1596,15 @@ bool Loss::calculate_error_device_metrics(const Batch& batch,
         return true;
 
     case CrossEntropy:
+        if (!forward_propagation.binary_logits.empty())
+        {
+            const TensorView logits = forward_propagation.binary_logits;
+            logits.dispatch([&]<typename T>() {
+                binary_cross_entropy_logits_cuda<T>(logits.size(), workspace, target.as<float>(), logits.as<T>());
+            });
+            reduce_and_accumulate(1.0f / static_cast<float>(input.get_shape()[0]));
+            return true;
+        }
         input.dispatch([&]<typename T>()
         {
             if (uses_binary_cross_entropy(input))
@@ -1733,7 +1782,11 @@ void Loss::calculate_output_deltas(const Batch& batch, const ForwardPropagation&
         weighted_squared_error_gradient(input, target, positives_weight, negatives_weight, get_weighted_coefficient(batch), input_delta);
         break;
     case CrossEntropy:
-        cross_entropy_gradient(input, target, input_delta, uses_binary_cross_entropy(input));
+        // The saved sigmoid head lets the loss differentiate with respect to
+        // logits directly, avoiding division by a saturated probability.
+        if (!forward_propagation.binary_logits.empty())
+            binary_cross_entropy_logits_gradient(forward_propagation.binary_logits, target, input_delta);
+        else cross_entropy_gradient(input, target, input_delta, uses_binary_cross_entropy(input));
         break;
     case CrossEntropy3d:
         cross_entropy_3d_gradient(input, target, input_delta, back_propagation.metrics.active_tokens_count);
@@ -1773,7 +1826,18 @@ void Loss::back_propagate_layers(ForwardPropagation& forward_propagation,
         }
         forward_propagation.recompute_for_backward(i);
         PROFILE_SCOPE("bwd:" + layers[i]->get_name());
-        layers[i]->back_propagate(forward_propagation, back_propagation, i);
+        if (error == Error::CrossEntropy && i == forward_propagation.binary_logits_layer)
+        {
+            // As with softmax cross-entropy, the output delta already includes
+            // the activation derivative. All other head operators run normally.
+            for (Operator* op : views::reverse(layers[i]->get_operators()))
+            {
+                const auto* activation = dynamic_cast<const ActivationOperator*>(op);
+                if (activation && activation->activation_function == ActivationFunction::Sigmoid) continue;
+                op->back_propagate(forward_propagation, back_propagation, i);
+            }
+        }
+        else layers[i]->back_propagate(forward_propagation, back_propagation, i);
     }
 }
 
@@ -1933,7 +1997,9 @@ void Loss::from_JSON(const JsonDocument& document)
 {
 
     const Json* root = document.first_child(get_name());
-    if (!root) root = document.first_child("Loss");
+    if (!root)
+        root = document.first_child("Loss");
+
     throw_if(!root, "Loss::from_JSON error: missing Loss element.");
 
     set_error(read_json_string(root, "Method"));

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
+
 #include "tests/common/pch.h"
 
 #include "opennn/core/random_utilities.h"
@@ -9,6 +12,29 @@
 #include "opennn/network/network.h"
 
 using namespace opennn;
+
+namespace
+{
+
+// Column 0 is a uniform ramp on [0, 1), column 1 is irrelevant uniform noise
+// on [0, 1] and column 2 (the target) is a bit-exact copy of column 0.
+MatrixR ramp_target_with_noise(const Index rows)
+{
+    MatrixR data(rows, 3);
+
+    for (Index row = 0; row < rows; ++row)
+    {
+        const type ramp = type(row) / type(rows);
+
+        data(row, 0) = ramp;
+        data(row, 1) = random_uniform(type(0), type(1));
+        data(row, 2) = ramp;
+    }
+
+    return data;
+}
+
+}
 
 TEST(GrowingInputsTest, DefaultConstructor)
 {
@@ -37,7 +63,7 @@ TEST(GrowingInputsTest, InputSelection)
     growing_inputs.set_display(false);
 
     InputSelectionResult input_selection_results = growing_inputs.perform_input_selection();
-    EXPECT_GE(input_selection_results.optimal_input_variables_indices[0], 0);
+    EXPECT_GE(input_selection_results.optimal_input_variables_indices[0], Index(0));
 }
 
 TEST(GrowingInputsTest, InputSelectionKnownResult)
@@ -46,14 +72,8 @@ TEST(GrowingInputsTest, InputSelectionKnownResult)
 
     TabularDataset dataset(samples, {2}, {1});
 
-    MatrixR data(samples, 3);
-    for(Index i = 0; i < samples; i++)
-    {
-        data(i, 0) = type(i) / samples;
-        data(i, 1) = random_uniform(0.0f, 1.0f);
-        data(i, 2) = data(i, 0);
-    }
-    dataset.set_data(data);
+    dataset.set_data(ramp_target_with_noise(samples));
+
     dataset.split_samples_random();
 
     Network network;
@@ -67,8 +87,9 @@ TEST(GrowingInputsTest, InputSelectionKnownResult)
     growing_inputs.set_maximum_inputs_number(1);
     InputSelectionResult results = growing_inputs.perform_input_selection();
 
-    EXPECT_EQ(results.optimal_input_variables_indices.size(), 1);
-    EXPECT_EQ(results.optimal_input_variables_indices[0], 0);
+    EXPECT_EQ(results.optimal_input_variables_indices.size(), size_t(1));
+    if (!results.optimal_input_variables_indices.empty())
+        EXPECT_EQ(results.optimal_input_variables_indices.front(), Index(0));
 }
 
 TEST(GrowingInputsTest, CrossValidationKeepsPersistentRoles)
@@ -76,14 +97,7 @@ TEST(GrowingInputsTest, CrossValidationKeepsPersistentRoles)
     const Index samples = 60;
 
     TabularDataset dataset(samples, {2}, {1});
-    MatrixR data(samples, 3);
-    for (Index i = 0; i < samples; i++)
-    {
-        data(i, 0) = type(i) / samples;
-        data(i, 1) = random_uniform(0.0f, 1.0f);
-        data(i, 2) = data(i, 0);
-    }
-    dataset.set_data(data);
+    dataset.set_data(ramp_target_with_noise(samples));
     dataset.split_samples_random();
 
     const vector<SampleRole> roles_before = dataset.get_sample_roles();
@@ -99,8 +113,9 @@ TEST(GrowingInputsTest, CrossValidationKeepsPersistentRoles)
 
     InputSelectionResult results = growing_inputs.perform_input_selection();
 
-    EXPECT_EQ(results.optimal_input_variables_indices.size(), 1);
-    EXPECT_EQ(results.optimal_input_variables_indices[0], 0);
+    EXPECT_EQ(results.optimal_input_variables_indices.size(), size_t(1));
+    if (results.optimal_input_variables_indices.size() == 1)
+        EXPECT_EQ(results.optimal_input_variables_indices[0], Index(0));
 
     EXPECT_TRUE(dataset.get_sample_roles() == roles_before);
 }

@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: LGPL-2.1-or-later
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 #pragma once
 
@@ -41,7 +41,7 @@ public:
 
    explicit LevenbergMarquardt(Loss* = nullptr);
 
-   void set_damping_parameter_factor(const float new_damping_parameter_factor) { damping_parameter_factor = new_damping_parameter_factor; }
+   void set_damping_parameter_factor(const float);
 
    void set_minimum_loss_decrease(const float new_minimum_loss_decrease) { minimum_loss_decrease = new_minimum_loss_decrease; }
    TrainingResult train() override;

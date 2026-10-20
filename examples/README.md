@@ -60,6 +60,9 @@ the others are listed below.
 | `qwen3` | `qwen3 [model_dir]`; the model is cached in `../data/qwen3`. Type a prompt, and `exit`, `quit` or an empty line to finish. |
 | `yolo` | `yolo [experiment]`, default `v3-pretrained`. No dataset is bundled: set `SYNTHETIC_YOLO_IMAGES` and `SYNTHETIC_YOLO_LABELS`, or use an experiment name containing `voc` (`VOC_ROOT`) or `bccd` (`BCCD_IMAGES`, `BCCD_LABELS`). |
 
+YOLO dataset paths are supplied through the environment variables above, with
+relative directory fallbacks described in [its data notice](yolo/data/SOURCE.md).
+
 Pretrained models are downloaded on the first run.
 
 ## Train your first model

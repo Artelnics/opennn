@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   E M B E D D I N G   L O O K U P   O P E R A T O R   T E S T
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 // The lookup carries three conventions nothing asserted on directly: token 0 is
 // padding and produces a zero row, an out-of-range id is zeroed with a warning
@@ -250,7 +245,3 @@ TEST(EmbeddingLookupOperatorTest, CudaPositionalEncodingKeepsInvalidTokensZeroAc
         }
     }
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

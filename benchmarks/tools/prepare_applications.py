@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
+
 """Build application probes and isolated PyTorch environments on Linux/WSL.
 
 Use Python 3.12 with venv support. Builds and downloaded packages stay in a new

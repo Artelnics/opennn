@@ -23,7 +23,7 @@ When redistributing the dataset, keep `ATTRIBUTION.tsv`, this notice and
 `TATOEBA_README.txt` with it; retain the sentence owners' credits, source and
 licence links, and describe subsequent modifications. Do not add legal or
 technical restrictions that remove the freedoms granted by the licence.
-OpenNN's LGPL software licence does not replace these data terms.
+OpenNN's software licence does not replace these data terms.
 
 ## Preparation for OpenNN
 

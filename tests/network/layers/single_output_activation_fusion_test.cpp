@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   S I N G L E   O U T P U T   A C T I V A T I O N   F U S I O N   T E S T
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 // A dense layer with one output runs its combination on CUDA as a warp-per-row
 // reduction rather than through cuBLASLt, and that kernel now applies the
@@ -159,7 +154,3 @@ TEST(SingleOutputActivationFusion, Bf16RefusedShapeStillGetsItsActivation)
 
     Configuration::instance().set(Device::CUDA, Type::FP32);
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

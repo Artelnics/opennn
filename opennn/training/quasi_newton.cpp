@@ -1,7 +1,8 @@
-// SPDX-License-Identifier: LGPL-2.1-or-later
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 #include "opennn/training/quasi_newton.h"
+#include "opennn/training/quasi_newton_update.h"
 
 #include "opennn/dataset/batch.h"
 #include "opennn/dataset/dataset.h"
@@ -23,45 +24,12 @@ QuasiNewton::QuasiNewton(Loss* new_loss)
 
 void QuasiNewton::calculate_inverse_hessian(OptimizerData& optimization_data) const
 {
-    VectorMap parameter_differences = optimization_data.views[ParameterDifferences].as_vector();
-    VectorMap gradient_difference = optimization_data.views[GradientDifference].as_vector();
-
-    VectorMap old_inverse_hessian_dot_gradient_difference =
-        optimization_data.views[OldInverseHessianDotGradientDifference].as_vector();
-
-    MatrixMap old_inverse_hessian = optimization_data.views[OldInverseHessian].as_matrix();
-    MatrixMap inverse_hessian     = optimization_data.views[InverseHessian].as_matrix();
-
-    VectorMap bfgs = optimization_data.views[BFGS].as_vector();
-
-    const float parameters_difference_dot_gradient_difference = parameter_differences.dot(gradient_difference);
-
-    old_inverse_hessian_dot_gradient_difference.noalias() = old_inverse_hessian * gradient_difference;
-
-    const float gradient_dot_hessian_dot_gradient = gradient_difference.dot(old_inverse_hessian_dot_gradient_difference);
-
-    if (parameters_difference_dot_gradient_difference <= EPSILON
-        || gradient_dot_hessian_dot_gradient <= EPSILON)
-    {
-        inverse_hessian = old_inverse_hessian;
-        return;
-    }
-
-    bfgs = (parameter_differences / parameters_difference_dot_gradient_difference)
-           - (old_inverse_hessian_dot_gradient_difference / gradient_dot_hessian_dot_gradient);
-
-    inverse_hessian = old_inverse_hessian;
-
-    inverse_hessian.selfadjointView<Lower>().rankUpdate(
-        parameter_differences, 1.0f / parameters_difference_dot_gradient_difference);
-
-    inverse_hessian.selfadjointView<Lower>().rankUpdate(
-        old_inverse_hessian_dot_gradient_difference, -1.0f / gradient_dot_hessian_dot_gradient);
-
-    inverse_hessian.selfadjointView<Lower>().rankUpdate(
-        bfgs, gradient_dot_hessian_dot_gradient);
-
-    inverse_hessian.triangularView<Upper>() = inverse_hessian.triangularView<Lower>().transpose();
+    detail::bfgs_inverse_update(
+        optimization_data.views[OldInverseHessian].as_matrix(),
+        optimization_data.views[ParameterDifferences].as_vector(),
+        optimization_data.views[GradientDifference].as_vector(),
+        optimization_data.views[InverseHessian].as_matrix(),
+        optimization_data.views[BfgsWork].as_vector());
 }
 
 void QuasiNewton::update_full_batch_parameters(const Batch& batch,
@@ -111,7 +79,7 @@ void QuasiNewton::update_full_batch_parameters(const Batch& batch,
         else
             line_search.initial = 1.0f;
 
-        tie(line_search.learning_rate, back_propagation.metrics.loss_value) = calculate_directional_point(
+        tie(line_search.learning_rate, back_propagation.metrics.loss_value) = backtrack_along_direction(
             batch,
             forward_propagation,
             back_propagation,
@@ -155,7 +123,7 @@ TrainingResult QuasiNewton::train()
              "Use Adam or SGD on GPU.");
 
     FullBatchContext context;
-    prepare_full_batch_training(context, "Training with quasi-Newton method...");
+    prepare_full_batch_training(context, "Starting quasi-Newton (BFGS) training");
 
     BackPropagation training_back_propagation(context.training_samples_number, *loss);
 
@@ -239,7 +207,7 @@ void QuasiNewton::from_JSON(const JsonDocument& document)
     read_common_json(root_element);
 }
 
-pair<float, float> QuasiNewton::calculate_directional_point(
+pair<float, float> QuasiNewton::backtrack_along_direction(
     const Batch& batch,
     ForwardPropagation& forward_propagation,
     BackPropagation& back_propagation,
@@ -259,23 +227,35 @@ pair<float, float> QuasiNewton::calculate_directional_point(
     const VectorR& training_direction = line_search.direction;
     VectorR& potential_parameters = line_search.potential;
 
-    for (int i = 0; i < 20; ++i)
+    // Backtracking with the Armijo condition. Each candidate lives only in the
+    // scratch buffer; the explicit-parameter forward pass restores the network.
+
+    constexpr Index maximum_trials = 20;
+
+    potential_parameters.resize(parameters.size());
+
+    const vector<TensorView>& inputs = batch.get_inputs();
+    const float slope = line_search.slope;
+
+    for (Index trial = 0; trial < maximum_trials; ++trial, alpha *= rho)
     {
-        potential_parameters = parameters + training_direction * alpha;
+        potential_parameters.noalias() = parameters + alpha * training_direction;
 
-        network->forward_propagate(batch.get_inputs(), potential_parameters, forward_propagation);
-        const Loss::EvaluationResult evaluation_result = loss->calculate_error(batch, forward_propagation);
-        const float candidate_regularization = loss->calculate_regularization(potential_parameters);
-        const float new_loss = evaluation_result.error + candidate_regularization;
+        network->forward_propagate(inputs, potential_parameters, forward_propagation);
 
-        if (new_loss <= current_loss + armijo_constant * alpha * line_search.slope)
+        const float potential_error = loss->calculate_error(batch, forward_propagation).error;
+        const float potential_regularization = loss->calculate_regularization(potential_parameters);
+        const float potential_loss = potential_error + potential_regularization;
+
+        const float sufficient_decrease_bound = current_loss + (armijo_constant * alpha) * slope;
+
+        if (potential_loss <= sufficient_decrease_bound)
         {
-            back_propagation.metrics.error = evaluation_result.error;
-            back_propagation.metrics.regularization = candidate_regularization;
-            return {alpha, new_loss};
-        }
+            back_propagation.metrics.error = potential_error;
+            back_propagation.metrics.regularization = potential_regularization;
 
-        alpha *= rho;
+            return {alpha, potential_loss};
+        }
     }
 
     back_propagation.metrics.error = previous_error;

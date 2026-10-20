@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
+
 // The CNN family, defined once, driven four ways.
 //
 // ResNet-50 v1.5: bottleneck blocks [3,4,6,3], widths

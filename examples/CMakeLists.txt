@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
+
 option(OpenNN_BUILD_BLANK "Build the blank example template" ON)
 
 function(opennn_example name)

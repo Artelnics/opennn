@@ -1,11 +1,12 @@
-// SPDX-License-Identifier: LGPL-2.1-or-later
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 #pragma once
 
 #include "opennn/core/opennn_types.h"
 
 #include <charconv>
+#include <chrono>
 #include <cctype>
 #include <initializer_list>
 #include <limits>
@@ -27,26 +28,28 @@ namespace opennn
     {
         if constexpr (is_floating_point_v<T>)
         {
+            // strtof and strtod read up to a NUL, which [first, last) does not have to contain.
+
             const string buffer(first, last);
-            char* parse_end = nullptr;
+            const char* const begin = buffer.c_str();
+            char* end = nullptr;
+
             errno = 0;
 
             if constexpr (is_same_v<T, float>)
-                value = strtof(buffer.c_str(), &parse_end);
+                value = strtof(begin, &end);
             else
-                value = static_cast<T>(strtod(buffer.c_str(), &parse_end));
-
-            if (parse_end == buffer.c_str())
-                return {first, errc::invalid_argument};
-
-            const size_t consumed = static_cast<size_t>(parse_end - buffer.c_str());
+                value = static_cast<T>(strtod(begin, &end));
 
             // strtof also flags ERANGE for a subnormal it did represent; std::from_chars only
             // refuses a value that overflows to infinity or underflows all the way to zero.
-            if (errno == ERANGE && (value == T(0) || !isfinite(value)))
-                return {first + consumed, errc::result_out_of_range};
+            const bool out_of_range = errno == ERANGE && (value == T(0) || !isfinite(value));
+            const ptrdiff_t consumed = end - begin;
 
-            return {first + consumed, errc{}};
+            if (consumed == 0)
+                return {first, errc::invalid_argument};
+
+            return {first + consumed, out_of_range ? errc::result_out_of_range : errc{}};
         }
         else
         {
@@ -148,7 +151,8 @@ namespace opennn
 
     void display_progress_bar(Index, Index);
 
-    float get_elapsed_time(const time_t& beginning_time);
+    // Seconds on the monotonic clock since start.
+    float get_elapsed_time(chrono::steady_clock::time_point start);
 
     string get_time(float);
 

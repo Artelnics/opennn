@@ -1,11 +1,5 @@
-// SPDX-License-Identifier: LGPL-2.1-or-later
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   C O N C A T E N A T I O N   K E R N E L S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 #include "opennn/core/cuda/kernel_common.cuh"
 #include "opennn/network/layers/kernel_concat.cuh"
@@ -57,7 +51,3 @@ void concat_backward_slice_cuda(const int batch, const int H, const int W,
 {
     slice_channels_cuda<float, false>(batch, H, W, slice_ch, total_ch, ch_offset, out_delta, in_delta);
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

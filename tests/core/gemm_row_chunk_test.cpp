@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   G E M M   R O W   C H U N K   T E S T   S O U R C E
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 // Above 16,384 rows the dense forward issues its GEMM in chunks of rows rather
 // than as one cuBLASLt call, because cuBLASLt loses throughput on a very tall
@@ -132,7 +127,3 @@ TEST(GemmRowChunk, TallDenseForwardMatchesTheDefinitionBf16)
 
     check_tall_dense_forward(Type::BF16, 3e-2f);
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: LGPL-2.1-or-later
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 #include "opennn/network/network.h"
 #include "opennn/network/network_internal.h"
@@ -416,14 +416,20 @@ static void define_variables_from_names(vector<Variable>& variables,
                                         const vector<string>& names,
                                         VariableRole role)
 {
-    variables.assign(names.size(), Variable());
+    // Built aside and moved in, so an allocation failure leaves the caller's
+    // list as it was. Every field not set here keeps the Variable() default.
+    vector<Variable> defined;
+    defined.reserve(names.size());
 
-    for (size_t i = 0; i < names.size(); ++i)
+    for (const string& name : names)
     {
-        variables[i].name = names[i];
-        variables[i].role = role;
-        variables[i].type = VariableType::Numeric;
+        Variable& variable = defined.emplace_back();
+        variable.name = name;
+        variable.role = role;
+        variable.type = VariableType::Numeric;
     }
+
+    variables = std::move(defined);
 }
 
 static void set_variable_names(vector<Variable>& variables, const vector<string>& new_names)
@@ -464,16 +470,24 @@ static void set_variable_names(vector<Variable>& variables, const vector<string>
 
 void Network::set_input_names(const vector<string>& new_input_names)
 {
-    if (input_variables.empty() && !new_input_names.empty())
-        return define_variables_from_names(input_variables, new_input_names, VariableRole::Input);
+    // A network built by a standard constructor plus steal_from() has no
+    // variables yet, so the first names define them instead of renaming.
+    if (!new_input_names.empty() && input_variables.empty())
+    {
+        define_variables_from_names(input_variables, new_input_names, VariableRole::Input);
+        return;
+    }
 
     set_variable_names(input_variables, new_input_names);
 }
 
 void Network::set_output_names(const vector<string>& new_output_names)
 {
-    if (output_variables.empty() && !new_output_names.empty())
-        return define_variables_from_names(output_variables, new_output_names, VariableRole::Target);
+    if (!new_output_names.empty() && output_variables.empty())
+    {
+        define_variables_from_names(output_variables, new_output_names, VariableRole::Target);
+        return;
+    }
 
     set_variable_names(output_variables, new_output_names);
 }

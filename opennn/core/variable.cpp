@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: LGPL-2.1-or-later
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 #include "opennn/core/variable.h"
 #include "opennn/core/string_utilities.h"
@@ -90,18 +90,19 @@ vector<pair<string, Index>> get_variable_columns(const vector<Variable>& variabl
         }
         else
         {
-            const vector<string> feature_names = variable.get_names();
+            const vector<string> labels = variable.get_names();
+            const Index copies = variable.is_categorical() ? 2 : 1;
 
-            for (Index feature = 0; feature < span; ++feature)
-                columns.emplace_back(feature_names[size_t(feature)], feature_index + feature);
+            for (Index entry = 0; entry < copies * span; ++entry)
+            {
+                const Index offset = entry % span;
+                const string& label = labels[size_t(offset)];
 
-            // A level also answers to the block it belongs to, because two blocks may share a
-            // level name and the bare name alone cannot say which of them was meant.
-
-            if (variable.is_categorical())
-                for (Index feature = 0; feature < span; ++feature)
-                    columns.emplace_back(variable.name + "." + feature_names[size_t(feature)],
-                                         feature_index + feature);
+                if (entry < span)
+                    columns.emplace_back(label, feature_index + offset);
+                else
+                    columns.emplace_back(variable.name + "." + label, feature_index + offset);
+            }
         }
 
         feature_index += span;

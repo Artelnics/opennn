@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
+
 #include "tests/common/pch.h"
 #include "opennn/core/configuration.h"
 #include "opennn/core/random_utilities.h"
@@ -7,6 +10,7 @@
 #include "opennn/models/models.h"
 #include "opennn/training/loss.h"
 #include "opennn/training/adam.h"
+#include "opennn/training/training.h"
 #include "opennn/core/device_backend.h"
 
 #include "tests/common/test_helpers.h"
@@ -110,6 +114,11 @@ TEST_F(AdamTest, DefaultConstructor)
     Adam adam;
 
     EXPECT_EQ(adam.get_loss() == nullptr, true);
+    EXPECT_FLOAT_EQ(adam.get_epsilon(), EPSILON);
+    EXPECT_ANY_THROW(adam.set_epsilon(0.0f));
+    EXPECT_ANY_THROW(adam.set_epsilon(-1.0f));
+    adam.set_epsilon(1.0e-4f);
+    EXPECT_FLOAT_EQ(adam.get_epsilon(), 1.0e-4f);
 }
 
 TEST_F(AdamTest, GeneralConstructor)
@@ -393,6 +402,110 @@ TEST_F(AdamTest, GroupedAndTailGraphUpdatesMatchEagerFP32)
 TEST_F(AdamTest, GroupedAndTailGraphUpdatesMatchEagerBF16)
 {
     expect_graph_replay_matches_eager_training(Type::BF16);
+}
+
+static void expect_prefetch_matches_synchronized_training(Type dtype)
+{
+    if (!device::has_cuda_device()) GTEST_SKIP() << "No CUDA device.";
+    if (dtype == Type::BF16 && device::cuda_compute_capability() < 80)
+        GTEST_SKIP() << "BF16 requires an Ampere or newer CUDA device.";
+    Configuration::instance().set(Device::CUDA, dtype);
+
+    for (bool resident : {false, true})
+    {
+        SCOPED_TRACE(testing::Message() << "resident=" << resident);
+        TabularDataset dataset(77, {2}, {1});
+        MatrixR values(77, 3);
+        for (Index i = 0; i < 77; ++i)
+            values.row(i) << float(i % 11) / 12.0f, float(i % 7) / 8.0f,
+                             float(i % 5) / 6.0f;
+        dataset.set_data(values);
+        dataset.set_variable_scalers("None");
+        dataset.set_sample_roles(SampleRole::Training);
+        for (Index i = 70; i < 77; ++i)
+            dataset.set_sample_role(i, SampleRole::Validation);
+        if (resident) dataset.set_storage_mode(Dataset::StorageMode::GPUPersistantData);
+
+        set_seed(41);
+        ApproximationNetwork reference({2}, {7}, {1});
+        const VectorR initial_parameters = reference.get_parameters_map();
+        const auto train = [&](ApproximationNetwork& network, int pool, int device_pool, bool synchronize)
+        {
+            Loss loss(&network, &dataset);
+            loss.set_error(Loss::Error::MeanSquaredError);
+            Adam optimizer(&loss);
+            optimizer.set_batch_size(4);
+            optimizer.set_batch_pool_size(pool);
+            optimizer.set_device_batch_pool_size(device_pool);
+            optimizer.set_maximum_epochs(3);
+            optimizer.set_display(false);
+            optimizer.set_shuffle(false);
+            optimizer.set_restore_best(false);
+            optimizer.set_cuda_graph(false);
+            if (synchronize)
+                optimizer.post_batch_callback = [](Network*)
+                { device::synchronize(device::get_compute_stream()); };
+            return optimizer.train();
+        };
+        const TrainingResult expected = train(reference, 1, 1, true);
+        for (const auto [pool, device_pool] : {pair{1, 1}, pair{2, 3}, pair{3, 2}, pair{3, 6}, pair{6, 3}})
+        {
+            SCOPED_TRACE(testing::Message() << "pool=" << pool << " device_pool=" << device_pool);
+            ApproximationNetwork pipelined({2}, {7}, {1});
+            pipelined.set_parameters(initial_parameters);
+            const TrainingResult actual = train(pipelined, pool, device_pool, false);
+            ASSERT_EQ(actual.get_epochs_number(), expected.get_epochs_number());
+            EXPECT_TRUE(actual.training_error_history.isApprox(expected.training_error_history, 1.0e-4f));
+            EXPECT_TRUE(actual.validation_error_history.isApprox(expected.validation_error_history, 1.0e-4f));
+            EXPECT_TRUE(logical_parameters_are_approx(
+                reference.get_parameter_specs(), VectorR(reference.get_parameters_map()),
+                VectorR(pipelined.get_parameters_map()), dtype == Type::BF16 ? 2.0e-4f : 2.0e-5f));
+        }
+    }
+}
+
+TEST_F(AdamTest, PipelinedTransfersMatchSynchronizedTrainingFP32)
+{
+    expect_prefetch_matches_synchronized_training(Type::FP32);
+}
+
+TEST_F(AdamTest, PipelinedTransfersMatchSynchronizedTrainingBF16)
+{
+    expect_prefetch_matches_synchronized_training(Type::BF16);
+}
+
+TEST_F(AdamTest, PipelinedImageTransfersMatchSynchronizedTraining)
+{
+    if (!device::has_cuda_device()) GTEST_SKIP() << "No CUDA device.";
+    Configuration::instance().set(Device::CUDA, Type::FP32);
+    const filesystem::path root = write_image_classification_dataset();
+    ScopeExit cleanup([&] { remove_image_classification_dataset(root); });
+    ImageDataset dataset(root);
+    dataset.set_sample_roles(SampleRole::Training);
+    set_seed(43);
+    ImageClassificationNetwork reference(dataset.get_input_shape(), {4, 8, 4}, dataset.get_target_shape());
+    ImageClassificationNetwork pipelined(dataset.get_input_shape(), {4, 8, 4}, dataset.get_target_shape());
+    pipelined.set_parameters(VectorR(reference.get_parameters_map()));
+    const auto train = [&](Network& network, bool synchronize)
+    {
+        Training training(&network, &dataset);
+        Optimizer* optimizer = training.get_optimization_algorithm();
+        optimizer->set_batch_size(1);
+        optimizer->set_maximum_epochs(3);
+        optimizer->set_display(false);
+        optimizer->set_shuffle(false);
+        optimizer->set_cuda_graph(false);
+        if (synchronize)
+            optimizer->post_batch_callback = [](Network*)
+            { device::synchronize(device::get_compute_stream()); };
+        return training.train();
+    };
+    const TrainingResult expected = train(reference, true);
+    const TrainingResult actual = train(pipelined, false);
+    EXPECT_TRUE(actual.training_error_history.isApprox(expected.training_error_history, 1.0e-4f));
+    EXPECT_TRUE(logical_parameters_are_approx(
+        reference.get_parameter_specs(), VectorR(reference.get_parameters_map()),
+        VectorR(pipelined.get_parameters_map()), 2.0e-5f));
 }
 
 // The encoder-decoder Transformer's training step must capture into a CUDA

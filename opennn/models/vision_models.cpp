@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: LGPL-2.1-or-later
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 #include "opennn/models/models.h"
 #include "opennn/core/log.h"
@@ -735,9 +735,10 @@ Yolo::Yolo(const Shape& input_shape,
              "Yolo: this minimal builder expects input H/W == grid_size * 32.");
     if (head_style == HeadStyle::FPN)
     {
-        throw_if(backbone != Backbone::DarknetTiny && backbone != Backbone::DarknetTinyV3
-                 && backbone != Backbone::Darknet53 && backbone != Backbone::CSPDarknet53,
-                 "Yolo: HeadStyle::FPN requires DarknetTiny, DarknetTinyV3, Darknet53, or CSPDarknet53.");
+        throw_if(!is_one_of(backbone, Backbone::DarknetTiny, Backbone::DarknetTinyV3,
+                            Backbone::Darknet53, Backbone::CSPDarknet53),
+                 "Yolo: HeadStyle::FPN is not available for the chosen backbone; "
+                 "use DarknetTiny, DarknetTinyV3, Darknet53 or CSPDarknet53.");
         throw_if(ssize(anchors) != 9 && ssize(anchors) != 6,
                  "Yolo: HeadStyle::FPN expects 6 anchors (2-head) or 9 anchors (3-head).");
         throw_if(backbone == Backbone::DarknetTinyV3 && ssize(anchors) != 6,
@@ -795,23 +796,22 @@ Yolo::Yolo(const Shape& input_shape,
             const vector<array<float, 2>> anchors_sorted = sort_anchors_by_area(anchors);
 
             const vector<array<float, 2>> anchors_small(anchors_sorted.begin(),     anchors_sorted.begin() + 3);
-            const vector<array<float, 2>> anchors_large(anchors_sorted.begin() + 3, anchors_sorted.end());
+            const vector<array<float, 2>> anchors_large(next(anchors_sorted.begin(), 3), anchors_sorted.end());
 
-            const Index p5_conv = builder.add_conv(last_index,
-                Shape{3, 3, get_layer(last_index)->get_output_shape()[2], 512},
-                act, stride, BatchNormalization::Yes, "fpn_p5_conv");
+            const Index c5_channels = get_layer(last_index)->get_output_shape()[2];
+            const Index p5_conv = builder.add_conv(last_index, Shape{3, 3, c5_channels, 512}, act, stride,
+                                                   BatchNormalization::Yes, "fpn_p5_conv");
             builder.add_det_head(p5_conv, anchors_large, "large");
 
-            const Index p5_lateral = builder.add_conv(last_index,
-                Shape{1, 1, get_layer(last_index)->get_output_shape()[2], 128},
-                act, stride, BatchNormalization::Yes, "fpn_p5_lateral");
+            const Index p5_lateral = builder.add_conv(last_index, Shape{1, 1, c5_channels, 128}, act, stride,
+                                                      BatchNormalization::Yes, "fpn_p5_lateral");
 
             const Index p4_concat = builder.add_top_down(
                 p5_lateral, c3_index, "fpn_p5_upsampling", "fpn_p4_concatenation");
 
-            const Index p4_conv = builder.add_conv(p4_concat,
-                Shape{3, 3, get_layer(p4_concat)->get_output_shape()[2], 256},
-                act, stride, BatchNormalization::Yes, "fpn_p4_conv");
+            const Index p4_channels = get_layer(p4_concat)->get_output_shape()[2];
+            const Index p4_conv = builder.add_conv(p4_concat, Shape{3, 3, p4_channels, 256}, act, stride,
+                                                   BatchNormalization::Yes, "fpn_p4_conv");
             builder.add_det_head(p4_conv, anchors_small, "small");
 
             builder.finish_yolo();
@@ -932,17 +932,17 @@ Yolo::Yolo(const Shape& input_shape,
                 builder.add_det_head(p3d, anchors_small, "small");
 
                 const Index n3_down = builder.add_conv(p3n, Shape{3, 3, 128, 256}, act, stride_2, BatchNormalization::Yes, "pan_n3_down");
-                const Index n4c = add_layer(make_unique<Concatenation>(get_layer(p4n)->get_output_shape(),
-                                                                       vector<Index>{256, 256}, "pan_n4_cat"),
-                                            {n3_down, p4n});
+                auto n4_merge = make_unique<Concatenation>(get_layer(p4n)->get_output_shape(),
+                                                           vector<Index>{256, 256}, "pan_n4_cat");
+                const Index n4c = add_layer(std::move(n4_merge), {n3_down, p4n});
                 const Index n4n = builder.add_yolo_neck(n4c, 512, 256, 512, "pan_n4", 1);
                 const Index n4d = builder.add_conv(n4n, Shape{3, 3, 256, 512}, act, stride, BatchNormalization::Yes, "pan_n4_pre");
                 builder.add_det_head(n4d, anchors_medium, "medium");
 
                 const Index n4_down = builder.add_conv(n4n, Shape{3, 3, 256, 512}, act, stride_2, BatchNormalization::Yes, "pan_n4_down");
-                const Index n5c = add_layer(make_unique<Concatenation>(get_layer(p5n)->get_output_shape(),
-                                                                       vector<Index>{512, 512}, "pan_n5_cat"),
-                                            {n4_down, p5n});
+                auto n5_merge = make_unique<Concatenation>(get_layer(p5n)->get_output_shape(),
+                                                           vector<Index>{512, 512}, "pan_n5_cat");
+                const Index n5c = add_layer(std::move(n5_merge), {n4_down, p5n});
                 const Index n5n = builder.add_yolo_neck(n5c, 1024, 512, 1024, "pan_n5", 1);
                 const Index n5d = builder.add_conv(n5n, Shape{3, 3, 512, 1024}, act, stride, BatchNormalization::Yes, "pan_n5_pre");
                 builder.add_det_head(n5d, anchors_large, "large");
@@ -1129,16 +1129,23 @@ Index load_darknet_backbone(Network& network,
     const DarknetFile file = open_darknet_weights(weights_path, "load_darknet_backbone");
     FILE* const f = file.get();
 
-    Index loaded = 0;
-    const auto& layers = network.get_layers();
-    for (size_t li = 0; li < layers.size() && loaded < n_backbone_convs; ++li)
-    {
-        auto* conv = dynamic_cast<Convolutional*>(layers[li].get());
-        if (!conv) continue;
+    if (n_backbone_convs <= 0) return 0;
 
-        conv->load_darknet_weights(f);
+    Index loaded = 0;
+
+    for (const unique_ptr<Layer>& layer : network.get_layers())
+    {
+        auto* const convolutional = dynamic_cast<Convolutional*>(layer.get());
+
+        if (!convolutional) continue;
+
+        convolutional->load_darknet_weights(f);
         ++loaded;
-        logging::info() << format("Loaded backbone conv {}/{} from {}\n", loaded, n_backbone_convs, weights_path.string());
+
+        logging::info() << format("Loaded Darknet convolution {} of {} from {}\n",
+                                  loaded, n_backbone_convs, weights_path.string());
+
+        if (loaded == n_backbone_convs) break;
     }
 
     return loaded;

@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   A T T E N T I O N   O P E R A T O R   T E S T
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 // The attention maths is covered on the GPU by the SDPA comparison tests. What
 // had no test at all is SdpaBf16Pack, whose entire reason for existing is that
@@ -129,7 +124,3 @@ TEST(AttentionOperatorTest, WithoutCausalMaskingEveryQuerySeesEverySource)
     for (Index i = 0; i < attention.causal_mask.size(); ++i)
         EXPECT_FLOAT_EQ(attention.causal_mask.data()[i], 0.0f) << "at index " << i;
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

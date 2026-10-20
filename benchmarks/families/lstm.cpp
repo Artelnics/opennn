@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
+
 // The LSTM family, defined once, driven four ways.
 //
 // LSTM forecasting on UCI Beijing PM2.5, hourly, predicting the next

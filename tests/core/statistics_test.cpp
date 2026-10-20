@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
+
 #include "tests/common/pch.h"
 
 #include "opennn/core/statistics.h"
@@ -103,15 +106,15 @@ TEST(StatisticsTest, Mean)
     EXPECT_NEAR(mean(matrix)(1), type(1), EPSILON);
     EXPECT_NEAR(mean(matrix)(2), type(4), EPSILON);
 
-    VectorR vector(2);
-    vector <<  type(1), type(1);
+    VectorR vector(3);
+    vector << type(0.5), type(2.5), type(6);
 
-    EXPECT_NEAR(mean(vector), type(1), EPSILON);
+    EXPECT_NEAR(mean(vector), type(3), EPSILON);
 
     vector.resize(2);
-    vector <<  type(-1), type(1) ;
+    vector << type(-3), type(5);
 
-    EXPECT_NEAR(mean(vector), type(0), EPSILON);
+    EXPECT_NEAR(mean(vector), type(1), EPSILON);
 
     vector.resize(5);
     vector <<  type(1), type(NAN), type(2.0), type(3.0), type(4.0);
@@ -152,19 +155,13 @@ TEST(StatisticsTest, StandardDeviation)
 
     EXPECT_NEAR(opennn::standard_deviation(vector), 0, EPSILON);
 
+    // Two values 4 apart: the sample variance is 4^2 / 2 = 8.
     vector.resize(2);
-    vector <<  type(1), type(1);
+    vector << type(3), type(7);
 
     standard_deviation = opennn::standard_deviation(vector);
 
-    EXPECT_NEAR(standard_deviation, 0, EPSILON);
-
-    vector.resize(2);
-    vector <<  type(-1.0), type(1) ;
-
-    standard_deviation = opennn::standard_deviation(vector);
-
-    EXPECT_NEAR(standard_deviation, std::sqrt(type(2)), EPSILON);
+    EXPECT_NEAR(standard_deviation, std::sqrt(type(8)), EPSILON);
 
     vector.resize(1);
     vector[0] = type(NAN);
@@ -179,12 +176,8 @@ TEST(StatisticsTest, Median)
     
     VectorR vector(2);
     vector.setZero();
-    
-    type median;
 
-    vector.resize(2);
-
-    median = opennn::median(vector);
+    type median = opennn::median(vector);
     
     EXPECT_NEAR(median, type(0), EPSILON);
 
@@ -462,27 +455,11 @@ TEST(StatisticsTest, Histogram)
     centers = bins.centers;
     frequencies = bins.frequencies;
 
-    EXPECT_NEAR(abs(centers[0]), type(0.5), type(1.0e-3));
-    EXPECT_NEAR(abs(centers[1]), type(1.5), type(1.0e-3));
-    EXPECT_NEAR(abs(centers[2]), type(2.5), type(1.0e-3));
-    EXPECT_NEAR(abs(centers[3]), type(3.5), type(1.0e-3));
-    EXPECT_NEAR(abs(centers[4]), type(4.5), type(1.0e-3));
-    EXPECT_NEAR(abs(centers[5]), type(5.5), type(1.0e-3));
-    EXPECT_NEAR(abs(centers[6]), type(6.5), type(1.0e-3));
-    EXPECT_NEAR(abs(centers[7]), type(7.5), type(1.0e-3));
-    EXPECT_NEAR(abs(centers[8]), type(8.5), type(1.0e-3));
-    EXPECT_NEAR(abs(centers[9]), type(9.5), type(1.0e-3));
-
-    EXPECT_EQ(frequencies[0], 1);
-    EXPECT_EQ(frequencies[1], 1);
-    EXPECT_EQ(frequencies[2], 1);
-    EXPECT_EQ(frequencies[3], 1);
-    EXPECT_EQ(frequencies[4], 1);
-    EXPECT_EQ(frequencies[5], 1);
-    EXPECT_EQ(frequencies[6], 1);
-    EXPECT_EQ(frequencies[7], 1);
-    EXPECT_EQ(frequencies[8], 1);
-    EXPECT_EQ(frequencies[9], 2);
+    for (Index bin = 0; bin < 10; ++bin)
+    {
+        EXPECT_NEAR(abs(centers[bin]), type(bin) + type(0.5), type(1.0e-3));
+        EXPECT_EQ(frequencies[bin], bin < 9 ? type(1) : type(2));
+    }
 
     type sum_frec_1 = frequencies.sum();
 
@@ -523,6 +500,49 @@ TEST(StatisticsTest, CenteredHistogramHandlesZeroWidth)
     }
 }
 
+TEST(StatisticsTest, CenteredHistogramBinsAreContiguousAndEqual)
+{
+    // Range 10 over 5 bins gives width 2; the middle bin is centred on the requested value.
+    VectorR data(7);
+    data << -6.0f, -3.0f, -0.5f, 0.0f, 0.9f, 2.5f, 4.0f;
+
+    const Histogram result = histogram_centered(data, 0.0f, 5);
+
+    ASSERT_EQ(result.frequencies.size(), 5);
+
+    for (Index k = 0; k < 5; ++k)
+    {
+        EXPECT_NEAR(result.maximums(k) - result.minimums(k), 2.0f, 1e-6f);
+        EXPECT_NEAR(result.centers(k), 0.5f * (result.minimums(k) + result.maximums(k)), 1e-6f);
+        if (k > 0) EXPECT_NEAR(result.minimums(k), result.maximums(k - 1), 1e-6f);
+    }
+
+    EXPECT_NEAR(result.centers(2), 0.0f, 1e-6f);
+    EXPECT_NEAR(result.minimums(2), -1.0f, 1e-6f);
+    EXPECT_NEAR(result.maximums(2), 1.0f, 1e-6f);
+
+    // -6 lies below the first bin [-5, -3) and is counted there; -3 opens the second bin.
+    EXPECT_EQ(result.frequencies(0), 1.0f);
+    EXPECT_EQ(result.frequencies(1), 1.0f);
+    EXPECT_EQ(result.frequencies(2), 3.0f);
+    EXPECT_EQ(result.frequencies(3), 1.0f);
+    EXPECT_EQ(result.frequencies(4), 1.0f);
+    EXPECT_EQ(result.frequencies.sum(), 7.0f);
+}
+
+TEST(StatisticsTest, CenteredHistogramSkipsMissingValuesAndEvenBinCounts)
+{
+    VectorR data(5);
+    data << -2.0f, -1.0f, QUIET_NAN, 1.0f, 2.0f;
+
+    const Histogram result = histogram_centered(data, 0.0f, 4);
+
+    ASSERT_EQ(result.frequencies.size(), 4);
+    EXPECT_EQ(result.frequencies.sum(), 4.0f);
+    // With an even count the central bin is the lower of the two middle ones.
+    EXPECT_NEAR(result.centers(1), 0.0f, 1e-6f);
+}
+
 TEST(StatisticsTest, HistogramHandlesSubnormalBinWidth)
 {
     VectorR data(5);
@@ -557,27 +577,22 @@ TEST(StatisticsTest, Histograms)
 
 TEST(StatisticsTest, MinimalIndex)
 {
-    VectorR vector;
+    EXPECT_EQ(minimal_index(VectorR()), 0);
 
-    EXPECT_EQ(minimal_index(vector), 0);
+    VectorR vector(4);
+    vector << type(4), type(-2.5), type(3), type(-2);
 
-    vector.resize(3);
-    vector <<  type(1),type(0),type(-1);
-
-    EXPECT_EQ(minimal_index(vector), 2);
+    EXPECT_EQ(minimal_index(vector), 1);
 }
 
 TEST(StatisticsTest, MaximalIndex)
 {
+    EXPECT_EQ(maximal_index(VectorR()), 0);
 
-    VectorR vector(0);
+    VectorR vector(4);
+    vector << type(-3), type(2), type(8.5), type(8);
 
-    EXPECT_EQ(maximal_index(vector), 0);
-
-    vector.resize(3);
-    vector <<  type(1),type(0),type(-1);
-
-    EXPECT_EQ(maximal_index(vector), 0);
+    EXPECT_EQ(maximal_index(vector), 2);
 }
 
 TEST(StatisticsTest, MaximalIndices)
@@ -587,10 +602,10 @@ TEST(StatisticsTest, MaximalIndices)
 
     EXPECT_EQ(maximal_indices(vector,0).rows(), 0);
 
-    vector.resize(3);
-    vector <<  type(-1),type(0),type(1) ;
+    vector.resize(4);
+    vector << type(0.2), type(9), type(-4), type(3);
 
-    EXPECT_EQ(maximal_indices(vector, 1)[0], 2);
+    EXPECT_EQ(maximal_indices(vector, 1)[0], 1);
 
     vector.resize(4);
     vector <<  type(1),type(1),type(1),type(1) ;
@@ -635,8 +650,7 @@ TEST(StatisticsTest, BoxPlot)
     BoxPlot box_plot;
     BoxPlot solution;
 
-    vector.resize(4);
-    vector.setZero();
+    vector.setZero(4);
     
     box_plot = opennn::box_plot(vector);
 

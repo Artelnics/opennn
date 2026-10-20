@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: LGPL-2.1-or-later
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 #include "opennn/core/statistics.h"
 #include "opennn/core/parallel_algorithms.h"
@@ -406,48 +406,28 @@ Histogram histogram(const VectorR& new_vector, Index bins_number)
     return assemble_histogram(centers, minimums, maximums, frequencies);
 }
 
-Histogram histogram_centered(const VectorR& vector, float center, Index bins_number)
+Histogram histogram_centered(const VectorR& values, float center, Index bins_number)
 {
     throw_if(bins_number <= 0, "histogram_centered: bins_number must be positive (got {}).", bins_number);
 
-    const Index bin_center = (bins_number % 2 == 0)
-        ? Index(float(bins_number) / 2.0f)
-        : Index(float(bins_number) / 2.0f + 0.5f);
+    // Equal, contiguous bins as wide as the regular histogram's, laid out so that
+    // one of them is centred on `center` (with an even count, the lower middle one).
+    // Values beyond either end fall into the nearest end bin; missing values are skipped.
+    const float range = values.size() == 0
+        ? 0.0f
+        : values.maxCoeff<PropagateNumbers>() - values.minCoeff<PropagateNumbers>();
+    const float width = range / float(bins_number);
+    const Index middle = (bins_number - 1) / 2;
+    const float first_edge = center - (float(middle) + 0.5f) * width;
 
-    VectorR minimums(bins_number);
-    VectorR maximums(bins_number);
+    const VectorR offsets = VectorR::LinSpaced(bins_number, 0.0f, float(bins_number - 1));
+    const VectorR minimums = (first_edge + offsets.array() * width).matrix();
+    const VectorR maximums = (minimums.array() + width).matrix();
+    const VectorR centers = (center + (offsets.array() - float(middle)) * width).matrix();
 
-    VectorR centers(bins_number);
     VectorR frequencies = VectorR::Zero(bins_number);
-
-    const float min = minimum(vector);
-    const float max = maximum(vector);
-
-    const float length = (max - min)/float(bins_number);
-    const float inv_length = 1.0f / length;
-
-    minimums(bin_center-1) = center - length;
-    maximums(bin_center-1) = center + length;
-    centers(bin_center-1) = center;
-
-    for (Index i = bin_center; i < bins_number; ++i)
-    {
-        minimums(i) = minimums(i - 1) + length;
-        maximums(i) = maximums(i - 1) + length;
-
-        centers(i) = (maximums(i) + minimums(i)) /2.0f;
-    }
-
-    for (Index i = Index(bin_center)-2; i >= 0; i--)
-    {
-        minimums(i) = minimums(i+1) - length;
-        maximums(i) = maximums(i+1) - length;
-
-        centers(i) = (maximums(i) + minimums(i)) /2.0f;
-    }
-
-    fill_frequencies(vector, minimums(0), inv_length, minimums, maximums, frequencies,
-                     [&](float value) { return !(value >= minimums(0)); });
+    fill_frequencies(values, first_edge, 1.0f / width, minimums, maximums, frequencies,
+                     [](float value) { return isnan(value); });
 
     return assemble_histogram(centers, minimums, maximums, frequencies);
 }

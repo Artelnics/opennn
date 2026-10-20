@@ -44,7 +44,7 @@ use. Redistribution requires a copy of the licence, preservation of relevant
 copyright, patent, trademark and attribution notices, and prominent notices
 of changes in modified files. Its patent and trademark provisions also apply.
 Include `LICENSE_BERT.txt`, `NOTICE_BERT.txt` and this source record with
-redistributed weights or vocabulary. OpenNN's LGPL software licence does not
+redistributed weights or vocabulary. OpenNN's software licence does not
 replace the model's Apache 2.0 terms or the reviews' CC BY 4.0 terms.
 
 Credit: Jacob Devlin, Ming-Wei Chang, Kenton Lee and Kristina Toutanova,

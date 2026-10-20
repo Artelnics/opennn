@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
+
 #include "tests/common/pch.h"
 #include "opennn/dataset/image_processing.h"
 
@@ -18,6 +21,13 @@ TEST(ImageProcessingTest, IsSupportedImageFile)
     EXPECT_FALSE(is_supported_image_file("model.txt"));
     EXPECT_FALSE(is_supported_image_file("noextension"));
     EXPECT_FALSE(is_supported_image_file("archive.gif"));
+
+    // macOS metadata files are hidden and are not images, whatever their extension.
+    EXPECT_FALSE(is_supported_image_file("._photo.jpg"));
+    EXPECT_FALSE(is_supported_image_file("class/._photo.BMP"));
+    EXPECT_FALSE(is_supported_image_file(".hidden.png"));
+    EXPECT_FALSE(is_supported_image_file(".DS_Store"));
+    EXPECT_TRUE(is_supported_image_file(".cache/photo.png"));
 }
 
 TEST(ImageProcessingTest, ResizeIdentitySameSize)

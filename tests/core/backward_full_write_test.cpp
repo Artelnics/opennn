@@ -1,10 +1,5 @@
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   B A C K W A R D   F U L L   W R I T E   T E S T   S O U R C E
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 // average_pooling_3d_backward and upsampling_backward used to pre-zero their
 // gradient before launching, so a kernel that skipped an element still came out
@@ -340,13 +335,12 @@ TEST(BackwardFullWrite, UpsamplingGpuWritesEveryElementAndMatchesReference)
                 for (int c = 0; c < channels; ++c)
                 {
                     float accumulator = 0.0f;
-                    for (int dh = 0; dh < scale; ++dh)
-                        for (int dw = 0; dw < scale; ++dw)
-                        {
-                            const int oh = ih * scale + dh;
-                            const int ow = iw * scale + dw;
-                            accumulator += output_delta[size_t(((b * out_h + oh) * out_w + ow) * channels + c)];
-                        }
+                    for (int y = ih * scale; y < (ih + 1) * scale; ++y)
+                    {
+                        const int row_offset = (b * out_h + y) * out_w;
+                        for (int x = iw * scale; x < (iw + 1) * scale; ++x)
+                            accumulator += output_delta[size_t((row_offset + x) * channels + c)];
+                    }
                     expected[size_t(((b * in_h + ih) * in_w + iw) * channels + c)] = accumulator;
                 }
 
@@ -369,7 +363,3 @@ TEST(BackwardFullWrite, UpsamplingGpuWritesEveryElementAndMatchesReference)
 }
 
 #endif
-
-// OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.

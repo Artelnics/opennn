@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: LGPL-2.1-or-later
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 #pragma once
 
@@ -67,6 +67,14 @@ public:
                       float*,
                       FillMode,
                       ColumnContiguity column_contiguity = ColumnContiguity::Unknown) const override;
+
+    void fill_batch(Batch&, const vector<Index>&, const FeatureSelection&, FillMode) const override;
+
+    bool supports_byte_inputs() const override
+    {
+        return storage_mode == StorageMode::BinaryFile && !augmentation_policy.enabled
+            && input_shape.get_rank() == 3 && get_channels_number() >= 1 && get_channels_number() <= 4;
+    }
 
     void augment_inputs(span<float>, Index) const;
 

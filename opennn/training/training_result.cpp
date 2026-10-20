@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: LGPL-2.1-or-later
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 #include "opennn/training/training_result.h"
 
@@ -16,14 +16,17 @@ string TrainingResult::write_stopping_condition() const
 {
     if (!stopping_condition) return "None";
 
-    static constexpr const char* names[] = {"Minimum loss decrease",
-                                            "Loss goal",
-                                            "Maximum validation error increases",
-                                            "Maximum epochs number",
-                                            "Maximum training time"};
+    // Neural Designer translates these labels; keep them stable.
+    switch (*stopping_condition)
+    {
+    case StoppingCondition::LossGoal:                        return "Loss goal";
+    case StoppingCondition::MinimumLossDecrease:             return "Minimum loss decrease";
+    case StoppingCondition::MaximumValidationErrorIncreases: return "Maximum validation error increases";
+    case StoppingCondition::MaximumTime:                     return "Maximum training time";
+    case StoppingCondition::MaximumEpochsNumber:             return "Maximum epochs number";
+    }
 
-    const size_t index = size_t(*stopping_condition);
-    return index < size(names) ? names[index] : "";
+    return {};
 }
 
 float TrainingResult::get_training_error() const

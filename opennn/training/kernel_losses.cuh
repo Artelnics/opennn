@@ -1,4 +1,6 @@
-// SPDX-License-Identifier: LGPL-2.1-or-later
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
+
 #ifndef KERNEL_LOSSES_CUH
 #define KERNEL_LOSSES_CUH
 
@@ -16,9 +18,6 @@ void mean_squared_error_metrics_gradient_cuda(const Index n, const Index batch,
                                               TOut* delta, float* error_sum);
 
 template<typename T>
-void mean_absolute_error_gradient_cuda(const Index, T*, const float*, const T*, float);
-
-template<typename T>
 void minkowski_error_cuda(const Index, float*, const float*, const T*, const float);
 
 template<typename T>
@@ -26,6 +25,12 @@ void minkowski_error_gradient_cuda(const Index, T*, const float*, const T*, cons
 
 template<typename T>
 void binary_cross_entropy_cuda(const Index, float*, const float*, const T*, const float);
+
+template<typename T>
+void binary_cross_entropy_logits_cuda(const Index, float*, const float*, const T*);
+
+template<typename TIn, typename TOut>
+void binary_cross_entropy_logits_gradient_cuda(const Index, const TIn*, const float*, float, TOut*);
 
 template<typename T>
 void binary_cross_entropy_gradient_cuda(const Index, T*, const float*, const T*, const float, const float);

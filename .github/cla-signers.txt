@@ -1,0 +1,9 @@
+# GitHub accounts whose pull requests are covered by the Contributor License Agreement (CLA.md)
+# or by an agreement with Artificial Intelligence Techniques, S.L. One account per line; the
+# rest of the line is a note. Maintainers add an account once the agreement is on file.
+RoberLopez      founder
+RubyAM          agreement with the company
+alvaromcib      agreement with the company
+adri71          agreement with the company
+Siscanalysis    agreement with the company
+miguelbdiez     agreement with the company

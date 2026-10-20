@@ -21,7 +21,7 @@ MIT licence for this file.
 The licence permits use, copying, modification, redistribution and sale,
 provided the original copyright and permission notice accompany copies or
 substantial portions of the model. The GPT-2 conversion retains these terms;
-OpenNN's LGPL software licence does not replace them.
+OpenNN's software licence does not replace them.
 
 When redistributing the converted weights or tokenizer, include
 `LICENSE_GPT2.txt` and this provenance notice. The upstream licence asks users

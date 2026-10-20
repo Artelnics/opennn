@@ -1,11 +1,5 @@
-// SPDX-License-Identifier: LGPL-2.1-or-later
-//   OpenNN: Open Neural Networks Library
-//   www.opennn.net
-//
-//   N O R M A L I Z A T I O N   K E R N E L S
-//
-//   Artificial Intelligence Techniques SL
-//   artelnics@artelnics.com
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
 #include "opennn/core/cuda/kernel_common.cuh"
 #include "opennn/core/device_backend.h"
@@ -897,8 +891,15 @@ norm_forward_warp_kernel(const int N, const int D, const T* __restrict__ X, cons
             }
         }
 
-        if constexpr (HasMean) warp_reduce_sum2(local_sum, local_sum_sq);
-        else                   local_sum_sq = warp_reduce_sum(local_sum_sq);
+        if constexpr (HasMean)
+        {
+            // warp_reduce_sum2 leaves the complete sums in lane 0 only.
+            // Every lane normalizes its own vector below, so share those sums.
+            warp_reduce_sum2(local_sum, local_sum_sq);
+            local_sum = __shfl_sync(0xffffffff, local_sum, 0);
+            local_sum_sq = __shfl_sync(0xffffffff, local_sum_sq, 0);
+        }
+        else local_sum_sq = warp_reduce_sum(local_sum_sq);
 
         float mean = 0.0f, inv_var;
         if constexpr (HasMean)
@@ -986,8 +987,14 @@ norm_backward_warp_kernel(const int N, const int D, const T* __restrict__ dY, co
             }
         }
 
-        if constexpr (HasMean) warp_reduce_sum2(local_sum_d, local_sum_dx);
-        else                   local_sum_dx = warp_reduce_sum(local_sum_dx);
+        if constexpr (HasMean)
+        {
+            // The input gradient is written by every lane, not just lane 0.
+            warp_reduce_sum2(local_sum_d, local_sum_dx);
+            local_sum_d = __shfl_sync(0xffffffff, local_sum_d, 0);
+            local_sum_dx = __shfl_sync(0xffffffff, local_sum_dx, 0);
+        }
+        else local_sum_dx = warp_reduce_sum(local_sum_dx);
         const float mean_d = local_sum_d * inv_D;
         const float mean_dx = local_sum_dx * inv_D;
 
@@ -1285,7 +1292,3 @@ void rmsnorm_backward_cuda(const int N, const int D, const T* dY, const T* X, co
 
 OPENNN_INSTANTIATE_FLOAT_BF16(INSTANTIATE)
 #undef INSTANTIATE
-
-// OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2026 Artificial Intelligence Techniques, SL.
-// Licensed under the GNU Lesser General Public License v2.1 or later.
