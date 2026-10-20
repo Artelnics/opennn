@@ -18,7 +18,7 @@ def main():
     required = ["LICENSE.txt", "LICENSING.md", "THIRD_PARTY_NOTICES.txt", "README.md",
                 "build-info.json", "libjpeg-turbo/LICENSE.md", "libjpeg-turbo/README.ijg", "zlib/LICENSE"]
     metadata = json.loads((docs / "build-info.json").read_text())
-    if metadata["version"] != "26.0.1":
+    if metadata["version"] != "26.0.2":
         raise ValueError(f"Unexpected release version: {metadata['version']}")
     if metadata.get("cpu_target") not in {"NATIVE", "PORTABLE"}:
         raise ValueError(f"Missing or invalid CPU target: {metadata.get('cpu_target')}")

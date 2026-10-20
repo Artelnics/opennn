@@ -19,6 +19,14 @@ endif()
 
 find_dependency(Eigen3 5.0)
 
+if(@APPLE@)
+    find_dependency(OpenNNLibomp)
+endif()
+
+if(@OpenNN_ONEDNN_FOUND@)
+    find_dependency(OpenNNOneDNN)
+endif()
+
 if(@_opennn_needs_openmp@)
     find_dependency(OpenMP COMPONENTS CXX)
 endif()

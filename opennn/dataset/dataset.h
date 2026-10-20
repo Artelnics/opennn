@@ -298,6 +298,7 @@ public:
                               ColumnContiguity column_contiguity = ColumnContiguity::Unknown) const;
 
     virtual bool supports_bf16_inputs() const { return true; }
+    virtual bool supports_byte_inputs() const { return false; }
 
     FeatureSelection get_feature_selection() const;
 

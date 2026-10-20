@@ -8,6 +8,10 @@
 
 #include "opennn/core/cuda/kernel_prelude.cuh"
 
+void unpack_image_pixels_cuda(const uint8_t* input, void* output, bool output_bf16,
+                               Index count, int channels, const float* scale,
+                               const float* offset, cudaStream_t stream);
+
 void gather_rows_cuda(const float* matrix, const int* row_indices, void* out, const bool out_bf16,
                       const Index n_rows, const Index n_cols,
                       const Index matrix_cols, const Index col_offset,

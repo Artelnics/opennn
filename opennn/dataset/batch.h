@@ -8,6 +8,7 @@
 #include "opennn/core/thread_safe_queue.h"
 
 #include <atomic>
+#include <array>
 #include <mutex>
 #include <thread>
 #include <utility>
@@ -56,12 +57,32 @@ struct DeviceGather
 
 bool bf16_host_input_cast_enabled() noexcept;
 
+struct PackedImageInput
+{
+    int channels = 0;
+    array<float, 4> scale{};
+    array<float, 4> offset{};
+};
+
+// Where a CUDA batch keeps its samples. Prefetch batches are filled on the host
+// without device storage; eager training slots only receive uploads, so they
+// need no pinned host staging. CPU batches ignore the setting.
+enum class BatchStorage { HostAndDevice, HostOnly, DeviceOnly };
+
 struct Batch
 {
     Batch(Index,
           const Dataset*,
           const EffectiveConfig&,
-          bool prefetch_only = false);
+          BatchStorage);
+
+    Batch(Index new_batch_size,
+          const Dataset* new_dataset,
+          const EffectiveConfig& new_config,
+          bool prefetch_only = false)
+        : Batch(new_batch_size, new_dataset, new_config,
+                prefetch_only ? BatchStorage::HostOnly : BatchStorage::HostAndDevice) {}
+
     ~Batch();
 
     Batch(const Batch&)            = delete;
@@ -72,7 +93,16 @@ struct Batch
     void set(Index,
              const Dataset*,
              const EffectiveConfig&,
-             bool prefetch_only = false);
+             BatchStorage);
+
+    void set(Index new_batch_size,
+             const Dataset* new_dataset,
+             const EffectiveConfig& new_config,
+             bool prefetch_only = false)
+    {
+        set(new_batch_size, new_dataset, new_config,
+            prefetch_only ? BatchStorage::HostOnly : BatchStorage::HostAndDevice);
+    }
 
     void fill(const vector<Index>& sample_indices,
               const FeatureSelection&,
@@ -124,6 +154,11 @@ struct Batch
     TensorView target_view_cache;
 
     optional<DeviceGather> device_gather;
+    // Only the eager training staging pool opts in; ordinary batches retain
+    // their FP32 host representation, including CUDA graph staging.
+    bool pack_image_input = false;
+    optional<PackedImageInput> packed_image_input;
+    Buffer packed_input_staging{Device::CUDA};
     device::PinnedBuffer gather_indices_host;
     Buffer gather_indices_device{Device::CUDA};
 };

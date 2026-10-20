@@ -1,0 +1,42 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
+
+# A pull request can be merged only when its author is covered by the Contributor License
+# Agreement (CLA.md) or by an agreement with Artificial Intelligence Techniques, S.L.
+# Covered GitHub accounts are listed in .github/cla-signers.txt. The job reads the list from
+# the base branch and never checks out or runs the pull request's code.
+name: CLA
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  cla:
+    name: Contributor License Agreement
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check that the author is covered
+        env:
+          GH_TOKEN: ${{ github.token }}
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          if grep -v '^#' .github/cla-signers.txt | awk '{print $1}' | grep -qixF -- "$AUTHOR"; then
+            echo "$AUTHOR is covered."
+            exit 0
+          fi
+          if ! gh pr view "$PR" --repo "$GITHUB_REPOSITORY" --json comments --jq '.comments[].body' | grep -q 'cla-check'; then
+            gh pr comment "$PR" --repo "$GITHUB_REPOSITORY" --body "<!-- cla-check -->
+          Thank you for your contribution. Before it can be merged, please accept the [Contributor License Agreement](https://github.com/Artelnics/opennn/blob/master/CLA.md): fill in its signature table, including every Git name and email you commit from, and send it to artelnics@artelnics.com. You sign it once.
+
+          Employees and interns of Artificial Intelligence Techniques, S.L. are covered by their own agreements; a maintainer will add your account to the list."
+          fi
+          echo "::error::$AUTHOR is not in .github/cla-signers.txt. See CONTRIBUTING.md."
+          exit 1
