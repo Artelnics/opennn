@@ -8,6 +8,8 @@
 #include "opennn/dataset/tabular_dataset.h"
 #include "tests/common/test_helpers.h"
 
+#include <omp.h>
+
 using namespace opennn;
 
 TEST(BatchTest, FreshCpuBatchUsesConfiguredDevice)

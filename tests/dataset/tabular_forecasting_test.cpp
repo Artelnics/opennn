@@ -334,6 +334,30 @@ TEST(TabularForecasting, ModelInputVariablesReflectForecastingWindow)
     }
 }
 
+TEST(TabularForecasting, ModelTargetVariablesNameEveryStepAhead)
+{
+    const auto names = [](const TabularDataset& dataset)
+    {
+        vector<string> result;
+        for (const Variable& variable : dataset.get_model_target_variables())
+            result.push_back(variable.name);
+        return result;
+    };
+
+    TabularDataset multi_step(12, {1}, {2});
+    multi_step.set_variable_names({"input", "first", "second"});
+    multi_step.configure_forecasting(2, 2, true);
+    // The order fill_targets writes: every step of a feature before the next feature.
+    EXPECT_EQ(names(multi_step),
+              (vector<string>{"first_ahead_t1", "first_ahead_t2", "second_ahead_t1", "second_ahead_t2"}));
+    EXPECT_EQ(Index(names(multi_step).size()), multi_step.get_target_shape().size());
+
+    TabularDataset single_step(12, {1}, {2});
+    single_step.set_variable_names({"input", "first", "second"});
+    single_step.configure_forecasting(2, 3, false);
+    EXPECT_EQ(names(single_step), (vector<string>{"first", "second"}));
+}
+
 TEST(TabularForecasting, MultiTargetJsonRoundTripPreservesTargetLayout)
 {
     TabularDataset original(12, {1}, {2});

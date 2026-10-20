@@ -7,9 +7,10 @@
 name: CI
 
 # Commits that only change Markdown documentation skip CI.
+# Validate development changes through their PR; pushes validate published master.
 on:
   push:
-    branches: [dev, master]
+    branches: [master]
     paths-ignore: ["**.md"]
   pull_request:
     branches: [dev, master]

@@ -1976,6 +1976,25 @@ vector<Variable> TabularDataset::get_model_input_variables() const
     return model_variables;
 }
 
+vector<Variable> TabularDataset::get_model_target_variables() const
+{
+    if (!is_forecasting() || !multi_target) return Dataset::get_model_target_variables();
+    const vector<string> feature_names = get_feature_names(VariableRole::Target);
+    vector<Variable> model_variables;
+    model_variables.reserve(feature_names.size() * size_t(future_time_steps));
+
+    // fill_targets writes every step ahead of a feature before the next feature.
+    for (const string& feature_name : feature_names)
+        for (Index step = 1; step <= future_time_steps; ++step)
+            model_variables.emplace_back(
+                format("{}_ahead_t{}", feature_name.empty() ? "variable" : feature_name, step),
+                "Target",
+                VariableType::Numeric,
+                "None");
+
+    return model_variables;
+}
+
 void TabularDataset::fill_batch(Batch& batch,
                                 const vector<Index>& sample_indices,
                                 const FeatureSelection& features,
