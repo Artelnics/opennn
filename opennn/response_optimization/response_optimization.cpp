@@ -64,6 +64,22 @@ Index get_discrete_column(const Constraint& constraint)
          : -1;
 }
 
+
+// The quantity get_constraint_bounds bounds: the value itself or, for Integer and AllowedSet,
+// its offset from the nearest whole number or allowed value.
+
+float get_bounded_value(const Constraint& constraint, const float value)
+{
+    if (constraint.condition == Condition::Integer)
+        return value - round(value);
+
+    if (constraint.condition == Condition::AllowedSet)
+        return value - *ranges::min_element(constraint.values, {},
+                           [&](const float allowed) { return abs(double(value) - allowed); });
+
+    return value;
+}
+
 }
 
 
@@ -120,6 +136,13 @@ pair<float, float> ResponseOptimization::get_constraint_bounds(const Constraint&
     }
 
     return {-unbounded, unbounded};
+}
+
+
+bool ResponseOptimization::is_within_bounds(const pair<float, float>& bounds, const float value) const
+{
+    return value >= bounds.first - get_bound_tolerance(bounds.first)
+        && value <= bounds.second + get_bound_tolerance(bounds.second);
 }
 
 
@@ -406,14 +429,8 @@ struct ResponseOptimization::FeasibilityRepairSystem : Eigen::DenseFunctor<float
 
             values(i) = constraint.equation.evaluate(point, evaluated_output);
 
-            float value = values(i);
-            if (constraint.condition == Condition::Integer)
-                value -= round(value);
-            else if (constraint.condition == Condition::AllowedSet)
-                value -= *ranges::min_element(constraint.values, {},
-                            [&](const float allowed) { return abs(double(value) - allowed); });
-
-            residuals(i) = calculate_constraint_residual(constraint_bounds[size_t(i)], value);
+            residuals(i) = calculate_constraint_residual(constraint_bounds[size_t(i)],
+                                                         get_bounded_value(constraint, values(i)));
         }
 
         return evaluated_output;
@@ -544,14 +561,10 @@ struct ResponseOptimization::FeasibilityRepairSystem : Eigen::DenseFunctor<float
     {
         const auto [lower, upper] = bounds;
 
-        float crossed_bound = 0.0f;
+        // A value that is not a number is left to the callers, which test the values themselves.
+        if (isnan(value) || problem.is_within_bounds(bounds, value)) return 0.0f;
 
-        if (value < lower - problem.get_bound_tolerance(lower))
-            crossed_bound = lower;
-        else if (value > upper + problem.get_bound_tolerance(upper))
-            crossed_bound = upper;
-        else
-            return 0.0f;
+        const float crossed_bound = (value < lower) ? lower : upper;
 
         const float residual = value - crossed_bound;
         const float margin = problem.feasibility_margin_factor;
@@ -828,6 +841,32 @@ MatrixR ResponseOptimization::perform_response_optimization()
 }
 
 
+VectorB ResponseOptimization::calculate_feasibility(const MatrixR& inputs, const MatrixR& outputs) const
+{
+    throw_if(!network, "The neural network has not been set.");
+    throw_if(inputs.cols() != network->get_inputs_number() || outputs.cols() != network->get_outputs_number()
+          || outputs.rows() != inputs.rows(), "The inputs and outputs to check have incompatible dimensions.");
+
+    VectorB feasible = VectorB::Constant(inputs.rows(), true);
+
+    VectorR input;
+    VectorR output;
+
+    for (Index i = 0; i < inputs.rows(); i++)
+    {
+        input = inputs.row(i).transpose();
+        output = outputs.row(i).transpose();
+
+        for (const Constraint& constraint : constraints)
+            feasible(i) = feasible(i)
+                && is_within_bounds(get_constraint_bounds(constraint),
+                                    get_bounded_value(constraint, constraint.equation.evaluate(input, output)));
+    }
+
+    return feasible;
+}
+
+
 VectorR ResponseOptimization::calculate_random_input(const pair<VectorR, VectorR>& domain) const
 {
     VectorR input(domain.first.size());
@@ -984,85 +1023,49 @@ bool ResponseOptimization::is_objective(const string& name) const
 }
 
 
-ResponseOptimization::Objectives::Objectives(const ResponseOptimization& p)
-    : problem(p), utopian(VectorR::Zero(static_cast<Index>(p.objectives.size())))
-{}
-
-
-MatrixR ResponseOptimization::Objectives::extract(const MatrixR& inputs, const MatrixR& outputs) const
-{
-    const Index n_rows = inputs.rows();
-    const Index n_obj  = static_cast<Index>(problem.objectives.size());
-    MatrixR result(n_rows, n_obj);
-    for (Index r = 0; r < n_rows; ++r)
-    {
-        const VectorR inp = inputs.row(r).transpose();
-        const VectorR out = outputs.row(r).transpose();
-        for (Index o = 0; o < n_obj; ++o)
-            result(r, o) = problem.objectives[o].expression.evaluate(inp, out);
-    }
-    return result;
-}
-
-
-float ResponseOptimization::Objectives::utopian_and_sense(Index row, Index col) const
-{
-    if (row == 1)
-    {
-        const auto sense = problem.objectives[col].sense;
-        return sense == Objective::Sense::Maximize ? 1.0f : -1.0f;
-    }
-    return utopian(col);
-}
-
-
-void ResponseOptimization::Objectives::update_utopian_from_points(const MatrixR& values)
-{
-    const Index n_obj = static_cast<Index>(problem.objectives.size());
-    for (Index o = 0; o < n_obj; ++o)
-    {
-        const auto sense = problem.objectives[o].sense;
-        utopian(o) = sense == Objective::Sense::Maximize
-            ? values.col(o).maxCoeff()
-            : values.col(o).minCoeff();
-    }
-}
-
-
 pair<Index, VectorR> ResponseOptimization::get_advised_point(const MatrixR& results) const
 {
     if (results.rows() == 0 || objectives.empty())
         return {-1, VectorR{}};
 
     const Index inputs_number = network->get_inputs_number();
-    const MatrixR all_inputs  = results.leftCols(inputs_number);
-    const MatrixR all_outputs = results.rightCols(results.cols() - inputs_number);
+    const Index objectives_number = Index(objectives.size());
 
-    Objectives obj(*this);
-    const MatrixR obj_values = obj.extract(all_inputs, all_outputs);
-    obj.update_utopian_from_points(obj_values);
+    // Each row's distance from the best value of every objective, the highest when
+    // maximizing and the lowest otherwise, in units of that objective's spread.
+    MatrixR distances(results.rows(), objectives_number);
 
-    const Index n_obj = obj_values.cols();
-    VectorR scale(n_obj);
-    for (Index o = 0; o < n_obj; ++o)
+    VectorR input;
+    VectorR output;
+
+    for (Index i = 0; i < results.rows(); i++)
     {
-        const float range = obj_values.col(o).maxCoeff() - obj_values.col(o).minCoeff();
-        scale(o) = range > 0 ? 1.0f / range : 1.0f;
+        input = results.row(i).head(inputs_number).transpose();
+        output = results.row(i).tail(results.cols() - inputs_number).transpose();
+
+        for (Index j = 0; j < objectives_number; j++)
+            distances(i, j) = objectives[size_t(j)].expression.evaluate(input, output);
     }
 
-    Index best_idx = 0;
-    float best_dist = numeric_limits<float>::infinity();
-    for (Index r = 0; r < obj_values.rows(); ++r)
+    for (Index j = 0; j < objectives_number; j++)
     {
-        float dist = 0.0f;
-        for (Index o = 0; o < n_obj; ++o)
+        auto column = distances.col(j);
+        const float range = column.maxCoeff() - column.minCoeff();
+        const float best = (objectives[size_t(j)].sense == Objective::Sense::Maximize) ? column.maxCoeff() : column.minCoeff();
+        column = (column.array() - best)*(range > 0 ? 1.0f/range : 1.0f);
+    }
+
+    Index advised = 0;
+    float advised_distance = numeric_limits<float>::infinity();
+
+    for (Index i = 0; i < results.rows(); i++)
+        if (const float distance = distances.row(i).squaredNorm(); distance < advised_distance)
         {
-            const float d = (obj_values(r, o) - obj.utopian(o)) * scale(o);
-            dist += d * d;
+            advised_distance = distance;
+            advised = i;
         }
-        if (dist < best_dist) { best_dist = dist; best_idx = r; }
-    }
-    return {best_idx, results.row(best_idx).transpose()};
+
+    return {advised, results.row(advised).transpose()};
 }
 
 
