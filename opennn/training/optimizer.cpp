@@ -683,13 +683,12 @@ void Optimizer::set_names()
 {
     const Dataset* dataset = loss->get_dataset();
 
-    const vector<Variable> input_variables = dataset->get_variables(VariableRole::Input);
-    const vector<Variable> target_variables = dataset->get_variables(VariableRole::Target);
-
+    // One name per network input and output: a forecasting window expands each
+    // variable by lag and, with several steps ahead, by step.
     Network* network = loss->get_network();
 
-    network->set_input_variables(input_variables);
-    network->set_output_variables(target_variables);
+    network->set_input_variables(dataset->get_model_input_variables());
+    network->set_output_variables(dataset->get_model_target_variables());
 }
 
 void Optimizer::prepare_training_artifacts()

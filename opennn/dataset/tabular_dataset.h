@@ -62,6 +62,7 @@ public:
     MatrixR calculate_autocorrelations(Index = 10) const;
     Tensor3 calculate_cross_correlations(Index = 10) const;
     vector<Variable> get_model_input_variables() const override;
+    vector<Variable> get_model_target_variables() const override;
     bool sample_order_matters() const noexcept override { return is_forecasting(); }
     void resize_input_shape(Index) override;
 

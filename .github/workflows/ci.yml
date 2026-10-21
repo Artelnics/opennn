@@ -6,15 +6,16 @@
 # so a green run means "a user with a compiler and CMake can build this".
 name: CI
 
-# Commits that only change Markdown documentation skip CI.
+# Commits that only change Markdown documentation or the benchmarks' pinned Python
+# packages skip CI: no job builds or reads them.
 # Validate development changes through their PR; pushes validate published master.
 on:
   push:
     branches: [master]
-    paths-ignore: ["**.md"]
+    paths-ignore: ["**.md", "benchmarks/manifests/**"]
   pull_request:
     branches: [dev, master]
-    paths-ignore: ["**.md"]
+    paths-ignore: ["**.md", "benchmarks/manifests/**"]
   workflow_dispatch:
 
 concurrency:

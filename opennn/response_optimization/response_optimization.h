@@ -54,17 +54,6 @@ public:
     Index get_objectives_number() const { return static_cast<Index>(objectives.size()); }
     bool is_objective(const string& name) const;
 
-    struct Objectives
-    {
-        const ResponseOptimization& problem;
-        VectorR utopian;
-
-        explicit Objectives(const ResponseOptimization& p);
-        MatrixR extract(const MatrixR& inputs, const MatrixR& outputs) const;
-        float utopian_and_sense(Index row, Index col) const;
-        void update_utopian_from_points(const MatrixR& values);
-    };
-
     pair<Index, VectorR> get_advised_point(const MatrixR& results) const;
 
     void set_iterations_number(Index);
@@ -81,6 +70,11 @@ public:
     void set_feasibility_margin_factor(float);
 
     MatrixR perform_response_optimization();
+
+    // Whether each row of inputs, with the outputs beside it, meets every constraint within the
+    // tolerances the optimization grants its own candidates. The outputs need not come from the
+    // network: recorded targets screen a dataset by the same rule. The input domain is not checked.
+    VectorB calculate_feasibility(const MatrixR& inputs, const MatrixR& outputs) const;
 
 protected:
 
@@ -129,6 +123,8 @@ private:
     float get_bound_tolerance(float) const;
 
     pair<float, float> get_constraint_bounds(const Constraint&) const;
+
+    bool is_within_bounds(const pair<float, float>&, float) const;
 
     float numeric_tolerance = 1e-6f;
 
