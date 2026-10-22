@@ -914,18 +914,21 @@ ExpressionProgram build_program(const ExpressionNode& node)
 }
 
 
-float evaluate_program(const ExpressionProgram& program,
-                       const VectorR& inputs_row,
-                       const VectorR& outputs_row)
+template<typename Vector>
+typename Vector::Scalar evaluate_program(const ExpressionProgram& program,
+                                         const Vector& inputs_row,
+                                         const Vector& outputs_row)
 {
-    if (program.operations.empty()) return 0.0f;
+    using Scalar = typename Vector::Scalar;
 
-    thread_local vector<float> buffer;
+    if (program.operations.empty()) return Scalar(0);
+
+    thread_local vector<Scalar> buffer;
 
     if (int(buffer.size()) < program.stack_depth)
         buffer.resize(size_t(program.stack_depth));
 
-    float* const stack = buffer.data();
+    Scalar* const stack = buffer.data();
 
     int top = -1;
 
@@ -934,7 +937,7 @@ float evaluate_program(const ExpressionProgram& program,
         switch (operation.kind)
         {
             using enum ExpressionOp::Kind;
-        case PushConst:  stack[++top] = operation.constant; break;
+        case PushConst:  stack[++top] = Scalar(operation.constant); break;
         case PushInput:  stack[++top] = inputs_row(operation.index); break;
         case PushOutput: stack[++top] = outputs_row(operation.index); break;
 
@@ -1048,7 +1051,8 @@ ExpressionNodePtr parse_expression_tree(const string& expression,
 }
 
 
-double evaluate_symmetric_polynomial(const CompiledExpression& expression, const VectorR& point)
+template<typename Vector>
+double evaluate_symmetric_polynomial(const CompiledExpression& expression, const Vector& point)
 {
     const size_t order = size_t(expression.symmetric_order);
 
@@ -1075,7 +1079,8 @@ double evaluate_symmetric_polynomial(const CompiledExpression& expression, const
 }
 
 
-void evaluate_symmetric_gradient(const CompiledExpression& expression, const VectorR& point, VectorR& gradient)
+template<typename Vector>
+void evaluate_symmetric_gradient(const CompiledExpression& expression, const Vector& point, Vector& gradient)
 {
     const size_t order = size_t(expression.symmetric_order);
     const size_t width = order + 1;
@@ -1143,8 +1148,33 @@ void evaluate_symmetric_gradient(const CompiledExpression& expression, const Vec
 
         const auto& [column, inverse_span] = expression.symmetric_terms[j];
 
-        gradient(column) = float(chain*scaled[j]*inverse_span*leave_one_out);
+        gradient(column) = typename Vector::Scalar(chain*scaled[j]*inverse_span*leave_one_out);
     }
+}
+
+
+template<typename Vector>
+typename Vector::Scalar evaluate_compiled(const CompiledExpression& expression,
+                                          const Vector& inputs_row,
+                                          const Vector& outputs_row)
+{
+    using Scalar = typename Vector::Scalar;
+
+    if (expression.symmetric_order > 0)
+        return Scalar(expression.symmetric_scale*sqrt(evaluate_symmetric_polynomial(expression, inputs_row)));
+
+    if (expression.linearity == ExpressionLinearity::Nonlinear)
+        return evaluate_program(expression.program, inputs_row, outputs_row);
+
+    Scalar result = Scalar(expression.linear_constant);
+
+    for (const auto& [column, coefficient] : expression.linear_input_terms)
+        result += Scalar(coefficient) * inputs_row(column);
+
+    for (const auto& [column, coefficient] : expression.linear_output_terms)
+        result += Scalar(coefficient) * outputs_row(column);
+
+    return result;
 }
 
 }
@@ -1152,21 +1182,13 @@ void evaluate_symmetric_gradient(const CompiledExpression& expression, const Vec
 
 float CompiledExpression::evaluate(const VectorR& inputs_row, const VectorR& outputs_row) const
 {
-    if (symmetric_order > 0)
-        return float(symmetric_scale*sqrt(evaluate_symmetric_polynomial(*this, inputs_row)));
+    return evaluate_compiled(*this, inputs_row, outputs_row);
+}
 
-    if (linearity == ExpressionLinearity::Nonlinear)
-        return evaluate_program(program, inputs_row, outputs_row);
 
-    float result = linear_constant;
-
-    for (const auto& [column, coefficient] : linear_input_terms)
-        result += coefficient * inputs_row(column);
-
-    for (const auto& [column, coefficient] : linear_output_terms)
-        result += coefficient * outputs_row(column);
-
-    return result;
+double CompiledExpression::evaluate_double(const Eigen::VectorXd& inputs_row, const Eigen::VectorXd& outputs_row) const
+{
+    return evaluate_compiled(*this, inputs_row, outputs_row);
 }
 
 
@@ -1333,10 +1355,14 @@ bool is_bare_variable(const CompiledExpression& expression)
 }
 
 
-void evaluate_input_gradient(const CompiledExpression& expression,
-                             const VectorR& point,
-                             const VectorR& output,
-                             VectorR& gradient)
+namespace
+{
+
+template<typename Vector>
+void calculate_input_gradient(const CompiledExpression& expression,
+                              const Vector& point,
+                              const Vector& output,
+                              Vector& gradient)
 {
     gradient.setZero(point.size());
 
@@ -1344,10 +1370,47 @@ void evaluate_input_gradient(const CompiledExpression& expression,
         evaluate_symmetric_gradient(expression, point, gradient);
     else if (expression.linearity == ExpressionLinearity::Linear)
         for (const auto& [column, coefficient] : expression.linear_input_terms)
-            gradient(column) = coefficient;
+            gradient(column) = typename Vector::Scalar(coefficient);
     else
         for (const auto& [column, program] : expression.input_gradient)
             gradient(column) = evaluate_program(program, point, output);
+}
+
+
+template<typename Vector>
+void calculate_output_gradient(const CompiledExpression& expression,
+                               const Vector& point,
+                               const Vector& output,
+                               Vector& gradient)
+{
+    gradient.setZero(output.size());
+
+    if (expression.linearity == ExpressionLinearity::Linear)
+        for (const auto& [column, coefficient] : expression.linear_output_terms)
+            gradient(column) = typename Vector::Scalar(coefficient);
+    else
+        for (const auto& [column, program] : expression.output_gradient)
+            gradient(column) = evaluate_program(program, point, output);
+}
+
+}
+
+
+void evaluate_input_gradient(const CompiledExpression& expression,
+                             const VectorR& point,
+                             const VectorR& output,
+                             VectorR& gradient)
+{
+    calculate_input_gradient(expression, point, output, gradient);
+}
+
+
+void evaluate_input_gradient(const CompiledExpression& expression,
+                             const Eigen::VectorXd& point,
+                             const Eigen::VectorXd& output,
+                             Eigen::VectorXd& gradient)
+{
+    calculate_input_gradient(expression, point, output, gradient);
 }
 
 
@@ -1366,14 +1429,16 @@ void evaluate_output_gradient(const CompiledExpression& expression,
                               const VectorR& output,
                               VectorR& gradient)
 {
-    gradient.setZero(output.size());
+    calculate_output_gradient(expression, point, output, gradient);
+}
 
-    if (expression.linearity == ExpressionLinearity::Linear)
-        for (const auto& [column, coefficient] : expression.linear_output_terms)
-            gradient(column) = coefficient;
-    else
-        for (const auto& [column, program] : expression.output_gradient)
-            gradient(column) = evaluate_program(program, point, output);
+
+void evaluate_output_gradient(const CompiledExpression& expression,
+                              const Eigen::VectorXd& point,
+                              const Eigen::VectorXd& output,
+                              Eigen::VectorXd& gradient)
+{
+    calculate_output_gradient(expression, point, output, gradient);
 }
 
 }

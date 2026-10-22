@@ -150,6 +150,10 @@ Both use analytical constraint Jacobians for supported CPU FP32 sequential
 dense networks, including common activations, affine scaling/unscaling and
 clamping. This logic stays in `response_optimization`; unsupported networks,
 unusable derivatives and nonsmooth boundaries use finite differences.
+`FeasibilityRepairSystem::solve_double` runs the same repair with the point, the constraint values,
+their derivatives and the solver state in double precision (the network still evaluates in float),
+for constraints that float cannot resolve, such as long sums of nearly cancelling terms or gaps below
+a float step. Rounding its point to float can lose that feasibility. `solve` is unchanged.
 There is no automatic solver fallback. A failed repair does not prove infeasibility.
 Failed sampling reports the worst tolerance-scaled miss of the best checked
 rounded candidate with a constraint violation, when finite values are available. These

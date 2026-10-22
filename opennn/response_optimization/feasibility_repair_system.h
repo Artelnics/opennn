@@ -25,29 +25,57 @@ public:
 
     pair<VectorR, VectorR> solve(VectorR);
 
+    // The same repair carried out in double precision: the point, the constraint values, their residuals
+    // and derivatives, and the solver's state. The network still evaluates in float. It reaches points
+    // that float cannot resolve, such as long sums of nearly cancelling terms or gaps below a float step;
+    // rounding its point to float can lose that feasibility.
+    pair<Eigen::VectorXd, VectorR> solve_double(Eigen::VectorXd);
+
     const pair<double, string>& get_closest_failure() const { return closest_failure; }
 
 private:
 
     using Condition = Constraint::Condition;
 
-    struct LevenbergMarquardtFunctor;
+    template<typename Scalar> using Vector = Eigen::Matrix<Scalar, Eigen::Dynamic, 1>;
+    template<typename Scalar> using Matrix = Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic, Layout>;
 
-    void solve_levenberg_marquardt(VectorR&, MatrixR);
-    void solve_gauss_newton(VectorR&, MatrixR);
+    template<typename Scalar>
+    struct Workspace
+    {
+        Vector<Scalar> box_scales;
+        Vector<Scalar> row_scales;
+        Vector<Scalar> row_values;
+        Vector<Scalar> row_residuals;
+        Vector<Scalar> evaluated_point;
+        VectorR evaluated_output;
+    };
 
-    bool round_discrete(VectorR&) const;
-    const VectorR& evaluate_outputs(const VectorR&);
-    void evaluate_constraints(const VectorR&);
-    void update_closest_failure();
-    float calculate_constraint_value(Index) const;
-    pair<float, float> calculate_constraint_residual(Index) const;
+    template<typename Scalar> struct LevenbergMarquardtFunctor;
+
+    template<typename Scalar> Workspace<Scalar>& get_workspace();
+    template<typename Scalar> const Workspace<Scalar>& get_workspace() const;
+    template<typename Scalar> const pair<Vector<Scalar>, Vector<Scalar>>& get_bounds() const;
+
+    template<typename Scalar> pair<Vector<Scalar>, VectorR> repair(Vector<Scalar>);
+    template<typename Scalar> void solve_levenberg_marquardt(Vector<Scalar>&, Matrix<Scalar>);
+    template<typename Scalar> void solve_gauss_newton(Vector<Scalar>&, Matrix<Scalar>);
+
+    template<typename Scalar> bool round_discrete(Vector<Scalar>&) const;
+    template<typename Scalar> const VectorR& evaluate_outputs(const Vector<Scalar>&);
+    template<typename Scalar> void evaluate_constraints(const Vector<Scalar>&);
+    template<typename Scalar> void update_closest_failure();
+    template<typename Scalar> Scalar calculate_constraint_value(Index) const;
+    template<typename Scalar> pair<Scalar, Scalar> calculate_constraint_residual(Index) const;
     float get_bound_tolerance(float) const;
 
     MatrixR calculate_network_jacobian(const VectorR&, const VectorR&) const;
-    MatrixR calculate_jacobian(const VectorR&, const VectorR&, const VectorR&, const VectorR& = {}) const;
-    void calculate_numerical_jacobian(const VectorR&, const VectorR&, const VectorR&,
-                                      const vector<Index>&, MatrixR&) const;
+    template<typename Scalar>
+    Matrix<Scalar> calculate_jacobian(const Vector<Scalar>&, const Vector<Scalar>&, const VectorR&,
+                                      const Vector<Scalar>& = {}) const;
+    template<typename Scalar>
+    void calculate_numerical_jacobian(const Vector<Scalar>&, const Vector<Scalar>&, const Vector<Scalar>&,
+                                      const vector<Index>&, Matrix<Scalar>&) const;
 
     Network* network;
     span<const Constraint> constraints;
@@ -65,13 +93,11 @@ private:
     static constexpr float difference_step = 1e-3f;
     static constexpr float discrete_difference_step = 0.25f;
     static constexpr float box_weight = 100.0f;
+    static constexpr double double_solver_tolerance = 1e-10;
 
-    VectorR box_scales;
-    VectorR row_scales;
-    VectorR row_values;
-    VectorR row_residuals;
-    VectorR evaluated_point;
-    VectorR evaluated_output;
+    pair<Eigen::VectorXd, Eigen::VectorXd> double_bounds;
+    Workspace<float> float_workspace;
+    Workspace<double> double_workspace;
     pair<double, string> closest_failure{numeric_limits<double>::infinity(), {}};
 };
 

@@ -16,6 +16,41 @@
 namespace opennn
 {
 
+namespace
+{
+
+// The network reads points in float, whatever the precision of the repair.
+template<typename Scalar>
+decltype(auto) as_float(const Eigen::Matrix<Scalar, Eigen::Dynamic, 1>& values)
+{
+    if constexpr (is_same_v<Scalar, float>) return (values);
+    else return VectorR(values.template cast<float>());
+}
+
+
+// The network's float outputs, as the rows of a repair in Scalar read them.
+template<typename Scalar>
+decltype(auto) as_scalar(const VectorR& values)
+{
+    if constexpr (is_same_v<Scalar, float>) return (values);
+    else return Eigen::Matrix<Scalar, Eigen::Dynamic, 1>(values.template cast<Scalar>());
+}
+
+
+float evaluate_row(const CompiledExpression& expression, const VectorR& point, const VectorR& output)
+{
+    return expression.evaluate(point, output);
+}
+
+
+double evaluate_row(const CompiledExpression& expression, const Eigen::VectorXd& point, const Eigen::VectorXd& output)
+{
+    return expression.evaluate_double(point, output);
+}
+
+}
+
+
 FeasibilityRepairSystem::FeasibilityRepairSystem(Network* new_network, span<const Constraint> new_constraints,
                                                pair<VectorR, VectorR> domain, const Index rounds,
                                                const Index evaluations, const float tolerance, const float margin,
@@ -54,6 +89,7 @@ void FeasibilityRepairSystem::set_domain(pair<VectorR, VectorR> domain)
     throw_if(!(domain.second - domain.first).allFinite() || (domain.first.array() > domain.second.array()).any(),
              "Feasibility repair domain must have finite, ordered bounds.");
     input_bounds = move(domain);
+    double_bounds = {input_bounds.first.cast<double>(), input_bounds.second.cast<double>()};
 }
 
 
@@ -65,58 +101,86 @@ void FeasibilityRepairSystem::set_solver(const Solver new_solver)
 }
 
 
+template<typename Scalar>
+FeasibilityRepairSystem::Workspace<Scalar>& FeasibilityRepairSystem::get_workspace()
+{
+    if constexpr (is_same_v<Scalar, float>) return float_workspace;
+    else return double_workspace;
+}
+
+
+template<typename Scalar>
+const FeasibilityRepairSystem::Workspace<Scalar>& FeasibilityRepairSystem::get_workspace() const
+{
+    if constexpr (is_same_v<Scalar, float>) return float_workspace;
+    else return double_workspace;
+}
+
+
+template<typename Scalar>
+const pair<FeasibilityRepairSystem::Vector<Scalar>, FeasibilityRepairSystem::Vector<Scalar>>&
+FeasibilityRepairSystem::get_bounds() const
+{
+    if constexpr (is_same_v<Scalar, float>) return input_bounds;
+    else return double_bounds;
+}
+
+
 float FeasibilityRepairSystem::get_bound_tolerance(const float bound) const
 {
     return max(EPSILON, abs(bound)*numeric_tolerance);
 }
 
 
-float FeasibilityRepairSystem::calculate_constraint_value(const Index i) const
+template<typename Scalar>
+Scalar FeasibilityRepairSystem::calculate_constraint_value(const Index i) const
 {
     const Constraint& constraint = constraints[size_t(i)];
-    const float value = row_values(i);
+    const Scalar value = get_workspace<Scalar>().row_values(i);
     if (constraint.condition == Condition::Integer) return value - round(value);
     if (constraint.condition == Condition::AllowedSet)
-        return value - *ranges::min_element(constraint.values, {},
-            [&](const float allowed) { return abs(double(value) - allowed); });
+        return value - Scalar(*ranges::min_element(constraint.values, {},
+            [&](const float allowed) { return abs(double(value) - allowed); }));
     return value;
 }
 
 
-pair<VectorR, VectorR> FeasibilityRepairSystem::solve(VectorR point)
+template<typename Scalar>
+pair<FeasibilityRepairSystem::Vector<Scalar>, VectorR> FeasibilityRepairSystem::repair(Vector<Scalar> point)
 {
-    const auto& [lower_bounds, upper_bounds] = input_bounds;
+    const auto& [lower_bounds, upper_bounds] = get_bounds<Scalar>();
+    Workspace<Scalar>& work = get_workspace<Scalar>();
 
     throw_if(point.size() != lower_bounds.size(), "Feasibility repair point has the wrong size.");
-    evaluated_point.resize(0);
-    evaluated_output.resize(0);
+    work.evaluated_point.resize(0);
+    work.evaluated_output.resize(0);
 
-    VectorR previous;
-    VectorR before_previous;
+    Vector<Scalar> previous;
+    Vector<Scalar> before_previous;
 
     for (Index i = 0; ; i++)
     {
         if (!point.allFinite()) return {};
 
-        if (!round_discrete(point) || !point.allFinite()) return {};
+        if (!round_discrete<Scalar>(point) || !point.allFinite()) return {};
 
-        evaluate_constraints(point);
+        evaluate_constraints<Scalar>(point);
 
-        if (!row_values.allFinite() || !row_residuals.allFinite()) return {};
+        if (!work.row_values.allFinite() || !work.row_residuals.allFinite()) return {};
 
-        if ((row_residuals.array() == 0.0f).all())
+        if ((work.row_residuals.array() == Scalar(0)).all())
         {
-            if (!evaluate_outputs(point).allFinite()) return {};
-            return {move(point), move(evaluated_output)};
+            if (!evaluate_outputs<Scalar>(point).allFinite()) return {};
+            return {move(point), move(work.evaluated_output)};
         }
 
-        update_closest_failure();
+        update_closest_failure<Scalar>();
 
         if (i == feasibility_rounds) return {};
 
         if (previous.size() == point.size()
          && ((point - previous).cwiseAbs().array()
-             <= numeric_tolerance*(upper_bounds - lower_bounds).cwiseMax(EPSILON).array()).all())
+             <= Scalar(numeric_tolerance)*(upper_bounds - lower_bounds).cwiseMax(Scalar(EPSILON)).array()).all())
             return {};
 
         if (before_previous.size() == point.size() && (before_previous.array() == point.array()).all())
@@ -125,25 +189,27 @@ pair<VectorR, VectorR> FeasibilityRepairSystem::solve(VectorR point)
         before_previous.swap(previous);
         previous = point;
 
-        if (i == 0) box_scales = (upper_bounds - lower_bounds).cwiseMax(EPSILON)/box_weight;
-        MatrixR initial_jacobian = calculate_jacobian(point, row_values, evaluated_output);
-        row_scales = initial_jacobian.rowwise().stableNorm();
+        if (i == 0) work.box_scales = (upper_bounds - lower_bounds).cwiseMax(Scalar(EPSILON))/Scalar(box_weight);
+        Matrix<Scalar> initial_jacobian = calculate_jacobian<Scalar>(point, work.row_values, work.evaluated_output);
+        work.row_scales = initial_jacobian.rowwise().stableNorm();
 
-        row_scales = (row_scales.array().isFinite() && (row_scales.array() > EPSILON))
-                     .select(row_scales.array(), 1.0f);
+        work.row_scales = (work.row_scales.array().isFinite() && (work.row_scales.array() > Scalar(EPSILON)))
+                          .select(work.row_scales.array(), Scalar(1));
 
-        if (solver == Solver::GaussNewton) solve_gauss_newton(point, move(initial_jacobian));
-        else solve_levenberg_marquardt(point, move(initial_jacobian));
+        if (solver == Solver::GaussNewton) solve_gauss_newton<Scalar>(point, move(initial_jacobian));
+        else solve_levenberg_marquardt<Scalar>(point, move(initial_jacobian));
     }
 }
 
 
-bool FeasibilityRepairSystem::round_discrete(VectorR& point) const
+template<typename Scalar>
+bool FeasibilityRepairSystem::round_discrete(Vector<Scalar>& point) const
 {
-    const auto& [lower_bounds, upper_bounds] = input_bounds;
+    const auto& bounds = get_bounds<Scalar>();
+    const auto& [lower_bounds, upper_bounds] = bounds;
 
-    const auto always_on = [&bounds = input_bounds](const Index column)
-        { return bounds.first(column) > 0.0f || bounds.second(column) < 0.0f; };
+    const auto always_on = [&bounds](const Index column)
+        { return bounds.first(column) > Scalar(0) || bounds.second(column) < Scalar(0); };
 
 
     for (const Constraint& constraint : constraints)
@@ -160,7 +226,7 @@ bool FeasibilityRepairSystem::round_discrete(VectorR& point) const
         if (budget < members.size() && always_on(members[budget].first)) return false;
 
         for (size_t j = budget; j < members.size(); j++)
-            point(members[j].first) = 0.0f;
+            point(members[j].first) = Scalar(0);
     }
 
     point = point.cwiseMax(lower_bounds).cwiseMin(upper_bounds);
@@ -170,31 +236,32 @@ bool FeasibilityRepairSystem::round_discrete(VectorR& point) const
         Index category = 0;
 
         const bool none_open =
-            (upper_bounds.segment(first_column, categories_number).array() > 0.0f)
-            .select(point.segment(first_column, categories_number).array(), -MAX).maxCoeff(&category) == -MAX;
+            (upper_bounds.segment(first_column, categories_number).array() > Scalar(0))
+            .select(point.segment(first_column, categories_number).array(), Scalar(-MAX)).maxCoeff(&category)
+            == Scalar(-MAX);
 
         if (none_open) return false;
 
         point.segment(first_column, categories_number).setZero();
 
-        point(first_column + category) = 1.0f;
+        point(first_column + category) = Scalar(1);
     }
 
     for (const Constraint& constraint : constraints)
         if (const Index column = constraint.get_discrete_column(); column >= 0)
         {
-            const float value = point(column);
+            const Scalar value = point(column);
 
-            const float lower = lower_bounds(column);
-            const float upper = upper_bounds(column);
+            const Scalar lower = lower_bounds(column);
+            const Scalar upper = upper_bounds(column);
 
             if (constraint.condition == Condition::Integer && ceil(lower) > floor(upper)) return false;
 
             point(column) = constraint.condition == Condition::Integer
                           ? clamp(round(value), ceil(lower), floor(upper))
-                          : *ranges::min_element(constraint.values, {}, [&](const float allowed)
+                          : Scalar(*ranges::min_element(constraint.values, {}, [&](const float allowed)
                                 { return (allowed < lower || allowed > upper)
-                                       ? numeric_limits<double>::infinity() : abs(double(allowed) - value); });
+                                       ? numeric_limits<double>::infinity() : abs(double(allowed) - value); }));
         }
 
     if ((point.array() < lower_bounds.array()).any() || (point.array() > upper_bounds.array()).any()) return false;
@@ -202,62 +269,74 @@ bool FeasibilityRepairSystem::round_discrete(VectorR& point) const
     for (const auto& [first, size] : categorical_blocks)
     {
         const auto block = point.segment(first, size).array();
-        if (!(block == 0.0f || block == 1.0f).all() || block.sum() != 1.0f) return false;
+        if (!(block == Scalar(0) || block == Scalar(1)).all() || block.sum() != Scalar(1)) return false;
     }
 
     return true;
 }
 
 
-const VectorR& FeasibilityRepairSystem::evaluate_outputs(const VectorR& point)
+template<typename Scalar>
+const VectorR& FeasibilityRepairSystem::evaluate_outputs(const Vector<Scalar>& point)
 {
-    if (evaluated_output.size() == 0 || evaluated_point.size() != point.size()
-     || (evaluated_point.array() != point.array()).any())
+    Workspace<Scalar>& work = get_workspace<Scalar>();
+
+    if (work.evaluated_output.size() == 0 || work.evaluated_point.size() != point.size()
+     || (work.evaluated_point.array() != point.array()).any())
     {
-        evaluated_output = network->calculate_outputs(point.transpose()).row(0).transpose();
-        evaluated_point = point;
+        work.evaluated_output = network->calculate_outputs(as_float(point).transpose()).row(0).transpose();
+        work.evaluated_point = point;
     }
 
-    return evaluated_output;
+    return work.evaluated_output;
 }
 
 
-void FeasibilityRepairSystem::evaluate_constraints(const VectorR& point)
+template<typename Scalar>
+void FeasibilityRepairSystem::evaluate_constraints(const Vector<Scalar>& point)
 {
-    if (constraints_read_output) evaluate_outputs(point);
+    Workspace<Scalar>& work = get_workspace<Scalar>();
+
+    if (constraints_read_output) evaluate_outputs<Scalar>(point);
 
     const Index rows_number = Index(constraints.size());
 
-    row_values.resize(rows_number);
-    row_residuals.resize(rows_number);
+    work.row_values.resize(rows_number);
+    work.row_residuals.resize(rows_number);
+
+    const auto& output = as_scalar<Scalar>(work.evaluated_output);
 
     for (Index i = 0; i < rows_number; i++)
     {
         const Constraint& constraint = constraints[size_t(i)];
 
-        row_values(i) = constraint.equation.evaluate(point, evaluated_output);
+        work.row_values(i) = evaluate_row(constraint.equation, point, output);
 
-        row_residuals(i) = calculate_constraint_residual(i).first;
+        work.row_residuals(i) = calculate_constraint_residual<Scalar>(i).first;
     }
 }
 
 
+template<typename Scalar>
 void FeasibilityRepairSystem::update_closest_failure()
 {
+    const Workspace<Scalar>& work = get_workspace<Scalar>();
+
     Index worst = -1;
     double worst_ratio = 0.0;
     double worst_gap = 0.0;
     double worst_tolerance = 0.0;
     float worst_bound = 0.0f;
 
-    for (Index i = 0; i < row_values.size(); i++)
+    for (Index i = 0; i < work.row_values.size(); i++)
     {
-        if (row_residuals(i) == 0.0f) continue;
+        if (work.row_residuals(i) == Scalar(0)) continue;
         const Constraint& constraint = constraints[size_t(i)];
         const auto [lower, upper] = constraint.get_bounds(numeric_tolerance, constraint_tolerance);
-        const float bound = row_residuals(i) < 0.0f ? lower : upper;
+        const float bound = work.row_residuals(i) < Scalar(0) ? lower : upper;
         const bool discrete = is_one_of(constraint.condition, Condition::Integer, Condition::AllowedSet);
-        const double gap = discrete ? abs(double(calculate_constraint_value(i))) : abs(double(row_values(i)) - bound);
+        const double gap = discrete ? abs(double(calculate_constraint_value<Scalar>(i)))
+                                    : abs(double(work.row_values(i)) - bound);
         const double tolerance = get_bound_tolerance(bound) + (discrete ? double(constraint_tolerance) : 0.0);
         const double ratio = gap/tolerance;
         if (ratio <= worst_ratio) continue;
@@ -272,15 +351,16 @@ void FeasibilityRepairSystem::update_closest_failure()
     const Constraint& constraint = constraints[size_t(worst)];
     static constexpr const char* names[] = {"Equal", "Between", "GreaterEqual", "LessEqual", "Greater", "Less",
                                            "AllowedSet", "Integer", "Cardinality"};
+    const Scalar value = work.row_values(worst);
     ostringstream message;
-    message << setprecision(numeric_limits<float>::max_digits10)
+    message << setprecision(numeric_limits<Scalar>::max_digits10)
             << "Best checked rounded candidate with a constraint violation (smallest maximum miss/tolerance): constraint '"
             << constraint.equation.text << "' (" << names[size_t(constraint.condition)] << "): "
-            << (constraint.condition == Condition::Cardinality ? "cardinality measure " : "value ") << row_values(worst);
-    if (constraint.condition == Condition::Integer) message << ", nearest integer " << round(row_values(worst));
+            << (constraint.condition == Condition::Cardinality ? "cardinality measure " : "value ") << value;
+    if (constraint.condition == Condition::Integer) message << ", nearest integer " << round(value);
     else if (constraint.condition == Condition::AllowedSet)
         message << ", nearest allowed value " << *ranges::min_element(constraint.values, {},
-            [&](const float allowed) { return abs(double(row_values(worst)) - allowed); });
+            [&](const float allowed) { return abs(double(value) - allowed); });
     else message << ", required " << (constraint.condition == Condition::Equal ? "value " : "bound ") << worst_bound;
     message << ", absolute miss " << worst_gap << " against tolerance " << worst_tolerance
             << " (" << worst_ratio << " times tolerance). ";
@@ -440,48 +520,50 @@ MatrixR FeasibilityRepairSystem::calculate_network_jacobian(const VectorR& point
 }
 
 
-MatrixR FeasibilityRepairSystem::calculate_jacobian(const VectorR& point,
-                                                   const VectorR& values,
-                                                   const VectorR& output,
-                                                   const VectorR& residuals) const
+template<typename Scalar>
+FeasibilityRepairSystem::Matrix<Scalar> FeasibilityRepairSystem::calculate_jacobian(const Vector<Scalar>& point,
+                                                                                   const Vector<Scalar>& values,
+                                                                                   const VectorR& output,
+                                                                                   const Vector<Scalar>& residuals) const
 {
-    const auto& [lower_bounds, upper_bounds] = input_bounds;
+    const auto& [lower_bounds, upper_bounds] = get_bounds<Scalar>();
 
     const bool every_row = residuals.size() != values.size();
 
-    VectorR steps = (upper_bounds - lower_bounds).cwiseMax(0.0f);
+    Vector<Scalar> steps = (upper_bounds - lower_bounds).cwiseMax(Scalar(0));
 
     for (const auto& [first_column, categories_number] : categorical_blocks)
         steps.segment(first_column, categories_number).setZero();
 
-    MatrixR jacobian = MatrixR::Zero(values.size(), point.size());
+    Matrix<Scalar> jacobian = Matrix<Scalar>::Zero(values.size(), point.size());
 
     vector<Index> probed_rows;
 
-    VectorR gradient(point.size());
-    VectorR output_gradient;
+    const auto& scalar_output = as_scalar<Scalar>(output);
+    Vector<Scalar> gradient(point.size());
+    Vector<Scalar> output_gradient;
     MatrixR network_jacobian;
     bool network_jacobian_evaluated = false;
 
     for (Index i = 0; i < values.size(); i++)
     {
-        if (!every_row && residuals(i) == 0.0f) continue;
+        if (!every_row && residuals(i) == Scalar(0)) continue;
 
         const CompiledExpression& expression = constraints[size_t(i)].equation;
 
         const bool reads_output = is_output_coupled(expression);
         if (reads_output && !network_jacobian_evaluated)
         {
-            network_jacobian = calculate_network_jacobian(point, output);
+            network_jacobian = calculate_network_jacobian(as_float(point), output);
             network_jacobian_evaluated = true;
         }
         if (!reads_output || network_jacobian.size() != 0)
         {
-            evaluate_input_gradient(expression, point, output, gradient);
+            evaluate_input_gradient(expression, point, scalar_output, gradient);
             if (reads_output)
             {
-                evaluate_output_gradient(expression, point, output, output_gradient);
-                gradient += network_jacobian.transpose()*output_gradient;
+                evaluate_output_gradient(expression, point, scalar_output, output_gradient);
+                gradient += network_jacobian.transpose().template cast<Scalar>()*output_gradient;
             }
 
             if (gradient.allFinite())
@@ -496,50 +578,51 @@ MatrixR FeasibilityRepairSystem::calculate_jacobian(const VectorR& point,
     }
 
     for (Index j = 0; j < point.size(); j++)
-        if (steps(j) == 0.0f)
+        if (steps(j) == Scalar(0))
             jacobian.col(j).setZero();
 
     if (probed_rows.empty()) return jacobian;
 
     for (Index j = 0; j < steps.size(); j++)
-        if (steps(j) > 0.0f)
-            steps(j) = max(difference_step*max(steps(j), abs(point(j))), EPSILON);
+        if (steps(j) > Scalar(0))
+            steps(j) = max(Scalar(difference_step)*max(steps(j), abs(point(j))), Scalar(EPSILON));
 
     for (const Constraint& constraint : constraints)
         if (const Index column = constraint.get_discrete_column(); column >= 0)
-            steps(column) = min(steps(column), discrete_difference_step);
+            steps(column) = min(steps(column), Scalar(discrete_difference_step));
 
-    calculate_numerical_jacobian(point, values, steps, probed_rows, jacobian);
+    calculate_numerical_jacobian<Scalar>(point, values, steps, probed_rows, jacobian);
 
     return jacobian;
 }
 
 
-void FeasibilityRepairSystem::calculate_numerical_jacobian(const VectorR& point,
-                                                          const VectorR& values,
-                                                          const VectorR& steps,
+template<typename Scalar>
+void FeasibilityRepairSystem::calculate_numerical_jacobian(const Vector<Scalar>& point,
+                                                          const Vector<Scalar>& values,
+                                                          const Vector<Scalar>& steps,
                                                           const vector<Index>& rows,
-                                                          MatrixR& jacobian) const
+                                                          Matrix<Scalar>& jacobian) const
 {
-    const auto& [lower_bounds, upper_bounds] = input_bounds;
+    const auto& [lower_bounds, upper_bounds] = get_bounds<Scalar>();
 
     const bool reads_output = ranges::any_of(rows, [&](const Index i)
         { return is_output_coupled(constraints[size_t(i)].equation); });
 
-    VectorR probe = point;
+    Vector<Scalar> probe = point;
     VectorR probe_output;
 
     for (Index j = 0; j < point.size(); j++)
     {
-        if (steps(j) == 0.0f) continue;
+        if (steps(j) == Scalar(0)) continue;
 
-        const float first_direction = point(j) + steps(j) > upper_bounds(j) ? -1.0f : 1.0f;
+        const Scalar first_direction = point(j) + steps(j) > upper_bounds(j) ? Scalar(-1) : Scalar(1);
 
-        for (const Index i : rows) jacobian(i, j) = QUIET_NAN;
+        for (const Index i : rows) jacobian(i, j) = numeric_limits<Scalar>::quiet_NaN();
 
-        for (const float direction : {first_direction, -first_direction})
+        for (const Scalar direction : {first_direction, -first_direction})
         {
-            const float bound = direction > 0.0f ? upper_bounds(j) : lower_bounds(j);
+            const Scalar bound = direction > Scalar(0) ? upper_bounds(j) : lower_bounds(j);
 
             probe(j) = clamp(point(j) + direction*steps(j), lower_bounds(j), upper_bounds(j));
             if (probe(j) == point(j)) probe(j) = nextafter(point(j), bound);
@@ -548,7 +631,9 @@ void FeasibilityRepairSystem::calculate_numerical_jacobian(const VectorR& point,
             if (step == 0.0) continue;
 
             if (reads_output)
-                probe_output = network->calculate_outputs(probe.transpose()).row(0).transpose();
+                probe_output = network->calculate_outputs(as_float(probe).transpose()).row(0).transpose();
+
+            const auto& scalar_probe_output = as_scalar<Scalar>(probe_output);
 
             bool complete = true;
 
@@ -556,8 +641,8 @@ void FeasibilityRepairSystem::calculate_numerical_jacobian(const VectorR& point,
             {
                 if (isfinite(jacobian(i, j))) continue;
 
-                const float value = constraints[size_t(i)].equation.evaluate(probe, probe_output);
-                const float derivative = float((double(value) - values(i))/step);
+                const Scalar value = evaluate_row(constraints[size_t(i)].equation, probe, scalar_probe_output);
+                const Scalar derivative = Scalar((double(value) - values(i))/step);
                 if (isfinite(derivative)) jacobian(i, j) = derivative;
                 else complete = false;
             }
@@ -568,150 +653,164 @@ void FeasibilityRepairSystem::calculate_numerical_jacobian(const VectorR& point,
         }
 
         for (const Index i : rows)
-            if (!isfinite(jacobian(i, j))) jacobian(i, j) = 0.0f;
+            if (!isfinite(jacobian(i, j))) jacobian(i, j) = Scalar(0);
     }
 }
 
 
-pair<float, float> FeasibilityRepairSystem::calculate_constraint_residual(const Index i) const
+template<typename Scalar>
+pair<Scalar, Scalar> FeasibilityRepairSystem::calculate_constraint_residual(const Index i) const
 {
     const auto [lower, upper] = constraints[size_t(i)].get_bounds(numeric_tolerance, constraint_tolerance);
-    const float value = calculate_constraint_value(i);
+    const Scalar value = calculate_constraint_value<Scalar>(i);
 
-    float crossed_bound = 0.0f;
+    Scalar crossed_bound = Scalar(0);
 
-    if (value < lower - get_bound_tolerance(lower))
-        crossed_bound = lower;
-    else if (value > upper + get_bound_tolerance(upper))
-        crossed_bound = upper;
+    if (value < Scalar(lower) - Scalar(get_bound_tolerance(lower)))
+        crossed_bound = Scalar(lower);
+    else if (value > Scalar(upper) + Scalar(get_bound_tolerance(upper)))
+        crossed_bound = Scalar(upper);
     else
         return {};
 
-    const float residual = value - crossed_bound;
-    const float margin = feasibility_margin_factor;
+    const Scalar residual = value - crossed_bound;
+    const Scalar margin = Scalar(feasibility_margin_factor);
 
-    const float inset = min(margin*max(abs(residual), margin*abs(crossed_bound)),
-                            0.5f*(upper - lower));
+    const Scalar inset = min(margin*max(abs(residual), margin*abs(crossed_bound)),
+                             Scalar(0.5f)*(Scalar(upper) - Scalar(lower)));
 
-    const float result = residual + ((residual > 0.0f) ? inset : -inset);
-    const double bound = result < 0.0f ? lower : upper;
+    const Scalar result = residual + ((residual > Scalar(0)) ? inset : -inset);
+    const double bound = result < Scalar(0) ? lower : upper;
     const double violation = abs(double(value) - bound);
-    const float slope = violation >= double(margin)*abs(bound)
-                     && double(margin)*violation < 0.5*(double(upper) - lower)
-                      ? 1.0f + margin : 1.0f;
+    const Scalar slope = violation >= double(margin)*abs(bound)
+                      && double(margin)*violation < 0.5*(double(upper) - lower)
+                       ? Scalar(1) + margin : Scalar(1);
     return {result, slope};
 }
 
 
-struct FeasibilityRepairSystem::LevenbergMarquardtFunctor : Eigen::DenseFunctor<float>
+template<typename Scalar>
+struct FeasibilityRepairSystem::LevenbergMarquardtFunctor : Eigen::DenseFunctor<Scalar>
 {
-    LevenbergMarquardtFunctor(FeasibilityRepairSystem& system, MatrixR jacobian)
-        : Eigen::DenseFunctor<float>(int(system.input_bounds.first.size()),
-              int(system.constraints.size() + system.input_bounds.first.size())),
+    using Base = Eigen::DenseFunctor<Scalar>;
+
+    LevenbergMarquardtFunctor(FeasibilityRepairSystem& system, Matrix<Scalar> jacobian)
+        : Base(int(system.input_bounds.first.size()),
+               int(system.constraints.size() + system.input_bounds.first.size())),
           system(system), initial_jacobian(move(jacobian)) {}
 
-    int operator()(const VectorR& point, VectorR& violations)
+    int operator()(const Vector<Scalar>& point, Vector<Scalar>& violations)
     {
-        system.evaluate_constraints(point);
-        violations.resize(system.row_values.size() + point.size());
-        violations.head(system.row_values.size()) = system.row_values.array().isFinite()
-            .select(system.row_residuals.array()/system.row_scales.array(), 1.0f/system.numeric_tolerance);
-        const auto& [lower, upper] = system.input_bounds;
+        const Workspace<Scalar>& work = system.get_workspace<Scalar>();
+        system.evaluate_constraints<Scalar>(point);
+        violations.resize(work.row_values.size() + point.size());
+        violations.head(work.row_values.size()) = work.row_values.array().isFinite()
+            .select(work.row_residuals.array()/work.row_scales.array(), Scalar(1)/Scalar(system.numeric_tolerance));
+        const auto& [lower, upper] = system.get_bounds<Scalar>();
         violations.tail(point.size()) =
-            ((point - upper).cwiseMax(0.0f) + (point - lower).cwiseMin(0.0f)).cwiseQuotient(system.box_scales);
+            ((point - upper).cwiseMax(Scalar(0)) + (point - lower).cwiseMin(Scalar(0))).cwiseQuotient(work.box_scales);
         return 0;
     }
 
-    int df(const VectorR& point, JacobianType& jacobian)
+    int df(const Vector<Scalar>& point, typename Base::JacobianType& jacobian)
     {
-        system.evaluate_constraints(point);
-        const MatrixR value_jacobian = initial_jacobian.size() != 0 ? exchange(initial_jacobian, MatrixR{})
-            : system.calculate_jacobian(point, system.row_values, system.evaluated_output, system.row_residuals);
-        jacobian.setZero(system.row_values.size() + point.size(), point.size());
-        for (Index i = 0; i < system.row_values.size(); i++)
-            if (system.row_residuals(i) != 0.0f && isfinite(system.row_residuals(i)))
-                jacobian.row(i) = value_jacobian.row(i)*(system.calculate_constraint_residual(i).second/system.row_scales(i));
-        const auto& [lower, upper] = system.input_bounds;
+        const Workspace<Scalar>& work = system.get_workspace<Scalar>();
+        system.evaluate_constraints<Scalar>(point);
+        const Matrix<Scalar> value_jacobian = initial_jacobian.size() != 0 ? exchange(initial_jacobian, Matrix<Scalar>{})
+            : system.calculate_jacobian<Scalar>(point, work.row_values, work.evaluated_output, work.row_residuals);
+        jacobian.setZero(work.row_values.size() + point.size(), point.size());
+        for (Index i = 0; i < work.row_values.size(); i++)
+            if (work.row_residuals(i) != Scalar(0) && isfinite(work.row_residuals(i)))
+                jacobian.row(i) = value_jacobian.row(i)
+                                  *(system.calculate_constraint_residual<Scalar>(i).second/work.row_scales(i));
+        const auto& [lower, upper] = system.get_bounds<Scalar>();
         for (Index j = 0; j < point.size(); j++)
             if (point(j) > upper(j) || point(j) < lower(j))
-                jacobian(system.row_values.size() + j, j) = 1.0f/system.box_scales(j);
+                jacobian(work.row_values.size() + j, j) = Scalar(1)/work.box_scales(j);
         return 0;
     }
 
     FeasibilityRepairSystem& system;
-    MatrixR initial_jacobian;
+    Matrix<Scalar> initial_jacobian;
 };
 
 
-void FeasibilityRepairSystem::solve_levenberg_marquardt(VectorR& point, MatrixR initial_jacobian)
+template<typename Scalar>
+void FeasibilityRepairSystem::solve_levenberg_marquardt(Vector<Scalar>& point, Matrix<Scalar> initial_jacobian)
 {
-    LevenbergMarquardtFunctor functor(*this, move(initial_jacobian));
-    Eigen::LevenbergMarquardt<LevenbergMarquardtFunctor> levenberg_marquardt(functor);
+    // The float repair stops at the library's tolerance; the double repair goes on to a finer one, which
+    // is what its precision is for.
+    const Scalar tolerance = is_same_v<Scalar, float> ? Scalar(numeric_tolerance) : Scalar(double_solver_tolerance);
+    LevenbergMarquardtFunctor<Scalar> functor(*this, move(initial_jacobian));
+    Eigen::LevenbergMarquardt<LevenbergMarquardtFunctor<Scalar>> levenberg_marquardt(functor);
     levenberg_marquardt.setMaxfev(feasibility_evaluations);
-    levenberg_marquardt.setFtol(numeric_tolerance);
-    levenberg_marquardt.setXtol(numeric_tolerance);
-    levenberg_marquardt.setGtol(0.0f);
+    levenberg_marquardt.setFtol(tolerance);
+    levenberg_marquardt.setXtol(tolerance);
+    levenberg_marquardt.setGtol(Scalar(0));
     levenberg_marquardt.minimize(point);
 }
 
 
-void FeasibilityRepairSystem::solve_gauss_newton(VectorR& point, MatrixR jacobian)
+template<typename Scalar>
+void FeasibilityRepairSystem::solve_gauss_newton(Vector<Scalar>& point, Matrix<Scalar> jacobian)
 {
-    const auto& [lower, upper] = input_bounds;
-    const VectorR spans = upper - lower;
-    VectorR residuals(row_residuals.size());
+    const auto& [lower, upper] = get_bounds<Scalar>();
+    const Workspace<Scalar>& work = get_workspace<Scalar>();
+    const Vector<Scalar> spans = upper - lower;
+    Vector<Scalar> residuals(work.row_residuals.size());
     const auto calculate_merit = [&]
-        { return row_residuals.cast<double>().cwiseQuotient(row_scales.cast<double>()).squaredNorm(); };
+        { return work.row_residuals.template cast<double>().cwiseQuotient(work.row_scales.template cast<double>())
+                     .squaredNorm(); };
 
     for (Index i = 0; i < feasibility_evaluations;)
     {
-        if (!row_values.allFinite() || !row_residuals.allFinite())
+        if (!work.row_values.allFinite() || !work.row_residuals.allFinite())
         {
-            point.setConstant(QUIET_NAN);
+            point.setConstant(numeric_limits<Scalar>::quiet_NaN());
             return;
         }
-        if ((row_residuals.array() == 0.0f).all()) return;
+        if ((work.row_residuals.array() == Scalar(0)).all()) return;
 
-        if (i > 0) jacobian = calculate_jacobian(point, row_values, evaluated_output, row_residuals);
+        if (i > 0) jacobian = calculate_jacobian<Scalar>(point, work.row_values, work.evaluated_output, work.row_residuals);
         Index rows = 0;
-        for (Index j = 0; j < row_residuals.size(); j++)
+        for (Index j = 0; j < work.row_residuals.size(); j++)
         {
-            if (row_residuals(j) == 0.0f) continue;
-            jacobian.row(rows) = jacobian.row(j)*(calculate_constraint_residual(j).second/row_scales(j));
-            residuals(rows++) = row_residuals(j)/row_scales(j);
+            if (work.row_residuals(j) == Scalar(0)) continue;
+            jacobian.row(rows) = jacobian.row(j)*(calculate_constraint_residual<Scalar>(j).second/work.row_scales(j));
+            residuals(rows++) = work.row_residuals(j)/work.row_scales(j);
         }
         auto active_jacobian = jacobian.topRows(rows);
         active_jacobian.array().rowwise() *= spans.transpose().array();
         if (!active_jacobian.allFinite() || !residuals.head(rows).allFinite())
         {
-            point.setConstant(QUIET_NAN);
+            point.setConstant(numeric_limits<Scalar>::quiet_NaN());
             return;
         }
 
-        const float scale = max(1.0f, active_jacobian.cwiseAbs().maxCoeff());
-        if (scale > 1.0f)
+        const Scalar scale = max(Scalar(1), active_jacobian.cwiseAbs().maxCoeff());
+        if (scale > Scalar(1))
         {
             active_jacobian /= scale;
             residuals.head(rows) /= scale;
         }
-        const VectorR step = active_jacobian.completeOrthogonalDecomposition().solve(-residuals.head(rows));
+        const Vector<Scalar> step = active_jacobian.completeOrthogonalDecomposition().solve(-residuals.head(rows));
         if (!step.allFinite())
         {
-            point.setConstant(QUIET_NAN);
+            point.setConstant(numeric_limits<Scalar>::quiet_NaN());
             return;
         }
         const double merit = calculate_merit();
-        float fraction = 1.0f;
+        Scalar fraction = Scalar(1);
         bool accepted = false;
-        for (Index j = 0; j < 8 && i < feasibility_evaluations; j++, fraction *= 0.5f)
+        for (Index j = 0; j < 8 && i < feasibility_evaluations; j++, fraction *= Scalar(0.5f))
         {
             i++;
-            VectorR candidate = point + (fraction*spans).cwiseProduct(step);
+            Vector<Scalar> candidate = point + (fraction*spans).cwiseProduct(step);
             if (!candidate.allFinite()) continue;
             candidate = candidate.cwiseMax(lower).cwiseMin(upper);
             if ((candidate.array() == point.array()).all()) return;
-            evaluate_constraints(candidate);
-            if (row_values.allFinite() && row_residuals.allFinite() && calculate_merit() < merit)
+            evaluate_constraints<Scalar>(candidate);
+            if (work.row_values.allFinite() && work.row_residuals.allFinite() && calculate_merit() < merit)
             {
                 point = move(candidate);
                 accepted = true;
@@ -720,6 +819,18 @@ void FeasibilityRepairSystem::solve_gauss_newton(VectorR& point, MatrixR jacobia
         }
         if (!accepted) return;
     }
+}
+
+
+pair<VectorR, VectorR> FeasibilityRepairSystem::solve(VectorR point)
+{
+    return repair<float>(move(point));
+}
+
+
+pair<Eigen::VectorXd, VectorR> FeasibilityRepairSystem::solve_double(Eigen::VectorXd point)
+{
+    return repair<double>(move(point));
 }
 
 }

@@ -201,6 +201,41 @@ TEST(Expression, SmallCoefficientsPreserveInputAndOutputUnits)
 }
 
 
+TEST(Expression, DoublePrecisionResolvesDifferencesBelowAFloatStep)
+{
+    const auto inputs = make_named_columns({"x1", "x2"});
+    const auto outputs = make_named_columns({"y1"});
+    Eigen::VectorXd point(2); point << 45.0000015, 45.0;
+    const Eigen::VectorXd output = Eigen::VectorXd::Constant(1, 0.5);
+
+    const auto gap = compile_expression("x1 - x2 + y1", inputs, outputs);
+    ASSERT_EQ(gap.linearity, ExpressionLinearity::Linear);
+    EXPECT_NEAR(gap.evaluate_double(point, output), 0.5000015, 1e-12);
+    EXPECT_EQ(gap.evaluate(point.cast<float>(), output.cast<float>()), 0.5f) << "both angles round to 45 in float";
+
+    const double degree = double(0.0174532925199433f);
+    const auto angles = compile_expression("cos(x1*0.0174532925199433) - cos(x2*0.0174532925199433) + y1*y1",
+                                           inputs, outputs);
+    ASSERT_EQ(angles.linearity, ExpressionLinearity::Nonlinear);
+    EXPECT_NEAR(angles.evaluate_double(point, output), cos(point(0)*degree) - cos(point(1)*degree) + 0.25, 1e-15);
+
+    Eigen::VectorXd input_gradient;
+    Eigen::VectorXd output_gradient;
+    evaluate_input_gradient(angles, point, output, input_gradient);
+    evaluate_output_gradient(angles, point, output, output_gradient);
+    ASSERT_EQ(input_gradient.size(), 2);
+    ASSERT_EQ(output_gradient.size(), 1);
+    EXPECT_NEAR(input_gradient(0), -degree*sin(point(0)*degree), 1e-15);
+    EXPECT_NEAR(input_gradient(1), degree*sin(point(1)*degree), 1e-15);
+    EXPECT_NEAR(output_gradient(0), 1.0, 1e-15);
+
+    const CompiledExpression budget = compile_elementary_symmetric({0, 1}, {10.0f, 10.0f}, 2, 1e-3f);
+    const VectorR single(point.cast<float>());
+    EXPECT_NEAR(budget.evaluate_double(single.cast<double>(), {}), double(budget.evaluate(single, {})),
+                1e-6*abs(double(budget.evaluate(single, {}))));
+}
+
+
 TEST(Expression, PowersNearZeroAndOneKeepTheirExponents)
 {
     const auto inputs = make_named_columns({"x1"});

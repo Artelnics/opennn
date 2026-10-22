@@ -63,6 +63,10 @@ struct CompiledExpression
     double symmetric_scale = 1.0;
 
     float evaluate(const VectorR&, const VectorR&) const;
+
+    // The same program, linear form or symmetric polynomial evaluated in double precision; the stored
+    // constants and coefficients are unchanged.
+    double evaluate_double(const Eigen::VectorXd&, const Eigen::VectorXd&) const;
 };
 
 
@@ -94,11 +98,21 @@ void evaluate_input_gradient(const CompiledExpression&,
                              const VectorR& output,
                              VectorR& gradient);
 
+void evaluate_input_gradient(const CompiledExpression&,
+                             const Eigen::VectorXd& point,
+                             const Eigen::VectorXd& output,
+                             Eigen::VectorXd& gradient);
+
 VectorR evaluate_input_gradient(const CompiledExpression&, const VectorR& point, const VectorR& output);
 
 void evaluate_output_gradient(const CompiledExpression&,
                               const VectorR& point,
                               const VectorR& output,
                               VectorR& gradient);
+
+void evaluate_output_gradient(const CompiledExpression&,
+                              const Eigen::VectorXd& point,
+                              const Eigen::VectorXd& output,
+                              Eigen::VectorXd& gradient);
 
 }

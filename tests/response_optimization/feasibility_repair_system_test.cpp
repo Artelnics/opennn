@@ -661,6 +661,86 @@ TEST_P(FeasibilitySolver, AccountsForMarginSlopesWithinASmallBudget)
 }
 
 
+TEST_P(FeasibilitySolver, RepairsInDoubleAGapBelowAFloatStep)
+{
+    const vector<Constraint> constraints{{compile_expression("x2 - x1", setup.network.get()),
+                                         Condition::Between, {1e-6f, 2e-6f}}};
+    Repair repair(setup.network.get(), constraints, {VectorR::Constant(2, 40.0f), VectorR::Constant(2, 50.0f)});
+    repair.set_solver(GetParam());
+
+    EXPECT_EQ(repair.solve(VectorR::Constant(2, 45.0f)).first.size(), 0)
+        << "between 32 and 64 float steps are 3.8e-6 apart, so no float point has a gap in the window";
+
+    const auto [input, output] = repair.solve_double(Eigen::VectorXd::Constant(2, 45.0));
+    ASSERT_EQ(input.size(), 2);
+    ASSERT_EQ(output.size(), 1);
+    EXPECT_TRUE(output.allFinite());
+    EXPECT_GE(input(1) - input(0), 1e-6 - 2e-7);
+    EXPECT_LE(input(1) - input(0), 2e-6 + 2e-7);
+    const float rounded_gap = float(input(1)) - float(input(0));
+    EXPECT_TRUE(rounded_gap == 0.0f || rounded_gap > 3e-6f) << "rounded to float, the point leaves the window";
+}
+
+
+TEST_P(FeasibilitySolver, RepairsAWellResolvedSystemAlikeInBothPrecisions)
+{
+    const vector<Constraint> constraints{{compile_expression("x1^2", setup.network.get()), Condition::Equal, {1.0f}},
+                                         {compile_expression("x2 + y", setup.network.get()), Condition::Equal, {2.0f}}};
+    Repair repair(setup.network.get(), constraints, domain());
+    repair.set_solver(GetParam());
+
+    VectorR start(2); start << 4.0f, 5.0f;
+    const VectorR single = repair.solve(start).first;
+    const auto [precise, output] = repair.solve_double(start.cast<double>());
+    ASSERT_EQ(single.size(), 2);
+    ASSERT_EQ(precise.size(), 2);
+    ASSERT_EQ(output.size(), 1);
+    EXPECT_NEAR(precise(0)*precise(0), 1.0, 1.5e-6);
+    EXPECT_NEAR(precise(1) + output(0), 2.0, 1e-5);
+    EXPECT_NEAR(precise(0), single(0), 1e-3);
+    EXPECT_NEAR(precise(1), single(1), 1e-3);
+}
+
+
+TEST_P(FeasibilitySolver, PlacesDiscreteValuesAndCardinalityInDouble)
+{
+    const vector<Constraint> placed{{compile_expression("x1", setup.network.get()), Condition::Integer, {}},
+                                    {compile_expression("x2", setup.network.get()), Condition::AllowedSet,
+                                     {9.0f, 1.0f, 5.0f}}};
+    Repair discrete(setup.network.get(), placed, domain());
+    discrete.set_solver(GetParam());
+    Eigen::VectorXd candidate(2); candidate << 2.7, 3.4;
+    const Eigen::VectorXd rounded = discrete.solve_double(candidate).first;
+    ASSERT_EQ(rounded.size(), 2);
+    EXPECT_EQ(rounded(0), 3.0);
+    EXPECT_EQ(rounded(1), 5.0);
+
+    const vector<Constraint> budget{{compile_elementary_symmetric({0, 1}, {10.0f, 10.0f}, 2, 1e-3f),
+                                     Condition::Cardinality, {1.0f}}};
+    Repair sparse(setup.network.get(), budget, domain());
+    sparse.set_solver(GetParam());
+    candidate << 2.0, 5.0;
+    const Eigen::VectorXd kept = sparse.solve_double(candidate).first;
+    ASSERT_EQ(kept.size(), 2);
+    EXPECT_EQ(kept(0), 0.0);
+    EXPECT_EQ(kept(1), 5.0);
+}
+
+
+TEST_P(FeasibilitySolver, ReportsTheClosestFailureInDouble)
+{
+    const vector<Constraint> constraints{{compile_expression("x1^2 + 1", setup.network.get()),
+                                         Condition::Equal, {0.0f}}};
+    Repair repair(setup.network.get(), constraints, domain());
+    repair.set_solver(GetParam());
+    const auto [input, output] = repair.solve_double(Eigen::VectorXd::Constant(2, 2.0));
+    EXPECT_EQ(input.size(), 0);
+    EXPECT_EQ(output.size(), 0);
+    EXPECT_TRUE(isfinite(repair.get_closest_failure().first));
+    EXPECT_FALSE(repair.get_closest_failure().second.empty());
+}
+
+
 INSTANTIATE_TEST_SUITE_P(RepairBackends, FeasibilitySolver,
                         testing::Values(Repair::Solver::LevenbergMarquardt, Repair::Solver::GaussNewton),
                         [](const testing::TestParamInfo<Repair::Solver>& info)
