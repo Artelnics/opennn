@@ -154,6 +154,10 @@ unusable derivatives and nonsmooth boundaries use finite differences.
 their derivatives and the solver state in double precision (the network still evaluates in float),
 for constraints that float cannot resolve, such as long sums of nearly cancelling terms or gaps below
 a float step. Rounding its point to float can lose that feasibility. `solve` is unchanged.
+The response optimizers repair every candidate with `solve_double`. They keep the repaired point
+rounded to float only if a second double-precision repair from it returns it unchanged, so every
+point they accept is feasible with its constraints evaluated in double; this costs one more network
+pass per accepted point than `solve`.
 There is no automatic solver fallback. A failed repair does not prove infeasibility.
 Failed sampling reports the worst tolerance-scaled miss of the best checked
 rounded candidate with a constraint violation, when finite values are available. These

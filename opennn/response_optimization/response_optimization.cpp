@@ -269,8 +269,13 @@ pair<VectorR, VectorR> ResponseOptimization::get_feasible_points(VectorR point) 
 pair<VectorR, VectorR> ResponseOptimization::get_feasible_points(VectorR point,
                                                                FeasibilityRepairSystem& feasibility_system) const
 {
-    auto result = feasibility_system.solve(move(point));
-    if (result.first.size() == 0)
+    // The repair runs in double precision. The searches keep the point in float, so the rounded point is
+    // accepted only if it is still feasible in double: a repair from it must return it unchanged.
+    const VectorR repaired = feasibility_system.solve_double(point.cast<double>()).first.cast<float>();
+    const auto checked = repaired.size() == 0 ? pair<Eigen::VectorXd, VectorR>{}
+                                              : feasibility_system.solve_double(repaired.cast<double>());
+    pair<VectorR, VectorR> result{repaired, checked.second};
+    if (checked.first.size() == 0 || checked.first != repaired.cast<double>())
     {
         const auto& failure = feasibility_system.get_closest_failure();
         if (failure.first < closest_failure.first) closest_failure = failure;

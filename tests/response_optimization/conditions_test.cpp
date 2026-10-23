@@ -714,6 +714,62 @@ TEST(Feasibility, ConfiguredSolverIsUsedByBothRepairEntryPoints)
 }
 
 
+TEST(Feasibility, SearchesRepairInDoublePrecision)
+{
+    MinimalApproximation setup({"x1", "x2"}, {"y"});
+    RepairProbe probe(setup.network.get());
+    probe.add_constraint("x1^2 + x2^2", Condition::Equal, {25.0f});
+    probe.calculate_domain();
+    auto feasibility_system = probe.make_feasibility_system(probe.input_bounds);
+    const VectorR start = VectorR::Constant(2, 1.0f);
+
+    const auto repaired = probe.get_feasible_points(start, feasibility_system);
+    const auto double_repair = feasibility_system.solve_double(start.cast<double>());
+    ASSERT_EQ(repaired.first.size(), 2);
+    ASSERT_EQ(double_repair.first.size(), 2);
+    EXPECT_EQ((repaired.first - VectorR(double_repair.first.cast<float>())).squaredNorm(), 0.0f);
+    EXPECT_NEAR(repaired.first.squaredNorm(), 25.0f, 1e-4f);
+    const VectorR expected = setup.network->calculate_outputs(repaired.first.transpose()).row(0).transpose();
+    EXPECT_TRUE(repaired.second.isApprox(expected, 1e-6f));
+}
+
+
+TEST(Feasibility, SearchesMeetRowsThatFloatCannotEvaluate)
+{
+    // The row is x^2 written as a cancelling sum: float evaluates it only in steps of about 8, so the
+    // float repair cannot meet 0.09. In double it reaches x = 0.3, and the rounded float point still
+    // meets the row when it is evaluated in double.
+    MinimalApproximation setup({"x"}, {"y"});
+    RepairProbe probe(setup.network.get());
+    probe.add_constraint("(x + 10000)*(x + 10000) - 20000*x - 100000000", Condition::Equal, {0.09f});
+    probe.calculate_domain();
+    auto feasibility_system = probe.make_feasibility_system(probe.input_bounds);
+    const VectorR start = VectorR::Constant(1, 1.0f);
+
+    EXPECT_EQ(feasibility_system.solve(start).first.size(), 0);
+    const auto repaired = probe.get_feasible_points(start, feasibility_system);
+    ASSERT_EQ(repaired.first.size(), 1);
+    EXPECT_NEAR(repaired.first(0), 0.3f, 1e-6f);
+}
+
+
+TEST(Feasibility, SearchesRefuseARoundedPointThatLeavesTheRow)
+{
+    // The row needs x1 - x2 = 5e-7 to about 1e-12, a gap no pair of floats near 1.5 has, so the double
+    // repair meets it and the rounded float point, checked in double, is refused.
+    MinimalApproximation setup({"x1", "x2"}, {"y"});
+    RepairProbe probe(setup.network.get());
+    probe.add_constraint("1000000*x1 - 1000000*x2", Condition::Equal, {0.5f});
+    probe.calculate_domain();
+    auto feasibility_system = probe.make_feasibility_system(probe.input_bounds);
+    const VectorR start{{1.0f, 2.0f}};
+
+    const auto double_repair = feasibility_system.solve_double(start.cast<double>());
+    ASSERT_EQ(double_repair.first.size(), 2);
+    EXPECT_EQ(probe.get_feasible_points(start, feasibility_system).first.size(), 0);
+}
+
+
 TEST_P(ResponseDriver, SamplingFailureNamesTheMissedCatalogueConstraint)
 {
     MinimalApproximation setup({"x"}, {"y"});
@@ -883,6 +939,7 @@ TEST(Feasibility, InputOnlyRepairAvoidsIntermediateNetworkCalls)
     probe.calculate_domain();
     probe.set_feasibility_rounds(1);
 
+    // An accepted point costs two passes: one for the repair and one for the check of its rounded point.
     for (const bool succeeds : {false, true})
     {
         SCOPED_TRACE(succeeds);
@@ -898,7 +955,7 @@ TEST(Feasibility, InputOnlyRepairAvoidsIntermediateNetworkCalls)
         const long calls = profiler::stats().call_count("fp:set") - previous_calls;
         profiler::set_enabled(profiling_enabled);
 
-        EXPECT_EQ(calls, succeeds ? 1 : 0);
+        EXPECT_EQ(calls, succeeds ? 2 : 0);
         ASSERT_EQ(result.first.size(), succeeds ? 1 : 0);
         ASSERT_EQ(result.second.size(), succeeds ? 1 : 0);
 
@@ -1374,11 +1431,12 @@ TEST_P(ResponseDriver, CategoricalSearchMatchesAScanOverCategories)
 
 TEST_P(ResponseDriver, RejectsUndefinedAndOverflowedConstraints)
 {
+    // The rows are evaluated in double, where exp first overflows above about 709.
     for (const bool overflow : {false, true})
     {
         MinimalApproximation setup({"x1", "x2"}, {"y"},
-                                   overflow ? 100.0f : -2.0f,
-                                   overflow ? 101.0f : -1.0f);
+                                   overflow ? 1000.0f : -2.0f,
+                                   overflow ? 1001.0f : -1.0f);
 
         const unique_ptr<ResponseOptimization> optimization = make_driver(GetParam(), setup.network.get());
 
