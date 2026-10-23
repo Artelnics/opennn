@@ -451,6 +451,26 @@ TEST(StatisticsTest, HistogramPreservesBinsForAllMissingData)
     EXPECT_TRUE(result.maximums.array().isNaN().all());
 }
 
+TEST(StatisticsTest, HistogramSkipsAMissingValueWhereverItIs)
+{
+    // The range comes from a SIMD reduction. A missing value first in the column fills the
+    // accumulator it starts from, which returned NaN on x86; on ARM any position did.
+    for (const Index missing : {Index(0), Index(1), Index(20), Index(39)})
+    {
+        VectorR data(40);
+        for (Index i = 0; i < 40; ++i) data(i) = float(i + 1);
+        data(missing) = QUIET_NAN;
+
+        const Histogram result = histogram(data, 10);
+
+        ASSERT_EQ(result.frequencies.size(), 10);
+        EXPECT_TRUE(result.centers.allFinite()) << "missing value at " << missing;
+        EXPECT_EQ(result.frequencies.sum(), 39.0f) << "missing value at " << missing;
+        EXPECT_FLOAT_EQ(result.minimums(0), missing == 0 ? 2.0f : 1.0f) << "missing value at " << missing;
+        EXPECT_FLOAT_EQ(result.maximums(9), missing == 39 ? 39.0f : 40.0f) << "missing value at " << missing;
+    }
+}
+
 TEST(StatisticsTest, CenteredHistogramHandlesZeroWidth)
 {
     for (const float value : {0.0f, 12.0f})
