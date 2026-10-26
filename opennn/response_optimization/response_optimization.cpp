@@ -56,6 +56,21 @@ vector<Index> get_group_members(const string& expression, const Network* network
 }
 
 
+// The quantity Constraint::get_bounds bounds: the value itself or, for Integer and AllowedSet,
+// its offset from the nearest whole number or allowed value.
+
+float get_bounded_value(const Constraint& constraint, const float value)
+{
+    if (constraint.condition == Condition::Integer)
+        return value - round(value);
+
+    if (constraint.condition == Condition::AllowedSet)
+        return value - *ranges::min_element(constraint.values, {},
+                           [&](const float allowed) { return abs(double(value) - allowed); });
+
+    return value;
+}
+
 }
 
 
@@ -152,6 +167,13 @@ pair<float, float> ResponseOptimization::Constraint::get_bounds(const float nume
     }
 
     return {-unbounded, unbounded};
+}
+
+
+bool ResponseOptimization::is_within_bounds(const pair<float, float>& bounds, const float value) const
+{
+    return value >= bounds.first - get_bound_tolerance(bounds.first)
+        && value <= bounds.second + get_bound_tolerance(bounds.second);
 }
 
 
@@ -468,6 +490,32 @@ MatrixR ResponseOptimization::perform_response_optimization()
     throw_if(multiplier > numeric_limits<Index>::max()/points_number, "The sampling budget is too large.");
 
     return objectives.size() > 1 ? multi_optimization() : single_optimization();
+}
+
+
+VectorB ResponseOptimization::calculate_feasibility(const MatrixR& inputs, const MatrixR& outputs) const
+{
+    throw_if(!network, "The neural network has not been set.");
+    throw_if(inputs.cols() != network->get_inputs_number() || outputs.cols() != network->get_outputs_number()
+          || outputs.rows() != inputs.rows(), "The inputs and outputs to check have incompatible dimensions.");
+
+    VectorB feasible = VectorB::Constant(inputs.rows(), true);
+
+    VectorR input;
+    VectorR output;
+
+    for (Index i = 0; i < inputs.rows(); i++)
+    {
+        input = inputs.row(i).transpose();
+        output = outputs.row(i).transpose();
+
+        for (const Constraint& constraint : constraints)
+            feasible(i) = feasible(i)
+                && is_within_bounds(constraint.get_bounds(numeric_tolerance, constraint_tolerance),
+                                    get_bounded_value(constraint, constraint.equation.evaluate(input, output)));
+    }
+
+    return feasible;
 }
 
 

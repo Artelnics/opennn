@@ -386,8 +386,9 @@ Histogram histogram(const VectorR& new_vector, Index bins_number)
     }
     else
     {
-        const float min = minimum(new_vector);
-        const float max = maximum(new_vector);
+        // Missing values are NaN: Eigen's default reductions returned NaN for them (#356).
+        const float min = new_vector.minCoeff<PropagateNumbers>();
+        const float max = new_vector.maxCoeff<PropagateNumbers>();
 
         const float length = (max - min) /float(bins_number);
         const float inv_length = 1.0f / length;

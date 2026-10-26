@@ -324,7 +324,8 @@ interfaces may not expose CUDA vendor types; `.cuh` implementation headers may.
 CI runs for pull requests targeting `dev` or `master`, and for pushes to
 `master`. Updating a development PR runs its integration checks once, without
 another run for the push to `dev`. For `dev` work without an open PR, use the
-manual `workflow_dispatch` trigger. Markdown-only changes skip automatic CI.
+manual `workflow_dispatch` trigger. Changes limited to Markdown or to the
+benchmarks' pinned Python packages (`benchmarks/manifests/`) skip automatic CI.
 
 `ci.yml` runs on hosted machines: Linux and Windows CPU builds, CUDA compilation
 on Linux, package consumers (static and shared on Linux, portable AppleClang on
@@ -394,6 +395,23 @@ applicable notices and source records; see `examples/yolo/data/SOURCE.md`.
 
 ## 26.0 release notes and migration
 
+### 26.0.3
+
+- Training names every input and output of a forecasting network: one input per
+  variable and lag (`<variable>_lag<k>`) and, with several steps ahead, one
+  output per target and step (`<target>_ahead_t<step>`). It used to give the
+  network the bare variable names, fewer than its neurons, so code reading one
+  name per input or output indexed past them: reports, expressions and input
+  importances of a trained multi-step model failed or crashed.
+  `Dataset::get_model_target_variables()` supplies the target names, next to
+  `get_model_input_variables()`.
+- Pull requests opened by bots skip the contributor licence agreement check,
+  and changes limited to `benchmarks/manifests/` skip CI. The benchmark
+  manifests pin fsspec 2026.6.0, a security update.
+
+Saved forecasting models carry the expanded names. The model format and the
+other algorithms are unchanged; `Dataset` gains one virtual function.
+
 ### 26.0.2
 
 - Installed CMake packages rediscover oneDNN and macOS libomp on the consumer's
@@ -405,6 +423,16 @@ applicable notices and source records; see `examples/yolo/data/SOURCE.md`.
   memory migration, fixing intermittent failures without changing tolerances.
 - Pull requests check that their author is covered by the contributor licence
   agreement.
+- Training on CUDA uploads the next batches while the current one computes and
+  prepares batch indices without an OpenMP team. The host uses about one CPU
+  core while training on the GPU, down from up to 17 on a 24-thread machine.
+- CPU evaluation sizes its batches from the activation memory of one sample,
+  within 512 MiB and the previous cap of 4,096 samples. Testing analysis of
+  images or long texts no longer needs tens of gigabytes; tabular models keep
+  4,096 samples and GPU batches are unchanged.
+- Image datasets skip hidden files, such as the `._` AppleDouble twins and
+  `.DS_Store` files that macOS leaves on shared volumes.
+- The CUDA batch tests include `omp.h` explicitly for GCC.
 
 The public API, model format and library algorithms are unchanged.
 

@@ -73,6 +73,11 @@ public:
 
     MatrixR perform_response_optimization();
 
+    // Whether each row of inputs, with the outputs beside it, meets every constraint within the
+    // tolerances the optimization grants its own candidates. The outputs need not come from the
+    // network: recorded targets screen a dataset by the same rule. The input domain is not checked.
+    VectorB calculate_feasibility(const MatrixR& inputs, const MatrixR& outputs) const;
+
 protected:
 
     Network* network = nullptr;
@@ -120,6 +125,8 @@ private:
     string get_input_column_name(Index) const;
 
     float get_bound_tolerance(float) const;
+
+    bool is_within_bounds(const pair<float, float>&, float) const;
 
     float numeric_tolerance = 1e-6f;
 

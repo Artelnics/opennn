@@ -1709,6 +1709,91 @@ TEST(Feasibility, NumericalProbesHandleExpressionsUndefinedInOneDirection)
 }
 
 
+// Screening recorded rows: the outputs are the ones given, not the network's, and each
+// condition keeps the tolerance the repair grants its own candidates.
+
+TEST(Feasibility, ScreensRowsWithTheOutputsGivenAndTheRepairTolerances)
+{
+    MinimalApproximation setup({"x1", "x2", "x3"}, {"y"});
+    RepairProbe probe(setup.network.get());
+
+    MatrixR inputs(6, 3);
+    inputs << 1.0f, 3.0f,    5.0f,
+              1.0f, 3.0001f, 0.0f,
+              1.0f, 1.0f,    5.0005f,
+              1.0f, 1.0f,    2.0f,
+              1.0f, 1.0f,    0.0f,
+              1.0f, 1.0f,    0.0f;
+
+    MatrixR outputs(6, 1);
+    outputs << 0.5f, 0.5f, 0.5f, 0.5f, 0.0f, numeric_limits<float>::quiet_NaN();
+
+    EXPECT_TRUE(probe.calculate_feasibility(inputs, outputs).all());
+
+    probe.add_constraint("x1 + x2", Condition::LessEqual, {4.0f});
+    probe.add_constraint("y", Condition::Greater, {0.0f});
+    probe.add_constraint("x3", Condition::AllowedSet, {0.0f, 5.0f});
+
+    const VectorB feasible = probe.calculate_feasibility(inputs, outputs);
+
+    ASSERT_EQ(feasible.size(), 6);
+    EXPECT_TRUE(feasible(0));
+    EXPECT_FALSE(feasible(1)) << "x1 + x2 exceeds 4 by more than its tolerance";
+    EXPECT_TRUE(feasible(2)) << "x3 lies within the allowed-value tolerance of 5";
+    EXPECT_FALSE(feasible(3)) << "x3 is not an allowed value";
+    EXPECT_FALSE(feasible(4)) << "y is not strictly greater than 0";
+    EXPECT_FALSE(feasible(5)) << "a missing output meets no condition";
+
+    EXPECT_THROW(probe.calculate_feasibility(inputs.leftCols(2), outputs), runtime_error);
+}
+
+
+TEST(Feasibility, ScreensCardinalityByTheMembersInPlay)
+{
+    MinimalApproximation setup({"x1", "x2", "x3", "x4"}, {"y"});
+    RepairProbe probe(setup.network.get());
+    probe.add_constraint("x1; x2; x3; x4", Condition::Cardinality, {2.0f});
+
+    MatrixR inputs(3, 4);
+    inputs << 3.0f, 0.0f,   4.0f, 0.0f,
+              3.0f, 1.0f,   4.0f, 0.0f,
+              3.0f, 0.001f, 4.0f, 0.0f;
+
+    const VectorB feasible = probe.calculate_feasibility(inputs, MatrixR::Zero(3, 1));
+
+    ASSERT_EQ(feasible.size(), 3);
+    EXPECT_TRUE(feasible(0));
+    EXPECT_FALSE(feasible(1)) << "three of the four members are in play";
+    EXPECT_TRUE(feasible(2)) << "a member at a ten-thousandth of its range counts as switched off";
+}
+
+
+// The advised point is the row nearest the best value of every objective, each distance
+// in units of that objective's spread over the rows.
+
+TEST(AdvisedPoint, IsTheRowNearestTheBestOfEveryObjective)
+{
+    MinimalApproximation setup({"x1", "x2"}, {"y"});
+    RepairProbe probe(setup.network.get());
+
+    EXPECT_EQ(probe.get_advised_point(MatrixR(0, 3)).first, -1);
+
+    probe.add_objective("x1", Sense::Minimize);
+    probe.add_objective("x2", Sense::Maximize);
+
+    MatrixR results(4, 3);
+    results <<  0.0f,  0.0f, 0.0f,
+               10.0f, 10.0f, 0.0f,
+                5.0f,  8.0f, 0.0f,
+                4.0f,  7.0f, 0.0f;
+
+    const auto [index, point] = probe.get_advised_point(results);
+
+    EXPECT_EQ(index, 3) << "0.4 and 0.3 of the spread away, against 0.5 and 0.2 for row 2";
+    EXPECT_TRUE(point.isApprox(results.row(3).transpose()));
+}
+
+
 TEST(DomainContraction, KeepsPreviousResultsWhenALaterBatchHasNoFeasiblePoint)
 {
     CategoricalApproximation setup({}, "material", {"accepted", "rejected"});

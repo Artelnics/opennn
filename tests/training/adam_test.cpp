@@ -784,6 +784,33 @@ TEST_F(AdamTest, TrainForecastingGPU)
 }
 #endif
 
+// Training names the network after the dataset. A forecasting window has one input
+// per variable and lag and one output per variable and step ahead; the bare
+// variable names left fewer names than neurons, which reports then indexed past.
+TEST_F(AdamTest, ForecastingTrainingNamesEveryInputAndOutput)
+{
+    set_seed(3);
+    TabularDataset dataset(24, {2}, {1});
+    dataset.set_variable_names({"temperature", "pressure", "ozone"});
+    dataset.set_data_random();
+    dataset.configure_forecasting(3, 2, true);
+    dataset.set_sample_roles("Training");
+    ForecastingNetwork network(dataset.get_input_shape(), {4}, dataset.get_target_shape());
+
+    Loss loss(&network, &dataset);
+    loss.set_error(Loss::Error::MeanSquaredError);
+    Adam adam(&loss);
+    adam.set_display(false);
+    adam.set_maximum_epochs(1);
+    adam.train();
+
+    const vector<string> inputs = network.get_input_feature_names();
+    ASSERT_EQ(Index(inputs.size()), network.get_inputs_number());
+    EXPECT_EQ(inputs.front(), "temperature_lag0");
+    EXPECT_EQ(inputs.back(), "pressure_lag2");
+    EXPECT_EQ(network.get_output_feature_names(), (vector<string>{"ozone_ahead_t1", "ozone_ahead_t2"}));
+}
+
 TEST_F(AdamTest, TrainImageClassificationCPU)
 {
     const filesystem::path root = write_image_classification_dataset();
