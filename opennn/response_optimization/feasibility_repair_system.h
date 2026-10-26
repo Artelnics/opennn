@@ -8,13 +8,19 @@
 namespace opennn
 {
 
+// Repairs a point into the constraints: each round projects it onto the box and the discrete conditions, and
+// a solver drives the residuals of the violated constraints to zero. The repair runs in double; the network
+// evaluates in float.
 class FeasibilityRepairSystem
 {
 public:
 
     using Constraint = ResponseOptimization::Constraint;
 
-    enum class Solver { LevenbergMarquardt, GaussNewton = 2 };
+    // Broyden takes Gauss-Newton's projected steps, with met equalities kept in them, but evaluates the Jacobian
+    // only at the start of a round and after a failed step; each accepted step corrects it with the secant update
+    // of least change in span units.
+    enum class Solver { LevenbergMarquardt, GaussNewton = 2, Broyden };
 
     FeasibilityRepairSystem(Network*, span<const Constraint>, pair<VectorR, VectorR> domain,
                             Index rounds = 1, Index evaluations = 50,
@@ -23,12 +29,12 @@ public:
     void set_domain(pair<VectorR, VectorR>);
     void set_solver(Solver);
 
+    // For a caller that keeps float points: the constraints are evaluated, in double, at the float point the
+    // repair will return, and a violated bound is aimed a float step inside, so the point returned meets them.
     pair<VectorR, VectorR> solve(VectorR);
 
-    // The same repair carried out in double precision: the point, the constraint values, their residuals
-    // and derivatives, and the solver's state. The network still evaluates in float. It reaches points
-    // that float cannot resolve, such as long sums of nearly cancelling terms or gaps below a float step;
-    // rounding its point to float can lose that feasibility.
+    // For a caller that keeps double points: the constraints are evaluated at the double point. It reaches points
+    // that float cannot represent, such as gaps below a float step; rounding them to float can lose feasibility.
     pair<Eigen::VectorXd, VectorR> solve_double(Eigen::VectorXd);
 
     const pair<double, string>& get_closest_failure() const { return closest_failure; }
@@ -36,50 +42,52 @@ public:
 private:
 
     using Condition = Constraint::Condition;
+    using Vector = Eigen::VectorXd;
+    using Matrix = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Layout>;
 
-    template<typename Scalar> using Vector = Eigen::Matrix<Scalar, Eigen::Dynamic, 1>;
-    template<typename Scalar> using Matrix = Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic, Layout>;
-
-    template<typename Scalar>
+    // The rows of the repair in progress at the point last evaluated, and the scales of its round.
     struct Workspace
     {
-        Vector<Scalar> box_scales;
-        Vector<Scalar> row_scales;
-        Vector<Scalar> row_values;
-        Vector<Scalar> row_residuals;
-        Vector<Scalar> evaluated_point;
+        Vector box_scales;
+        Vector row_scales;
+        Vector row_margins;
+        Vector row_values;
+        Vector row_residuals;
+        Vector evaluated_point;
         VectorR evaluated_output;
     };
 
-    template<typename Scalar> struct LevenbergMarquardtFunctor;
+    struct LevenbergMarquardtFunctor;
 
-    template<typename Scalar> Workspace<Scalar>& get_workspace();
-    template<typename Scalar> const Workspace<Scalar>& get_workspace() const;
-    template<typename Scalar> const pair<Vector<Scalar>, Vector<Scalar>>& get_bounds() const;
+    pair<Vector, VectorR> repair(Vector, bool float_points);
+    bool round_discrete(Vector&) const;
+    void set_float_margins(const Vector&, const Matrix&);
 
-    template<typename Scalar> pair<Vector<Scalar>, VectorR> repair(Vector<Scalar>);
-    template<typename Scalar> void solve_levenberg_marquardt(Vector<Scalar>&, Matrix<Scalar>);
-    template<typename Scalar> void solve_gauss_newton(Vector<Scalar>&, Matrix<Scalar>);
-
-    template<typename Scalar> bool round_discrete(Vector<Scalar>&) const;
-    template<typename Scalar> const VectorR& evaluate_outputs(const Vector<Scalar>&);
-    template<typename Scalar> void evaluate_constraints(const Vector<Scalar>&);
-    template<typename Scalar> void update_closest_failure();
-    template<typename Scalar> Scalar calculate_constraint_value(Index) const;
-    template<typename Scalar> pair<Scalar, Scalar> calculate_constraint_residual(Index) const;
+    const VectorR& evaluate_outputs(const Vector&);
+    void evaluate_constraints(const Vector&);
+    double calculate_constraint_value(Index) const;
+    pair<double, double> calculate_constraint_residual(Index) const;
+    void update_closest_failure();
     float get_bound_tolerance(float) const;
 
     MatrixR calculate_network_jacobian(const VectorR&, const VectorR&) const;
-    template<typename Scalar>
-    Matrix<Scalar> calculate_jacobian(const Vector<Scalar>&, const Vector<Scalar>&, const VectorR&,
-                                      const Vector<Scalar>& = {}) const;
-    template<typename Scalar>
-    void calculate_numerical_jacobian(const Vector<Scalar>&, const Vector<Scalar>&, const Vector<Scalar>&,
-                                      const vector<Index>&, Matrix<Scalar>&) const;
+    Matrix calculate_jacobian(const Vector&, const Vector&, const VectorR&, const Vector& = {}) const;
+    void calculate_numerical_jacobian(const Vector&, const Vector&, const Vector&, const vector<Index>&,
+                                      Matrix&) const;
+
+    // The solvers, in feasibility_repair_solvers.cpp.
+    void solve_levenberg_marquardt(Vector&, Matrix);
+    void solve_gauss_newton(Vector&, Matrix, bool broyden = false);
+    double calculate_merit() const;
+    Vector calculate_step(const Matrix&, const Vector&, Vector&) const;
+    bool search_step(const Vector&, const Vector&, Index, Index&, Vector&);
+    void evaluate_step_rows(const Vector&, const Vector&, Matrix&) const;
+    Vector get_equality_targets() const;
+    static void correct_jacobian(Matrix&, const Vector&, const Vector&, const Vector&);
 
     Network* network;
     span<const Constraint> constraints;
-    pair<VectorR, VectorR> input_bounds;
+    pair<Vector, Vector> bounds;
     vector<pair<Index, Index>> categorical_blocks;
     bool constraints_read_output = false;
 
@@ -93,11 +101,10 @@ private:
     static constexpr float difference_step = 1e-3f;
     static constexpr float discrete_difference_step = 0.25f;
     static constexpr float box_weight = 100.0f;
-    static constexpr double double_solver_tolerance = 1e-10;
+    static constexpr double solver_tolerance = 1e-10;
 
-    pair<Eigen::VectorXd, Eigen::VectorXd> double_bounds;
-    Workspace<float> float_workspace;
-    Workspace<double> double_workspace;
+    bool float_points = false;
+    Workspace work;
     pair<double, string> closest_failure{numeric_limits<double>::infinity(), {}};
 };
 

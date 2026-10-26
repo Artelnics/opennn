@@ -59,14 +59,14 @@ vector<Index> get_group_members(const string& expression, const Network* network
 // The quantity Constraint::get_bounds bounds: the value itself or, for Integer and AllowedSet,
 // its offset from the nearest whole number or allowed value.
 
-float get_bounded_value(const Constraint& constraint, const float value)
+double get_bounded_value(const Constraint& constraint, const double value)
 {
     if (constraint.condition == Condition::Integer)
         return value - round(value);
 
     if (constraint.condition == Condition::AllowedSet)
         return value - *ranges::min_element(constraint.values, {},
-                           [&](const float allowed) { return abs(double(value) - allowed); });
+                           [&](const float allowed) { return abs(value - allowed); });
 
     return value;
 }
@@ -170,10 +170,11 @@ pair<float, float> ResponseOptimization::Constraint::get_bounds(const float nume
 }
 
 
-bool ResponseOptimization::is_within_bounds(const pair<float, float>& bounds, const float value) const
+// The repair's own test: a value in double within the tolerance of the bounds.
+bool ResponseOptimization::is_within_bounds(const pair<float, float>& bounds, const double value) const
 {
-    return value >= bounds.first - get_bound_tolerance(bounds.first)
-        && value <= bounds.second + get_bound_tolerance(bounds.second);
+    return value >= double(bounds.first) - double(get_bound_tolerance(bounds.first))
+        && value <= double(bounds.second) + double(get_bound_tolerance(bounds.second));
 }
 
 
@@ -276,7 +277,9 @@ FeasibilityRepairSystem ResponseOptimization::make_feasibility_system(const pair
                                                feasibility_rounds, feasibility_evaluations,
                                                numeric_tolerance, feasibility_margin_factor, constraint_tolerance);
     feasibility_system.set_solver(feasibility_solver == FeasibilitySolver::GaussNewton
-        ? FeasibilityRepairSystem::Solver::GaussNewton : FeasibilityRepairSystem::Solver::LevenbergMarquardt);
+        ? FeasibilityRepairSystem::Solver::GaussNewton
+        : feasibility_solver == FeasibilitySolver::Broyden ? FeasibilityRepairSystem::Solver::Broyden
+                                                          : FeasibilityRepairSystem::Solver::LevenbergMarquardt);
     return feasibility_system;
 }
 
@@ -291,13 +294,10 @@ pair<VectorR, VectorR> ResponseOptimization::get_feasible_points(VectorR point) 
 pair<VectorR, VectorR> ResponseOptimization::get_feasible_points(VectorR point,
                                                                FeasibilityRepairSystem& feasibility_system) const
 {
-    // The repair runs in double precision. The searches keep the point in float, so the rounded point is
-    // accepted only if it is still feasible in double: a repair from it must return it unchanged.
-    const VectorR repaired = feasibility_system.solve_double(point.cast<double>()).first.cast<float>();
-    const auto checked = repaired.size() == 0 ? pair<Eigen::VectorXd, VectorR>{}
-                                              : feasibility_system.solve_double(repaired.cast<double>());
-    pair<VectorR, VectorR> result{repaired, checked.second};
-    if (checked.first.size() == 0 || checked.first != repaired.cast<double>())
+    // The searches keep their points in float, and the repair returns a float point that meets the constraints
+    // evaluated in double.
+    pair<VectorR, VectorR> result = feasibility_system.solve(move(point));
+    if (result.first.size() == 0)
     {
         const auto& failure = feasibility_system.get_closest_failure();
         if (failure.first < closest_failure.first) closest_failure = failure;
@@ -379,7 +379,8 @@ void ResponseOptimization::set_feasibility_margin_factor(const float new_feasibi
 
 void ResponseOptimization::set_feasibility_solver(const FeasibilitySolver new_solver)
 {
-    throw_if(!is_one_of(new_solver, FeasibilitySolver::LevenbergMarquardt, FeasibilitySolver::GaussNewton),
+    throw_if(!is_one_of(new_solver, FeasibilitySolver::LevenbergMarquardt, FeasibilitySolver::GaussNewton,
+                        FeasibilitySolver::Broyden),
              "Invalid feasibility solver.");
     feasibility_solver = new_solver;
 }
@@ -501,18 +502,19 @@ VectorB ResponseOptimization::calculate_feasibility(const MatrixR& inputs, const
 
     VectorB feasible = VectorB::Constant(inputs.rows(), true);
 
-    VectorR input;
-    VectorR output;
+    // The rows are evaluated in double at the float points given, as the repair evaluates its candidates.
+    Eigen::VectorXd input;
+    Eigen::VectorXd output;
 
     for (Index i = 0; i < inputs.rows(); i++)
     {
-        input = inputs.row(i).transpose();
-        output = outputs.row(i).transpose();
+        input = inputs.row(i).transpose().cast<double>();
+        output = outputs.row(i).transpose().cast<double>();
 
         for (const Constraint& constraint : constraints)
             feasible(i) = feasible(i)
                 && is_within_bounds(constraint.get_bounds(numeric_tolerance, constraint_tolerance),
-                                    get_bounded_value(constraint, constraint.equation.evaluate(input, output)));
+                                    get_bounded_value(constraint, constraint.equation.evaluate_double(input, output)));
     }
 
     return feasible;

@@ -646,7 +646,7 @@ TEST_P(ResponseDriver, FailureLimitPreservesPartialResultsAndResetsAfterSuccess)
 }
 
 
-TEST_P(ResponseDriver, SelectsEitherFeasibilitySolver)
+TEST_P(ResponseDriver, SelectsEachFeasibilitySolver)
 {
     MinimalApproximation setup({"x1", "x2"}, {"y"});
     setup.network->set_parameters(VectorR::Zero(setup.network->get_parameters_buffer_size()));
@@ -656,7 +656,8 @@ TEST_P(ResponseDriver, SelectsEitherFeasibilitySolver)
     optimization->set_points_number(4);
     optimization->set_iterations_number(1);
     for (const auto solver : {ResponseOptimization::FeasibilitySolver::LevenbergMarquardt,
-                              ResponseOptimization::FeasibilitySolver::GaussNewton})
+                              ResponseOptimization::FeasibilitySolver::GaussNewton,
+                              ResponseOptimization::FeasibilitySolver::Broyden})
     {
         SCOPED_TRACE(int(solver));
         optimization->set_feasibility_solver(solver);
@@ -701,20 +702,27 @@ TEST(Feasibility, ConfiguredSolverIsUsedByBothRepairEntryPoints)
     probe.add_constraint("x1 + x2", Condition::Equal, {5.0f});
     probe.calculate_domain();
     probe.input_bounds.second(1) = 2.0f;
-    probe.set_feasibility_solver(ResponseOptimization::FeasibilitySolver::GaussNewton);
-    auto feasibility_system = probe.make_feasibility_system(probe.input_bounds);
-    const auto direct = probe.get_feasible_points(VectorR::Zero(2));
-    const auto reused = probe.get_feasible_points(VectorR::Zero(2), feasibility_system);
-    ASSERT_EQ(direct.first.size(), 2);
-    ASSERT_EQ(reused.first.size(), 2);
-    EXPECT_NEAR(direct.first(0), 125.0f/26.0f, 1e-5f);
-    EXPECT_NEAR(direct.first(1), 5.0f/26.0f, 1e-5f);
-    EXPECT_EQ((direct.first - reused.first).squaredNorm(), 0.0f);
-    EXPECT_THROW(probe.set_feasibility_solver(static_cast<ResponseOptimization::FeasibilitySolver>(1)), runtime_error);
+    for (const auto solver : {ResponseOptimization::FeasibilitySolver::GaussNewton,
+                              ResponseOptimization::FeasibilitySolver::Broyden})
+    {
+        SCOPED_TRACE(int(solver));
+        probe.set_feasibility_solver(solver);
+        auto feasibility_system = probe.make_feasibility_system(probe.input_bounds);
+        const auto direct = probe.get_feasible_points(VectorR::Zero(2));
+        const auto reused = probe.get_feasible_points(VectorR::Zero(2), feasibility_system);
+        ASSERT_EQ(direct.first.size(), 2);
+        ASSERT_EQ(reused.first.size(), 2);
+        EXPECT_NEAR(direct.first(0), 125.0f/26.0f, 1e-5f);
+        EXPECT_NEAR(direct.first(1), 5.0f/26.0f, 1e-5f);
+        EXPECT_EQ((direct.first - reused.first).squaredNorm(), 0.0f);
+    }
+    for (const int value : {1, 4})
+        EXPECT_THROW(probe.set_feasibility_solver(static_cast<ResponseOptimization::FeasibilitySolver>(value)),
+                     runtime_error);
 }
 
 
-TEST(Feasibility, SearchesRepairInDoublePrecision)
+TEST(Feasibility, SearchesKeepTheFloatPointTheRepairReturns)
 {
     MinimalApproximation setup({"x1", "x2"}, {"y"});
     RepairProbe probe(setup.network.get());
@@ -724,11 +732,11 @@ TEST(Feasibility, SearchesRepairInDoublePrecision)
     const VectorR start = VectorR::Constant(2, 1.0f);
 
     const auto repaired = probe.get_feasible_points(start, feasibility_system);
-    const auto double_repair = feasibility_system.solve_double(start.cast<double>());
+    const auto direct = feasibility_system.solve(start);
     ASSERT_EQ(repaired.first.size(), 2);
-    ASSERT_EQ(double_repair.first.size(), 2);
-    EXPECT_EQ((repaired.first - VectorR(double_repair.first.cast<float>())).squaredNorm(), 0.0f);
-    EXPECT_NEAR(repaired.first.squaredNorm(), 25.0f, 1e-4f);
+    ASSERT_EQ(direct.first.size(), 2);
+    EXPECT_EQ((repaired.first - direct.first).squaredNorm(), 0.0f);
+    EXPECT_LE(abs(repaired.first.cast<double>().squaredNorm() - 25.0), 25e-6) << "met in double at the float point";
     const VectorR expected = setup.network->calculate_outputs(repaired.first.transpose()).row(0).transpose();
     EXPECT_TRUE(repaired.second.isApprox(expected, 1e-6f));
 }
@@ -736,9 +744,8 @@ TEST(Feasibility, SearchesRepairInDoublePrecision)
 
 TEST(Feasibility, SearchesMeetRowsThatFloatCannotEvaluate)
 {
-    // The row is x^2 written as a cancelling sum: float evaluates it only in steps of about 8, so the
-    // float repair cannot meet 0.09. In double it reaches x = 0.3, and the rounded float point still
-    // meets the row when it is evaluated in double.
+    // The row is x^2 written as a cancelling sum: float arithmetic evaluates it only in steps of about 8. The
+    // repair evaluates it in double at the float point it returns, so it meets 0.09 at x = 0.3.
     MinimalApproximation setup({"x"}, {"y"});
     RepairProbe probe(setup.network.get());
     probe.add_constraint("(x + 10000)*(x + 10000) - 20000*x - 100000000", Condition::Equal, {0.09f});
@@ -746,17 +753,18 @@ TEST(Feasibility, SearchesMeetRowsThatFloatCannotEvaluate)
     auto feasibility_system = probe.make_feasibility_system(probe.input_bounds);
     const VectorR start = VectorR::Constant(1, 1.0f);
 
-    EXPECT_EQ(feasibility_system.solve(start).first.size(), 0);
+    const float in_float = probe.constraints[0].equation.evaluate(VectorR::Constant(1, 0.3f), VectorR::Zero(1));
+    EXPECT_GT(abs(double(in_float) - 0.09), 0.09*1e-6) << "float arithmetic cannot meet the row";
     const auto repaired = probe.get_feasible_points(start, feasibility_system);
     ASSERT_EQ(repaired.first.size(), 1);
     EXPECT_NEAR(repaired.first(0), 0.3f, 1e-6f);
 }
 
 
-TEST(Feasibility, SearchesRefuseARoundedPointThatLeavesTheRow)
+TEST(Feasibility, SearchesRefuseARowNoFloatPointMeets)
 {
-    // The row needs x1 - x2 = 5e-7 to about 1e-12, a gap no pair of floats near 1.5 has, so the double
-    // repair meets it and the rounded float point, checked in double, is refused.
+    // The row needs x1 - x2 = 5e-7 to about 1e-12, a gap no pair of floats near 1.5 has: the double repair
+    // meets it, and the repair for the float point a search keeps cannot.
     MinimalApproximation setup({"x1", "x2"}, {"y"});
     RepairProbe probe(setup.network.get());
     probe.add_constraint("1000000*x1 - 1000000*x2", Condition::Equal, {0.5f});
@@ -766,6 +774,7 @@ TEST(Feasibility, SearchesRefuseARoundedPointThatLeavesTheRow)
 
     const auto double_repair = feasibility_system.solve_double(start.cast<double>());
     ASSERT_EQ(double_repair.first.size(), 2);
+    EXPECT_EQ(feasibility_system.solve(start).first.size(), 0);
     EXPECT_EQ(probe.get_feasible_points(start, feasibility_system).first.size(), 0);
 }
 
@@ -798,7 +807,8 @@ TEST(Feasibility, DiagnosticTracksRoundedCandidatesAndResetsBetweenRuns)
 {
     MinimalApproximation setup({"x"}, {"y"});
     for (const auto solver : {ResponseOptimization::FeasibilitySolver::LevenbergMarquardt,
-                              ResponseOptimization::FeasibilitySolver::GaussNewton})
+                              ResponseOptimization::FeasibilitySolver::GaussNewton,
+                              ResponseOptimization::FeasibilitySolver::Broyden})
     {
         RepairProbe probe(setup.network.get());
         probe.add_objective("x", Sense::Minimize);
@@ -939,7 +949,7 @@ TEST(Feasibility, InputOnlyRepairAvoidsIntermediateNetworkCalls)
     probe.calculate_domain();
     probe.set_feasibility_rounds(1);
 
-    // An accepted point costs two passes: one for the repair and one for the check of its rounded point.
+    // An accepted point costs one pass: its outputs, evaluated once the repair has met the constraints.
     for (const bool succeeds : {false, true})
     {
         SCOPED_TRACE(succeeds);
@@ -955,7 +965,7 @@ TEST(Feasibility, InputOnlyRepairAvoidsIntermediateNetworkCalls)
         const long calls = profiler::stats().call_count("fp:set") - previous_calls;
         profiler::set_enabled(profiling_enabled);
 
-        EXPECT_EQ(calls, succeeds ? 2 : 0);
+        EXPECT_EQ(calls, succeeds ? 1 : 0);
         ASSERT_EQ(result.first.size(), succeeds ? 1 : 0);
         ASSERT_EQ(result.second.size(), succeeds ? 1 : 0);
 

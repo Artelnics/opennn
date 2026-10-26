@@ -32,6 +32,54 @@ protected:
     }
 };
 
+// Gauss-Newton and Broyden take the same projected minimum-norm steps with the same backtracking, and the first
+// step of a round is Gauss-Newton's for both.
+class ProjectedStepSolver : public testing::TestWithParam<Repair::Solver> {};
+
+
+// The discrete boundary value problem of More, Garbow and Hillstrom: a square system of nearly linear equalities.
+vector<Constraint> make_boundary_value_system(const Network* network, const Index size)
+{
+    vector<Constraint> constraints;
+    const double step = 1.0/double(size + 1);
+    for (Index i = 1; i <= size; i++)
+    {
+        ostringstream row;
+        row << setprecision(9) << "2*x" << i;
+        if (i > 1) row << " - x" << i - 1;
+        if (i < size) row << " - x" << i + 1;
+        row << " + " << 0.5*step*step << "*(x" << i << " + " << double(i)*step << " + 1)^3";
+        constraints.push_back({compile_expression(row.str(), network), Condition::Equal, {0.0f}});
+    }
+    return constraints;
+}
+
+
+// A Clamping layer nobody bounded clamps to +-MAX. Bounds raised to infinity leave its outputs unchanged, but
+// the repair can no longer differentiate the network and probes it with finite differences.
+void open_clamping(Network& network)
+{
+    auto* clamping = static_cast<Clamping*>(network.get_first("Clamping"));
+    for (Index i = 0; i < network.get_outputs_number(); i++)
+    {
+        clamping->set_lower_bound(i, -numeric_limits<float>::infinity());
+        clamping->set_upper_bound(i, numeric_limits<float>::infinity());
+    }
+}
+
+
+template<typename Work>
+long count_forward_passes(Work&& work)
+{
+    const bool profiling_enabled = profiler::is_enabled();
+    profiler::set_enabled(true);
+    const long previous_calls = profiler::stats().call_count("fp:set");
+    work();
+    const long calls = profiler::stats().call_count("fp:set") - previous_calls;
+    profiler::set_enabled(profiling_enabled);
+    return calls;
+}
+
 }
 
 
@@ -39,7 +87,7 @@ TEST_P(FeasibilitySolver, RejectsUnknownAndRemovedSolverValues)
 {
     Repair repair(setup.network.get(), {}, domain());
     repair.set_solver(GetParam());
-    for (const int value : {-1, 1, 3})
+    for (const int value : {-1, 1, 4})
         EXPECT_THROW(repair.set_solver(static_cast<Repair::Solver>(value)), runtime_error);
 }
 
@@ -386,7 +434,7 @@ TEST_P(FeasibilitySolver, FallsBackForLogarithmicScaling)
     EXPECT_NEAR(output(0), log(2.0f), 2e-6f);
 
     Repair one_step(&network, constraints, {VectorR::Constant(1, 0.1f), VectorR::Constant(1, 10.0f)},
-                    1, GetParam() == Repair::Solver::GaussNewton ? 1 : 2);
+                    1, GetParam() == Repair::Solver::LevenbergMarquardt ? 2 : 1);
     one_step.set_solver(GetParam());
     const bool profiling_enabled = profiler::is_enabled();
     profiler::set_enabled(true);
@@ -437,7 +485,7 @@ TEST_P(FeasibilitySolver, RepairsAtClampingBoundariesAndOnConstantSegments)
 }
 
 
-TEST(FeasibilityGaussNewton, RepairsWhenFiniteDifferencesLoseOutputChanges)
+TEST_P(ProjectedStepSolver, RepairsWhenFiniteDifferencesLoseOutputChanges)
 {
     Network network;
     network.add_layer(make_unique<opennn::Dense>(Shape{1}, Shape{1}, "Identity"));
@@ -451,7 +499,7 @@ TEST(FeasibilityGaussNewton, RepairsWhenFiniteDifferencesLoseOutputChanges)
     ASSERT_FLOAT_EQ(network.calculate_outputs(MatrixR::Constant(1, 1, 0.01f))(0, 0), 1000000.0f);
     const vector<Constraint> constraints{{compile_expression("y - 1000000", &network), Condition::Equal, {2.0f}}};
     Repair repair(&network, constraints, {VectorR::Zero(1), VectorR::Constant(1, 10.0f)}, 1, 1);
-    repair.set_solver(Repair::Solver::GaussNewton);
+    repair.set_solver(GetParam());
     const auto [input, output] = repair.solve(VectorR::Zero(1));
     ASSERT_EQ(input.size(), 1);
     ASSERT_EQ(output.size(), 1);
@@ -460,7 +508,7 @@ TEST(FeasibilityGaussNewton, RepairsWhenFiniteDifferencesLoseOutputChanges)
 }
 
 
-TEST(FeasibilityGaussNewton, FindsTheMinimumNormStepWithUnequalSpansAndAFixedColumn)
+TEST_P(ProjectedStepSolver, FindsTheMinimumNormStepWithUnequalSpansAndAFixedColumn)
 {
     MinimalApproximation setup({"x1", "x2", "x3"}, {"y"});
     const auto equation = compile_expression("x1 + x2/2 + x3/10", setup.network.get());
@@ -475,7 +523,7 @@ TEST(FeasibilityGaussNewton, FindsTheMinimumNormStepWithUnequalSpansAndAFixedCol
         vector<Constraint> constraints{{equation, Condition::Equal, {3.0f}}};
         if (duplicate) constraints.push_back({redundant, Condition::Equal, {6.0f}});
         Repair repair(setup.network.get(), constraints, {lower, upper});
-        repair.set_solver(Repair::Solver::GaussNewton);
+        repair.set_solver(GetParam());
         const auto [input, output] = repair.solve(point);
         ASSERT_EQ(input.size(), 3);
         ASSERT_EQ(output.size(), 1);
@@ -487,13 +535,13 @@ TEST(FeasibilityGaussNewton, FindsTheMinimumNormStepWithUnequalSpansAndAFixedCol
 }
 
 
-TEST(FeasibilityGaussNewton, RejectsAStationaryInfeasiblePoint)
+TEST_P(ProjectedStepSolver, RejectsAStationaryInfeasiblePoint)
 {
     MinimalApproximation setup({"x1", "x2"}, {"y"});
     const vector<Constraint> constraints{{compile_expression("x1^2", setup.network.get()),
                                          Condition::Equal, {1.0f}}};
     Repair repair(setup.network.get(), constraints, {VectorR::Zero(2), VectorR::Constant(2, 10.0f)});
-    repair.set_solver(Repair::Solver::GaussNewton);
+    repair.set_solver(GetParam());
     pair<VectorR, VectorR> result;
     EXPECT_NO_THROW(result = repair.solve(VectorR::Zero(2)));
     EXPECT_EQ(result.first.size(), 0);
@@ -501,7 +549,7 @@ TEST(FeasibilityGaussNewton, RejectsAStationaryInfeasiblePoint)
 }
 
 
-TEST(FeasibilityGaussNewton, ProjectsAnOvershootingStepAndContinuesRepair)
+TEST_P(ProjectedStepSolver, ProjectsAnOvershootingStepAndContinuesRepair)
 {
     MinimalApproximation setup({"x1", "x2"}, {"y"});
     const vector<Constraint> constraints{{compile_expression("x1^2", setup.network.get()),
@@ -509,7 +557,7 @@ TEST(FeasibilityGaussNewton, ProjectsAnOvershootingStepAndContinuesRepair)
     VectorR lower(2); lower << 0.0f, 3.0f;
     VectorR upper(2); upper << 2.0f, 3.0f;
     Repair repair(setup.network.get(), constraints, {lower, upper});
-    repair.set_solver(Repair::Solver::GaussNewton);
+    repair.set_solver(GetParam());
     VectorR point(2); point << 0.1f, 3.0f;
     const auto [input, output] = repair.solve(point);
     ASSERT_EQ(input.size(), 2);
@@ -522,7 +570,7 @@ TEST(FeasibilityGaussNewton, ProjectsAnOvershootingStepAndContinuesRepair)
 }
 
 
-TEST(FeasibilityGaussNewton, BacktracksWithinTheCandidateEvaluationBudget)
+TEST_P(ProjectedStepSolver, BacktracksWithinTheCandidateEvaluationBudget)
 {
     Network network;
     network.add_layer(make_unique<opennn::Dense>(Shape{1}, Shape{1}, "Identity"));
@@ -538,7 +586,7 @@ TEST(FeasibilityGaussNewton, BacktracksWithinTheCandidateEvaluationBudget)
     {
         SCOPED_TRACE(budget);
         Repair repair(&network, constraints, {VectorR::Constant(1, -1.5f), VectorR::Constant(1, 1.5f)}, 1, budget);
-        repair.set_solver(Repair::Solver::GaussNewton);
+        repair.set_solver(GetParam());
         const bool profiling_enabled = profiler::is_enabled();
         profiler::set_enabled(true);
         const long previous_calls = profiler::stats().call_count("fp:set");
@@ -557,12 +605,12 @@ TEST(FeasibilityGaussNewton, BacktracksWithinTheCandidateEvaluationBudget)
 }
 
 
-TEST(FeasibilityGaussNewton, BacktracksAfterANonfiniteTrial)
+TEST_P(ProjectedStepSolver, BacktracksAfterANonfiniteTrial)
 {
     MinimalApproximation setup({"x1"}, {"y"});
     const vector<Constraint> constraints{{compile_expression("sqrt(x1)", setup.network.get()), Condition::Equal, {0.0f}}};
     Repair repair(setup.network.get(), constraints, {VectorR::Constant(1, -8.0f), VectorR::Constant(1, 8.0f)});
-    repair.set_solver(Repair::Solver::GaussNewton);
+    repair.set_solver(GetParam());
     const auto result = repair.solve(VectorR::Constant(1, 4.0f));
     ASSERT_EQ(result.first.size(), 1);
     EXPECT_FLOAT_EQ(result.first(0), 0.0f);
@@ -570,7 +618,7 @@ TEST(FeasibilityGaussNewton, BacktracksAfterANonfiniteTrial)
 }
 
 
-TEST(FeasibilityGaussNewton, RepairsRedundantEquationsAcrossLargeFiniteDomains)
+TEST_P(ProjectedStepSolver, RepairsRedundantEquationsAcrossLargeFiniteDomains)
 {
     MinimalApproximation setup({"x1"}, {"y"});
     const vector<Constraint> constraints{{compile_expression("x1", setup.network.get()), Condition::Equal, {1.0f}},
@@ -579,7 +627,7 @@ TEST(FeasibilityGaussNewton, RepairsRedundantEquationsAcrossLargeFiniteDomains)
     {
         SCOPED_TRACE(upper);
         Repair repair(setup.network.get(), constraints, {VectorR::Zero(1), VectorR::Constant(1, upper)});
-        repair.set_solver(Repair::Solver::GaussNewton);
+        repair.set_solver(GetParam());
         const auto result = repair.solve(VectorR::Zero(1));
         ASSERT_EQ(result.first.size(), 1);
         EXPECT_NEAR(result.first(0), 1.0f, 1e-6f);
@@ -588,13 +636,13 @@ TEST(FeasibilityGaussNewton, RepairsRedundantEquationsAcrossLargeFiniteDomains)
 }
 
 
-TEST(FeasibilityGaussNewton, PreservesTheMinimumNormStepWithLargeResiduals)
+TEST_P(ProjectedStepSolver, PreservesTheMinimumNormStepWithLargeResiduals)
 {
     MinimalApproximation setup({"x1", "x2"}, {"y"});
     const vector<Constraint> constraints{{compile_expression("1e30*(1-x1*x2)-x1-x2", setup.network.get()),
                                          Condition::Equal, {-2.0f}}};
     Repair repair(setup.network.get(), constraints, {VectorR::Zero(2), VectorR::Ones(2)});
-    repair.set_solver(Repair::Solver::GaussNewton);
+    repair.set_solver(GetParam());
     const auto result = repair.solve(VectorR::Zero(2));
     ASSERT_EQ(result.first.size(), 2);
     EXPECT_FLOAT_EQ(result.first(0), 1.0f);
@@ -603,13 +651,13 @@ TEST(FeasibilityGaussNewton, PreservesTheMinimumNormStepWithLargeResiduals)
 }
 
 
-TEST(FeasibilityGaussNewton, AppliesASmallCorrectionBeforeStopping)
+TEST_P(ProjectedStepSolver, AppliesASmallCorrectionBeforeStopping)
 {
     MinimalApproximation setup({"x1", "x2"}, {"y"});
     const vector<Constraint> constraints{{compile_expression("x1", setup.network.get()),
                                          Condition::Equal, {1.0f}}};
     Repair repair(setup.network.get(), constraints, {VectorR::Zero(2), VectorR::Constant(2, 10.0f)}, 1, 1);
-    repair.set_solver(Repair::Solver::GaussNewton);
+    repair.set_solver(GetParam());
     const auto result = repair.solve(VectorR::Constant(2, 1.0f + 2e-6f));
     ASSERT_EQ(result.first.size(), 2);
     EXPECT_FLOAT_EQ(result.first(0), 1.0f);
@@ -617,13 +665,13 @@ TEST(FeasibilityGaussNewton, AppliesASmallCorrectionBeforeStopping)
 }
 
 
-TEST(FeasibilityGaussNewton, ContinuesSmallProjectedStepsUntilFeasible)
+TEST_P(ProjectedStepSolver, ContinuesSmallProjectedStepsUntilFeasible)
 {
     MinimalApproximation setup({"x1", "x2"}, {"y"});
     const vector<Constraint> constraints{{compile_expression("x1 + x2", setup.network.get()),
                                          Condition::Equal, {5.0f}}};
     Repair repair(setup.network.get(), constraints, {VectorR::Zero(2), VectorR::Constant(2, 10.0f)});
-    repair.set_solver(Repair::Solver::GaussNewton);
+    repair.set_solver(GetParam());
     VectorR point(2); point << 9.0f, 0.0f;
     const auto result = repair.solve(point);
     ASSERT_EQ(result.first.size(), 2);
@@ -632,6 +680,55 @@ TEST(FeasibilityGaussNewton, ContinuesSmallProjectedStepsUntilFeasible)
     EXPECT_TRUE((result.first.array() <= 10.0f).all());
     EXPECT_NEAR(result.first.sum(), 5.0f, 5e-6f);
     EXPECT_FLOAT_EQ(result.first(1), 0.0f);
+}
+
+
+TEST(FeasibilityBroyden, KeepsMetEqualitiesInTheStep)
+{
+    // Dropped from the step once met, the equalities of a square system drift back out while Broyden meets the
+    // others, and the rows take turns until the evaluations run out.
+    vector<string> names;
+    for (Index i = 1; i <= 10; i++) names.push_back("x" + to_string(i));
+    MinimalApproximation setup(names, {"y"});
+    const vector<Constraint> constraints = make_boundary_value_system(setup.network.get(), 10);
+    Repair repair(setup.network.get(), constraints, {VectorR::Constant(10, -1.0f), VectorR::Ones(10)});
+    repair.set_solver(Repair::Solver::Broyden);
+    for (Index start = 0; start < 25; start++)
+    {
+        SCOPED_TRACE(start);
+        Eigen::VectorXd point(10);
+        for (Index i = 0; i < 10; i++) point(i) = sin(1.7*double(start + 1)*double(i + 1));
+        const auto [input, output] = repair.solve_double(point);
+        ASSERT_EQ(input.size(), 10);
+        for (const Constraint& constraint : constraints)
+            EXPECT_LE(abs(constraint.equation.evaluate_double(input, output.cast<double>())), 2e-7);
+    }
+}
+
+
+TEST(FeasibilityBroyden, TakesFewerNetworkPassesThanGaussNewtonThroughFiniteDifferences)
+{
+    MinimalApproximation setup({"x1", "x2", "x3", "x4", "x5", "x6"}, {"y"});
+    Network& network = *setup.network;
+    network.set_parameters(VectorR::LinSpaced(network.get_parameters_buffer_size(), -0.5f, 0.5f));
+    open_clamping(network);
+    const float target = network.calculate_outputs(MatrixR::Constant(1, 6, 7.0f))(0, 0);
+    const vector<Constraint> constraints{{compile_expression("y", &network), Condition::Equal, {target}}};
+
+    long passes[2] = {};
+    for (const Repair::Solver solver : {Repair::Solver::GaussNewton, Repair::Solver::Broyden})
+    {
+        SCOPED_TRACE(int(solver));
+        Repair repair(&network, constraints, {VectorR::Zero(6), VectorR::Constant(6, 10.0f)});
+        repair.set_solver(solver);
+        pair<Eigen::VectorXd, VectorR> result;
+        passes[solver == Repair::Solver::Broyden] =
+            count_forward_passes([&] { result = repair.solve_double(Eigen::VectorXd::Constant(6, 2.0)); });
+        ASSERT_EQ(result.first.size(), 6);
+        ASSERT_EQ(result.second.size(), 1);
+        EXPECT_NEAR(result.second(0), target, 1e-5f);
+    }
+    EXPECT_LT(passes[1], passes[0]) << "Gauss-Newton takes finite differences at every step, Broyden once";
 }
 
 
@@ -646,7 +743,7 @@ TEST_P(FeasibilitySolver, AccountsForMarginSlopesWithinASmallBudget)
             const vector<Constraint> constraints{{equation, condition,
                 condition == Condition::Between ? vector<float>{1.0f, 1.01f} : vector<float>{1.0f}}};
             Repair repair(setup.network.get(), constraints, domain(), 1,
-                          GetParam() == Repair::Solver::GaussNewton ? 1 : 2);
+                          GetParam() == Repair::Solver::LevenbergMarquardt ? 2 : 1);
             repair.set_solver(GetParam());
             const float direction = condition == Condition::LessEqual ? 1.0f : -1.0f;
             VectorR point = VectorR::Zero(2);
@@ -679,6 +776,25 @@ TEST_P(FeasibilitySolver, RepairsInDoubleAGapBelowAFloatStep)
     EXPECT_LE(input(1) - input(0), 2e-6 + 2e-7);
     const float rounded_gap = float(input(1)) - float(input(0));
     EXPECT_TRUE(rounded_gap == 0.0f || rounded_gap > 3e-6f) << "rounded to float, the point leaves the window";
+}
+
+
+TEST_P(FeasibilitySolver, ReturnsFloatPointsWithinABoundTheDoubleRepairOnlyReaches)
+{
+    // A double repair ends on the bound of x1 - x2 <= 0, where rounding its point to float can leave it. The
+    // float repair evaluates the row at the float point it returns and aims a float step inside.
+    const vector<Constraint> constraints{{compile_expression("x1 - x2", setup.network.get()),
+                                         Condition::LessEqual, {0.0f}}};
+    Repair repair(setup.network.get(), constraints, domain());
+    repair.set_solver(GetParam());
+    for (Index k = 0; k < 20; k++)
+    {
+        SCOPED_TRACE(k);
+        VectorR start(2); start << 5.0f + 0.23f*float(k), 1.0f + 0.17f*float(k);
+        const VectorR point = repair.solve(start).first;
+        ASSERT_EQ(point.size(), 2);
+        EXPECT_LE(double(point(0)) - double(point(1)), double(EPSILON));
+    }
 }
 
 
@@ -742,6 +858,13 @@ TEST_P(FeasibilitySolver, ReportsTheClosestFailureInDouble)
 
 
 INSTANTIATE_TEST_SUITE_P(RepairBackends, FeasibilitySolver,
-                        testing::Values(Repair::Solver::LevenbergMarquardt, Repair::Solver::GaussNewton),
+                        testing::Values(Repair::Solver::LevenbergMarquardt, Repair::Solver::GaussNewton,
+                                        Repair::Solver::Broyden),
                         [](const testing::TestParamInfo<Repair::Solver>& info)
-                        { return info.param == Repair::Solver::GaussNewton ? "GaussNewton" : "LevenbergMarquardt"; });
+                        { return info.param == Repair::Solver::GaussNewton ? "GaussNewton"
+                               : info.param == Repair::Solver::Broyden ? "Broyden" : "LevenbergMarquardt"; });
+
+INSTANTIATE_TEST_SUITE_P(GaussNewtonFamily, ProjectedStepSolver,
+                        testing::Values(Repair::Solver::GaussNewton, Repair::Solver::Broyden),
+                        [](const testing::TestParamInfo<Repair::Solver>& info)
+                        { return info.param == Repair::Solver::Broyden ? "Broyden" : "GaussNewton"; });

@@ -144,20 +144,26 @@ on either response search, or `FeasibilityRepairSystem::Solver::GaussNewton`
 for direct repair, using Eigen with no additional dependency. It takes minimum-norm steps in
 input-span coordinates, scales the linear system before decomposition and uses
 up to eight backtracking trials per step, clipped to the domain; LM remains the default.
-Both repair backends share rounds, per-round evaluation limits (excluding
+Broyden (`FeasibilitySolver::Broyden`) takes the same steps but evaluates the Jacobian once
+per round and corrects it after each accepted step with the least-change secant update in
+span units; a step from a corrected Jacobian is tried at full length only, and when it fails
+the rows of the step are evaluated again. It keeps met equalities in the step. It saves most
+when the network must be differentiated by finite differences.
+All repair backends share rounds, per-round evaluation limits (excluding
 numerical probes), tolerance, margin and final discrete/feasibility checks.
-Both use analytical constraint Jacobians for supported CPU FP32 sequential
+All use analytical constraint Jacobians for supported CPU FP32 sequential
 dense networks, including common activations, affine scaling/unscaling and
 clamping. This logic stays in `response_optimization`; unsupported networks,
 unusable derivatives and nonsmooth boundaries use finite differences.
-`FeasibilityRepairSystem::solve_double` runs the same repair with the point, the constraint values,
-their derivatives and the solver state in double precision (the network still evaluates in float),
-for constraints that float cannot resolve, such as long sums of nearly cancelling terms or gaps below
-a float step. Rounding its point to float can lose that feasibility. `solve` is unchanged.
-The response optimizers repair every candidate with `solve_double`. They keep the repaired point
-rounded to float only if a second double-precision repair from it returns it unchanged, so every
-point they accept is feasible with its constraints evaluated in double; this costs one more network
-pass per accepted point than `solve`.
+The repair runs in double precision; the network evaluates in float. `FeasibilityRepairSystem::solve`
+serves callers that keep float points, as the response optimizers do: it evaluates the constraints,
+in double, at the float point it will return and aims a violated bound a float step inside (the
+constraint's derivative times one float step per input), so every point it returns meets its
+constraints evaluated in double. `solve_double` serves callers that keep double points: it evaluates
+the constraints at the double point and reaches what float cannot represent, such as gaps below a
+float step, which rounding to float can lose. An equality whose tolerance is finer than one float
+step moves it stays out of reach of float points. `ResponseOptimization::calculate_feasibility`
+screens rows by the same rule, in double.
 There is no automatic solver fallback. A failed repair does not prove infeasibility.
 Failed sampling reports the worst tolerance-scaled miss of the best checked
 rounded candidate with a constraint violation, when finite values are available. These

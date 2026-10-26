@@ -16,7 +16,7 @@ class ResponseOptimization
 {
 public:
 
-    enum class FeasibilitySolver { LevenbergMarquardt, GaussNewton = 2 };
+    enum class FeasibilitySolver { LevenbergMarquardt, GaussNewton = 2, Broyden };
 
     void set(Network* = nullptr);
 
@@ -126,7 +126,7 @@ private:
 
     float get_bound_tolerance(float) const;
 
-    bool is_within_bounds(const pair<float, float>&, float) const;
+    bool is_within_bounds(const pair<float, float>&, double) const;
 
     float numeric_tolerance = 1e-6f;
 
