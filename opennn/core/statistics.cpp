@@ -386,8 +386,7 @@ Histogram histogram(const VectorR& new_vector, Index bins_number)
     }
     else
     {
-        // Missing values are NaN, and Eigen's default reductions leave them undefined: ARM returned
-        // NaN for any of them, x86 for one at the start. There are more than bins_number numbers here.
+        // Missing values are NaN: Eigen's default reductions returned NaN for them (#356).
         const float min = new_vector.minCoeff<PropagateNumbers>();
         const float max = new_vector.maxCoeff<PropagateNumbers>();
 
