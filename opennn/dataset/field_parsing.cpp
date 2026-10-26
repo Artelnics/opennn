@@ -415,7 +415,7 @@ time_t date_to_timestamp(string_view text, Index gmt, DateFormat format)
     if (!parsed) return -1;
     if (parsed->date_count == 0 && format != Auto) return -1;
 
-    tm time_components{};
+    tm time_components{.tm_isdst = -1};   // mktime finds whether summer time applies
 
     if (parsed->date_count > 0 && parsed->year_index == 0)
     {
