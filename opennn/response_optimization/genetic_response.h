@@ -19,6 +19,10 @@ private:
     MatrixR single_optimization() override;
     MatrixR multi_optimization() override;
 
+    pair<MatrixR, MatrixR> sample_population(const pair<VectorR, VectorR>&, const function<VectorR()>& next_candidate,
+                                             const string& members, const string& outcome,
+                                             bool required = false) const;
+
     pair<MatrixR, MatrixR> initialize_population(const pair<VectorR, VectorR>&) const;
     pair<MatrixR, MatrixR> evolve_population(const pair<VectorR, VectorR>&) const;
 

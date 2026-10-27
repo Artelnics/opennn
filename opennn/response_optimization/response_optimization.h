@@ -48,6 +48,7 @@ public:
 
         void validate() const;
         pair<float, float> get_bounds(float numeric_tolerance, float constraint_tolerance) const;
+        double get_bounded_value(double) const;
         Index get_discrete_column() const;
     };
 
@@ -73,9 +74,6 @@ public:
 
     MatrixR perform_response_optimization();
 
-    // Whether each row of inputs, with the outputs beside it, meets every constraint within the
-    // tolerances the optimization grants its own candidates. The outputs need not come from the
-    // network: recorded targets screen a dataset by the same rule. The input domain is not checked.
     VectorB calculate_feasibility(const MatrixR& inputs, const MatrixR& outputs) const;
 
 protected:
@@ -97,6 +95,8 @@ protected:
     pair<VectorR, VectorR> get_feasible_points(VectorR, FeasibilityRepairSystem&) const;
 
     FeasibilityRepairSystem make_feasibility_system(const pair<VectorR, VectorR>&) const;
+
+    Index get_sampling_budget_multiplier() const;
 
     string get_sampling_failure() const;
 

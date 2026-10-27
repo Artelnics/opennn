@@ -1,20 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
-// Every condition and objective sense a response optimization understands, stated against
-// a small untrained network and run through both solvers.
-//
-// The networks carry no training, so no case asks what response comes back. Each one asks
-// only where the result may sit: inside the box, on a hyperplane, on a lattice, one hot
-// across a categorical block. That holds whatever the weights are.
-//
-// Cases that are refused before any search starts are grouped first, under
-// ResponseOptimizationSetup. The ones that run are parameterised over both solvers, so a
-// condition that only one of them honours fails here.
-//
-// The expression language the conditions are written in is tested in
-// expression_test.cpp.
-
 #include "tests/common/pch.h"
 
 #include "tests/response_optimization/synthetic_fixture.h"
@@ -744,8 +730,6 @@ TEST(Feasibility, SearchesKeepTheFloatPointTheRepairReturns)
 
 TEST(Feasibility, SearchesMeetRowsThatFloatCannotEvaluate)
 {
-    // The row is x^2 written as a cancelling sum: float arithmetic evaluates it only in steps of about 8. The
-    // repair evaluates it in double at the float point it returns, so it meets 0.09 at x = 0.3.
     MinimalApproximation setup({"x"}, {"y"});
     RepairProbe probe(setup.network.get());
     probe.add_constraint("(x + 10000)*(x + 10000) - 20000*x - 100000000", Condition::Equal, {0.09f});
@@ -763,8 +747,6 @@ TEST(Feasibility, SearchesMeetRowsThatFloatCannotEvaluate)
 
 TEST(Feasibility, SearchesRefuseARowNoFloatPointMeets)
 {
-    // The row needs x1 - x2 = 5e-7 to about 1e-12, a gap no pair of floats near 1.5 has: the double repair
-    // meets it, and the repair for the float point a search keeps cannot.
     MinimalApproximation setup({"x1", "x2"}, {"y"});
     RepairProbe probe(setup.network.get());
     probe.add_constraint("1000000*x1 - 1000000*x2", Condition::Equal, {0.5f});
@@ -949,7 +931,6 @@ TEST(Feasibility, InputOnlyRepairAvoidsIntermediateNetworkCalls)
     probe.calculate_domain();
     probe.set_feasibility_rounds(1);
 
-    // An accepted point costs one pass: its outputs, evaluated once the repair has met the constraints.
     for (const bool succeeds : {false, true})
     {
         SCOPED_TRACE(succeeds);
@@ -1441,7 +1422,6 @@ TEST_P(ResponseDriver, CategoricalSearchMatchesAScanOverCategories)
 
 TEST_P(ResponseDriver, RejectsUndefinedAndOverflowedConstraints)
 {
-    // The rows are evaluated in double, where exp first overflows above about 709.
     for (const bool overflow : {false, true})
     {
         MinimalApproximation setup({"x1", "x2"}, {"y"},
@@ -1719,9 +1699,6 @@ TEST(Feasibility, NumericalProbesHandleExpressionsUndefinedInOneDirection)
 }
 
 
-// Screening recorded rows: the outputs are the ones given, not the network's, and each
-// condition keeps the tolerance the repair grants its own candidates.
-
 TEST(Feasibility, ScreensRowsWithTheOutputsGivenAndTheRepairTolerances)
 {
     MinimalApproximation setup({"x1", "x2", "x3"}, {"y"});
@@ -1777,9 +1754,6 @@ TEST(Feasibility, ScreensCardinalityByTheMembersInPlay)
     EXPECT_TRUE(feasible(2)) << "a member at a ten-thousandth of its range counts as switched off";
 }
 
-
-// The advised point is the row nearest the best value of every objective, each distance
-// in units of that objective's spread over the rows.
 
 TEST(AdvisedPoint, IsTheRowNearestTheBestOfEveryObjective)
 {

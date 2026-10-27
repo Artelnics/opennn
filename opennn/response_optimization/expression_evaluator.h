@@ -63,9 +63,6 @@ struct CompiledExpression
     double symmetric_scale = 1.0;
 
     float evaluate(const VectorR&, const VectorR&) const;
-
-    // The same program, linear form or symmetric polynomial evaluated in double precision; the stored
-    // constants and coefficients are unchanged.
     double evaluate_double(const Eigen::VectorXd&, const Eigen::VectorXd&) const;
 };
 

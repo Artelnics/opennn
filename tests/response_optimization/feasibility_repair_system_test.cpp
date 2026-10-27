@@ -32,12 +32,9 @@ protected:
     }
 };
 
-// Gauss-Newton and Broyden take the same projected minimum-norm steps with the same backtracking, and the first
-// step of a round is Gauss-Newton's for both.
 class ProjectedStepSolver : public testing::TestWithParam<Repair::Solver> {};
 
 
-// The discrete boundary value problem of More, Garbow and Hillstrom: a square system of nearly linear equalities.
 vector<Constraint> make_boundary_value_system(const Network* network, const Index size)
 {
     vector<Constraint> constraints;
@@ -55,8 +52,6 @@ vector<Constraint> make_boundary_value_system(const Network* network, const Inde
 }
 
 
-// A Clamping layer nobody bounded clamps to +-MAX. Bounds raised to infinity leave its outputs unchanged, but
-// the repair can no longer differentiate the network and probes it with finite differences.
 void open_clamping(Network& network)
 {
     auto* clamping = static_cast<Clamping*>(network.get_first("Clamping"));
@@ -685,8 +680,6 @@ TEST_P(ProjectedStepSolver, ContinuesSmallProjectedStepsUntilFeasible)
 
 TEST(FeasibilityBroyden, KeepsMetEqualitiesInTheStep)
 {
-    // Dropped from the step once met, the equalities of a square system drift back out while Broyden meets the
-    // others, and the rows take turns until the evaluations run out.
     vector<string> names;
     for (Index i = 1; i <= 10; i++) names.push_back("x" + to_string(i));
     MinimalApproximation setup(names, {"y"});
@@ -781,8 +774,6 @@ TEST_P(FeasibilitySolver, RepairsInDoubleAGapBelowAFloatStep)
 
 TEST_P(FeasibilitySolver, ReturnsFloatPointsWithinABoundTheDoubleRepairOnlyReaches)
 {
-    // A double repair ends on the bound of x1 - x2 <= 0, where rounding its point to float can leave it. The
-    // float repair evaluates the row at the float point it returns and aims a float step inside.
     const vector<Constraint> constraints{{compile_expression("x1 - x2", setup.network.get()),
                                          Condition::LessEqual, {0.0f}}};
     Repair repair(setup.network.get(), constraints, domain());

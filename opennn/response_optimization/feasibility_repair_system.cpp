@@ -51,6 +51,8 @@ void FeasibilityRepairSystem::set_domain(pair<VectorR, VectorR> domain)
     throw_if(!(domain.second - domain.first).allFinite() || (domain.first.array() > domain.second.array()).any(),
              "Feasibility repair domain must have finite, ordered bounds.");
     bounds = {domain.first.cast<double>(), domain.second.cast<double>()};
+    spans = bounds.second - bounds.first;
+    box_scales = spans.cwiseMax(double(EPSILON))/double(box_weight);
 }
 
 
@@ -64,46 +66,42 @@ void FeasibilityRepairSystem::set_solver(const Solver new_solver)
 
 pair<VectorR, VectorR> FeasibilityRepairSystem::solve(VectorR point)
 {
-    auto [repaired, output] = repair(point.cast<double>(), true);
+    float_points = true;
+    auto [repaired, output] = repair(point.cast<double>());
     return {repaired.cast<float>(), move(output)};
 }
 
 
 pair<Eigen::VectorXd, VectorR> FeasibilityRepairSystem::solve_double(Eigen::VectorXd point)
 {
-    return repair(move(point), false);
+    float_points = false;
+    return repair(move(point));
 }
 
 
-// Each round projects the point and evaluates it; a met point is returned, otherwise the solver takes over from
-// the Jacobian at the projected point. The rounds stop when the point stops moving or comes back.
-pair<FeasibilityRepairSystem::Vector, VectorR> FeasibilityRepairSystem::repair(Vector point, const bool for_float)
+pair<FeasibilityRepairSystem::Vector, VectorR> FeasibilityRepairSystem::repair(Vector point)
 {
-    const auto& [lower_bounds, upper_bounds] = bounds;
+    throw_if(point.size() != spans.size(), "Feasibility repair point has the wrong size.");
 
-    throw_if(point.size() != lower_bounds.size(), "Feasibility repair point has the wrong size.");
-    float_points = for_float;
-    work.evaluated_point.resize(0);
-    work.evaluated_output.resize(0);
-    work.row_margins.resize(0);
+    evaluated_point.resize(0);
+    evaluated_output.resize(0);
+    rounding_errors.resize(0);
 
     Vector previous;
     Vector before_previous;
 
     for (Index i = 0; ; i++)
     {
-        if (!point.allFinite()) return {};
-
-        if (!round_discrete(point) || !point.allFinite()) return {};
+        if (!point.allFinite() || !round_discrete(point)) return {};
 
         evaluate_constraints(point);
 
-        if (!work.row_values.allFinite() || !work.row_residuals.allFinite()) return {};
+        if (!row_values.allFinite() || !row_residuals.allFinite()) return {};
 
-        if ((work.row_residuals.array() == 0.0).all())
+        if ((row_residuals.array() == 0.0).all())
         {
             if (!evaluate_outputs(point).allFinite()) return {};
-            return {move(point), move(work.evaluated_output)};
+            return {move(point), move(evaluated_output)};
         }
 
         update_closest_failure();
@@ -112,32 +110,28 @@ pair<FeasibilityRepairSystem::Vector, VectorR> FeasibilityRepairSystem::repair(V
 
         if (previous.size() == point.size()
          && ((point - previous).cwiseAbs().array()
-             <= double(numeric_tolerance)*(upper_bounds - lower_bounds).cwiseMax(double(EPSILON)).array()).all())
+             <= double(numeric_tolerance)*spans.cwiseMax(double(EPSILON)).array()).all())
             return {};
 
-        if (before_previous.size() == point.size() && (before_previous.array() == point.array()).all())
-            return {};
+        if (before_previous.size() == point.size() && before_previous == point) return {};
 
         before_previous.swap(previous);
         previous = point;
 
-        if (i == 0) work.box_scales = (upper_bounds - lower_bounds).cwiseMax(double(EPSILON))/double(box_weight);
-        Matrix initial_jacobian = calculate_jacobian(point, work.row_values, work.evaluated_output);
-        work.row_scales = initial_jacobian.rowwise().stableNorm();
+        Matrix jacobian = calculate_jacobian(point, row_values, evaluated_output);
 
-        work.row_scales = (work.row_scales.array().isFinite() && (work.row_scales.array() > double(EPSILON)))
-                          .select(work.row_scales.array(), 1.0);
+        row_scales = jacobian.rowwise().stableNorm();
+        row_scales = (row_scales.array().isFinite() && row_scales.array() > double(EPSILON))
+                     .select(row_scales.array(), 1.0);
 
-        if (float_points) set_float_margins(point, initial_jacobian);
+        if (float_points) set_rounding_errors(point, jacobian);
 
-        if (solver == Solver::LevenbergMarquardt) solve_levenberg_marquardt(point, move(initial_jacobian));
-        else solve_gauss_newton(point, move(initial_jacobian), solver == Solver::Broyden);
+        if (solver == Solver::LevenbergMarquardt) solve_levenberg_marquardt(point, move(jacobian));
+        else solve_gauss_newton(point, move(jacobian), solver == Solver::Broyden);
     }
 }
 
 
-// Switches off the members a cardinality budget leaves out, clips the point to the box, picks one category per
-// categorical input and places the discrete inputs; false when the conditions leave no valid point.
 bool FeasibilityRepairSystem::round_discrete(Vector& point) const
 {
     const auto& [lower_bounds, upper_bounds] = bounds;
@@ -209,109 +203,78 @@ bool FeasibilityRepairSystem::round_discrete(Vector& point) const
 }
 
 
-// A float step in an input moves a constraint by about its derivative times that step. For a caller that keeps
-// float points, a violated bound is aimed that far inside, so that rounding to float keeps the repaired point in.
-void FeasibilityRepairSystem::set_float_margins(const Vector& point, const Matrix& jacobian)
+void FeasibilityRepairSystem::set_rounding_errors(const Vector& point, const Matrix& jacobian)
 {
-    work.row_margins = Vector::Zero(work.row_values.size());
+    rounding_errors = Vector::Zero(row_values.size());
 
-    for (Index i = 0; i < jacobian.rows(); i++)
-        for (Index j = 0; j < point.size(); j++)
-        {
-            const float coordinate = float(point(j));
-            const double float_step = double(nextafter(coordinate, numeric_limits<float>::infinity())) - coordinate;
-            if (isfinite(jacobian(i, j))) work.row_margins(i) += abs(jacobian(i, j))*float_step;
-        }
+    for (Index j = 0; j < point.size(); j++)
+    {
+        const float coordinate = float(point(j));
+        const double float_step = double(nextafter(coordinate, numeric_limits<float>::infinity())) - coordinate;
 
-    for (Index i = 0; i < work.row_values.size(); i++)
-        work.row_residuals(i) = calculate_constraint_residual(i).first;
+        for (Index i = 0; i < jacobian.rows(); i++)
+            if (isfinite(jacobian(i, j))) rounding_errors(i) += abs(jacobian(i, j))*float_step;
+    }
+
+    for (Index i = 0; i < row_values.size(); i++)
+        row_residuals(i) = calculate_constraint_residual(i).first;
 }
 
 
 const VectorR& FeasibilityRepairSystem::evaluate_outputs(const Vector& point)
 {
-    if (work.evaluated_output.size() == 0 || work.evaluated_point.size() != point.size()
-     || (work.evaluated_point.array() != point.array()).any())
+    if (evaluated_output.size() == 0 || evaluated_point.size() != point.size() || evaluated_point != point)
     {
-        work.evaluated_output = network->calculate_outputs(VectorR(point.cast<float>()).transpose()).row(0).transpose();
-        work.evaluated_point = point;
+        evaluated_output = network->calculate_outputs(VectorR(point.cast<float>()).transpose()).row(0).transpose();
+        evaluated_point = point;
     }
 
-    return work.evaluated_output;
+    return evaluated_output;
 }
 
 
-// The network reads float points. For a caller that keeps float points, the constraints are also evaluated at
-// the float point the repair will return, so its feasibility is the caller's.
 void FeasibilityRepairSystem::evaluate_constraints(const Vector& point)
 {
     if (constraints_read_output) evaluate_outputs(point);
 
-    const Index rows_number = Index(constraints.size());
+    const Vector input = float_points ? Vector(point.cast<float>().cast<double>()) : point;
+    const Vector output = evaluated_output.cast<double>();
 
-    work.row_values.resize(rows_number);
-    work.row_residuals.resize(rows_number);
+    row_values.resize(Index(constraints.size()));
+    row_residuals.resize(row_values.size());
 
-    const Vector output = work.evaluated_output.cast<double>();
-    const Vector float_point = float_points ? Vector(point.cast<float>().cast<double>()) : Vector();
-    const Vector& evaluated_point = float_points ? float_point : point;
-
-    for (Index i = 0; i < rows_number; i++)
+    for (Index i = 0; i < row_values.size(); i++)
     {
-        work.row_values(i) = constraints[size_t(i)].equation.evaluate_double(evaluated_point, output);
-
-        work.row_residuals(i) = calculate_constraint_residual(i).first;
+        row_values(i) = constraints[size_t(i)].equation.evaluate_double(input, output);
+        row_residuals(i) = calculate_constraint_residual(i).first;
     }
 }
 
 
-// The quantity a constraint's bounds apply to: its value or, for Integer and AllowedSet, the offset of its value
-// from the nearest whole number or allowed value.
-double FeasibilityRepairSystem::calculate_constraint_value(const Index i) const
-{
-    const Constraint& constraint = constraints[size_t(i)];
-    const double value = work.row_values(i);
-    if (constraint.condition == Condition::Integer) return value - round(value);
-    if (constraint.condition == Condition::AllowedSet)
-        return value - double(*ranges::min_element(constraint.values, {},
-            [&](const float allowed) { return abs(value - allowed); }));
-    return value;
-}
-
-
-// The residual of a constraint is zero within its tolerance of the bounds. Outside, it is the distance past the
-// crossed bound plus an inset that aims a little inside: the margin factor times the distance, or times the margin
-// factor and the bound once the distance is small. The slope is the derivative of the residual by the value.
 pair<double, double> FeasibilityRepairSystem::calculate_constraint_residual(const Index i) const
 {
-    const auto [lower, upper] = constraints[size_t(i)].get_bounds(numeric_tolerance, constraint_tolerance);
-    const double value = calculate_constraint_value(i);
+    const Constraint& constraint = constraints[size_t(i)];
+    const auto [lower, upper] = constraint.get_bounds(numeric_tolerance, constraint_tolerance);
+    const double value = constraint.get_bounded_value(row_values(i));
 
-    double crossed_bound = 0.0;
+    const bool below = value < double(lower) - double(get_bound_tolerance(lower));
+    const bool above = value > double(upper) + double(get_bound_tolerance(upper));
 
-    if (value < double(lower) - double(get_bound_tolerance(lower)))
-        crossed_bound = double(lower);
-    else if (value > double(upper) + double(get_bound_tolerance(upper)))
-        crossed_bound = double(upper);
-    else
-        return {};
+    if (!below && !above) return {};
 
-    if (work.row_margins.size() != 0)
-    {
-        const double shift = min(work.row_margins(i), 0.5*(double(upper) - double(lower)));
-        crossed_bound += crossed_bound == double(lower) ? shift : -shift;
-    }
+    const double half_width = 0.5*(double(upper) - double(lower));
+    const double inward = rounding_errors.size() != 0 ? min(rounding_errors(i), half_width) : 0.0;
+    const double crossed_bound = below ? double(lower) + inward : double(upper) - inward;
 
     const double residual = value - crossed_bound;
     const double margin = double(feasibility_margin_factor);
+    const double inset = min(margin*max(abs(residual), margin*abs(crossed_bound)), half_width);
+    const double result = residual + (residual > 0.0 ? inset : -inset);
 
-    const double inset = min(margin*max(abs(residual), margin*abs(crossed_bound)), 0.5*(double(upper) - double(lower)));
-
-    const double result = residual + ((residual > 0.0) ? inset : -inset);
     const double bound = result < 0.0 ? lower : upper;
     const double violation = abs(value - bound);
-    const double slope = violation >= margin*abs(bound) && margin*violation < 0.5*(double(upper) - lower)
-                       ? 1.0 + margin : 1.0;
+    const double slope = violation >= margin*abs(bound) && margin*violation < half_width ? 1.0 + margin : 1.0;
+
     return {result, slope};
 }
 
@@ -330,14 +293,14 @@ void FeasibilityRepairSystem::update_closest_failure()
     double worst_tolerance = 0.0;
     float worst_bound = 0.0f;
 
-    for (Index i = 0; i < work.row_values.size(); i++)
+    for (Index i = 0; i < row_values.size(); i++)
     {
-        if (work.row_residuals(i) == 0.0) continue;
+        if (row_residuals(i) == 0.0) continue;
         const Constraint& constraint = constraints[size_t(i)];
         const auto [lower, upper] = constraint.get_bounds(numeric_tolerance, constraint_tolerance);
-        const float bound = work.row_residuals(i) < 0.0 ? lower : upper;
+        const float bound = row_residuals(i) < 0.0 ? lower : upper;
         const bool discrete = is_one_of(constraint.condition, Condition::Integer, Condition::AllowedSet);
-        const double gap = discrete ? abs(calculate_constraint_value(i)) : abs(work.row_values(i) - bound);
+        const double gap = discrete ? abs(constraint.get_bounded_value(row_values(i))) : abs(row_values(i) - bound);
         const double tolerance = get_bound_tolerance(bound) + (discrete ? double(constraint_tolerance) : 0.0);
         const double ratio = gap/tolerance;
         if (ratio <= worst_ratio) continue;
@@ -352,7 +315,7 @@ void FeasibilityRepairSystem::update_closest_failure()
     const Constraint& constraint = constraints[size_t(worst)];
     static constexpr const char* names[] = {"Equal", "Between", "GreaterEqual", "LessEqual", "Greater", "Less",
                                            "AllowedSet", "Integer", "Cardinality"};
-    const double value = work.row_values(worst);
+    const double value = row_values(worst);
     ostringstream message;
     message << setprecision(numeric_limits<double>::max_digits10)
             << "Best checked rounded candidate with a constraint violation (smallest maximum miss/tolerance): constraint '"
@@ -521,18 +484,13 @@ MatrixR FeasibilityRepairSystem::calculate_network_jacobian(const VectorR& point
 }
 
 
-// The derivatives of the constraint values by the inputs, of every row or of the rows with a nonzero entry in
-// rows: analytical where the expression and the network allow it, by finite differences otherwise. Fixed and
-// categorical columns have none.
 FeasibilityRepairSystem::Matrix FeasibilityRepairSystem::calculate_jacobian(const Vector& point, const Vector& values,
                                                                             const VectorR& output,
                                                                             const Vector& rows) const
 {
-    const auto& [lower_bounds, upper_bounds] = bounds;
-
     const bool every_row = rows.size() != values.size();
 
-    Vector steps = (upper_bounds - lower_bounds).cwiseMax(0.0);
+    Vector steps = spans;
 
     for (const auto& [first_column, categories_number] : categorical_blocks)
         steps.segment(first_column, categories_number).setZero();
@@ -599,8 +557,6 @@ FeasibilityRepairSystem::Matrix FeasibilityRepairSystem::calculate_jacobian(cons
 }
 
 
-// One-sided differences, probing the other side when a row is not finite on the first; probes are evaluated
-// where the rows are, at float points for a caller that keeps them.
 void FeasibilityRepairSystem::calculate_numerical_jacobian(const Vector& point, const Vector& values,
                                                           const Vector& steps, const vector<Index>& rows,
                                                           Matrix& jacobian) const
@@ -634,9 +590,8 @@ void FeasibilityRepairSystem::calculate_numerical_jacobian(const Vector& point, 
             if (reads_output)
                 probe_output = network->calculate_outputs(VectorR(probe.cast<float>()).transpose()).row(0).transpose();
 
-            const Vector double_probe_output = probe_output.cast<double>();
-            const Vector float_probe = float_points ? Vector(probe.cast<float>().cast<double>()) : Vector();
-            const Vector& evaluated_probe = float_points ? float_probe : probe;
+            const Vector input = float_points ? Vector(probe.cast<float>().cast<double>()) : probe;
+            const Vector output = probe_output.cast<double>();
 
             bool complete = true;
 
@@ -644,7 +599,7 @@ void FeasibilityRepairSystem::calculate_numerical_jacobian(const Vector& point, 
             {
                 if (isfinite(jacobian(i, j))) continue;
 
-                const double value = constraints[size_t(i)].equation.evaluate_double(evaluated_probe, double_probe_output);
+                const double value = constraints[size_t(i)].equation.evaluate_double(input, output);
                 const double derivative = (value - values(i))/step;
                 if (isfinite(derivative)) jacobian(i, j) = derivative;
                 else complete = false;

@@ -1,13 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
-// Small untrained networks built on the spot, and the handful of ways the response tests
-// read them. Nothing here is trained: the weights are whatever the constructor gives, so a
-// test may ask where the response goes but never what value it takes.
-//
-// Shared so that the expression tests and the condition tests state a network the same
-// way.
-
 #pragma once
 
 #include "opennn/core/statistics.h"

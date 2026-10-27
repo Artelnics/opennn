@@ -55,22 +55,6 @@ vector<Index> get_group_members(const string& expression, const Network* network
     return members;
 }
 
-
-// The quantity Constraint::get_bounds bounds: the value itself or, for Integer and AllowedSet,
-// its offset from the nearest whole number or allowed value.
-
-double get_bounded_value(const Constraint& constraint, const double value)
-{
-    if (constraint.condition == Condition::Integer)
-        return value - round(value);
-
-    if (constraint.condition == Condition::AllowedSet)
-        return value - *ranges::min_element(constraint.values, {},
-                           [&](const float allowed) { return abs(value - allowed); });
-
-    return value;
-}
-
 }
 
 
@@ -170,7 +154,18 @@ pair<float, float> ResponseOptimization::Constraint::get_bounds(const float nume
 }
 
 
-// The repair's own test: a value in double within the tolerance of the bounds.
+double ResponseOptimization::Constraint::get_bounded_value(const double value) const
+{
+    if (condition == Condition::Integer)
+        return value - round(value);
+
+    if (condition == Condition::AllowedSet)
+        return value - *ranges::min_element(values, {}, [&](const float allowed) { return abs(value - allowed); });
+
+    return value;
+}
+
+
 bool ResponseOptimization::is_within_bounds(const pair<float, float>& bounds, const double value) const
 {
     return value >= double(bounds.first) - double(get_bound_tolerance(bounds.first))
@@ -276,10 +271,7 @@ FeasibilityRepairSystem ResponseOptimization::make_feasibility_system(const pair
     FeasibilityRepairSystem feasibility_system(network, constraints, domain,
                                                feasibility_rounds, feasibility_evaluations,
                                                numeric_tolerance, feasibility_margin_factor, constraint_tolerance);
-    feasibility_system.set_solver(feasibility_solver == FeasibilitySolver::GaussNewton
-        ? FeasibilityRepairSystem::Solver::GaussNewton
-        : feasibility_solver == FeasibilitySolver::Broyden ? FeasibilityRepairSystem::Solver::Broyden
-                                                          : FeasibilityRepairSystem::Solver::LevenbergMarquardt);
+    feasibility_system.set_solver(feasibility_solver);
     return feasibility_system;
 }
 
@@ -294,8 +286,6 @@ pair<VectorR, VectorR> ResponseOptimization::get_feasible_points(VectorR point) 
 pair<VectorR, VectorR> ResponseOptimization::get_feasible_points(VectorR point,
                                                                FeasibilityRepairSystem& feasibility_system) const
 {
-    // The searches keep their points in float, and the repair returns a float point that meets the constraints
-    // evaluated in double.
     pair<VectorR, VectorR> result = feasibility_system.solve(move(point));
     if (result.first.size() == 0)
     {
@@ -323,6 +313,12 @@ void ResponseOptimization::set(Network* new_network)
     input_bounds = {};
     invalid_objective = -1;
     closest_failure = {numeric_limits<double>::infinity(), {}};
+}
+
+
+Index ResponseOptimization::get_sampling_budget_multiplier() const
+{
+    return sampling_budget_multiplier > 0 ? sampling_budget_multiplier : iterations_number;
 }
 
 
@@ -487,8 +483,8 @@ MatrixR ResponseOptimization::perform_response_optimization()
     closest_failure = {numeric_limits<double>::infinity(), {}};
     throw_if(!network, "The neural network has not been set.");
     throw_if(objectives.empty(), "No objective has been set.");
-    const Index multiplier = sampling_budget_multiplier > 0 ? sampling_budget_multiplier : iterations_number;
-    throw_if(multiplier > numeric_limits<Index>::max()/points_number, "The sampling budget is too large.");
+    throw_if(get_sampling_budget_multiplier() > numeric_limits<Index>::max()/points_number,
+             "The sampling budget is too large.");
 
     return objectives.size() > 1 ? multi_optimization() : single_optimization();
 }
@@ -502,7 +498,6 @@ VectorB ResponseOptimization::calculate_feasibility(const MatrixR& inputs, const
 
     VectorB feasible = VectorB::Constant(inputs.rows(), true);
 
-    // The rows are evaluated in double at the float points given, as the repair evaluates its candidates.
     Eigen::VectorXd input;
     Eigen::VectorXd output;
 
@@ -514,7 +509,7 @@ VectorB ResponseOptimization::calculate_feasibility(const MatrixR& inputs, const
         for (const Constraint& constraint : constraints)
             feasible(i) = feasible(i)
                 && is_within_bounds(constraint.get_bounds(numeric_tolerance, constraint_tolerance),
-                                    get_bounded_value(constraint, constraint.equation.evaluate_double(input, output)));
+                                    constraint.get_bounded_value(constraint.equation.evaluate_double(input, output)));
     }
 
     return feasible;

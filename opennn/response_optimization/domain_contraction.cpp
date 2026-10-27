@@ -94,7 +94,7 @@ void DomainContraction::contract_categories(pair<VectorR, VectorR>& domain,
 pair<MatrixR, MatrixR> DomainContraction::sample_local_domains(
     const vector<pair<VectorR, VectorR>>& local_domains, const bool require_points)
 {
-    const Index rounds = sampling_budget_multiplier > 0 ? sampling_budget_multiplier : iterations_number;
+    const Index rounds = get_sampling_budget_multiplier();
     const Index sample_size = max(Index(1), points_number/Index(local_domains.size()));
     const Index capacity = sample_size*Index(local_domains.size());
 
