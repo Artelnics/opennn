@@ -239,35 +239,42 @@ TEST(FieldParsingTest, TwoFieldDatesNeedALeadingYear)
     }
 }
 
+// The local time read back is the one written, in summer as in winter: with tm_isdst
+// left at 0, mktime read every summer time as winter time, an hour off.
 TEST(FieldParsingTest, DateToTimestampRoundTrip)
 {
-    const time_t timestamp = date_to_timestamp("2020-06-15 12:30:45", 0, Ymd);
+    for (const int month : {1, 6})
+    {
+        const string text = "2020-0" + to_string(month) + "-15 12:30:45";
+        const time_t timestamp = date_to_timestamp(text, 0, Ymd);
 
-    ASSERT_NE(timestamp, time_t(-1));
+        ASSERT_NE(timestamp, time_t(-1)) << text;
 
-    struct tm expected = {};
-    expected.tm_year = 2020 - 1900;
-    expected.tm_mon  = 6 - 1;
-    expected.tm_mday = 15;
-    expected.tm_hour = 12;
-    expected.tm_min  = 30;
-    expected.tm_sec  = 45;
-    expected.tm_isdst = 0;
+        struct tm expected = {};
+        expected.tm_year = 2020 - 1900;
+        expected.tm_mon  = month - 1;
+        expected.tm_mday = 15;
+        expected.tm_hour = 12;
+        expected.tm_min  = 30;
+        expected.tm_sec  = 45;
+        expected.tm_isdst = -1;
 
-    EXPECT_EQ(timestamp, mktime(&expected));
+        EXPECT_EQ(timestamp, mktime(&expected)) << text;
 
-    struct tm decoded = {};
+        struct tm decoded = {};
 #if defined(_WIN32)
-    localtime_s(&decoded, &timestamp);
+        localtime_s(&decoded, &timestamp);
 #else
-    localtime_r(&timestamp, &decoded);
+        localtime_r(&timestamp, &decoded);
 #endif
 
-    EXPECT_EQ(decoded.tm_year + 1900, 2020);
-    EXPECT_EQ(decoded.tm_mon + 1, 6);
-    EXPECT_EQ(decoded.tm_mday, 15);
-    EXPECT_EQ(decoded.tm_min, 30);
-    EXPECT_EQ(decoded.tm_sec, 45);
+        EXPECT_EQ(decoded.tm_year + 1900, 2020) << text;
+        EXPECT_EQ(decoded.tm_mon + 1, month) << text;
+        EXPECT_EQ(decoded.tm_mday, 15) << text;
+        EXPECT_EQ(decoded.tm_hour, 12) << text;
+        EXPECT_EQ(decoded.tm_min, 30) << text;
+        EXPECT_EQ(decoded.tm_sec, 45) << text;
+    }
 }
 
 TEST(FieldParsingTest, DateToTimestampInvalid)
@@ -284,7 +291,7 @@ TEST(FieldParsingTest, DateToTimestampMeridiem)
         expected.tm_mon = 6 - 1;
         expected.tm_mday = 15;
         expected.tm_hour = hour;
-        expected.tm_isdst = 0;
+        expected.tm_isdst = -1;
         return mktime(&expected);
     };
 
