@@ -22,7 +22,7 @@ nvidia-nccl-cu13==2.29.7
 nvidia-nvjitlink==13.3.33
 nvidia-nvshmem-cu13==3.4.5
 nvidia-nvtx==13.0.85
-setuptools==84.0.0
+setuptools==84.1.0
 sympy==1.14.0
 torch==2.13.0+cu130
 triton==3.7.1
