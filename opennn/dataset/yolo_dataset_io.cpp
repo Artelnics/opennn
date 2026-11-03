@@ -1043,6 +1043,13 @@ void YoloDataset::build_cache(const vector<array<float, 2>>& requested_anchors)
 void YoloDataset::setup_metadata(Index new_samples_number)
 {
     samples_number = new_samples_number;
+    clear_fold_split();
+    uint64_t maximum = 0;
+    for (size_t i = 1; i < boxes_offsets.size(); ++i)
+        maximum = max(maximum, boxes_offsets[i] - boxes_offsets[i - 1]);
+    throw_if(maximum > uint64_t(numeric_limits<Index>::max() / 20),
+             "YOLO box count exceeds the supported target size.");
+    max_boxes_per_image = Index(maximum);
 
     cache_input_shape = input_shape;
     cache_grid_size = grid_size;

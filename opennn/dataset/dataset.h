@@ -71,7 +71,7 @@ public:
     const vector<SampleRole>& get_sample_roles() const noexcept { return sample_roles; }
 
     void set_fold_split(const vector<Index>& training, const vector<Index>& validation);
-    void clear_fold_split() noexcept { fold_split_roles.reset(); }
+    void clear_fold_split() noexcept { on_sample_roles_changed(); fold_split_roles.reset(); }
 
     void set_augmentation_epoch(Index);
     Index get_augmentation_epoch() const noexcept { return augmentation_epoch; }
@@ -341,6 +341,7 @@ protected:
     void samples_from_JSON(const Json*);
     virtual void resize_data_from_JSON(Index) {}
     virtual void on_used_samples_changed() {}
+    virtual void on_sample_roles_changed() noexcept {}
 
     void require_in_memory_data(string_view what) const
     {
@@ -358,6 +359,7 @@ protected:
     // Call before replacing or editing host data, including reloads and preprocessing.
     void invalidate_data()
     {
+        on_sample_roles_changed();
         clear_training_scaling();
         disable_device_residency();
     }

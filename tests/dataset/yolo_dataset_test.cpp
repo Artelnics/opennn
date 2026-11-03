@@ -30,7 +30,8 @@ struct YoloAugmentationFixture
     TempDir directory{"opennn_yolo_augmentation_partition_"};
     YoloDataset dataset;
 
-    explicit YoloAugmentationFixture(Dataset::StorageMode storage, int width = 16, int height = 16)
+    explicit YoloAugmentationFixture(Dataset::StorageMode storage, int width = 16, int height = 16,
+                                     int boxes_per_image = 1)
     {
         const auto images = directory.path / "images";
         const auto labels = directory.path / "labels";
@@ -41,7 +42,9 @@ struct YoloAugmentationFixture
         {
             const string name = to_string(i);
             write_bmp_24(images / (name + ".bmp"), width, height, uint8_t(40 + 40 * i), 30, 10);
-            write_label(labels / (name + ".txt"), i, 0.5f, 0.5f, 1.0f, 1.0f);
+            ofstream label(labels / (name + ".txt"));
+            for (int box = 0; box < boxes_per_image; ++box)
+                label << i << " 0.5 0.5 1 1\n";
         }
         dataset.set_display(false);
         dataset.set(images, labels, {height, width, 3}, 2, 1, {{0.5f, 0.5f}});
@@ -130,6 +133,9 @@ TEST(YoloDataset, MosaicUsesOnlyCurrentTrainingImagesAndBoxes)
         YoloAugmentationFixture fixture(storage);
         auto& dataset = fixture.dataset;
         dataset.set_v8_mode(true);
+        auto first = async(launch::async, [&] { return read_augmented_sample(dataset); });
+        auto second = async(launch::async, [&] { return read_augmented_sample(dataset); });
+        EXPECT_EQ(first.get(), second.get());
         expect_mosaic_sources(dataset, 2, 2);
         dataset.set_sample_roles(SampleRole::None);
         dataset.set_sample_role(4, SampleRole::Training);
@@ -143,7 +149,51 @@ TEST(YoloDataset, MosaicUsesOnlyCurrentTrainingImagesAndBoxes)
             expect_mosaic_sources(dataset, 3, 3);
         }
         expect_mosaic_sources(dataset, 1);
+        Dataset& base = dataset;
+        base.split_samples_sequential(0.5f, 0.5f, 0.0f);
+        expect_mosaic_sources(dataset, 1, 1);
+        base.set_sample_roles({"Validation", "Validation", "Training", "Validation", "Validation"});
+        expect_mosaic_sources(dataset, 2, 2);
+        JsonDocument saved;
+        saved.set_root(Json::parse(augmentation_json(dataset)));
+        base.set_sample_role(2, SampleRole::Validation);
+        base.set_sample_role(4, SampleRole::Training);
+        expect_mosaic_sources(dataset, 4, 4);
+        dataset.from_JSON(saved);
+        expect_mosaic_sources(dataset, 2, 2);
     }
+}
+
+TEST(YoloDataset, V8PreservesAllBoxesWithAndWithoutMosaic)
+{
+    for (auto storage : {Dataset::StorageMode::BinaryFile, Dataset::StorageMode::Matrix})
+        for (int count : {31, 101})
+        {
+            YoloAugmentationFixture fixture(storage, 16, 16, count);
+            auto& dataset = fixture.dataset;
+            dataset.set_v8_mode(true);
+            auto policy = dataset.get_augmentation_policy();
+            for (bool mosaic : {false, true})
+                for (bool enabled : {true, false})
+                {
+                    policy.mosaic = mosaic;
+                    policy.enabled = enabled;
+                    dataset.set_augmentation_policy(policy);
+                    const Index capacity = max<Index>(100, count * (enabled && mosaic ? 4 : 1));
+                    ASSERT_EQ(dataset.get_target_shape().size(), capacity * 5);
+                    for (FillMode mode : {FillMode::Training, FillMode::Validation})
+                    {
+                        vector<float> targets(size_t(capacity * 10 + 1), -99.0f);
+                        dataset.fill_targets({2, 2}, {}, targets.data(), mode);
+                        const Index expected = count * (enabled && mosaic && mode == FillMode::Training ? 4 : 1);
+                        for (Index row = 0; row < 2; ++row)
+                            for (Index box = 0; box < capacity; ++box)
+                                EXPECT_EQ(targets[size_t((row * capacity + box) * 5 + 4)],
+                                          box < expected ? 3.0f : 0.0f);
+                        EXPECT_EQ(targets.back(), -99.0f);
+                    }
+                }
+        }
 }
 
 TEST(YoloDataset, AugmentationRejectsNonTrainingInputsAndTargets)

@@ -570,6 +570,7 @@ void YoloDataset::set_augmentation_policy(const AugmentationPolicy& new_policy)
     if (is_device_resident()) disable_device_residency();
 
     augmentation_policy = new_policy;
+    if (v8_mode) update_target_layout();
 }
 
 
@@ -605,7 +606,8 @@ void YoloDataset::update_target_layout()
 {
     disable_device_residency();
     if (v8_mode)
-        target_shape = {MAX_GT_BOXES * 5};
+        target_shape = {max(MAX_GT_BOXES, max_boxes_per_image
+            * (augmentation_policy.enabled && augmentation_policy.mosaic ? 4 : 1)) * 5};
     else if (is_multi_scale())
         target_shape = {transform_reduce(head_grid_sizes.begin(), head_grid_sizes.end(), Index(0), plus<>{},
             [&](Index g) { return g * g * boxes_per_head * (5 + classes_number); })};
@@ -669,8 +671,19 @@ struct YoloDataset::AugmentationBatch
 {
     AugmentationPolicy policy;
     uint64_t seed;
-    vector<Index> training_indices;
+    span<const Index> training_indices;
 };
+
+span<const Index> YoloDataset::get_mosaic_training_indices() const
+{
+    const std::lock_guard lock(mosaic_indices_mutex);
+    if (!mosaic_indices_valid)
+    {
+        mosaic_training_indices = get_sample_indices(SampleRole::Training);
+        mosaic_indices_valid = true;
+    }
+    return mosaic_training_indices;
+}
 
 YoloDataset::AugmentationBatch YoloDataset::prepare_augmentation_batch(
     const vector<Index>& sample_indices, FillMode mode) const
@@ -680,7 +693,7 @@ YoloDataset::AugmentationBatch YoloDataset::prepare_augmentation_batch(
     policy.mosaic = policy.enabled && policy.mosaic;
     if (policy.enabled) validate_augmentation_samples(sample_indices);
     return {policy, get_augmentation_seed(),
-            policy.mosaic ? get_sample_indices(SampleRole::Training) : vector<Index>{}};
+            policy.mosaic ? get_mosaic_training_indices() : span<const Index>{}};
 }
 
 void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
@@ -888,7 +901,7 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
                     }
 
                     if (v8_mode)
-                        make_target_v8_gtlist(boxes, classes_number, target_ptr);
+                        make_target_v8_gtlist(boxes, classes_number, target_ptr, target_record_floats / 5);
                     else if (is_multi_scale())
                         make_target_multi_scale(boxes, head_anchors, head_grid_sizes,
                                                 boxes_per_head, classes_number, target_ptr);

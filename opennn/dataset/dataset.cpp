@@ -123,6 +123,7 @@ void Dataset::record_memory(const string& stage) const
 
 void Dataset::set_fold_split(const vector<Index>& training, const vector<Index>& validation)
 {
+    on_sample_roles_changed();
     fold_split_roles = sample_roles;
     vector<SampleRole>& roles = *fold_split_roles;
     for (const Index i : training)   roles[size_t(i)] = SampleRole::Training;
@@ -296,6 +297,7 @@ void Dataset::upload_device_matrix(const MatrixR& matrix)
 
 void Dataset::set_sample_roles(SampleRole role_type)
 {
+    on_sample_roles_changed();
     const bool used_samples_changed = ranges::any_of(sample_roles,
         [role_type](SampleRole role)
         {
@@ -311,6 +313,7 @@ void Dataset::set_sample_role(const Index index, SampleRole new_role)
              "Dataset::set_sample_role: sample index {} is out of range for {} samples.",
              index, ssize(sample_roles));
 
+    on_sample_roles_changed();
     const bool used_samples_changed = (sample_roles[index] == SampleRole::None)
                                    != (new_role == SampleRole::None);
     sample_roles[index] = new_role;
@@ -323,6 +326,7 @@ void Dataset::set_sample_roles(const vector<string>& new_roles)
              "Dataset::set_sample_roles: {} roles given for {} samples.",
              ssize(new_roles), ssize(sample_roles));
 
+    on_sample_roles_changed();
     bool used_samples_changed = false;
     for (Index i = 0; i < ssize(new_roles); ++i)
     {
@@ -336,6 +340,7 @@ void Dataset::set_sample_roles(const vector<string>& new_roles)
 
 void Dataset::set_sample_roles(const vector<Index>& indices, SampleRole role_type)
 {
+    on_sample_roles_changed();
     bool used_samples_changed = false;
     for (const auto& i : indices)
     {
@@ -417,6 +422,7 @@ void Dataset::split_samples(const float training_samples_ratio,
 
     // Compact after shuffling to preserve the seeded order, including unused rows.
     erase_if(indices, [this](Index sample) { return sample_roles[sample] == SampleRole::None; });
+    on_sample_roles_changed();
     for (Index position = 0; position < ssize(indices); ++position)
         sample_roles[indices[position]] = position < training_end ? SampleRole::Training
             : position < validation_end ? SampleRole::Validation : SampleRole::Testing;
@@ -1167,6 +1173,7 @@ void Dataset::samples_from_JSON(const Json *samples_element)
     if (has_sample_ids)
         sample_ids = get_tokens(read_json_string(samples_element, "SamplesId"), get_separator_string());
 
+    on_sample_roles_changed();
     sample_roles.assign(size_t(samples_number), SampleRole::Training);
 
     if (!variables.empty())

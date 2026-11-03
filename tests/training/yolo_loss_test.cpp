@@ -3,6 +3,7 @@
 
 #include "tests/common/pch.h"
 #include "tests/common/numerical_derivatives.h"
+#include "opennn/core/device_backend.h"
 
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/dataset/yolo_dataset.h"
@@ -294,25 +295,36 @@ void build_yolo_v8_network(Network& net, const YoloLossV8Fixture& f)
 TEST(YoloLoss, V8UsesDetectionContractWithGenericDataset)
 {
     YoloLossV8Fixture f;
-    constexpr Index samples_number = 2;
-    constexpr Index max_gt_boxes = 3;
-    TabularDataset dataset(samples_number,
-                           Shape{f.H, f.W, 3},
-                           Shape{max_gt_boxes * 5});
-    dataset.set_data_constant(0.0f);
-    dataset.set_sample_roles(SampleRole::Training);
-
-    Network network;
-    build_yolo_v8_network(network, f);
-
-    Loss loss(&network, &dataset);
-    loss.set_error(Loss::Error::Yolo);
-    loss.set_regularization(Loss::Regularization::NoRegularization);
-
-    const VectorR gradient          = calculate_gradient(loss);
-    const VectorR numerical_gradient = calculate_numerical_gradient(loss);
-
-    EXPECT_LT((gradient - numerical_gradient).array().abs().maxCoeff(), 0.5f);
+    for (Device backend : {Device::CPU, Device::CUDA})
+    {
+        if (backend == Device::CUDA && !device::has_cuda_device()) continue;
+        Configuration::instance().set(backend, Type::FP32);
+        constexpr Index inputs = f.H * f.W * 3;
+        constexpr Index max_gt_boxes = 101;
+        TabularDataset dataset(2, Shape{f.H, f.W, 3}, Shape{max_gt_boxes * 5});
+        MatrixR data = MatrixR::Zero(2, inputs + max_gt_boxes * 5);
+        dataset.set_data(data);
+        dataset.set_sample_roles(SampleRole::Training);
+        Network network;
+        build_yolo_v8_network(network, f);
+        if (backend == Device::CUDA) network.copy_parameters_device();
+        Loss loss(&network, &dataset);
+        loss.set_error(Loss::Error::Yolo);
+        loss.set_regularization(Loss::Regularization::NoRegularization);
+        const VectorR empty_gradient = calculate_gradient(loss);
+        const Index last_box = inputs + (max_gt_boxes - 1) * 5;
+        data.block(0, last_box, 2, 5) << 0.25f, 0.25f, 0.5f, 0.5f, 1.0f,
+                                       0.75f, 0.75f, 0.5f, 0.5f, 1.0f;
+        dataset.set_data(data);
+        const float error = calculate_numerical_error(loss);
+        const VectorR gradient = calculate_gradient(loss);
+        EXPECT_GT((gradient - empty_gradient).norm(), 1e-6f);
+        data.block(0, inputs, 2, 5) = data.block(0, last_box, 2, 5).eval();
+        data.block(0, last_box, 2, 5).setZero();
+        dataset.set_data(data);
+        EXPECT_NEAR(calculate_numerical_error(loss), error, 1e-6f);
+        EXPECT_LT((calculate_gradient(loss) - gradient).norm(), 1e-6f);
+    }
 }
 
 TEST(YoloLoss, V8WithObjectGradientMatchesNumericalGradient)

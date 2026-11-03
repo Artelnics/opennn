@@ -4,6 +4,7 @@
 #pragma once
 
 #include <cstdio>
+#include <mutex>
 
 #include "opennn/dataset/dataset.h"
 #include "opennn/core/io_utilities.h"
@@ -151,6 +152,12 @@ private:
 
     struct AugmentationBatch;
     AugmentationBatch prepare_augmentation_batch(const vector<Index>&, FillMode) const;
+    span<const Index> get_mosaic_training_indices() const;
+    void on_sample_roles_changed() noexcept override { mosaic_indices_valid = false; }
+
+    mutable std::mutex mosaic_indices_mutex;
+    mutable vector<Index> mosaic_training_indices;
+    mutable bool mosaic_indices_valid = false;
 
     filesystem::path images_directory;
     filesystem::path labels_directory;
@@ -176,6 +183,7 @@ private:
     uint64_t target_data_offset = 0;
     uint64_t boxes_data_offset = 0;
     vector<uint64_t> boxes_offsets;
+    Index max_boxes_per_image = 0;
 
     AugmentationPolicy augmentation_policy{};
     float display_confidence_threshold = 0.25f;

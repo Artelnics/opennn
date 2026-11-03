@@ -87,6 +87,9 @@ YOLO applies source color, Mosaic, shared image/box jitter and flip, then Cutout
 Clip boxes and discard degenerate ones; Cutout preserves annotations. Keep old
 JSON compatible: absent Cutout fields mean disabled. Setters and JSON loading
 must reject invalid policies before changing policy/device residency, even disabled.
+YOLOv8 sizes targets for the largest source box count (four sources with Mosaic),
+keeping 100 slots as the compatibility minimum. Mosaic caches Training indices
+until roles, folds or data change.
 
 | Parameter | Accepted domain |
 | --- | --- |

@@ -261,12 +261,12 @@ inline void make_target_multi_scale(const vector<YoloDataset::Box>& boxes,
 
 inline void make_target_v8_gtlist(const vector<YoloDataset::Box>& boxes,
                                    Index classes_number,
-                                   float* target)
+                                   float* target,
+                                   Index max_gt_boxes = YoloDataset::MAX_GT_BOXES)
 {
-    constexpr Index MAX_GT = YoloDataset::MAX_GT_BOXES;
-    fill_n(target, MAX_GT * 5, 0.0f);
-    const Index n = min<Index>(ssize(boxes), MAX_GT);
-    for (Index i = 0; i < n; ++i)
+    throw_if(ssize(boxes) > max_gt_boxes, "YOLOv8 target capacity is smaller than its box count.");
+    fill_n(target, max_gt_boxes * 5, 0.0f);
+    for (Index i = 0; i < ssize(boxes); ++i)
     {
         const auto& b = boxes[size_t(i)];
         throw_if(b.class_id < 0 || b.class_id >= classes_number,
