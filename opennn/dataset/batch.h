@@ -6,6 +6,7 @@
 #include "opennn/core/configuration.h"
 #include "opennn/core/tensor_types.h"
 #include "opennn/core/thread_safe_queue.h"
+#include "opennn/core/image_transform.h"
 
 #include <atomic>
 #include <array>
@@ -159,6 +160,16 @@ struct Batch
     bool pack_image_input = false;
     optional<PackedImageInput> packed_image_input;
     Buffer packed_input_staging{Device::CUDA};
+    optional<ImageTransformBatch> image_transform;
+    device::PinnedBuffer image_parameters_host;
+    Buffer image_parameters_device{Device::CUDA};
+    Buffer image_scratch{Device::CUDA};
+
+    span<ImageTransformParameters> prepare_image_transform(const ImageTransformBatch&);
+    span<ImageChannelScale> image_channel_scales();
+    span<ImageRegion> image_cutouts();
+    void upload_image_transform(Batch&, DeviceStream);
+
     device::PinnedBuffer gather_indices_host;
     Buffer gather_indices_device{Device::CUDA};
 };

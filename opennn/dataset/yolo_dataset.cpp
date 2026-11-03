@@ -26,17 +26,7 @@ uint8_t round_to_byte(const float value)
     return uint8_t(min(255.0f, max(0.0f, value + 0.5f)));
 }
 
-struct AugmentationTransform
-{
-    float crop_left;
-    float crop_top;
-    float crop_right;
-    float crop_bottom;
-    bool flip;
-    float exposure_mul;
-    float saturation_mul;
-    float hue_shift;
-};
+using AugmentationTransform = ImageCropTransform;
 
 void validate_augmentation_scale(string_view name, float value)
 {
@@ -104,6 +94,14 @@ void hsv_to_rgb(float h, float s, float v, float& r, float& g, float& b)
     }
 }
 
+ImageRegion sample_cutout(RandomStream& random, Index width, Index height, Index max_side)
+{
+    const Index pw = 1 + Index(random.next() % uint64_t(min(width, max_side)));
+    const Index ph = 1 + Index(random.next() % uint64_t(min(height, max_side)));
+    return {Index(random.next() % uint64_t(width - pw + 1)),
+            Index(random.next() % uint64_t(height - ph + 1)), pw, ph};
+}
+
 static const uint8_t* apply_cutout(uint8_t* img, const Shape& shape,
                                    const YoloDataset::AugmentationPolicy& policy,
                                    uint64_t epoch_seed, Index sample_index)
@@ -113,15 +111,11 @@ static const uint8_t* apply_cutout(uint8_t* img, const Shape& shape,
     RandomStream random(derive_random_seed(derive_random_seed(epoch_seed, uint64_t(sample_index)),
                                            0x4355544F5554ull));
     const Index max_side = max<Index>(1, Index(double(max(h, w)) * policy.cutout_max_size_ratio));
-    const Index max_width = min(w, max_side), max_height = min(h, max_side);
     for (int n = 0; n < policy.cutout_count; ++n)
     {
-        const Index pw = 1 + Index(random.next() % uint64_t(max_width));
-        const Index ph = 1 + Index(random.next() % uint64_t(max_height));
-        const Index x0 = Index(random.next() % uint64_t(w - pw + 1));
-        const Index y0 = Index(random.next() % uint64_t(h - ph + 1));
-        for (Index dy = 0; dy < ph; ++dy)
-            fill_n(img + ((y0 + dy) * w + x0) * ch, pw * ch, uint8_t(0));
+        const auto region = sample_cutout(random, w, h, max_side);
+        for (Index dy = 0; dy < region.height; ++dy)
+            fill_n(img + ((region.y + dy) * w + region.x) * ch, region.width * ch, uint8_t(0));
     }
     return img;
 }
@@ -696,6 +690,95 @@ YoloDataset::AugmentationBatch YoloDataset::prepare_augmentation_batch(
             policy.mosaic ? get_mosaic_training_indices() : span<const Index>{}};
 }
 
+void YoloDataset::read_image_record(Index sample, uint8_t* destination) const
+{
+    throw_if(sample < 0 || sample >= samples_number, "YoloDataset input sample index is out of range.");
+    if (storage_mode == StorageMode::Matrix)
+        copy_n(images_ram.data() + size_t(sample) * size_t(cache_image_record_bytes),
+               size_t(cache_image_record_bytes), destination);
+    else
+        image_cache_reader.read_at(span(destination, size_t(cache_image_record_bytes)),
+                                   sizeof(YoloImageCacheHeader)
+                                   + uint64_t(sample) * uint64_t(cache_image_record_bytes));
+}
+
+optional<ImageTransformBatch> YoloDataset::get_gpu_image_transform(Index samples) const
+{
+    ImageTransformBatch transform;
+    transform.kind = ImageTransformBatch::Kind::Crop;
+    transform.samples = samples;
+    transform.enabled = augmentation_policy.enabled;
+    transform.mosaic = transform.enabled && augmentation_policy.mosaic;
+    transform.sources = samples * (transform.mosaic ? 4 : 1);
+    transform.height = cache_input_shape[0];
+    transform.width = cache_input_shape[1];
+    transform.channels = cache_input_shape[2];
+    transform.output_height = input_shape[0];
+    transform.output_width = input_shape[1];
+    if (transform.enabled && augmentation_policy.cutout_max_size_ratio > 0.0f)
+        transform.cutouts = augmentation_policy.cutout_count;
+    return transform;
+}
+
+void YoloDataset::fill_batch(Batch& batch, const vector<Index>& sample_indices,
+                              const FeatureSelection& features, FillMode mode) const
+{
+    batch.image_transform.reset();
+    if (!batch.uses_cuda() || mode != FillMode::Training
+        || (!augmentation_policy.enabled && !batch.pack_image_input))
+        return Dataset::fill_batch(batch, sample_indices, features, mode);
+    throw_if(ssize(sample_indices) != batch.batch_size,
+             "fill_batch sample count does not match the batch size.");
+    const auto augmentation = prepare_augmentation_batch(sample_indices, mode);
+    const auto transform = *get_gpu_image_transform(batch.batch_size);
+    const auto parameters = batch.prepare_image_transform(transform);
+    const auto cutouts = batch.image_cutouts();
+    vector<Index> sources;
+    unordered_map<Index, Index> source_indices;
+    const auto source_slot = [&](Index sample)
+    {
+        const auto [entry, added] = source_indices.try_emplace(sample, ssize(sources));
+        if (added) sources.push_back(sample);
+        return entry->second;
+    };
+    auto color_policy = augmentation.policy;
+    color_policy.jitter = 0.0f;
+    color_policy.flip = false;
+    for (Index i = 0; i < batch.batch_size; ++i)
+    {
+        auto& parameter = parameters[size_t(i)];
+        const Index sample = sample_indices[size_t(i)];
+        if (transform.enabled)
+            parameter.crop = sample_augmentation_transform(augmentation.seed, uint64_t(sample), augmentation.policy);
+        if (transform.mosaic)
+        {
+            const auto quads = compute_mosaic_layout(augmentation.seed, sample, augmentation.training_indices,
+                                                     transform.height, transform.width);
+            parameter.cut_x = quads[0].qw;
+            parameter.cut_y = quads[0].qh;
+            for (size_t q = 0; q < quads.size(); ++q)
+            {
+                parameter.sources[q] = source_slot(quads[q].si);
+                const auto color = sample_augmentation_transform(augmentation.seed, uint64_t(quads[q].si), color_policy);
+                parameter.colors[q] = {color.exposure_mul, color.saturation_mul, color.hue_shift};
+            }
+        }
+        else
+            parameter.sources[0] = source_slot(sample);
+        RandomStream random(derive_random_seed(derive_random_seed(augmentation.seed, uint64_t(sample)),
+                                               0x4355544F5554ull));
+        const Index max_side = max<Index>(1, Index(double(max(transform.height, transform.width))
+                                                   * augmentation.policy.cutout_max_size_ratio));
+        for (Index n = 0; n < transform.cutouts; ++n)
+            cutouts[size_t(i * transform.cutouts + n)] =
+                sample_cutout(random, transform.width, transform.height, max_side);
+    }
+    batch.image_transform->sources = ssize(sources);
+    for (size_t i = 0; i < sources.size(); ++i)
+        read_image_record(sources[i], batch.input.host.as<uint8_t>() + i * size_t(cache_image_record_bytes));
+    fill_targets(sample_indices, features.targets, batch.target.host.as<float>(), mode);
+}
+
 void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
                               const vector<Index>&,
                               float* input_data,
@@ -704,26 +787,14 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
 {
     const Index batch_size = ssize(sample_indices);
     const float scale = 1.0f / 255.0f;
+    const Index output_values = input_shape.size();
 
     const auto augmentation = prepare_augmentation_batch(sample_indices, mode);
     const auto& policy = augmentation.policy;
-    const bool matrix_storage = storage_mode == StorageMode::Matrix;
-
     string omp_error;
 
     const bool resize_needed = (input_shape[0] != cache_input_shape[0])
                             || (input_shape[1] != cache_input_shape[1]);
-
-    auto read_image_record = [&](Index sample, uint8_t* destination)
-    {
-        if (matrix_storage)
-            copy_n(images_ram.data() + size_t(sample) * size_t(cache_image_record_bytes),
-                   size_t(cache_image_record_bytes), destination);
-        else
-            image_cache_reader.read_at(span(destination, size_t(cache_image_record_bytes)),
-                                       sizeof(YoloImageCacheHeader)
-                                       + uint64_t(sample) * uint64_t(cache_image_record_bytes));
-    };
 
     const int workers = max(1, min(omp_get_max_threads(), to_int(batch_size)));
 
@@ -731,7 +802,7 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
     {
         vector<uint8_t> pixels(static_cast<size_t>(cache_image_record_bytes));
         vector<uint8_t> augmented(policy.enabled ? size_t(cache_image_record_bytes) : 0);
-        vector<uint8_t> resized(resize_needed ? size_t(image_record_bytes) : 0);
+        vector<uint8_t> resized(resize_needed ? size_t(output_values) : 0);
         vector<uint8_t> mosaic_source(policy.mosaic ? size_t(cache_image_record_bytes) : 0);
 
         #pragma omp for schedule(dynamic)
@@ -798,9 +869,9 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
                 }
 
                 Map<Array<float, Dynamic, 1>>(
-                    input_data + i * image_record_bytes, image_record_bytes) =
+                    input_data + i * output_values, output_values) =
                     Map<const Array<uint8_t, Dynamic, 1>>(
-                        image_bytes, image_record_bytes).cast<float>() * scale;
+                        image_bytes, output_values).cast<float>() * scale;
             }
             catch (const exception& e)
             {

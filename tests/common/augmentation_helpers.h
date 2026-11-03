@@ -6,13 +6,83 @@
 #include "opennn/core/random_utilities.h"
 #include "opennn/core/json.h"
 #include "opennn/dataset/dataset.h"
+#include "opennn/core/device_backend.h"
 #include "gtest/gtest.h"
 
 #include <future>
+#include <fstream>
 #include <omp.h>
 
 namespace opennn_test
 {
+
+inline void add_image_pattern(const std::filesystem::path& path)
+{
+    std::fstream image(path, std::ios::in | std::ios::out | std::ios::binary);
+    image.seekg(54);
+    std::vector<char> pixels((std::istreambuf_iterator<char>(image)), {});
+    for (size_t i = 0; i < pixels.size(); ++i) pixels[i] = char((i * 17 + i / 23) % 256);
+    image.clear();
+    image.seekp(54);
+    image.write(pixels.data(), std::streamsize(pixels.size()));
+}
+
+inline void expect_cuda_augmentation(opennn::Dataset& dataset, float tolerance)
+{
+    using namespace opennn;
+    auto indices = dataset.get_sample_indices(SampleRole::Training);
+    ASSERT_FALSE(indices.empty());
+    indices.resize(std::min<size_t>(indices.size(), 3));
+    const auto features = dataset.get_feature_selection();
+    for (Type type : {Type::FP32, Type::BF16})
+    {
+        if (type == Type::BF16 && device::cuda_compute_capability() < 80) continue;
+        Batch host(ssize(indices), &dataset, {Device::CPU, Type::FP32, 0});
+        Batch staged(ssize(indices), &dataset, {Device::CUDA, type, 0}, BatchStorage::HostOnly);
+        Batch destination(ssize(indices), &dataset, {Device::CUDA, type, 0}, BatchStorage::DeviceOnly);
+        const auto read = [&](FillMode mode)
+        {
+            staged.fill(indices, features, mode);
+            EXPECT_EQ(staged.image_transform.has_value(), mode == FillMode::Training);
+            staged.upload_to_device_batch_async(destination, device::get_transfer_stream());
+            std::vector<float> values(size_t(host.input.shape.size() + host.target.shape.size()));
+            copy_device_to_host_float(destination.input.buffer.data(), destination.input.type,
+                                      host.input.shape.size(), values.data(), device::get_compute_stream());
+            device::copy_async(values.data() + host.input.shape.size(), destination.target.buffer.data(),
+                               host.target.shape.size() * sizeof(float), device::CopyKind::DeviceToHost,
+                               device::get_compute_stream());
+            device::synchronize(device::get_compute_stream());
+            return values;
+        };
+        for (Index epoch : {0, 1})
+        {
+            dataset.set_augmentation_epoch(epoch);
+            std::reverse(indices.begin(), indices.end());
+            for (FillMode mode : {FillMode::Training, FillMode::Validation, FillMode::Inference})
+            {
+                host.fill(indices, features, mode);
+                const auto actual = read(mode);
+                EXPECT_EQ(read(mode), actual);
+                float maximum_error = 0.0f;
+                for (Index i = 0; i < host.input.shape.size(); ++i)
+                {
+                    const float expected = destination.input.type == Type::BF16
+                        ? float(Eigen::bfloat16(host.input.buffer.as<float>()[i])) : host.input.buffer.as<float>()[i];
+                    maximum_error = std::max(maximum_error, std::abs(actual[size_t(i)] - expected));
+                }
+                EXPECT_LE(maximum_error, tolerance + (destination.input.type == Type::BF16 ? 0.004f : 0.0f));
+                EXPECT_TRUE(std::equal(actual.begin() + host.input.shape.size(), actual.end(), host.target.buffer.as<float>()));
+            }
+        }
+        const auto excluded = dataset.get_sample_indices(SampleRole::Validation);
+        if (!excluded.empty())
+        {
+            auto invalid = indices;
+            invalid.back() = excluded.front();
+            EXPECT_THROW(staged.fill(invalid, features), std::runtime_error);
+        }
+    }
+}
 
 inline std::string augmentation_json(const opennn::Dataset& dataset)
 {

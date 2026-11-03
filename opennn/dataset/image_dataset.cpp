@@ -55,6 +55,30 @@ static Index sample_augmentation_shift(RandomStream& random, float minimum, floa
     return static_cast<Index>(llround(sample_augmentation_value(random, minimum, maximum)));
 }
 
+static ImageAffineTransform sample_image_transform(uint64_t seed, Index sample,
+                                                   const ImageAugmentationPolicy& policy)
+{
+    RandomStream random(derive_random_seed(seed, uint64_t(sample)));
+    ImageAffineTransform transform;
+    transform.flip_x = policy.reflection_axis_x && random.uniform() < 0.5f;
+    transform.flip_y = policy.reflection_axis_y && random.uniform() < 0.5f;
+    if (policy.rotation_minimum != 0.0f || policy.rotation_maximum != 0.0f)
+    {
+        transform.angle = remainder(sample_augmentation_value(random, policy.rotation_minimum,
+                                                               policy.rotation_maximum), 360.0f);
+        const float radians = -transform.angle * numbers::pi_v<float> / 180.0f;
+        transform.cosine = cos(radians);
+        transform.sine = sin(radians);
+    }
+    if (policy.horizontal_translation_minimum != 0.0f || policy.horizontal_translation_maximum != 0.0f)
+        transform.shift_x = sample_augmentation_shift(random, policy.horizontal_translation_minimum,
+                                                       policy.horizontal_translation_maximum);
+    if (policy.vertical_translation_minimum != 0.0f || policy.vertical_translation_maximum != 0.0f)
+        transform.shift_y = sample_augmentation_shift(random, policy.vertical_translation_minimum,
+                                                       policy.vertical_translation_maximum);
+    return transform;
+}
+
 static string image_cache_signature(Index samples, Index height, Index width, Index channels,
                                     const vector<filesystem::path>& class_folders,
                                     const filesystem::file_time_type& newest_write_time)
@@ -204,40 +228,28 @@ void ImageDataset::augment_inputs(span<float> input_data, Index batch_size, span
 
     const bool use_rotation = augmentation_policy.rotation_minimum != 0.0f
                            || augmentation_policy.rotation_maximum != 0.0f;
-    const bool use_horizontal_translation = augmentation_policy.horizontal_translation_minimum != 0.0f
-                                         || augmentation_policy.horizontal_translation_maximum != 0.0f;
-    const bool use_vertical_translation = augmentation_policy.vertical_translation_minimum != 0.0f
-                                       || augmentation_policy.vertical_translation_maximum != 0.0f;
-
     const auto augment_sample = [&](Index i, Tensor3& scratch_storage)
     {
         const Index sample_index = indices.empty() ? i : indices[size_t(i)];
-        RandomStream random(derive_random_seed(epoch_seed, uint64_t(sample_index)));
+        const auto transform = sample_image_transform(epoch_seed, sample_index, augmentation_policy);
         float* sample = input_values + i * pixels;
         TensorMap3 image(sample, height, width, channels);
 
-        if (augmentation_policy.reflection_axis_x && random.uniform() < 0.5f)
+        if (transform.flip_x)
             reflect_image_horizontal(image);
 
-        if (augmentation_policy.reflection_axis_y && random.uniform() < 0.5f)
+        if (transform.flip_y)
             reflect_image_vertical(image);
 
         if (use_rotation)
         {
             copy_n(sample, pixels, scratch_storage.data());
             const TensorMap3 scratch(scratch_storage.data(), height, width, channels);
-            const float angle = sample_augmentation_value(random, augmentation_policy.rotation_minimum,
-                                                           augmentation_policy.rotation_maximum);
-            rotate_image(scratch, image, remainder(angle, 360.0f));
+            rotate_image(scratch, image, transform.angle);
         }
 
-        if (use_horizontal_translation)
-            translate_image_x(image, sample_augmentation_shift(random, augmentation_policy.horizontal_translation_minimum,
-                                                               augmentation_policy.horizontal_translation_maximum));
-
-        if (use_vertical_translation)
-            translate_image_y(image, sample_augmentation_shift(random, augmentation_policy.vertical_translation_minimum,
-                                                               augmentation_policy.vertical_translation_maximum));
+        translate_image_x(image, transform.shift_x);
+        translate_image_y(image, transform.shift_y);
     };
 
     #pragma omp parallel
@@ -562,12 +574,58 @@ void ImageDataset::write_image_cache(const vector<filesystem::path>& paths, cons
     writer.finish_with_rename(cache_path);
 }
 
+optional<ImageTransformBatch> ImageDataset::get_gpu_image_transform(Index samples) const
+{
+    if (!augmentation_policy.enabled) return nullopt;
+    ImageTransformBatch transform;
+    transform.samples = transform.sources = samples;
+    transform.height = transform.output_height = input_shape[0];
+    transform.width = transform.output_width = input_shape[1];
+    transform.channels = input_shape[2];
+    transform.float_input = storage_mode == StorageMode::Matrix;
+    transform.enabled = true;
+    return transform;
+}
+
+void ImageDataset::fill_augmented_batch(Batch& batch, const vector<Index>& sample_indices,
+                                        const FeatureSelection& features) const
+{
+    throw_if(ssize(sample_indices) != batch.batch_size,
+             "fill_batch sample count does not match the batch size.");
+    validate_augmentation_samples(sample_indices);
+    const auto transform = *get_gpu_image_transform(batch.batch_size);
+    const auto parameters = batch.prepare_image_transform(transform);
+    const auto scales = batch.image_channel_scales();
+    if (ssize(input_scale) == transform.channels && ssize(input_offset) == transform.channels)
+        for (Index c = 0; c < transform.channels; ++c)
+            scales[size_t(c)] = {input_scale[size_t(c)], input_offset[size_t(c)]};
+    const uint64_t seed = get_augmentation_seed();
+    for (Index i = 0; i < batch.batch_size; ++i)
+    {
+        auto& affine = parameters[size_t(i)].affine;
+        affine = sample_image_transform(seed, sample_indices[size_t(i)], augmentation_policy);
+        affine.shift_x = clamp(affine.shift_x, -transform.width, transform.width);
+        affine.shift_y = clamp(affine.shift_y, -transform.height, transform.height);
+        if (!transform.float_input)
+            cache_reader.read_at(span(batch.input.host.as<uint8_t>() + size_t(i) * pixel_number,
+                                      size_t(pixel_number)), uint64_t(sample_indices[size_t(i)]) * pixel_number);
+    }
+    if (transform.float_input)
+        fill_tensor_data(data, sample_indices, features.inputs,
+                          span(batch.input.host.as<float>(), size_t(batch.batch_size * input_shape.size())),
+                          classify_column_contiguity(features.inputs));
+    fill_targets(sample_indices, features.targets, batch.target.host.as<float>(), FillMode::Training);
+}
+
 void ImageDataset::fill_batch(Batch& batch,
                                const vector<Index>& sample_indices,
                                const FeatureSelection& features,
                                FillMode mode) const
 {
+    batch.image_transform.reset();
     batch.packed_image_input.reset();
+    if (batch.uses_cuda() && mode == FillMode::Training && augmentation_policy.enabled)
+        return fill_augmented_batch(batch, sample_indices, features);
     if (!batch.pack_image_input || !batch.uses_cuda() || !supports_byte_inputs()
         || mode != FillMode::Training)
         return Dataset::fill_batch(batch, sample_indices, features, mode);

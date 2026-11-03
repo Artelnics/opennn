@@ -307,6 +307,18 @@ public:
 
     virtual bool supports_bf16_inputs() const { return true; }
     virtual bool supports_byte_inputs() const { return false; }
+    virtual optional<ImageTransformBatch> get_gpu_image_transform(Index) const { return nullopt; }
+    bool uses_gpu_image_augmentation() const
+    {
+        const auto transform = get_gpu_image_transform(1);
+        return transform && transform->enabled;
+    }
+    Index gpu_input_staging_bytes() const
+    {
+        const auto transform = get_gpu_image_transform(1);
+        return transform ? transform->source_bytes() + transform->scratch_bytes() + transform->parameters_bytes()
+                         : supports_byte_inputs() ? input_shape.size() : 0;
+    }
 
     FeatureSelection get_feature_selection() const;
 

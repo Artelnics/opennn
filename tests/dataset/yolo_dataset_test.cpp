@@ -245,6 +245,31 @@ TEST(YoloDataset, AugmentationReplaysImagesAndBoxesAcrossWorkersBatchesAndEpochs
     }
 }
 
+TEST(YoloDataset, CudaAugmentationMatchesHostImagesAndBoxes)
+{
+    if (!device::has_cuda_device()) GTEST_SKIP() << "No CUDA device.";
+    for (auto storage : {Dataset::StorageMode::BinaryFile, Dataset::StorageMode::Matrix})
+        for (bool mosaic : {false, true})
+        {
+            YoloAugmentationFixture fixture(storage, 17, 13, 31);
+            for (const auto& entry : filesystem::directory_iterator(fixture.directory.path / "images"))
+                if (entry.path().extension() == ".bmp") add_image_pattern(entry.path());
+            auto& dataset = fixture.dataset;
+            dataset.set(fixture.directory.path / "images", fixture.directory.path / "labels", {13, 17, 3}, 2, 1, {{0.5f, 0.5f}});
+            dataset.set_storage_mode(storage);
+            dataset.set_sample_roles({"Validation", "Training", "Training", "Training", "Testing"});
+            dataset.set_v8_mode(mosaic);
+            YoloDataset::AugmentationPolicy policy;
+            policy.mosaic = mosaic;
+            policy.cutout_count = 3;
+            policy.cutout_max_size_ratio = 0.3f;
+            dataset.set_augmentation_policy(policy);
+            expect_cuda_augmentation(dataset, 2.0f / 255.0f);
+            dataset.set_shape(VariableRole::Input, {9, 11, 3});
+            expect_cuda_augmentation(dataset, 2.0f / 255.0f);
+        }
+}
+
 TEST(YoloDataset, AugmentationJsonRoundTripsAndRejectsInvalidPolicies)
 {
     YoloAugmentationFixture fixture(Dataset::StorageMode::BinaryFile);

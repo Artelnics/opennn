@@ -127,6 +127,10 @@ public:
                       FillMode,
                       ColumnContiguity column_contiguity = ColumnContiguity::Unknown) const override;
 
+    void fill_batch(Batch&, const vector<Index>&, const FeatureSelection&, FillMode) const override;
+    bool supports_byte_inputs() const override { return true; }
+    optional<ImageTransformBatch> get_gpu_image_transform(Index) const override;
+
     struct AugmentationPolicy
     {
         float jitter = 0.2f;
@@ -205,6 +209,7 @@ private:
     void setup_metadata(Index);
     void update_target_layout();
     void load_cache_to_ram();
+    void read_image_record(Index, uint8_t*) const;
 
     vector<uint8_t> images_ram;
     vector<float> targets_ram;

@@ -101,7 +101,7 @@ TEST(ImageDataset, DefaultConstructorIsEmpty)
     EXPECT_TRUE(image_dataset.is_empty());
 }
 
-TEST(ImageDataset, PackedCudaBatchesMatchHostScalingAndAugmentationFallback)
+TEST(ImageDataset, PackedCudaBatchesMatchHostScaling)
 {
     if (!device::has_cuda_device()) GTEST_SKIP() << "No CUDA device.";
     ImageFixtureThreeClasses fixture(7, 5, 2);
@@ -139,6 +139,7 @@ TEST(ImageDataset, PackedCudaBatchesMatchHostScalingAndAugmentationFallback)
                     host.fill(indices, features, mode);
                     staged.fill(indices, features, mode);
                     EXPECT_EQ(staged.packed_image_input.has_value(), !augmentation && mode == FillMode::Training);
+                    EXPECT_EQ(staged.image_transform.has_value(), augmentation && mode == FillMode::Training);
                     staged.upload_to_device_batch_async(destination, device::get_transfer_stream());
                     staged.wait_h2d_on_compute_stream();
                     vector<float> actual(size_t(host.input.shape.size()));
@@ -661,6 +662,32 @@ TEST(ImageDataset, AugmentationReplaysAcrossWorkersBatchesAndEpochs)
         policy.horizontal_translation_maximum = policy.vertical_translation_maximum = 3.0f;
         dataset.set_augmentation_policy(policy);
         expect_augmentation_replay(dataset, false);
+    }
+}
+
+TEST(ImageDataset, CudaAugmentationMatchesHostGeometryAndScaling)
+{
+    if (!device::has_cuda_device()) GTEST_SKIP() << "No CUDA device.";
+    ImageFixture fixture(17, 13, 2);
+    for (const auto& entry : filesystem::recursive_directory_iterator(fixture.root))
+        if (entry.path().extension() == ".bmp") add_image_pattern(entry.path());
+    for (auto storage : {Dataset::StorageMode::BinaryFile, Dataset::StorageMode::Matrix})
+    {
+        ImageDataset dataset;
+        dataset.set_display(false);
+        dataset.set_storage_mode(storage);
+        dataset.set_data_path(fixture.root);
+        dataset.read_images();
+        dataset.set_sample_roles(SampleRole::Training);
+        dataset.set_sample_role(0, SampleRole::Validation);
+        ImageAugmentationPolicy policy;
+        policy.enabled = policy.reflection_axis_x = policy.reflection_axis_y = true;
+        policy.rotation_minimum = -35.0f;
+        policy.rotation_maximum = 35.0f;
+        policy.horizontal_translation_minimum = policy.vertical_translation_minimum = -3.0f;
+        policy.horizontal_translation_maximum = policy.vertical_translation_maximum = 3.0f;
+        dataset.set_augmentation_policy(policy);
+        expect_cuda_augmentation(dataset, 1e-6f);
     }
 }
 

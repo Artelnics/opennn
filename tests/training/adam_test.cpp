@@ -236,7 +236,7 @@ static void expect_training_augmentation_replay(Device device)
         ImageClassificationNetwork network(dataset.get_input_shape(), {4, 8, 4}, dataset.get_target_shape());
         Training training(&network, &dataset);
         auto* optimizer = training.get_optimization_algorithm();
-        optimizer->set_batch_size(2);
+        optimizer->set_batch_size(3);
         optimizer->set_maximum_epochs(3);
         optimizer->set_loss_goal(-1.0f);
         optimizer->set_display(false);
@@ -251,13 +251,17 @@ static void expect_training_augmentation_replay(Device device)
             dataset.fill_inputs({0}, features, inputs.data(), FillMode::Training);
         };
         EXPECT_TRUE(isfinite(training.train().get_training_error()));
-        return epochs;
+        if (graph) EXPECT_FALSE(optimizer->get_cuda_graph_capture_failed());
+        network.copy_parameters_host();
+        return pair{epochs, VectorR(network.get_parameters_map())};
     };
     const auto expected = train(1, false);
-    ASSERT_EQ(expected.size(), 3u);
-    EXPECT_NE(expected[0], expected[1]);
-    EXPECT_NE(expected[1], expected[2]);
-    EXPECT_EQ(train(3, device == Device::CUDA), expected);
+    ASSERT_EQ(expected.first.size(), 3u);
+    EXPECT_NE(expected.first[0], expected.first[1]);
+    EXPECT_NE(expected.first[1], expected.first[2]);
+    const auto replay = train(3, device == Device::CUDA);
+    EXPECT_EQ(replay.first, expected.first);
+    EXPECT_TRUE(replay.second.isApprox(expected.second, 1e-5f));
 }
 
 TEST_F(AdamTest, AugmentationEpochsReplayCPU)

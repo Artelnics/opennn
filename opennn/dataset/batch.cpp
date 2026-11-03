@@ -7,6 +7,7 @@
 #include "opennn/core/device_backend.h"
 #include "opennn/core/memory_debug.h"
 #include "opennn/core/cuda/kernel_cast.cuh"
+#include "opennn/core/cuda/kernel_image.cuh"
 #include "opennn/dataset/kernel_gather.cuh"
 
 namespace opennn
@@ -49,6 +50,9 @@ void Batch::set(const Index new_batch_size,
 
     device_gather.reset();
     packed_image_input.reset();
+    image_transform.reset();
+    image_parameters_device.resize_bytes(0, Device::CUDA);
+    image_scratch.resize_bytes(0, Device::CUDA);
     pack_image_input = false;
     packed_input_staging.resize_bytes(0, Device::CUDA);
 
@@ -161,6 +165,14 @@ void Batch::set(const Index new_batch_size,
     const bool host_bf16_input_cast =
         input.type == Type::BF16
         && bf16_host_input_cast_enabled();
+
+    if (storage != BatchStorage::HostOnly)
+        if (const auto transform = dataset->get_gpu_image_transform(batch_size))
+        {
+            packed_input_staging.resize_bytes(transform->source_bytes(), Device::CUDA);
+            image_parameters_device.resize_bytes(transform->parameters_bytes(), Device::CUDA);
+            image_scratch.resize_bytes(transform->scratch_bytes(), Device::CUDA);
+        }
 
     // The uploading batch converts on the host, never its device destination.
     const bool host_bf16_staging =
@@ -288,7 +300,53 @@ Batch::~Batch()
     h2d_done_recorded = false;
 }
 
+span<ImageTransformParameters> Batch::prepare_image_transform(const ImageTransformBatch& transform)
+{
+    image_transform = transform;
+    packed_image_input.reset();
+    device_gather.reset();
+    input.host.grow_to(transform.source_bytes());
+    image_parameters_host.grow_to(transform.parameters_bytes());
+    span<ImageTransformParameters> parameters(image_parameters_host.as<ImageTransformParameters>(),
+                                               size_t(transform.samples));
+    ranges::fill(parameters, ImageTransformParameters{});
+    ranges::fill(image_channel_scales(), ImageChannelScale{});
+    return parameters;
+}
+
+span<ImageChannelScale> Batch::image_channel_scales()
+{
+    return {reinterpret_cast<ImageChannelScale*>(image_parameters_host.as<uint8_t>()
+                + image_transform->scales_offset()), size_t(image_transform->channels)};
+}
+
+span<ImageRegion> Batch::image_cutouts()
+{
+    return {reinterpret_cast<ImageRegion*>(image_parameters_host.as<uint8_t>()
+                + image_transform->cutouts_offset()), size_t(image_transform->samples * image_transform->cutouts)};
+}
+
 #ifdef OPENNN_HAS_CUDA
+
+void Batch::upload_image_transform(Batch& destination, DeviceStream stream)
+{
+    const auto& transform = *image_transform;
+    const auto upload = [&](Buffer& buffer, const void* source, Index bytes)
+    {
+        if (buffer.byte_size() < bytes) buffer.resize_bytes(bytes, Device::CUDA);
+        device::copy_async(buffer.data(), source, bytes, device::CopyKind::HostToDevice, stream);
+    };
+    upload(destination.packed_input_staging, input.host.data(), transform.source_bytes());
+    upload(destination.image_parameters_device, image_parameters_host.data(), transform.parameters_bytes());
+    upload(destination.target.buffer, target.host.data(), target.shape.size() * sizeof(float));
+    if (destination.image_scratch.byte_size() < transform.scratch_bytes())
+        destination.image_scratch.resize_bytes(transform.scratch_bytes(), Device::CUDA);
+    record_h2d_done(stream);
+    wait_h2d_on_compute_stream();
+    transform_images_cuda(destination.packed_input_staging.data(), destination.input.buffer.data(),
+                           destination.input.type == Type::BF16, destination.image_parameters_device.data(),
+                           destination.image_scratch.as<uint8_t>(), transform, device::get_compute_stream());
+}
 
 void Batch::upload_to_device_batch_async(Batch& destination, DeviceStream stream)
 {
@@ -298,6 +356,8 @@ void Batch::upload_to_device_batch_async(Batch& destination, DeviceStream stream
              "Batch::upload_to_device_batch_async requires CUDA batches.");
     throw_if(current_batch_size > destination.batch_size,
              "Batch::upload_to_device_batch_async destination batch is too small.");
+
+    if (image_transform) return upload_image_transform(destination, stream);
 
     const Index input_values_count = input.shape.size();
     const Index target_values_count = target.shape.size();
@@ -433,6 +493,7 @@ void Batch::upload_to_device_batch_async(Batch& destination, DeviceStream stream
 #else
 
 void Batch::upload_to_device_batch_async(Batch&, DeviceStream) OPENNN_CUDA_STUB_BODY(Batch::upload_to_device_batch_async)
+void Batch::upload_image_transform(Batch&, DeviceStream) OPENNN_CUDA_STUB_BODY(Batch::upload_image_transform)
 
 #endif
 

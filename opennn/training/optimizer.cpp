@@ -298,7 +298,7 @@ void Optimizer::TrainingSession::prepare_eager_batches(Index batch_size, Dataset
     const Index slots = min(Index(capacity), dataset.get_samples_number(SampleRole::Training) / batch_size);
     for (Index slot = 1; slot < slots; ++slot)
         transfer_batches.push_back(make_unique<Batch>(batch_size, &dataset, config, BatchStorage::DeviceOnly));
-    if (dataset.supports_byte_inputs())
+    if (dataset.supports_byte_inputs() && !dataset.get_gpu_image_transform(batch_size))
         for (Index slot = 0; slot < slots; ++slot)
             eager_batch(slot)->packed_input_staging.resize_bytes(
                 batch_size * dataset.get_input_shape().size(), Device::CUDA);
@@ -625,8 +625,8 @@ Index Optimizer::get_maximum_batch_size() const
         if(fp32_input_staging && !input_shape.empty())
             bytes += get_aligned_bytes(stored_samples * input_shape.size(), Type::FP32);
 
-        if (on_gpu && !can_use_cuda_graph() && dataset->supports_byte_inputs())
-            bytes += stored_samples * input_shape.size();
+        if (on_gpu)
+            bytes += stored_samples * dataset->gpu_input_staging_bytes();
 
         return bytes;
     };
@@ -1515,7 +1515,8 @@ struct Optimizer::GraphEpochContext
           device_metrics(training_session.device_metrics),
           compute(device::get_compute_stream()), transfer(device::get_transfer_stream()),
           profile_this(env_flag_enabled("OPENNN_PROFILE")),
-          staged_h2d(!optimizer.loss->get_dataset()->is_device_resident()
+          staged_h2d(!optimizer.loss->get_dataset()->uses_gpu_image_augmentation()
+                     && !optimizer.loss->get_dataset()->is_device_resident()
                      && training_session.fixed_batch()->input.type != Type::BF16),
           resident_gather(optimizer.loss->get_dataset()->can_device_gather(
               *training_session.fixed_batch(), features)),

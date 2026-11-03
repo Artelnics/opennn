@@ -76,11 +76,14 @@ public:
             && input_shape.get_rank() == 3 && get_channels_number() >= 1 && get_channels_number() <= 4;
     }
 
+    optional<ImageTransformBatch> get_gpu_image_transform(Index) const override;
+
     void augment_inputs(span<float>, Index) const;
 
 private:
 
     void augment_inputs(span<float>, Index, span<const Index>) const;
+    void fill_augmented_batch(Batch&, const vector<Index>&, const FeatureSelection&) const;
     void write_image_cache(const vector<filesystem::path>&, const string& trailer) const;
 
     ImageAugmentationPolicy augmentation_policy;

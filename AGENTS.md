@@ -69,8 +69,12 @@ Configure these independently with `set_workers_number`, `set_batch_pool_size`
 and `set_device_batch_pool_size`; CUDA Graphs use their own pipeline. Preserve
 buffer/event lifetimes, thread-setting restoration and memory-budget accounting.
 More buffering consumes memory and cannot fix sustained slow preparation.
-Binary classification images without augmentation can upload bytes and scale on
-GPU; augmentation currently prepares floats on CPU. Measure end-to-end cost.
+CUDA image training transforms pixels and scales them on GPU, using kernels in
+`core/cuda/kernel_image.cu`; classification supports FP32 matrix or byte inputs,
+and YOLO uploads cached bytes. CPU workers read sources, sample deterministic
+parameters and prepare matching boxes/targets. Mosaic shares repeated sources
+within a batch. Allocate staging before CUDA Graph capture and account for it
+in automatic batch sizing. Measure end-to-end cost.
 
 ### Augmentation contract
 
