@@ -695,6 +695,7 @@ void Optimizer::prepare_training_artifacts()
 {
     Dataset* const dataset = loss->get_dataset();
     Network* const network = loss->get_network();
+    dataset->set_augmentation_epoch(0);
 
     const auto prepare_endpoint = [&](VariableRole role)
     {
@@ -1060,6 +1061,7 @@ TrainingResult Optimizer::train()
 
         for (Index epoch = 0; epoch < epoch_budget; ++epoch)
         {
+            dataset->set_augmentation_epoch(epoch);
             if (should_display(epoch)) logging::info() << "Epoch: " << epoch << "\n";
 
             if (next_training_batches_ready.valid())

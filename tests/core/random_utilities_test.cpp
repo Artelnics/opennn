@@ -50,6 +50,29 @@ TEST(RandomUtilitiesTest, BulkDistributionsPreserveSeededDrawOrder)
     EXPECT_EQ(random_uniform(), uniform(expected_generator));
 }
 
+TEST(RandomUtilitiesTest, LocalStreamsReplayWithoutConsumingGlobalDraws)
+{
+    set_seed(42);
+    const float expected_draw = random_uniform();
+    set_seed(42);
+    EXPECT_EQ(get_seed(), 42u);
+    RandomStream first(derive_random_seed(get_seed(), 7));
+    RandomStream replay(derive_random_seed(get_seed(), 7));
+    RandomStream other(derive_random_seed(get_seed(), 8));
+    EXPECT_NE(first.next(), other.next());
+    replay.next();
+    for (int i = 0; i < 100; ++i)
+    {
+        const float value = first.uniform(-2.0f, 3.0f);
+        EXPECT_EQ(value, replay.uniform(-2.0f, 3.0f));
+        EXPECT_GE(value, -2.0f);
+        EXPECT_LT(value, 3.0f);
+    }
+    EXPECT_EQ(random_uniform(), expected_draw);
+    set_seed(99);
+    EXPECT_EQ(get_seed(), 99u);
+}
+
 TEST(RandomUtilitiesTest, OrthogonalInitializationPreservesDrawCountAndColumnNorms)
 {
     constexpr unsigned seed = 271;

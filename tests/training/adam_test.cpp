@@ -214,7 +214,64 @@ TEST_F(AdamTest, TrainingScalingCleanupSurvivesCallbackException)
         EXPECT_NEAR(inputs[size_t(i)], raw(i, 0), EPSILON);
 }
 
+static void expect_training_augmentation_replay(Device device)
+{
+    Configuration::instance().set(device, Type::FP32);
+    const filesystem::path root = write_image_classification_dataset();
+    ScopeExit cleanup([&] { remove_image_classification_dataset(root); });
+    ImageDataset dataset(root);
+    dataset.set_sample_roles(SampleRole::Training);
+    ImageAugmentationPolicy policy;
+    policy.enabled = policy.reflection_axis_x = true;
+    policy.rotation_minimum = -25.0f;
+    policy.rotation_maximum = 25.0f;
+    policy.horizontal_translation_minimum = -2.0f;
+    policy.horizontal_translation_maximum = 2.0f;
+    dataset.set_augmentation_policy(policy);
+    const auto features = dataset.get_feature_indices(VariableRole::Input);
+    const auto train = [&](Index workers, bool graph)
+    {
+        set_seed(43);
+        dataset.set_augmentation_epoch(99);
+        ImageClassificationNetwork network(dataset.get_input_shape(), {4, 8, 4}, dataset.get_target_shape());
+        Training training(&network, &dataset);
+        auto* optimizer = training.get_optimization_algorithm();
+        optimizer->set_batch_size(2);
+        optimizer->set_maximum_epochs(3);
+        optimizer->set_loss_goal(-1.0f);
+        optimizer->set_display(false);
+        optimizer->set_shuffle(false);
+        optimizer->set_workers_number(workers);
+        optimizer->set_cuda_graph(graph);
+        vector<vector<float>> epochs;
+        optimizer->post_epoch_callback = [&](Index epoch, float, float, Network*)
+        {
+            EXPECT_EQ(dataset.get_augmentation_epoch(), epoch);
+            auto& inputs = epochs.emplace_back(size_t(dataset.get_input_shape().size()));
+            dataset.fill_inputs({0}, features, inputs.data(), FillMode::Training);
+        };
+        EXPECT_TRUE(isfinite(training.train().get_training_error()));
+        return epochs;
+    };
+    const auto expected = train(1, false);
+    ASSERT_EQ(expected.size(), 3u);
+    EXPECT_NE(expected[0], expected[1]);
+    EXPECT_NE(expected[1], expected[2]);
+    EXPECT_EQ(train(3, device == Device::CUDA), expected);
+}
+
+TEST_F(AdamTest, AugmentationEpochsReplayCPU)
+{
+    expect_training_augmentation_replay(Device::CPU);
+}
+
 #ifdef OPENNN_HAS_CUDA
+TEST_F(AdamTest, AugmentationEpochsReplayGPU)
+{
+    if (!device::has_cuda_device()) GTEST_SKIP() << "No CUDA device.";
+    expect_training_augmentation_replay(Device::CUDA);
+}
+
 TEST_F(AdamTest, TrainApproximationGPU)
 {
     Configuration::instance().set(Device::CUDA, Type::FP32);

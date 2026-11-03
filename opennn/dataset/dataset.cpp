@@ -62,6 +62,30 @@ vector<Index> Dataset::get_sample_indices(SampleRole role_type) const
                           [role_type](SampleRole role) { return role == role_type; });
 }
 
+void Dataset::validate_augmentation_samples(span<const Index> indices) const
+{
+    const auto& roles = active_sample_roles();
+    for (const Index index : indices)
+    {
+        throw_if(index < 0 || index >= ssize(roles),
+                 "Augmentation sample index {} is out of range.", index);
+        throw_if(roles[size_t(index)] != SampleRole::Training,
+                 "Augmentation requires training samples; sample {} is not in the active training partition.", index);
+    }
+}
+
+void Dataset::set_augmentation_epoch(Index epoch)
+{
+    throw_if(epoch < 0, "Augmentation epoch must be nonnegative.");
+    augmentation_epoch = epoch;
+}
+
+uint64_t Dataset::get_augmentation_seed() const noexcept
+{
+    return derive_random_seed(derive_random_seed(get_seed(), 0x4155474D454E54ull),
+                              uint64_t(augmentation_epoch));
+}
+
 void Dataset::record_memory(const string& stage) const
 {
     if (!memory_debug::enabled()) return;

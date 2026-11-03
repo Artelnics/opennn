@@ -30,17 +30,29 @@ static bool has_configured_augmentation(const ImageAugmentationPolicy& policy)
         || policy.vertical_translation_maximum != 0.0f;
 }
 
-static float sample_augmentation_value(float minimum, float maximum)
+static void validate_augmentation_range(string_view name, float minimum, float maximum,
+                                       double exclusive_limit = numeric_limits<double>::infinity())
+{
+    throw_if(!isfinite(minimum) || !isfinite(maximum),
+             "Image augmentation {} bounds must be finite.", name);
+    throw_if(minimum > maximum,
+             "Image augmentation {} minimum must not exceed maximum.", name);
+    throw_if(double(minimum) <= -exclusive_limit || double(maximum) >= exclusive_limit,
+             "Image augmentation {} bounds must fit the signed pixel-index range (-{}, {}).",
+             name, exclusive_limit, exclusive_limit);
+}
+
+static float sample_augmentation_value(RandomStream& random, float minimum, float maximum)
 {
     if (minimum == maximum)
         return minimum;
 
-    return random_uniform(min(minimum, maximum), max(minimum, maximum));
+    return float(lerp(double(minimum), double(maximum), double(random.uniform())));
 }
 
-static Index sample_augmentation_shift(float minimum, float maximum)
+static Index sample_augmentation_shift(RandomStream& random, float minimum, float maximum)
 {
-    return static_cast<Index>(lround(sample_augmentation_value(minimum, maximum)));
+    return static_cast<Index>(llround(sample_augmentation_value(random, minimum, maximum)));
 }
 
 static string image_cache_signature(Index samples, Index height, Index width, Index channels,
@@ -72,6 +84,12 @@ ImageDataset::ImageDataset(const filesystem::path& new_data_path,
 
 void ImageDataset::set_augmentation_policy(const ImageAugmentationPolicy& new_policy)
 {
+    validate_augmentation_range("rotation", new_policy.rotation_minimum, new_policy.rotation_maximum);
+    const double shift_limit = -double(numeric_limits<Index>::min());
+    validate_augmentation_range("horizontal translation", new_policy.horizontal_translation_minimum,
+                                new_policy.horizontal_translation_maximum, shift_limit);
+    validate_augmentation_range("vertical translation", new_policy.vertical_translation_minimum,
+                                new_policy.vertical_translation_maximum, shift_limit);
     if (is_device_resident()) disable_device_residency();
 
     augmentation_policy = new_policy;
@@ -165,6 +183,11 @@ void ImageDataset::to_JSON(JsonWriter& printer) const
 
 void ImageDataset::augment_inputs(const span<float> input_data, Index batch_size) const
 {
+    augment_inputs(input_data, batch_size, {});
+}
+
+void ImageDataset::augment_inputs(span<float> input_data, Index batch_size, span<const Index> indices) const
+{
     if (!augmentation_policy.enabled || batch_size <= 0) return;
 
     const Index height = input_shape[0];
@@ -177,6 +200,7 @@ void ImageDataset::augment_inputs(const span<float> input_data, Index batch_size
              ssize(input_data), batch_size, pixels, batch_size * pixels);
 
     float* const input_values = input_data.data();
+    const uint64_t epoch_seed = get_augmentation_seed();
 
     const bool use_rotation = augmentation_policy.rotation_minimum != 0.0f
                            || augmentation_policy.rotation_maximum != 0.0f;
@@ -187,29 +211,32 @@ void ImageDataset::augment_inputs(const span<float> input_data, Index batch_size
 
     const auto augment_sample = [&](Index i, Tensor3& scratch_storage)
     {
+        const Index sample_index = indices.empty() ? i : indices[size_t(i)];
+        RandomStream random(derive_random_seed(epoch_seed, uint64_t(sample_index)));
         float* sample = input_values + i * pixels;
         TensorMap3 image(sample, height, width, channels);
 
-        if (augmentation_policy.reflection_axis_x && random_bool(0.5f))
+        if (augmentation_policy.reflection_axis_x && random.uniform() < 0.5f)
             reflect_image_horizontal(image);
 
-        if (augmentation_policy.reflection_axis_y && random_bool(0.5f))
+        if (augmentation_policy.reflection_axis_y && random.uniform() < 0.5f)
             reflect_image_vertical(image);
 
         if (use_rotation)
         {
             copy_n(sample, pixels, scratch_storage.data());
             const TensorMap3 scratch(scratch_storage.data(), height, width, channels);
-            rotate_image(scratch, image, sample_augmentation_value(augmentation_policy.rotation_minimum,
-                                                                   augmentation_policy.rotation_maximum));
+            const float angle = sample_augmentation_value(random, augmentation_policy.rotation_minimum,
+                                                           augmentation_policy.rotation_maximum);
+            rotate_image(scratch, image, remainder(angle, 360.0f));
         }
 
         if (use_horizontal_translation)
-            translate_image_x(image, sample_augmentation_shift(augmentation_policy.horizontal_translation_minimum,
+            translate_image_x(image, sample_augmentation_shift(random, augmentation_policy.horizontal_translation_minimum,
                                                                augmentation_policy.horizontal_translation_maximum));
 
         if (use_vertical_translation)
-            translate_image_y(image, sample_augmentation_shift(augmentation_policy.vertical_translation_minimum,
+            translate_image_y(image, sample_augmentation_shift(random, augmentation_policy.vertical_translation_minimum,
                                                                augmentation_policy.vertical_translation_maximum));
     };
 
@@ -586,6 +613,7 @@ void ImageDataset::fill_inputs(const vector<Index>& sample_indices,
     const bool has_scaling = ssize(input_scale) == channels
                           && ssize(input_offset) == channels;
     const bool apply_augmentation = mode == FillMode::Training && augmentation_policy.enabled;
+    if (apply_augmentation) validate_augmentation_samples(sample_indices);
 
     const auto scale_sample = [&](float* sample)
     {
@@ -654,7 +682,7 @@ void ImageDataset::fill_inputs(const vector<Index>& sample_indices,
     }
 
     if (apply_augmentation)
-        augment_inputs(input_span, batch_size);
+        augment_inputs(input_span, batch_size, sample_indices);
 
     if (!scale_in_fill)
     {

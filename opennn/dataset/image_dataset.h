@@ -80,6 +80,7 @@ public:
 
 private:
 
+    void augment_inputs(span<float>, Index, span<const Index>) const;
     void write_image_cache(const vector<filesystem::path>&, const string& trailer) const;
 
     ImageAugmentationPolicy augmentation_policy;

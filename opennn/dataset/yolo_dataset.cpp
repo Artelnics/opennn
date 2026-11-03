@@ -8,6 +8,7 @@
 
 #include "opennn/core/io_utilities.h"
 #include "opennn/core/json.h"
+#include "opennn/core/random_utilities.h"
 #include "opennn/core/string_utilities.h"
 #include "opennn/dataset/image_processing.h"
 #include "opennn/network/detection_head.h"
@@ -25,11 +26,6 @@ uint8_t round_to_byte(const float value)
     return uint8_t(min(255.0f, max(0.0f, value + 0.5f)));
 }
 
-
-
-
-
-
 struct AugmentationTransform
 {
     float crop_left;
@@ -42,60 +38,34 @@ struct AugmentationTransform
     float hue_shift;
 };
 
-uint64_t splitmix64(uint64_t x)
+void validate_augmentation_scale(string_view name, float value)
 {
-    x += 0x9E3779B97F4A7C15ull;
-    x = (x ^ (x >> 30)) * 0xBF58476D1CE4E5B9ull;
-    x = (x ^ (x >> 27)) * 0x94D049BB133111EBull;
-    return x ^ (x >> 31);
+    throw_if(!isfinite(value) || value <= 0.0f,
+             "YOLO augmentation {} must be finite and positive; 1 disables the change.", name);
+    const double largest_scale = exp(abs(double(log(value))));
+    throw_if(!isfinite(largest_scale) || largest_scale > double(numeric_limits<float>::max()),
+             "YOLO augmentation {} is too extreme for finite FP32 log-space sampling and reciprocals.", name);
 }
 
-uint64_t batch_augmentation_seed(const vector<Index>& sample_indices, bool augment)
-{
-    if (!augment) return 0;
-
-    uint64_t seed = 14695981039346656037ULL;
-    for (const Index sample_index : sample_indices)
-    {
-        seed ^= uint64_t(sample_index);
-        seed *= 1099511628211ULL;
-    }
-    return seed ? seed : 1;
-}
-
-AugmentationTransform sample_augmentation_transform(uint64_t epoch_counter,
+AugmentationTransform sample_augmentation_transform(uint64_t epoch_seed,
                                                     uint64_t sample_index,
                                                     const YoloDataset::AugmentationPolicy& policy)
 {
-    auto rand_unit = [](uint64_t& rng_state) -> float
+    RandomStream random(derive_random_seed(epoch_seed, sample_index));
+    const auto rand_scale = [&](float max_scale) -> float
     {
-        rng_state = splitmix64(rng_state);
-        return float(rng_state >> 40) / float(1u << 24);
+        return exp(random.uniform(-1.0f, 1.0f) * log(max_scale));
     };
-
-    auto rand_signed = [&](uint64_t& rng_state, float range) -> float
-    {
-        return (rand_unit(rng_state) * 2.0f - 1.0f) * range;
-    };
-
-    auto rand_scale = [&](uint64_t& rng_state, float max_scale) -> float
-    {
-        const float r = rand_unit(rng_state);
-        const float t = (r * 2.0f - 1.0f) * log(max_scale);
-        return exp(t);
-    };
-
-    uint64_t state = splitmix64(epoch_counter * 0x9E3779B97F4A7C15ull + sample_index);
 
     AugmentationTransform transform{};
-    transform.crop_left   = rand_signed(state, policy.jitter);
-    transform.crop_right  = rand_signed(state, policy.jitter);
-    transform.crop_top    = rand_signed(state, policy.jitter);
-    transform.crop_bottom = rand_signed(state, policy.jitter);
-    transform.flip = policy.flip && (rand_unit(state) < 0.5f);
-    transform.exposure_mul = rand_scale(state, policy.exposure);
-    transform.saturation_mul = rand_scale(state, policy.saturation);
-    transform.hue_shift = rand_signed(state, policy.hue);
+    transform.crop_left   = random.uniform(-policy.jitter, policy.jitter);
+    transform.crop_right  = random.uniform(-policy.jitter, policy.jitter);
+    transform.crop_top    = random.uniform(-policy.jitter, policy.jitter);
+    transform.crop_bottom = random.uniform(-policy.jitter, policy.jitter);
+    transform.flip = policy.flip && random.uniform() < 0.5f;
+    transform.exposure_mul = rand_scale(policy.exposure);
+    transform.saturation_mul = rand_scale(policy.saturation);
+    transform.hue_shift = random.uniform(-policy.hue, policy.hue);
     return transform;
 }
 
@@ -134,31 +104,24 @@ void hsv_to_rgb(float h, float s, float v, float& r, float& g, float& b)
     }
 }
 
-// TODO(cutout-ui): expose cutout_count and cutout_max_size_ratio in the editor
-// augmentation panel and wire through neural_engine.cpp before enabling.
 static const uint8_t* apply_cutout(uint8_t* img, const Shape& shape,
                                    const YoloDataset::AugmentationPolicy& policy,
                                    uint64_t epoch_seed, Index sample_index)
 {
-    auto rng = [](uint64_t& s) -> float {
-        s = splitmix64(s);
-        return float(s >> 40) / float(1u << 24);
-    };
-    const int h = int(shape[0]);
-    const int w = int(shape[1]);
-    const int ch = int(shape[2]);
-    uint64_t seed = splitmix64(epoch_seed * 0xBF58476D1CE4E5B9ull + uint64_t(sample_index));
-    const int max_side = std::max(1, int(std::max(h, w) * policy.cutout_max_size_ratio));
+    if (policy.cutout_count == 0 || policy.cutout_max_size_ratio == 0.0f) return img;
+    const Index h = shape[0], w = shape[1], ch = shape[2];
+    RandomStream random(derive_random_seed(derive_random_seed(epoch_seed, uint64_t(sample_index)),
+                                           0x4355544F5554ull));
+    const Index max_side = max<Index>(1, Index(double(max(h, w)) * policy.cutout_max_size_ratio));
+    const Index max_width = min(w, max_side), max_height = min(h, max_side);
     for (int n = 0; n < policy.cutout_count; ++n)
     {
-        const int pw = 1 + int(rng(seed) * max_side);
-        const int ph = 1 + int(rng(seed) * max_side);
-        const int x0 = int(rng(seed) * std::max(1, w - pw));
-        const int y0 = int(rng(seed) * std::max(1, h - ph));
-        for (int dy = 0; dy < ph; ++dy)
-            for (int dx = 0; dx < pw; ++dx)
-                for (int c = 0; c < ch; ++c)
-                    img[(y0 + dy) * w * ch + (x0 + dx) * ch + c] = 0;
+        const Index pw = 1 + Index(random.next() % uint64_t(max_width));
+        const Index ph = 1 + Index(random.next() % uint64_t(max_height));
+        const Index x0 = Index(random.next() % uint64_t(w - pw + 1));
+        const Index y0 = Index(random.next() % uint64_t(h - ph + 1));
+        for (Index dy = 0; dy < ph; ++dy)
+            fill_n(img + ((y0 + dy) * w + x0) * ch, pw * ch, uint8_t(0));
     }
     return img;
 }
@@ -194,10 +157,8 @@ void apply_geometric_to_image(const uint8_t* src, uint8_t* dst,
     const float original_height = float(height);
     const float source_x0 = transform.crop_left * original_width;
     const float source_y0 = transform.crop_top * original_height;
-    const float source_x1 = (1.0f - transform.crop_right) * original_width;
-    const float source_y1 = (1.0f - transform.crop_bottom) * original_height;
-    const float crop_width = max(1.0f, source_x1 - source_x0);
-    const float crop_height = max(1.0f, source_y1 - source_y0);
+    const float crop_width = (1.0f - transform.crop_left - transform.crop_right) * original_width;
+    const float crop_height = (1.0f - transform.crop_top - transform.crop_bottom) * original_height;
 
     for (Index dy = 0; dy < height; ++dy)
     {
@@ -285,8 +246,8 @@ void bilinear_resize_uint8(const uint8_t* src,
 void apply_geometric_to_boxes(vector<YoloDataset::Box>& boxes,
                               const AugmentationTransform& transform)
 {
-    const float crop_width = max(1e-6f, 1.0f - transform.crop_left - transform.crop_right);
-    const float crop_height = max(1e-6f, 1.0f - transform.crop_top - transform.crop_bottom);
+    const float crop_width = 1.0f - transform.crop_left - transform.crop_right;
+    const float crop_height = 1.0f - transform.crop_top - transform.crop_bottom;
 
     vector<YoloDataset::Box> out;
     out.reserve(boxes.size());
@@ -595,6 +556,17 @@ void YoloDataset::enable_device_residency()
 
 void YoloDataset::set_augmentation_policy(const AugmentationPolicy& new_policy)
 {
+    throw_if(!isfinite(new_policy.jitter) || new_policy.jitter < 0.0f || new_policy.jitter >= 0.5f,
+             "YOLO augmentation jitter must be finite and in [0, 0.5) so crop dimensions stay positive.");
+    validate_augmentation_scale("exposure", new_policy.exposure);
+    validate_augmentation_scale("saturation", new_policy.saturation);
+    throw_if(!isfinite(new_policy.hue) || new_policy.hue < 0.0f || new_policy.hue > 0.5f,
+             "YOLO augmentation hue must be finite and in [0, 0.5] (fractions of a hue cycle).");
+    throw_if(new_policy.cutout_count < 0,
+             "Cutout count must be nonnegative.");
+    throw_if(!isfinite(new_policy.cutout_max_size_ratio)
+             || new_policy.cutout_max_size_ratio < 0.0f || new_policy.cutout_max_size_ratio > 1.0f,
+             "Cutout maximum size ratio must be finite and in [0, 1].");
     if (is_device_resident()) disable_device_residency();
 
     augmentation_policy = new_policy;
@@ -654,31 +626,20 @@ struct MosaicParams
 };
 
 MosaicParams derive_mosaic_params(uint64_t epoch_seed, uint64_t sample_index,
-                                  Index samples_number)
+                                  span<const Index> training_indices)
 {
     // Salted re-mix of the per-sample seed: the mosaic draws from its own stream,
     // independent of the one sample_augmentation_transform consumes.
-    uint64_t state = splitmix64(splitmix64(epoch_seed * 0x9E3779B97F4A7C15ull + sample_index)
-                                + 0xCAFEBABEDEADBEEFull);
-
-    const auto next_value = [&state]()
-    {
-        state = splitmix64(state);
-        return state;
-    };
-
-    const auto next_fraction = [&]()
-    {
-        return 0.3f + (0.7f - 0.3f) * float(next_value() >> 40) / 16777216.0f;
-    };
+    RandomStream random(derive_random_seed(derive_random_seed(epoch_seed, sample_index),
+                                           0xCAFEBABEDEADBEEFull));
 
     MosaicParams params{};
 
     for (Index& companion : params.companions)
-        companion = Index(next_value() % uint64_t(samples_number));
+        companion = training_indices[size_t(random.next() % training_indices.size())];
 
-    params.cx_frac = next_fraction();
-    params.cy_frac = next_fraction();
+    params.cx_frac = random.uniform(0.3f, 0.7f);
+    params.cy_frac = random.uniform(0.3f, 0.7f);
 
     return params;
 }
@@ -690,9 +651,9 @@ struct MosaicQuad
 };
 
 array<MosaicQuad, 4> compute_mosaic_layout(uint64_t epoch_seed, Index sample_index,
-                                           Index samples_number, Index height, Index width)
+                                           span<const Index> training_indices, Index height, Index width)
 {
-    const MosaicParams mp = derive_mosaic_params(epoch_seed, uint64_t(sample_index), samples_number);
+    const MosaicParams mp = derive_mosaic_params(epoch_seed, uint64_t(sample_index), training_indices);
     const Index cut_x = max<Index>(1, min(width - 1, Index(mp.cx_frac * float(width))));
     const Index cut_y = max<Index>(1, min(height - 1, Index(mp.cy_frac * float(height))));
 
@@ -704,6 +665,24 @@ array<MosaicQuad, 4> compute_mosaic_layout(uint64_t epoch_seed, Index sample_ind
     }};
 }
 
+struct YoloDataset::AugmentationBatch
+{
+    AugmentationPolicy policy;
+    uint64_t seed;
+    vector<Index> training_indices;
+};
+
+YoloDataset::AugmentationBatch YoloDataset::prepare_augmentation_batch(
+    const vector<Index>& sample_indices, FillMode mode) const
+{
+    AugmentationPolicy policy = augmentation_policy;
+    policy.enabled = mode == FillMode::Training && policy.enabled;
+    policy.mosaic = policy.enabled && policy.mosaic;
+    if (policy.enabled) validate_augmentation_samples(sample_indices);
+    return {policy, get_augmentation_seed(),
+            policy.mosaic ? get_sample_indices(SampleRole::Training) : vector<Index>{}};
+}
+
 void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
                               const vector<Index>&,
                               float* input_data,
@@ -713,12 +692,9 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
     const Index batch_size = ssize(sample_indices);
     const float scale = 1.0f / 255.0f;
 
-    const bool augment = mode == FillMode::Training && augmentation_policy.enabled;
+    const auto augmentation = prepare_augmentation_batch(sample_indices, mode);
+    const auto& policy = augmentation.policy;
     const bool matrix_storage = storage_mode == StorageMode::Matrix;
-    const uint64_t epoch_seed = batch_augmentation_seed(sample_indices, augment);
-
-    const AugmentationPolicy policy = augmentation_policy;
-    const bool mosaic = augment && policy.mosaic;
 
     string omp_error;
 
@@ -741,9 +717,9 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
     #pragma omp parallel num_threads(workers)
     {
         vector<uint8_t> pixels(static_cast<size_t>(cache_image_record_bytes));
-        vector<uint8_t> augmented(augment ? size_t(cache_image_record_bytes) : 0);
+        vector<uint8_t> augmented(policy.enabled ? size_t(cache_image_record_bytes) : 0);
         vector<uint8_t> resized(resize_needed ? size_t(image_record_bytes) : 0);
-        vector<uint8_t> mosaic_source(mosaic ? size_t(cache_image_record_bytes) : 0);
+        vector<uint8_t> mosaic_source(policy.mosaic ? size_t(cache_image_record_bytes) : 0);
 
         #pragma omp for schedule(dynamic)
         for (Index i = 0; i < batch_size; ++i)
@@ -754,17 +730,13 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
                 throw_if(sample_index < 0 || sample_index >= samples_number,
                          "YoloDataset input sample index is out of range.");
 
-                read_image_record(sample_index, pixels.data());
-
-                const uint8_t* image_bytes = pixels.data();
-
-                if (mosaic)
+                if (policy.mosaic)
                 {
                     const Index H = cache_input_shape[0];
                     const Index W = cache_input_shape[1];
                     const Index C = cache_input_shape[2];
                     const array<MosaicQuad, 4> quads =
-                        compute_mosaic_layout(epoch_seed, sample_index, samples_number, H, W);
+                        compute_mosaic_layout(augmentation.seed, sample_index, augmentation.training_indices, H, W);
 
                     AugmentationPolicy color_policy = policy;
                     color_policy.jitter = 0.0f;
@@ -775,29 +747,32 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
                         read_image_record(q.si, mosaic_source.data());
 
                         const AugmentationTransform transform = sample_augmentation_transform(
-                            epoch_seed, uint64_t(q.si), color_policy);
+                            augmentation.seed, uint64_t(q.si), color_policy);
                         apply_color_jitter(mosaic_source.data(), H, W, C, transform);
 
                         resize_bilinear_into(mosaic_source.data(), H, W,
-                                             augmented.data(), W,
+                                             pixels.data(), W,
                                              q.dst_x, q.dst_y, q.qw, q.qh, C);
                     }
                 }
-                else if (augment)
+                else
+                    read_image_record(sample_index, pixels.data());
+
+                const uint8_t* image_bytes = pixels.data();
+                if (policy.enabled)
                 {
                     const AugmentationTransform transform = sample_augmentation_transform(
-                        epoch_seed, uint64_t(sample_index), policy);
+                        augmentation.seed, uint64_t(sample_index), policy);
 
                     apply_geometric_to_image(pixels.data(), augmented.data(),
                                              cache_input_shape[0], cache_input_shape[1],
                                              cache_input_shape[2], transform);
-                    apply_color_jitter(augmented.data(),
-                                       cache_input_shape[0], cache_input_shape[1],
-                                       cache_input_shape[2], transform);
+                    if (!policy.mosaic)
+                        apply_color_jitter(augmented.data(),
+                                           cache_input_shape[0], cache_input_shape[1],
+                                           cache_input_shape[2], transform);
+                    image_bytes = apply_cutout(augmented.data(), cache_input_shape, policy, augmentation.seed, sample_index);
                 }
-
-                if (mosaic || augment)
-                    image_bytes = apply_cutout(augmented.data(), cache_input_shape, policy, epoch_seed, sample_index);
 
                 if (resize_needed)
                 {
@@ -834,15 +809,12 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
 {
     const Index batch_size = ssize(sample_indices);
 
-    const bool augment = mode == FillMode::Training && augmentation_policy.enabled;
+    const auto augmentation = prepare_augmentation_batch(sample_indices, mode);
+    const auto& policy = augmentation.policy;
     const bool matrix_storage = storage_mode == StorageMode::Matrix;
-    const uint64_t epoch_seed = batch_augmentation_seed(sample_indices, augment);
-
-    const AugmentationPolicy policy = augmentation_policy;
-    const bool mosaic = augment && policy.mosaic;
 
     const bool grid_changed = (grid_size != cache_grid_size);
-    const bool reencode = augment || grid_changed || is_multi_scale() || v8_mode;
+    const bool reencode = policy.enabled || grid_changed || is_multi_scale() || v8_mode;
 
     string omp_error;
 
@@ -889,12 +861,12 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
                 {
                     float* const target_ptr = target_data + i * target_record_floats;
 
-                    if (mosaic)
+                    if (policy.mosaic)
                     {
                         const Index H = cache_input_shape[0];
                         const Index W = cache_input_shape[1];
                         const array<MosaicQuad, 4> quads =
-                            compute_mosaic_layout(epoch_seed, sample_index, samples_number, H, W);
+                            compute_mosaic_layout(augmentation.seed, sample_index, augmentation.training_indices, H, W);
 
                         boxes.clear();
                         for (const MosaicQuad& q : quads)
@@ -906,15 +878,13 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
                         }
                     }
                     else
-                    {
                         read_sample_boxes(sample_index, boxes, box_records);
 
-                        if (augment)
-                        {
-                            const AugmentationTransform transform = sample_augmentation_transform(
-                                epoch_seed, uint64_t(sample_index), policy);
-                            apply_geometric_to_boxes(boxes, transform);
-                        }
+                    if (policy.enabled)
+                    {
+                        const AugmentationTransform transform = sample_augmentation_transform(
+                            augmentation.seed, uint64_t(sample_index), policy);
+                        apply_geometric_to_boxes(boxes, transform);
                     }
 
                     if (v8_mode)

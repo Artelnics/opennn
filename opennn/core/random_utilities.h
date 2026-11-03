@@ -8,6 +8,20 @@
 namespace opennn
 {
     void set_seed(unsigned seed);
+    unsigned get_seed() noexcept;
+
+    uint64_t derive_random_seed(uint64_t seed, uint64_t key) noexcept;
+
+    class RandomStream
+    {
+    public:
+        explicit RandomStream(uint64_t seed) : state(seed) {}
+        uint64_t next() noexcept;
+        float uniform(float minimum = 0.0f, float maximum = 1.0f) noexcept;
+
+    private:
+        uint64_t state;
+    };
 
     float random_uniform(float = -1, float = 1);
     float random_normal(float = 0, float = 1);

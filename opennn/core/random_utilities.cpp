@@ -3,6 +3,7 @@
 
 #include "opennn/core/random_utilities.h"
 
+#include <atomic>
 #include <mutex>
 
 #include <Eigen/QR>
@@ -14,7 +15,16 @@ namespace
 {
 
 mutex rng_mutex;
-mt19937 generator{random_device{}()};
+atomic<unsigned> global_seed{random_device{}()};
+mt19937 generator{global_seed.load()};
+
+uint64_t mix_seed(uint64_t value) noexcept
+{
+    value += 0x9E3779B97F4A7C15ull;
+    value = (value ^ (value >> 30)) * 0xBF58476D1CE4E5B9ull;
+    value = (value ^ (value >> 27)) * 0x94D049BB133111EBull;
+    return value ^ (value >> 31);
+}
 
 }
 
@@ -22,6 +32,29 @@ void set_seed(unsigned seed)
 {
     lock_guard<mutex> lock(rng_mutex);
     generator.seed(seed);
+    global_seed.store(seed, memory_order_relaxed);
+}
+
+unsigned get_seed() noexcept
+{
+    return global_seed.load(memory_order_relaxed);
+}
+
+uint64_t derive_random_seed(uint64_t seed, uint64_t key) noexcept
+{
+    return mix_seed(seed ^ mix_seed(key));
+}
+
+uint64_t RandomStream::next() noexcept
+{
+    const uint64_t result = mix_seed(state);
+    state += 0x9E3779B97F4A7C15ull;
+    return result;
+}
+
+float RandomStream::uniform(float minimum, float maximum) noexcept
+{
+    return minimum + (maximum - minimum) * (float(next() >> 40) / 16777216.0f);
 }
 
 float random_uniform(float min, float max)

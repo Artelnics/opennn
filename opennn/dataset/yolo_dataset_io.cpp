@@ -41,6 +41,17 @@ vector<array<float, 2>> anchors_from_json(const Json* source)
     return anchors;
 }
 
+int cutout_count_from_json(const Json* source)
+{
+    const Json* field = source->find("AugCutoutCount");
+    if (!field) return 0;
+    const double value = field->as_double();
+    throw_if(!field->is_number() || !isfinite(value) || value < 0
+             || value > numeric_limits<int>::max() || floor(value) != value,
+             "AugCutoutCount must be a nonnegative integer within the int range.");
+    return int(value);
+}
+
 vector<string> read_yolo_classes(const filesystem::path& labels_directory)
 {
     const auto non_empty_lines = [](istream& stream)
@@ -1102,7 +1113,9 @@ void YoloDataset::to_JSON(JsonWriter& printer) const
         {"AugSaturation", augmentation_policy.saturation},
         {"AugHue",        augmentation_policy.hue},
         {"AugFlip",       augmentation_policy.flip    ? 1 : 0},
-        {"AugMosaic",     augmentation_policy.mosaic  ? 1 : 0}
+        {"AugMosaic",     augmentation_policy.mosaic  ? 1 : 0},
+        {"AugCutoutCount", augmentation_policy.cutout_count},
+        {"AugCutoutMaxSizeRatio", augmentation_policy.cutout_max_size_ratio}
     });
     printer.begin_array("MultiScaleHeads");
     for (size_t head = 0; head < head_grid_sizes.size(); ++head)
@@ -1161,6 +1174,8 @@ void YoloDataset::from_JSON(const JsonDocument& document)
     parsed_policy.hue        = source->has("AugHue")        ? read_json_float(source, "AugHue")        : 0.1f;
     parsed_policy.flip       = source->has("AugFlip")       ? (read_json_index(source, "AugFlip")      != 0) : true;
     parsed_policy.mosaic     = source->has("AugMosaic")     ? (read_json_index(source, "AugMosaic")    != 0) : false;
+    parsed_policy.cutout_count = cutout_count_from_json(source);
+    parsed_policy.cutout_max_size_ratio = read_json_float(source, "AugCutoutMaxSizeRatio", 0.04f);
     set_augmentation_policy(parsed_policy);
 
     const Json* samples_element = yolo_element->find("Samples");

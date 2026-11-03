@@ -12,6 +12,7 @@
 #include "opennn/core/statistics.h"
 
 #include "tests/common/test_helpers.h"
+#include "tests/common/augmentation_helpers.h"
 
 #include <filesystem>
 #include <fstream>
@@ -105,6 +106,7 @@ TEST(ImageDataset, PackedCudaBatchesMatchHostScalingAndAugmentationFallback)
     if (!device::has_cuda_device()) GTEST_SKIP() << "No CUDA device.";
     ImageFixtureThreeClasses fixture(7, 5, 2);
     ImageDataset dataset(fixture.root);
+    dataset.set_sample_roles(SampleRole::Training);
     const vector<Index> indices{5, 0, 3};
     const FeatureSelection features = dataset.get_feature_selection();
     for (Type dtype : {Type::FP32, Type::BF16})
@@ -459,6 +461,11 @@ TEST(ImageDataset, SetAugmentationPolicyDisablesDeviceResidency)
     image_dataset.enable_device_residency();
     ASSERT_TRUE(image_dataset.is_device_resident());
 
+    ImageAugmentationPolicy invalid;
+    invalid.rotation_minimum = 1.0f;
+    EXPECT_THROW(image_dataset.set_augmentation_policy(invalid), runtime_error);
+    EXPECT_TRUE(image_dataset.is_device_resident());
+
     ImageAugmentationPolicy policy;
     policy.enabled = true;
     policy.reflection_axis_x = true;
@@ -527,6 +534,134 @@ TEST(ImageDataset, AugmentInputsDisabledLeavesDataUnchanged)
 
     for (Index i = 0; i < pixels; ++i)
         EXPECT_FLOAT_EQ(data[size_t(i)], original[size_t(i)]);
+}
+
+TEST(ImageDataset, AugmentationRequiresTheActiveTrainingPartition)
+{
+    ImageFixture fixture(4, 3, 2);
+    ImageDataset dataset(fixture.root);
+    dataset.set_sample_roles({"Validation", "Training", "Testing", "None"});
+    ImageAugmentationPolicy policy;
+    policy.enabled = true;
+    policy.horizontal_translation_minimum = policy.horizontal_translation_maximum = 1.0f;
+    dataset.set_augmentation_policy(policy);
+    const auto features = dataset.get_feature_indices(VariableRole::Input);
+    vector<float> input(size_t(2 * dataset.get_input_shape().size()), -99.0f);
+    for (Index excluded : {0, 2, 3, -1, 4})
+    {
+        EXPECT_THROW(dataset.fill_inputs({1, excluded}, features, input.data(), FillMode::Training), runtime_error);
+        EXPECT_TRUE(ranges::all_of(input, [](float value) { return value == -99.0f; }));
+    }
+    dataset.fill_inputs({1}, features, input.data(), FillMode::Training);
+    EXPECT_FLOAT_EQ(input[0], 0.0f);
+    for (FillMode mode : {FillMode::Validation, FillMode::Inference})
+    {
+        dataset.fill_inputs({0}, features, input.data(), mode);
+        const auto expected = input;
+        policy.enabled = false;
+        dataset.set_augmentation_policy(policy);
+        dataset.fill_inputs({0}, features, input.data(), mode);
+        EXPECT_EQ(input, expected);
+        policy.enabled = true;
+        dataset.set_augmentation_policy(policy);
+    }
+    {
+        FoldScope fold(dataset, {0}, {1});
+        EXPECT_NO_THROW(dataset.fill_inputs({0}, features, input.data(), FillMode::Training));
+        EXPECT_THROW(dataset.fill_inputs({1}, features, input.data(), FillMode::Training), runtime_error);
+    }
+    EXPECT_NO_THROW(dataset.fill_inputs({1}, features, input.data(), FillMode::Training));
+    EXPECT_THROW(dataset.fill_inputs({0}, features, input.data(), FillMode::Training), runtime_error);
+}
+
+TEST(ImageDataset, AugmentationPolicyValidationIsAtomicAndAppliesToJson)
+{
+    ImageFixture fixture(4, 3, 2);
+    ImageDataset dataset(fixture.root);
+    const string original = augmentation_json(dataset);
+    using Policy = ImageAugmentationPolicy;
+    const float limit = -float(numeric_limits<Index>::min());
+    for (bool enabled : {false, true})
+        for (auto [low, high] : {pair{&Policy::rotation_minimum, &Policy::rotation_maximum},
+                                 pair{&Policy::horizontal_translation_minimum, &Policy::horizontal_translation_maximum},
+                                 pair{&Policy::vertical_translation_minimum, &Policy::vertical_translation_maximum}})
+        {
+            Policy policy;
+            policy.enabled = enabled;
+            policy.*low = 1.0f;
+            EXPECT_THROW(dataset.set_augmentation_policy(policy), runtime_error);
+            for (auto field : {low, high})
+                for (float value : {numeric_limits<float>::quiet_NaN(), numeric_limits<float>::infinity(),
+                                    -numeric_limits<float>::infinity(), limit, -limit})
+                {
+                    if (low == &Policy::rotation_minimum && isfinite(value)) continue;
+                    policy.*low = policy.*high = 0.0f;
+                    policy.*field = value;
+                    EXPECT_THROW(dataset.set_augmentation_policy(policy), runtime_error);
+                    EXPECT_EQ(augmentation_json(dataset), original);
+                }
+        }
+    for (const char* field : {"RandomRotationMinimum", "RandomHorizontalTranslationMinimum",
+                             "RandomVerticalTranslationMinimum"})
+    {
+        JsonDocument document;
+        document.set_root(Json::parse(original));
+        document.get_root()["Dataset"]["DataSource"].set(field, 1.0f);
+        EXPECT_THROW(dataset.from_JSON(document), runtime_error);
+    }
+}
+
+TEST(ImageDataset, AugmentationAcceptsFiniteAnglesAndSafePixelShifts)
+{
+    ImageFixture fixture(16, 12, 1);
+    ImageDataset dataset(fixture.root);
+    vector<float> original(16 * 12 * 3, 1.0f);
+    ImageAugmentationPolicy policy;
+    policy.enabled = true;
+    policy.rotation_minimum = policy.rotation_maximum = 720.0f;
+    dataset.set_augmentation_policy(policy);
+    auto input = original;
+    dataset.augment_inputs(input, 1);
+    EXPECT_EQ(input, original);
+    policy.rotation_minimum = -numeric_limits<float>::max();
+    policy.rotation_maximum = numeric_limits<float>::max();
+    dataset.set_augmentation_policy(policy);
+    dataset.augment_inputs(input, 1);
+    EXPECT_TRUE(ranges::all_of(input, [](float x) { return isfinite(x); }));
+    EXPECT_TRUE(ranges::any_of(input, [](float x) { return x > 0.0f; }));
+    policy.rotation_minimum = policy.rotation_maximum = 0.0f;
+    const float shift = nextafter(-float(numeric_limits<Index>::min()), 0.0f);
+    for (float amount : {-shift, shift})
+    {
+        policy.horizontal_translation_minimum = policy.horizontal_translation_maximum = amount;
+        policy.vertical_translation_minimum = policy.vertical_translation_maximum = amount;
+        dataset.set_augmentation_policy(policy);
+        input = original;
+        dataset.augment_inputs(input, 1);
+        EXPECT_TRUE(ranges::all_of(input, [](float x) { return x == 0.0f; }));
+    }
+}
+
+TEST(ImageDataset, AugmentationReplaysAcrossWorkersBatchesAndEpochs)
+{
+    ImageFixture fixture(16, 12, 4);
+    for (auto storage : {Dataset::StorageMode::BinaryFile, Dataset::StorageMode::Matrix})
+    {
+        ImageDataset dataset;
+        dataset.set_display(false);
+        dataset.set_storage_mode(storage);
+        dataset.set_data_path(fixture.root);
+        dataset.read_images();
+        dataset.set_sample_roles(SampleRole::Training);
+        ImageAugmentationPolicy policy;
+        policy.enabled = policy.reflection_axis_x = policy.reflection_axis_y = true;
+        policy.rotation_minimum = -20.0f;
+        policy.rotation_maximum = 20.0f;
+        policy.horizontal_translation_minimum = policy.vertical_translation_minimum = -3.0f;
+        policy.horizontal_translation_maximum = policy.vertical_translation_maximum = 3.0f;
+        dataset.set_augmentation_policy(policy);
+        expect_augmentation_replay(dataset, false);
+    }
 }
 
 TEST(ImageDataset, ConstructFromPathSingleClassThrows)

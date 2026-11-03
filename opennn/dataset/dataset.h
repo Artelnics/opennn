@@ -73,6 +73,9 @@ public:
     void set_fold_split(const vector<Index>& training, const vector<Index>& validation);
     void clear_fold_split() noexcept { fold_split_roles.reset(); }
 
+    void set_augmentation_epoch(Index);
+    Index get_augmentation_epoch() const noexcept { return augmentation_epoch; }
+
     Index get_variables_number() const noexcept { return variables.size(); }
     Index get_variables_number(VariableRole) const;
     Index get_variables_number(string_view role) const { return get_variables_number(string_to_variable_role(role)); }
@@ -321,6 +324,9 @@ protected:
 
     Dataset() = default;
 
+    void validate_augmentation_samples(span<const Index>) const;
+    uint64_t get_augmentation_seed() const noexcept;
+
     void fill_batch_host(Batch&,
                          const vector<Index>& sample_indices,
                          const FeatureSelection&,
@@ -369,6 +375,7 @@ protected:
     vector<string> sample_ids;
 
     optional<vector<SampleRole>> fold_split_roles;
+    Index augmentation_epoch = 0;
 
     const vector<SampleRole>& active_sample_roles() const noexcept
     { return fold_split_roles ? *fold_split_roles : sample_roles; }

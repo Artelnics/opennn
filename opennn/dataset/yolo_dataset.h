@@ -135,8 +135,8 @@ public:
         bool flip = true;
         bool enabled = true;
         bool mosaic = false;
-        int   cutout_count          = 0;     // 0 = disabled; TODO: wire editor UI
-        float cutout_max_size_ratio = 0.04f; // max patch side = max(H,W) * ratio
+        int cutout_count = 0;
+        float cutout_max_size_ratio = 0.04f;
     };
 
     void set_augmentation_policy(const AugmentationPolicy&);
@@ -148,6 +148,9 @@ public:
                                      const vector<string>& class_filter = {});
 
 private:
+
+    struct AugmentationBatch;
+    AugmentationBatch prepare_augmentation_batch(const vector<Index>&, FillMode) const;
 
     filesystem::path images_directory;
     filesystem::path labels_directory;

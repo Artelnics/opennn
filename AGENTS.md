@@ -1,242 +1,109 @@
-# OpenNN — guide for coding agents and maintainers
+# OpenNN — contributor and agent guide
 
-[README.md](README.md) is the user guide: first build, installed package and
-example-data licences. This file covers where things are, build options, how to
-verify changes, CI, example data, the 26.0 release notes and migration,
-and releases. Keep rules here repository-wide; workstation paths belong in
-environment variables, not in repository files.
+[README.md](README.md) covers first use. Keep this file focused on repository-wide
+working rules; task reports and verification records belong in PRs or releases.
 
-## Working branches
+## Working rules
 
-- Use the existing OpenNN checkout on `dev` for normal development. Do not create
-  additional clones or worktrees unless the user explicitly requests them.
-- Keep development and release preparation on `dev`. Merge into `master` only
-  when the user explicitly decides the work is ready for release.
-- Preserve uncommitted work and saved stashes when switching or consolidating
-  branches.
-- Contributors base changes on `dev` and open a pull request describing the
-  resulting behavior and the validation run.
+- Work in the existing checkout on `dev`. Do not create clones or worktrees
+  unless requested. Preserve unrelated changes and saved stashes.
+- Keep development and release preparation on `dev`; merge into `master`, tag
+  or publish a release only when the owner explicitly decides to release.
+- Preserve public APIs and serialized formats unless a breaking change is
+  authorized. Neural Designer uses exported symbols absent from local call sites.
+- Keep builds, installs, downloaded models, generated data and raw results outside
+  Git. Use environment variables for workstation paths.
+- Follow neighboring code and retain the SPDX/copyright headers and licence notices.
+  Portable `.h` interfaces must not expose CUDA vendor types; use `.cuh` internally.
+- Keep README independent of branch/release state. Preserve attribution files,
+  skill entry points and the public include paths. Agent-specific folders stay local.
 
-## Compatibility and scope
+## Library modules and dependencies
 
-- Preserve the public API and serialized model compatibility unless the task
-  explicitly authorizes a breaking change.
-- Neural Designer links against OpenNN and uses symbols that may appear unused
-  inside this repository. Do not remove public or exported code based only on
-  repository-local call sites.
-- Preserve unrelated working-tree changes. Build products, downloaded models,
-  generated data and raw benchmark results must remain outside Git.
-- Keep `README.md` independent of the branch and release state, so it can be
-  promoted to `master` unchanged. Record verification status and outstanding
-  checks in the pull request or release record.
-
-## Where things are
-
-| Path | Contents |
+| Path | Responsibility |
 | --- | --- |
-| `opennn/` | The library; module map below. |
-| `tests/` | GoogleTest tests of the `opennn/` library only, one folder per library module (network layers and operators are separate). `tests/common/` holds the test `main`, the precompiled header and shared helpers. Do not add benchmark, example or tooling tests here, and keep no loose test files at the `tests/` root. |
-| `examples/` | Runnable applications and bundled data. The catalog is `examples/README.md`. |
-| `benchmarks/` | OpenNN versus PyTorch comparison drivers, input manifests, `README.md` (usage) and `PROTOCOL.md` (measurement rules). `benchmarks/reports/` is ignored by Git and holds each user's own reports. |
-| `tools/` | Verification scripts, code checkers, fuzzing, package checks and agent skills; table below. |
-| `.github/workflows/` | `ci.yml`, the hosted CI. |
+| `opennn/core/` | Configuration, types, tensors, device primitives, persistence; CUDA under `core/cuda/`. |
+| `opennn/network/` | Network, layers, operators, model I/O and exports. |
+| `opennn/models/` | Ready-made architectures; shared execution belongs to Network. |
+| `opennn/dataset/` | Dataset, TabularDataset (including forecasting), TextDataset, ImageDataset and YoloDataset. |
+| `opennn/training/`, `evaluation/` | Losses, optimizers, training and quality analysis. |
+| `opennn/model_selection/`, `response_optimization/` | Model selection and constrained input optimization. |
+| `tests/` | Library GoogleTests, grouped by module; shared helpers under `tests/common/`. No loose root tests or tooling/example tests. |
+| `examples/`, `benchmarks/`, `tools/` | Applications/data, comparison drivers and maintenance tools. |
 
-`CMakePresets.json` holds the repeatable configure/build/test settings, and
-`tools/CODE_QUALITY.json` the reviewed maintainability limits (ratchet).
-
-`LICENSE.txt` (AGPL 3.0, matching the `AGPL-3.0-only` SPDX headers),
-`LICENSING.md` (dual licensing and the section 7 additional permissions) and
-`THIRD_PARTY_NOTICES.txt` are installed with every package. Every source file
-starts with the two-line SPDX and copyright header that
-`tools/check_code_quality.py` enforces.
-
-### Library modules and dependencies
-
-| Module | Responsibility and starting points |
-| --- | --- |
-| `opennn/core/` | Configuration, tensor and storage types, backend operations and persistence utilities. Start with `configuration.h` and `opennn_types.h`; CUDA kernels are under `core/cuda/`. `pch.h` is the library's private precompiled header. |
-| `opennn/network/` | `Network` (`network.h`), propagation, save/load (`network_io.cpp`), chat and `ModelExpression` source export (`model_expression.cpp`). `layers/` holds network layers, `LayerType` and the layer factory (`layer_registry.h`); `operators/` holds reusable operators. |
-| `opennn/models/` | Ready-made tabular, image, language and forecasting architectures declared in `models.h`; shared execution and tokenizer methods belong to `Network`. |
-| `opennn/dataset/` | `Dataset` (`dataset.h`) and the four concrete classes below; I/O in `tabular_dataset_io.cpp` and `yolo_dataset_io.cpp`. |
-| `opennn/training/` | `Training` (`training.h`), losses and optimizers such as `Adam` and `SGD`. |
-| `opennn/evaluation/` | `Evaluation` (`evaluation.h`) for prediction-quality analysis. |
-| `opennn/model_selection/` | Input and network-size selection. |
-| `opennn/response_optimization/` | Optimization of inputs subject to model outputs and constraints (`response_optimization.h`); numerical repair lives in `feasibility_repair_system.h/.cpp`. |
-
-`core` is the foundation. `network` and `models` define computation; datasets
-feed training, and evaluation and selection use those interfaces. This is not a
-strict linear chain: `tools/check_architecture.py` records the allowed directions
-and a small list of existing exceptions. Keep public headers at their include
-paths. The `core/cuda/flash_attention_shim/` hierarchy is required by the
-optional FlashAttention backend.
-
-### Choosing a dataset
-
-`Dataset` is the shared interface for batches, sample roles and variables.
-Choose one of the four concrete classes:
-
-| Class | Data and configuration |
-| --- | --- |
-| `TabularDataset` | Numeric and categorical tables, including time series through `configure_forecasting(past, future, multi_target)`. |
-| `TextDataset` | Labelled text, paired translation sequences or next-token prediction, selected with `TextDataset::Options::task`. Tokenizers and optional attention masks configure the input representation. |
-| `ImageDataset` | Image classification with one label per image. |
-| `YoloDataset` | Object detection with boxes, synchronized image/box augmentation and detection-head target layouts. |
-
-### Maintenance tools
-
-| Task | Entry point |
-| --- | --- |
-| Incremental CPU/CUDA verification | Configure, build and test presets in `CMakePresets.json` |
-| Size, complexity and dependency checks | `tools/check_code_quality.py`, `tools/check_architecture.py` |
-| Coverage and public-header checks | `tools/check_coverage.py`, `tools/check_headers.sh` |
-| JSON fuzzing | `tools/fuzz/` |
-| Installed-package checks and C++ consumer | `tools/check_installed_package.py`, `tools/package_smoke/` (including dependency relocation checks) |
-| Full example/device matrix | `tools/run-opennn-examples/SKILL.md` |
-| Benchmark preparation and execution | `benchmarks/prepare.py`, `benchmarks/run.py`, `benchmarks/compare.py`; procedure in `tools/run-opennn-benchmarks/SKILL.md` |
-
-## Code organization
-
-- Follow neighboring files for naming, include order and class layout.
-- Keep reusable tensor and device primitives in `opennn/core/`; datasets,
-  network code, training, model selection and evaluation must retain their
-  existing dependency direction.
-- Validate structural changes on both CPU and CUDA when they touch shared code.
-  Some qualifications, includes and data-member ordering are intentionally
-  significant even when a local edit suggests otherwise.
+Keep reusable tensor/device code in core and respect the dependency directions
+checked by `tools/check_architecture.py`. Retain the optional FlashAttention shim.
+For response repair, preserve float/double return-point feasibility checks and
+constraint-container lifetimes; a failed repair does not prove infeasibility.
 
 ## Build options
 
-Run CMake from the repository root and keep build and install directories
-outside it. A default configuration builds examples and tests; select only the
-targets you need. For a library-only build, set `OpenNN_BUILD_TESTS=OFF` and
-`OpenNN_BUILD_EXAMPLES=OFF`, then build target `opennn`.
+Use [CMakePresets.json](CMakePresets.json) from the repository root. Ninja builds
+live in `../opennn-build/<preset>`; Windows requires a Visual Studio developer
+prompt. OpenMP is required. Dependency versions/licences are in
+[THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt).
 
-| Option | Default | Description |
-| --- | ---: | --- |
-| `OpenNN_DISABLE_CUDA` | `OFF` | Force a CPU-only build even when CUDA is available. |
-| `OpenNN_REQUIRE_CUDA` | `OFF` | Fail configuration if CUDA cannot be enabled. |
-| `OpenNN_BUILD_TESTS` | `ON` | Build the GoogleTest test suite. |
-| `OpenNN_BUILD_EXAMPLES` | `ON` | Build example applications. |
-| `OpenNN_BUILD_BLANK` | `ON` | Include the `blank` example template when examples are enabled. |
-| `OpenNN_BUILD_BENCHMARKS` | `OFF` | Build benchmark drivers from `benchmarks/`. |
-| `OpenNN_BUILD_FUZZERS` | `OFF` | Build Clang libFuzzer targets with ASan/UBSan. |
-| `OpenNN_BUILD_VISION` | `ON` | Build vision, sequence, transformer and detection components. |
-| `OpenNN_BUILD_SHARED` | `OFF` | Build OpenNN as a shared library instead of a static library. |
-| `OpenNN_INSTALL` | `ON` | Generate library installation and package rules. |
-| `OpenNN_CPU_TARGET` | `NATIVE` | `NATIVE` keeps host-specific ISA flags for local throughput; `PORTABLE` removes them for distributable binaries. |
-| `OpenNN_ENABLE_LTO` | platform-dependent | Enable interprocedural optimization for release builds. |
-| `OpenNN_ENABLE_MKL` | `OFF` | Use Intel MKL as Eigen's BLAS/LAPACK backend. |
-| `OpenNN_ENABLE_ONEDNN` | `AUTO` | Use detected oneDNN CPU primitives; `ON` requires it and `OFF` disables the search. |
-| `OpenNN_MKL_ROOT`, `OpenNN_ONEDNN_ROOT` | empty | Locate a nonstandard MKL or oneDNN installation. |
-| `OpenNN_CHECK_HEADERS` | `OFF` | Compile public headers independently. |
-| `OpenNN_UNIT_TEST_TIMEOUT` | `600` seconds | CTest limit for the unit suite; the sanitizer preset uses 1,800. |
-
-OpenMP is required; configuration fails if the selected toolchain lacks it.
-Eigen is found as a package or fetched; zlib and libjpeg-turbo are fetched by
-CMake. oneTBB and oneDNN are optional detected CPU dependencies, and MKL is
-explicitly opt-in. GoogleTest is needed only for tests. CUDA builds add NVIDIA
-runtime dependencies and the fetched cuDNN frontend. Versions and licences are
-listed in [THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt).
-
-Gauss–Newton is available through
-`set_feasibility_solver(ResponseOptimization::FeasibilitySolver::GaussNewton)`
-on either response search, or `FeasibilityRepairSystem::Solver::GaussNewton`
-for direct repair, using Eigen with no additional dependency. It takes minimum-norm steps in
-input-span coordinates, scales the linear system before decomposition and uses
-up to eight backtracking trials per step, clipped to the domain; LM remains the default.
-Broyden (`FeasibilitySolver::Broyden`) takes the same steps but evaluates the Jacobian once
-per round and corrects it after each accepted step with the least-change secant update in
-span units; a step from a corrected Jacobian is tried at full length only, and when it fails
-the rows of the step are evaluated again. It keeps met equalities in the step. It saves most
-when the network must be differentiated by finite differences.
-All repair backends share rounds, per-round evaluation limits (excluding
-numerical probes), tolerance, margin and final discrete/feasibility checks.
-All use analytical constraint Jacobians for supported CPU FP32 sequential
-dense networks, including common activations, affine scaling/unscaling and
-clamping. This logic stays in `response_optimization`; unsupported networks,
-unusable derivatives and nonsmooth boundaries use finite differences.
-The repair runs in double precision; the network evaluates in float. `FeasibilityRepairSystem::solve`
-serves callers that keep float points, as the response optimizers do: it evaluates the constraints,
-in double, at the float point it will return and aims a violated bound a float step inside (the
-constraint's derivative times one float step per input), so every point it returns meets its
-constraints evaluated in double. `solve_double` serves callers that keep double points: it evaluates
-the constraints at the double point and reaches what float cannot represent, such as gaps below a
-float step, which rounding to float can lose. An equality whose tolerance is finer than one float
-step moves it stays out of reach of float points. `ResponseOptimization::calculate_feasibility`
-screens rows by the same rule, in double.
-There is no automatic solver fallback. A failed repair does not prove infeasibility.
-Failed sampling reports the worst tolerance-scaled miss of the best checked
-rounded candidate with a constraint violation, when finite values are available. These
-diagnostics reuse evaluated values, exclude continuous solver probes and reset
-between optimization runs; they do not establish a globally nearest feasible value.
-Searches reuse a local repair system within each sampling batch and pass the
-active domain explicitly. Genetic search retains nonempty partial initial and
-offspring batches when sampling stops; an empty initial population still fails,
-and empty offspring batches leave the previous population intact.
-
-`PORTABLE` removes only explicit host-specific ISA flags (`-march=native`,
-`/arch:AVX2` or the Apple Silicon target). It does not change tensor layouts,
-algorithms, thread counts or CUDA kernels. Clang static libraries built with
-LTO require a compatible Clang/LLVM toolchain in their consumers; set
-`OpenNN_ENABLE_LTO=OFF` when distributing static objects across toolchains.
-
-### CPU threads
-
-On Linux, OpenNN uses one thread per CPU the process may run on
-(`sched_getaffinity`, so `taskset` is honoured). Other platforms use the reported
-hardware concurrency, with OpenMP as a fallback. The same count is given to
-Eigen, OpenMP and MKL. `OPENNN_THREADS=n` overrides it, and
-`OPENNN_OMP_DYNAMIC=1` re-enables dynamic OpenMP teams.
-
-On hybrid Intel CPUs (P- and E-cores), GCC 14's libgomp stops spinning at
-barriers, so every fork/join sleeps in the kernel. Set `GOMP_SPINCOUNT=300000`
-or `OMP_WAIT_POLICY=active` before running latency-sensitive work. The runtime
-reads these variables before `main`, so OpenNN cannot set them for you.
+- `OpenNN_DISABLE_CUDA=ON` forces CPU; `OpenNN_REQUIRE_CUDA=ON` requires CUDA.
+- For library-only builds, disable `OpenNN_BUILD_TESTS` and `OpenNN_BUILD_EXAMPLES`,
+  then build target `opennn`. Benchmarks and fuzzers are opt-in.
+- `OpenNN_BUILD_VISION`, `OpenNN_BUILD_SHARED` and `OpenNN_INSTALL` control scope,
+  linkage and packaging. See [CMakeLists.txt](CMakeLists.txt) for all options.
+- Use `OpenNN_CPU_TARGET=PORTABLE` for distribution; it removes host ISA flags,
+  not algorithm or thread settings. Disable LTO across incompatible toolchains.
+- MKL is opt-in; oneDNN is detected by default. Nonstandard installations use
+  `OpenNN_MKL_ROOT`, `OpenNN_ONEDNN_ROOT`, `CMAKE_CUDA_COMPILER`,
+  `CMAKE_CUDA_ARCHITECTURES`, `CUDNN_INCLUDE_DIR` and `CUDNN_LIBRARY`.
+  CUDA/cuDNN runtime libraries must be on the runtime search path.
 
 ### CUDA batch preparation
 
-CUDA training prepares batches with two workers by default
-(`OPENNN_BATCH_WORKERS`), each with one OpenMP thread (`OPENNN_BATCH_THREADS`),
-separate from the general CPU thread limit. A larger thread budget, up to the
-caller's OpenMP limit, can help expensive preprocessing; the caller's setting
-is restored after each fill, including failures. CPU batch preparation keeps
-its normal thread budget.
+`OPENNN_THREADS` overrides the CPU thread count (Linux otherwise uses affinity).
+Dynamic OpenMP teams are opt-in through `OPENNN_OMP_DYNAMIC=1`. On hybrid Intel
+CPUs with GCC/libgomp, benchmark `GOMP_SPINCOUNT=300000` or `OMP_WAIT_POLICY=active`
+when barrier latency matters; set these before starting the process.
 
-Workers fill reusable pinned host buffers: `max(workers + 1, 3)` for GPU
-execution and one for CPU execution. A worker waits while none is free, and more
-buffers do not create more workers. Eager CUDA training rotates through three
-device buffers by default, including the batch being processed, so uploads can
-overlap computation; these buffers only receive uploads and keep no host copy.
-Events protect host data until its upload finishes and each device buffer until
-its previous step finishes, and host waits sleep instead of spinning. Configure
-the capacities independently:
+CUDA defaults to two batch workers (`OPENNN_BATCH_WORKERS`), one OpenMP thread
+per fill (`OPENNN_BATCH_THREADS`, capped by the caller's limit),
+`max(workers + 1, 3)` pinned host buffers and three eager device buffers.
+Configure these independently with `set_workers_number`, `set_batch_pool_size`
+and `set_device_batch_pool_size`; CUDA Graphs use their own pipeline. Preserve
+buffer/event lifetimes, thread-setting restoration and memory-budget accounting.
+More buffering consumes memory and cannot fix sustained slow preparation.
+Binary classification images without augmentation can upload bytes and scale on
+GPU; augmentation currently prepares floats on CPU. Measure end-to-end cost.
 
-```cpp
-optimizer.set_workers_number(2);
-optimizer.set_batch_pool_size(3);
-optimizer.set_device_batch_pool_size(3);
-```
+### Augmentation contract
 
-The device-pool setting applies to eager CUDA training; CUDA Graphs keep their
-own pipeline. Automatic batch sizing accounts for the device pool and transfer
-staging memory. More buffers consume memory and can absorb preparation delays,
-but cannot compensate for a sustained input bottleneck. Measure throughput and
-CPU time before increasing workers or either pool.
+Use only the active Training partition, including folds and Mosaic companions.
+Validation/inference must not augment. Local RNG streams derive from global
+`set_seed`, epoch and sample ID without consuming global RNG draws, independent
+of worker scheduling and batch order. Adam/SGD reset epoch to zero per train call
+and advance it; manual readers use `set_augmentation_epoch`. Full-batch optimizers
+retain their prepared batch. Epoch is runtime state, not a resume checkpoint;
+raw-buffer ImageDataset augmentation uses row IDs. Set configuration before
+concurrent fills. This does not promise bit-identical training across backends.
 
-For binary image data without augmentation, eager training transfers byte
-pixels and converts and scales them on the GPU; validation and other image paths
-keep their float host preparation. CUDA text classification with ordinary token
-inputs reads each binary record's tokens and labels together. These
-optimizations preserve the binary formats, input values and sample order.
+YOLO applies source color, Mosaic, shared image/box jitter and flip, then Cutout.
+Clip boxes and discard degenerate ones; Cutout preserves annotations. Keep old
+JSON compatible: absent Cutout fields mean disabled. Setters and JSON loading
+must reject invalid policies before changing policy/device residency, even disabled.
+
+| Parameter | Accepted domain |
+| --- | --- |
+| Classification rotation | Finite ordered degrees; reduce modulo 360. |
+| Classification translation | Finite ordered signed pixels strictly within ±2^(Index bits−1). |
+| YOLO jitter / hue | Finite `[0, 0.5)` / `[0, 0.5]`. |
+| Exposure / saturation | Positive finite factors with finite FP32 log-space samples/reciprocals; 1 neutral. |
+| Cutout count / side ratio | Integer ≥ 0 / finite `[0, 1]`; either zero disables. Side capped per image axis. |
+
+Domain references: [OpenCV geometry](https://docs.opencv.org/4.13.0/da/d54/group__imgproc__transform.html),
+[Darknet jitter](https://github.com/AlexeyAB/darknet/wiki/CFG-Parameters-in-the-%5Bnet%5D-section),
+[Darknet scales](https://github.com/AlexeyAB/darknet/blob/master/src/utils.c),
+[Torchvision hue](https://docs.pytorch.org/vision/stable/generated/torchvision.transforms.ColorJitter.html)
+and [Cutout](https://github.com/uoguelph-mlrg/Cutout/blob/master/util/cutout.py).
+The numerical limits above are OpenNN's contract, not identical library APIs.
 
 ## Build and verify
-
-Use the CMake presets for routine verification on Linux, WSL and Windows.
-On Windows, run them from a Visual Studio developer prompt. The presets
-`verify-cpu`, `verify-cuda` and `verify-sanitizers` (Linux Clang) require Ninja
-and keep persistent build trees in `../opennn-build/<preset>`. Passing another
-directory with `-B` requires the same directory in later `cmake --build` and
-`ctest --test-dir` commands instead of the build and test presets.
 
 ```sh
 cmake --preset verify-cpu
@@ -246,478 +113,68 @@ ctest --preset verify-cpu
 cmake --preset verify-cuda
 cmake --build --preset verify-cuda --parallel
 ctest --preset verify-cuda
+
+python -B tools/check_code_quality.py
+python -B tools/check_architecture.py
 ```
 
-For focused checks after building, pass a GoogleTest filter for that command
-only. These commands work in Bash and PowerShell:
+Use focused GoogleTest filters while editing, then full CPU and CUDA suites
+without `GTEST_FILTER` for completed library changes. CUDA must run on a working
+GPU; report unavailable backends and skips explicitly. Hosted CI compiles CUDA
+but has no GPU. Shared-code changes require both backends. When overriding `-B`,
+use that directory for subsequent build/CTest commands rather than the presets.
 
-```sh
-cmake -E env "GTEST_FILTER=Dense.*:DenseNoBiasTest.*" GTEST_FAIL_IF_NO_TEST_SELECTED=1 ctest --preset verify-cpu
-cmake -E env "GTEST_FILTER=*Gpu*:*GPU*:*CUDA*" GTEST_FAIL_IF_NO_TEST_SELECTED=1 ctest --preset verify-cuda
-```
+Use Python 3.12 and the dependencies in `tools/test-requirements.txt` and
+`tools/code-quality-requirements.txt`. Export tests need NumPy, pandas,
+onnxruntime and Node; missing runtimes are skips. Use `python -B` to avoid caches.
+The Linux Clang `verify-sanitizers` preset runs ASan/UBSan; JSON fuzzing is under
+`tools/fuzz/`. Coverage floors and static analysis are defined by
+`tools/check_coverage.py` and [.github/workflows/ci.yml](.github/workflows/ci.yml).
 
-Use focused checks while editing and the complete CPU and CUDA suites as the
-final gate for a completed batch of library changes. Run the full suites without
-`GTEST_FILTER` set. A library change is not complete until the relevant CPU and
-CUDA suites pass, or an unavailable backend is reported clearly; a CPU fallback
-never counts as a CUDA pass. The CUDA preset requires CUDA at configuration and
-a working GPU when running tests.
+Run quality/architecture checks before every commit. Update `tools/CODE_QUALITY.json`
+with `check_code_quality.py --update` for legitimate size changes; never relax
+complexity or duplication limits to hide a regression. Include the updated limits.
+CI runs on PRs to dev/master and pushes to master; use workflow_dispatch for dev
+without a PR. Markdown/benchmark-manifest-only changes skip automatic CI.
 
-For non-standard CUDA installations, pass CMake cache options with `-D`:
-`CMAKE_CUDA_COMPILER`, `CMAKE_CUDA_ARCHITECTURES`, `CUDNN_INCLUDE_DIR` and
-`CUDNN_LIBRARY`. Select a CUDA toolkit and host compiler that support C++20.
-Make the CUDA and cuDNN runtime libraries available through `PATH` on Windows
-or the dynamic loader search path on Linux. Optional compiler caches such as
-sccache can be selected with `CMAKE_CXX_COMPILER_LAUNCHER` and
-`CMAKE_CUDA_COMPILER_LAUNCHER`.
+## Maintenance tools
 
-### Python for checks and export tests
+| Task | Entry point |
+| --- | --- |
+| Examples | [Catalog](examples/README.md), [execution skill](tools/run-opennn-examples/SKILL.md) |
+| Benchmarks | [Usage](benchmarks/README.md), [protocol](benchmarks/PROTOCOL.md), [execution skill](tools/run-opennn-benchmarks/SKILL.md) |
+| Performance gate | `benchmarks/compare.py`: 5% throughput/memory allowance, no lower confirmed batch capacity. |
+| Headers / coverage | `tools/check_headers.sh`, `tools/check_coverage.py` |
+| Packages | `tools/check_installed_package.py`, `tools/package_smoke/` including dependency relocation. |
 
-Use Python 3.12, the CI version; older interpreters cannot run the checkers.
-In an isolated environment:
+Follow the corresponding skill for full example matrices or benchmark cells.
+Only approve protocol-compliant measurements. Raw benchmark output belongs in
+`../opennn-benchmark-results/` or `OPENNN_BENCH_RESULTS`, never in commits.
+Run data-dependent examples from their executable directory; update the example
+catalog and data notices when changing examples, data, targets or dependencies.
+CI compiles examples/benchmarks but does not run them.
 
-```sh
-python -m pip install -r tools/test-requirements.txt -r tools/code-quality-requirements.txt
-```
+## Data and releases
 
-The C++ export execution tests need NumPy, pandas and onnxruntime for generated
-Python and ONNX models, and Node.js on `PATH` for JavaScript (CI uses Node 24);
-they report a skip when a runtime is missing. Use `python -B` so maintenance
-checks leave no caches.
-
-### Sanitizers
-
-```bash
-CXX=clang++-17 cmake --preset verify-sanitizers -B ../opennn-sanitizers
-cmake --build ../opennn-sanitizers --target opennn_tests --parallel 2
-ASAN_OPTIONS=detect_leaks=1:halt_on_error=1:allocator_may_return_null=1 UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1 \
-  OPENNN_THREADS=4 ctest --test-dir ../opennn-sanitizers --output-on-failure
-```
-
-For longer JSON fuzzing than CI runs:
-
-```sh
-cmake --preset verify-sanitizers -B ../build-fuzz -DOpenNN_BUILD_FUZZERS=ON
-cmake --build ../build-fuzz --target opennn_json_fuzz --parallel 2
-mkdir -p ../build-fuzz/corpus ../build-fuzz/artifacts
-../build-fuzz/bin/opennn_json_fuzz -max_total_time=3600 -artifact_prefix=../build-fuzz/artifacts/ ../build-fuzz/corpus tools/fuzz/corpus
-```
-
-### Before every commit
-
-Run the source checks that gate CI:
-
-```bash
-python tools/check_code_quality.py
-python tools/check_architecture.py
-```
-
-`check_code_quality.py` is a ratchet over first-party `.cpp`, `.h`, `.cu` and
-`.cuh` files (excluding the vendored FlashAttention shim), and it also checks
-SPDX identifiers. Any metric above `tools/CODE_QUALITY.json` fails CI. Unprefixed keys
-cover C++, `cuda_` keys cover CUDA, and `combined_duplicate_percent` covers both.
-When a commit legitimately grows the code (size metrics such as `nloc`,
-`physical_lines`, `functions` or `files`), run
-`python tools/check_code_quality.py --update` and include `tools/CODE_QUALITY.json` in
-the same commit. Do not update it to absorb worse quality metrics (long or
-complex functions, duplication); simplify the code instead.
-
-`check_architecture.py` enforces the module dependency direction. Portable `.h`
-interfaces may not expose CUDA vendor types; `.cuh` implementation headers may.
-
-## CI and quality gates
-
-CI runs for pull requests targeting `dev` or `master`, and for pushes to
-`master`. Updating a development PR runs its integration checks once, without
-another run for the push to `dev`. For `dev` work without an open PR, use the
-manual `workflow_dispatch` trigger. Changes limited to Markdown or to the
-benchmarks' pinned Python packages (`benchmarks/manifests/`) skip automatic CI.
-
-`ci.yml` runs on hosted machines: Linux and Windows CPU builds, CUDA compilation
-on Linux, package consumers (static and shared on Linux, portable AppleClang on
-macOS, static GCC, Clang and MSVC), ASan/UBSan, 20,000 JSON fuzzing mutations
-and the source checkers. It also runs:
-
-- Static analysis that treats selected Clang analyzer ownership and
-  use-after-move findings in the persistence, dataset and device modules as errors.
-- Coverage of the CPU unit suite: at least 70% line and 35% branch coverage of
-  non-CUDA sources, plus the per-module floors in `tools/check_coverage.py`.
-  Raise thresholds as tests are added.
-
-CI has no GPU: it compiles CUDA but never runs CUDA tests. Configure and build
-the `verify-cuda` preset, then run `ctest --preset verify-cuda` on a machine with
-a GPU before merging changes that touch CUDA or shared code, and report the
-result. Changes to shared code also require the `verify-cpu` suite.
-
-`python benchmarks/compare.py baseline.json candidate.json` gates performance
-changes: it allows 5% throughput/memory variation and rejects lower confirmed
-batch capacity.
-
-## Examples and benchmarks
-
-- When changing an example, its data, targets or dependencies, update the catalog
-  in `examples/README.md` and the affected `data/SOURCE.md` notices. Run
-  data-dependent examples from the executable directory.
-- To run every example across the supported device/precision matrix, follow
-  [tools/run-opennn-examples/SKILL.md](tools/run-opennn-examples/SKILL.md).
-- Benchmark usage and the measurement contract live in
-  [benchmarks/README.md](benchmarks/README.md) and
-  [benchmarks/PROTOCOL.md](benchmarks/PROTOCOL.md). Approve only measurements
-  that meet the protocol.
-- To measure a benchmark cell or compare a change before and after, follow
-  [tools/run-opennn-benchmarks/SKILL.md](tools/run-opennn-benchmarks/SKILL.md).
-- Raw benchmark output belongs outside the checkout, in
-  `../opennn-benchmark-results/` by default; `OPENNN_BENCH_RESULTS` overrides it.
-  Benchmark results and reports are never committed.
-- CI compiles every example and benchmark driver (targets `examples` and
-  `benchmarks`) on Linux but runs neither.
-
-## Example data
-
-Each example keeps its data next to it. Where a dataset comes from a public
-source, its `data/SOURCE.md` gives the attribution and licence; keep each
-notice with its data.
-
-- `examples/mnist/data/images.zip` and `examples/melanoma_cancer/data/images.zip`
-  keep the original file names inside. CMake extracts only the selected
-  example's archive into the build directory. Keep member names unique.
-- Record SHA-256 digests of the bytes stored in Git
-  (`git show HEAD:<path> | sha256sum`), not of a Windows checkout, where
-  `core.autocrlf` turns text files into CRLF. `.gitattributes` keeps the
-  pretrained-model licence files byte-exact for the same reason.
-- `bert`, `gpt2` and `qwen3` download their models at run time from the
-  Artelnics Hugging Face repositories, which carry the same licence, notice and
-  `SOURCE.md` files as `examples/<example>/data/`. Update both copies together.
-- The GPT-2 and BERT files were first published as the GitHub release assets
-  `gpt2-weights-v1` and `bert-weights-v1`; the Hugging Face files are
-  byte-identical. Only `dev` snapshots before `3a7e45b41` download from GitHub,
-  and removing those assets breaks them. OpenNN 8.x releases use neither.
-
-YOLO datasets must have recorded provenance, including externally supplied
-synthetic images. Obtain checkpoint-specific confirmation before redistributing
-`darknet53.conv.74` or `yolov3-tiny.weights`. Optional
-external datasets and Ultralytics conversions need their file manifests and
-applicable notices and source records; see `examples/yolo/data/SOURCE.md`.
-
-## 26.0 release notes and migration
-
-### 26.0.3
-
-- Training names every input and output of a forecasting network: one input per
-  variable and lag (`<variable>_lag<k>`) and, with several steps ahead, one
-  output per target and step (`<target>_ahead_t<step>`). It used to give the
-  network the bare variable names, fewer than its neurons, so code reading one
-  name per input or output indexed past them: reports, expressions and input
-  importances of a trained multi-step model failed or crashed.
-  `Dataset::get_model_target_variables()` supplies the target names, next to
-  `get_model_input_variables()`.
-- Pull requests opened by bots skip the contributor licence agreement check,
-  and changes limited to `benchmarks/manifests/` skip CI. The benchmark
-  manifests pin fsspec 2026.6.0, a security update.
-
-Saved forecasting models carry the expanded names. The model format and the
-other algorithms are unchanged; `Dataset` gains one virtual function.
-
-### 26.0.2
-
-- Installed CMake packages rediscover oneDNN and macOS libomp on the consumer's
-  machine instead of exporting paths from the build machine. Package names no
-  longer contain a candidate suffix.
-- Documentation and example defaults use general configuration and relative
-  paths. Verification uses the CMake presets directly.
-- Numerical-gradient tests retain their own parameter snapshot across CPU/CUDA
-  memory migration, fixing intermittent failures without changing tolerances.
-- Pull requests check that their author is covered by the contributor licence
-  agreement.
-- Training on CUDA uploads the next batches while the current one computes and
-  prepares batch indices without an OpenMP team. The host uses about one CPU
-  core while training on the GPU, down from up to 17 on a 24-thread machine.
-- CPU evaluation sizes its batches from the activation memory of one sample,
-  within 512 MiB and the previous cap of 4,096 samples. Testing analysis of
-  images or long texts no longer needs tens of gigabytes; tabular models keep
-  4,096 samples and GPU batches are unchanged.
-- Image datasets skip hidden files, such as the `._` AppleDouble twins and
-  `.DS_Store` files that macOS leaves on shared volumes.
-- The CUDA batch tests include `omp.h` explicitly for GCC.
-
-The public API, model format and library algorithms are unchanged.
-
-### 26.0.1
-
-A patch release with one fix: `Evaluation::calculate_error_data` no longer uses
-a structured binding inside an OpenMP region, which crashed Clang 17 and
-AppleClang. Results are unchanged.
-
-### What's new in 26.0
-
-OpenNN now numbers its major versions by year: 26.0 follows 8.x, and there is
-no 9.x release.
-
-- A new licence. OpenNN 26.0 and later are offered under the GNU AGPL
-  version 3 only, with additional permissions for NVIDIA and Intel libraries
-  and for exported models, or under a commercial licence from Artelnics. 8.x
-  and earlier keep the LGPL 2.1 or later. See [LICENSING.md](LICENSING.md).
-
-- Levenberg-Marquardt now evaluates damped steps against an immutable curvature
-  matrix and commits only accepted candidate metrics. Its damping factor must
-  be finite and greater than one; invalid factors are rejected instead of
-  allowing a retry loop that cannot advance. Binary classification keeps its
-  15-field result format and existing degenerate-case conventions.
-
-- A module layout under `opennn/<module>/` and shorter public names: `Network`,
-  `Training`, `Evaluation`, `Adam`, `SGD`, `LSTM`, `LevenbergMarquardt`,
-  `QuasiNewton`, `Autoencoder`, `Yolo` and `InputSelection`.
-- Four dataset classes replace seven. `TabularDataset` includes forecasting
-  windows, and `TextDataset` covers classification, translation, next-token
-  prediction and token/attention-mask inputs.
-- Stricter model loading: missing parameter files, parameter-count mismatches
-  and nonfinite embedded weights are errors. The JSON parser is strict, bounded
-  and fuzz-tested.
-- Response optimization accepts original variable names in backticks and adds
-  feasibility controls: `set_feasibility_evaluations()`,
-  `set_feasibility_rounds()`, `set_sampling_budget_multiplier()` and
-  `set_maximum_consecutive_failures()`.
-- JavaScript export sanitizes feature identifiers, escapes HTML labels and uses
-  a dropdown for categorical inputs.
-- Configurable library logging.
-- `NATIVE` and `PORTABLE` CPU targets, shared-library builds, a relocatable CMake
-  package and a core package without the vision components.
-- Many CPU/CUDA reliability fixes in buffer ordering, handle release,
-  mixed-precision layouts and dataset device copies.
-
-The itemized list, including internal refactoring, is in
-[CHANGELOG.md at `af6ee7ef5`](https://github.com/Artelnics/opennn/blob/af6ee7ef5157a48b2aa23689136dbd2976124239/CHANGELOG.md).
+- Preserve `examples/*/data/SOURCE.md`, manifests and applicable licences. Keep
+  archive member names unique; hash Git bytes, not CRLF-transformed checkouts.
+- Keep Hugging Face model notices synchronized with their example copies. Preserve
+  legacy GPT-2/BERT release assets still referenced by historical dev snapshots.
+- Record YOLO provenance, including synthetic/external data and conversions. Obtain
+  checkpoint-specific confirmation before redistributing Darknet weights.
+- Packages exclude example data. Use `OpenNN_INSTALL=ON`, `OpenNN_CPU_TARGET=PORTABLE`
+  and CPack outside the checkout; verify extracted packages, dependency relocation
+  and a consumer. Retain licence files, build-info and SHA-256 checksums.
+- Verify the exact release candidate with all CI jobs and local CUDA tests; record
+  toolchain, passes, skips, downstream Neural Designer checks and unresolved work.
+  Update release notes/migration requirements. Verification is not release approval.
+- After the owner's release decision, promote dev to master and tag the reviewed,
+  passing commit as `v<project version>`; publish artifacts and the verification record.
 
 ### Migrating from 8.x to 26.0
 
-26.0 is a major source and model-format migration. Recompile consumers;
-replacing an 8.x shared library in place is not supported. The package version
-file requires the same major version, so request `find_package(OpenNN 26.0 ...)`.
-There are no old-name aliases or forwarding headers, and former JSON root and
-factory names are rejected. The renames below do not change tensor layouts,
-weights, numerical algorithms or memory ownership.
-
-#### Headers
-
-| Former header | Current header |
-| --- | --- |
-| `opennn/neural_network.h` | `opennn/network/network.h` |
-| `opennn/dataset.h` | `opennn/dataset/dataset.h` and `opennn/dataset/tabular_dataset.h` |
-| `opennn/standard_networks.h` | `opennn/models/models.h` |
-| `opennn/training_strategy.h` | `opennn/training/training.h` |
-| `opennn/dense_layer.h` | `opennn/network/layers/dense_layer.h` |
-| `opennn/bounding_layer.h` | `opennn/network/layers/clamping_layer.h` |
-| `opennn/response_optimization.h` | `opennn/response_optimization/response_optimization.h` |
-| `opennn/variable.h` | `opennn/core/variable.h` |
-| `opennn/registry.h` | `opennn/network/layers/layer_registry.h` (`LayerType`, `create_layer`); `create_optimizer` is in `opennn/training/optimizer.h` and `create_input_selection` in `opennn/model_selection/input_selection.h` |
-| `opennn/pch.h` | `opennn/core/pch.h` (private precompiled header) |
-
-Changing includes alone is insufficient: use `opennn::Dense` and `Clamping` for
-the current layer classes and the dataset classes below.
-
-#### Renamed classes and saved names
-
-| Former | Current | Saved JSON and related names |
-| --- | --- | --- |
-| `NeuralNetwork` | `Network` | Root key `"Network"`. Generated Python models expose `module.Network()`; regenerate exports. |
-| `TrainingStrategy` | `Training` | Root key `"Training"`. Model selection uses `get_training()` and `set_training()`. |
-| `QuasiNewtonMethod` | `QuasiNewton` | `OptimizationMethod` value and nested object key `QuasiNewton`. |
-| `LevenbergMarquardtAlgorithm` | `LevenbergMarquardt` | Factory and JSON name unchanged. |
-| `AdaptiveMomentEstimation` | `Adam` | `OptimizationMethod` value and nested object key `Adam`. |
-| `StochasticGradientDescent` | `SGD` | `OptimizationMethod` value and nested object key `SGD`. |
-| `LongShortTermMemory` | `LSTM` | Layer key `LSTM` inside `Network.Layers.Items`; `LayerType::LSTM`; `LSTMOperator`. New layers default to the label `lstm_layer`. |
-| `InputsSelection` | `InputSelection` | `InputSelection` object with `InputSelectionMethod`; `InputSelectionResult`; singular `input_selection` accessor and factory names. |
-| `TestingAnalysis` | `Evaluation` | Header `opennn/evaluation/evaluation.h`. |
-| `AutoencoderNetwork`, `YoloNetwork` | `Autoencoder`, `Yolo` | Declared in `opennn/models/models.h`. |
-
-Optimizer headers are `opennn/training/adam.h`, `sgd.h`, `levenberg_marquardt.h`
-and `quasi_newton.h`. Standalone optimizer and LSTM layer JSON use the new root
-names too.
-
-#### Datasets
-
-| Removed class | Replacement |
-| --- | --- |
-| `TimeSeriesDataset` | `TabularDataset` with `configure_forecasting(past, future, multi_target)`; `get_sequence_data()` returns a three-dimensional window tensor. |
-| `LanguageDataset` | `TextDataset`, choosing `Classification` or `SequenceToSequence` explicitly. |
-| `TextGenerationDataset` | `TextDataset` with `Task::NextToken` and a positive sequence length. |
-| `BertDataset` | `TextDataset` with `InputLayout::TokensAndMask` and a loaded `WordPieceTokenizer`. |
-
-```cpp
-TabularDataset series("readings.csv", ",", true);
-series.set_variable_role("target", VariableRole::InputTarget);
-series.configure_forecasting(24, 1);
-
-TextDataset translation({.task = TextDataset::Task::SequenceToSequence});
-translation.read_txt("parallel_text.tsv");
-
-TextDataset corpus({.task = TextDataset::Task::NextToken, .sequence_length = 256});
-corpus.read_txt("corpus.txt");
-```
-
-- Configure forecasting windows after loading the table and assigning roles. Use
-  `InputTarget` when past values of the predicted variable are also inputs;
-  `clear_forecasting()` restores ordinary table shapes.
-- Text vocabulary and tokenizer access take an optional `VariableRole`. In
-  `TokensAndMask` mode the model receives the attention mask as `Input` and token
-  IDs as `Decoder`; install the tokenizer with
-  `set_tokenizer(std::move(tokenizer), VariableRole::Decoder)`. See the
-  [BERT example](examples/bert/main.cpp).
-- Text dataset JSON stores tokenizer settings and sample splits. Loading it with a
-  corpus whose token IDs or label order differ is an error; save fresh metadata.
-- `YoloDataset` derives directly from `Dataset`, without image-classification methods.
-
-#### Time-series windows
-
-8.x treated sample `i` as the present instant: inputs were rows `[i-past, i-1]`
-and targets began at `i+1`. 26.0 treats the sample index as the window start:
-inputs are `[i, i+past-1]` and targets begin at `i+past`. With a single target
-window the target is `i+past+future-1`; multi-target windows include every future
-step. Regenerate chronological splits and compare windows explicitly; do not
-reuse old sample indices or action-conditioned optimization constraints.
-
-#### Models and parameters
-
-26.0 uses JSON configuration with binary parameter storage. There is no general
-8.x XML/NDM converter; migrate each production model as follows:
-
-1. Keep the original artifacts and an 8.x environment that can load them.
-2. Record the topology, activations, feature and category order, scaling
-   descriptives, tensor shapes and output interpretation. Export representative
-   inputs and expected outputs.
-3. Rebuild the model with the current APIs. Transfer parameters only after
-   checking each layer's layout; equal parameter counts do not imply equal order.
-4. Compare predictions on the recorded cases, including missing values,
-   categories, boundary values and forecasting windows.
-5. Save with `Network::save` and `save_parameters_binary`, reload, and compare
-   again. Keep the JSON and binary files together.
-
-`Network::load(path)` requires the matching `.bin` file or embedded JSON
-parameters and raises an error, leaving the existing network intact, when both
-are absent. Embedded parameters must contain exactly the compiled buffer's
-number of values, including alignment padding, and every value must be finite.
-Raw snapshots use the compiled layout: `get_parameters_number()` reports the
-logical count and `get_parameters_buffer_size()` the size `set_parameters`
-expects. To load an architecture only, do it explicitly:
-
-```cpp
-Network network;
-network.from_JSON(load_json_file(path));
-// Initialize or load matching parameters before inference.
-```
-
-#### Other behavior changes
-
-- Genetic algorithms default to `Random` initialization. Call
-  `set_initialization_method` to keep `Correlations`; JSON records
-  `InitializationMethod`.
-- The optimizer prepares scaling for each training run, and input selection
-  recompiles the model. The old convolution-specific Adam learning-rate override
-  is gone; set learning rates explicitly.
-- `ResponseOptimization::set()` clears objectives, constraints and cached bounds;
-  configure expressions again after rebinding the network.
-- An unavailable validation error is now NaN instead of zero. Model selection
-  requires validation data, and small cross-validation folds are balanced.
-- Custom WordLevel tokenizer framing is saved in JSON; existing tokenizer caches
-  are rebuilt.
-- Re-export HTML/JavaScript models to obtain the export fixes.
-- Select CPU execution with `Configuration::instance().set(Device::CPU, Type::FP32)`.
-
-#### Earlier development snapshots
-
-Code written against earlier development snapshots (numbered 9.0) must also move
-`opennn/neural_network/`, `opennn/training_strategy/` and `opennn/testing_analysis/`
-includes to `opennn/network/`, `opennn/training/` and `opennn/evaluation/`. JSON
-saved by those snapshots only needs the root keys renamed (`"NeuralNetwork"` to
-`"Network"`, `"TrainingStrategy"` to `"Training"`) and the optimizer names from the
-table above; its parameter file stays paired and unchanged.
-
-The `ResponseOptimization::Objectives` helper has been removed; use
-`get_advised_point()` to select a compromise from optimization results.
-Fixed objectives now score distance to their target during that selection.
-The singular `ResponseOptimization::Objective` type remains available.
-The unused `get_objectives_number()`, `clear_objectives()` and `is_objective()`
-members have also been removed.
-The protected `ResponseOptimization::solve(VectorR)` is now
-`get_feasible_points(VectorR)`. It still repairs one candidate and returns its
-input/output pair, or an empty pair on failure. `FeasibilityRepairSystem::solve()`
-retains its name.
-
-`FeasibilityRepairSystem` now borrows a `span<const ResponseOptimization::Constraint>`
-instead of building a separate `Equation` representation. Keep the constraint container
-alive and unchanged while repair uses it; pass a named container rather than a temporary.
-`Constraint` owns value validation, bounds calculation and discrete-column identification;
-`Objective::evaluate_score()` owns minimization, maximization and fixed-target scoring.
-The final repair constructor argument is the discrete constraint tolerance, independent
-of the numerical tolerance and feasibility margin.
-
-## Release
-
-Installation packages exclude example data. Do not create Git tags or GitHub
-releases without the owner's approval. Historical 8.x model compatibility is not
-claimed. Record downstream compatibility checks, including Neural Designer,
-for each release. Engineering verification and the release decision are
-separate statuses.
-
-Before promotion:
-
-- Verify the exact candidate commit on every `ci.yml` job and run the CUDA
-  suite locally on a GPU machine. Report skips and disabled tests separately;
-  earlier passes do not certify a new candidate.
-- When validating an 8.x production model, follow the
-  [migration procedure](#models-and-parameters) and compare its reference predictions.
-- Update the release notes for the version being published, including behavior
-  changes and migration requirements.
-- After the owner's decision, merge `dev` into `master`, create the annotated
-  `v<version>` tag matching `project(OpenNN VERSION ...)` on the reviewed commit
-  after every `ci.yml` job has passed on it. Publish the artifacts with their
-  checksums and verification record.
-
-### Installation packages
-
-Configure with `OpenNN_INSTALL=ON` and `OpenNN_CPU_TARGET=PORTABLE`, build the
-library, and write packages outside the checkout:
-
-```sh
-cpack --config /absolute/path/to/build/CPackConfig.cmake -C Release -G ZIP -B ../opennn-packages
-cpack --config /absolute/path/to/build/CPackConfig.cmake -C Release -G TGZ -B ../opennn-packages
-```
-
-The archive name records the version, system, processor, CPU target and backend,
-and each archive gets a SHA-256 file. Stable package names contain no
-prerelease suffix. `share/doc/OpenNN/build-info.json` records
-the compiler, configuration, CUDA, shared-library and LTO settings. The package
-installs `README.md`, `LICENSE.txt`, `THIRD_PARTY_NOTICES.txt` and the
-libjpeg-turbo, zlib, Eigen, cuDNN frontend and FlashAttention notices that apply. Extract it into a new directory and check it:
-
-```sh
-python tools/check_installed_package.py /absolute/path/to/extracted-prefix
-python -B tools/package_smoke/check_dependency_relocation.py
-cmake -S tools/package_smoke -B ../archive-consumer -DCMAKE_PREFIX_PATH=/absolute/path/to/extracted-prefix -DCMAKE_FIND_USE_PACKAGE_REGISTRY=OFF
-cmake --build ../archive-consumer --config Release
-```
-
-Then run `../archive-consumer/opennn_package_smoke` (under `Release/` with Visual
-Studio). CPack does not create a Git tag or GitHub release.
-
-### Verification records
-
-Record the candidate commit, toolchain, backend, test passes and skips, package
-checksums, consumer results and unresolved checks in the release or pull-request
-description. Keep raw evidence outside Git.
-
-## Documentation
-
-- Root Markdown documents are `README.md` (users), `AGENTS.md` (agents and
-  maintainers), `CONTRIBUTING.md` (contributions), `CLA.md` (contributor agreement)
-  and `LICENSING.md` (licensing terms). Keep task-specific notes and verification
-  records in issues, pull requests or releases; update the relevant guide for
-  repository-wide instructions.
-- Subfolder guides: `examples/README.md` (example catalog),
-  `benchmarks/README.md`, `benchmarks/PROTOCOL.md`,
-  `tools/run-opennn-examples/SKILL.md` and `tools/run-opennn-benchmarks/SKILL.md`.
-- Preserve attribution notices (`examples/*/data/SOURCE.md`,
-  `THIRD_PARTY_NOTICES.txt`) and skill entry points.
-- Link to an immutable Git revision for superseded material.
-- Agent-specific folders such as `.claude/` stay local and ignored by Git.
-  Instructions that matter for the repository belong in this file.
+26.0 is a source/model-format break: rebuild consumers and migrate models with
+reference-prediction checks. Parameter counts alone do not establish layout
+compatibility. Keep paired JSON/binary files. Detailed release notes, renames and
+the migration procedure remain in the
+[archived guide](https://github.com/Artelnics/opennn/blob/54a45ae9f49c7d3e7cbb14fd46cdd8ad4fb5b613/AGENTS.md#260-release-notes-and-migration).
