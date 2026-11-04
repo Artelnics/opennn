@@ -134,7 +134,8 @@ pair<FeasibilityRepairSystem::Vector, VectorR> FeasibilityRepairSystem::repair(V
 
 bool FeasibilityRepairSystem::round_discrete(Vector& point) const
 {
-    const auto& [lower_bounds, upper_bounds] = bounds;
+    const auto& lower_bounds = bounds.first;
+    const auto& upper_bounds = bounds.second;
 
     const auto always_on = [&](const Index column)
         { return lower_bounds(column) > 0.0 || upper_bounds(column) < 0.0; };
