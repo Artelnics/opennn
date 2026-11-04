@@ -434,35 +434,6 @@ string ModelExpression::build_expression(const vector<string>& input_names,
     return buffer.str();
 }
 
-void ModelExpression::apply_name_mapping(string& text, const vector<string>& original, const vector<string>& mapped)
-{
-    const size_t count = min(original.size(), mapped.size());
-    for (size_t i = 0; i < count; ++i)
-        replace_all_word_appearances(text, original[i], mapped[i]);
-}
-
-string ModelExpression::process_body_line(const string& line, const vector<string>& input_names, const vector<string>& fixed_input_names)
-{
-    string processed = line;
-    replace(processed, "[", "_");
-    replace(processed, "]", "_");
-    const size_t count = min(input_names.size(), fixed_input_names.size());
-    for (size_t i = 0; i < count; ++i)
-    {
-        const string& raw = input_names[i];
-        const string& fix = fixed_input_names[i];
-        if (raw == fix) continue;
-        replace_all_word_appearances(processed, "scaled_" + raw, "scaled_" + fix);
-        string space_to_underscore = raw;
-        ranges::replace(space_to_underscore, ' ', '_');
-        if (space_to_underscore != raw)
-            replace_all_word_appearances(processed, "scaled_" + space_to_underscore,
-                                         "scaled_" + fix);
-    }
-    apply_name_mapping(processed, input_names, fixed_input_names);
-    return processed;
-}
-
 vector<string> ModelExpression::prepare_body_lines(const string& expression)
 {
     vector<string> lines = split_expression_lines(expression);
@@ -652,8 +623,9 @@ string ModelExpression::get_expression_c() const
 {
     const ExportNames names = collect_names();
 
-    string expression = build_expression();
-    apply_name_mapping(expression, names.outputs, names.fixed_outputs);
+    // Layer writers receive the unique identifiers from the outset: renaming the
+    // expression afterwards cannot tell apart two inputs that share a name.
+    const string expression = build_expression(names.fixed_inputs, names.fixed_outputs);
     const vector<string> lines = prepare_body_lines(expression);
     const bool has_softmax = expression.find("Softmax") != string::npos;
 
@@ -720,8 +692,7 @@ void ModelExpression::emit_c_calculate_outputs(ostringstream& buffer,
 
     const LanguageSyntax syntax = language_syntax(ProgrammingLanguage::C, outputs_number);
 
-    emit_body_lines(buffer, lines, syntax,
-        [&](const string& l) { return process_body_line(l, input_names, fixed_input_names); });
+    emit_body_lines(buffer, lines, syntax, nullptr);
 
     const vector<string> fixed_outputs = fix_output_names(expression, output_names, ProgrammingLanguage::C);
     if (!fixed_outputs.empty())
@@ -2002,8 +1973,7 @@ string ModelExpression::get_expression_csharp() const
         if (input_identifiers.contains(names.fixed_outputs[i]))
             names.outputs[i] = names.fixed_outputs[i] = names.fixed_outputs[i] + "_output";
 
-    string expression = build_expression(names.inputs, names.outputs);
-    apply_name_mapping(expression, names.outputs, names.fixed_outputs);
+    const string expression = build_expression(names.fixed_inputs, names.fixed_outputs);
     const vector<string> lines = prepare_body_lines(expression);
     const bool has_softmax = expression.find("Softmax") != string::npos;
 
@@ -2071,7 +2041,7 @@ void ModelExpression::emit_csharp_calculate_outputs(ostringstream& buffer,
     emit_body_lines(buffer, lines, syntax,
         [&](const string& raw_line)
         {
-            string line = process_body_line(raw_line, names.inputs, names.fixed_inputs);
+            string line = raw_line;
             for (const auto& [function, method] : math_functions)
                 replace_all_word_appearances(line, function, method);
             return line;
@@ -2131,9 +2101,7 @@ string ModelExpression::get_expression_python() const
 {
     const ExportNames names = collect_names();
 
-    string expression = build_expression();
-    for (const string& name : network->get_output_feature_names())
-        replace_all_word_appearances(expression, name, replace_reserved_keywords(name));
+    const string expression = build_expression(names.fixed_inputs, names.fixed_outputs);
 
     const vector<string> lines = prepare_body_lines(expression);
     const bool has_softmax = expression.find("Softmax") != string::npos;
@@ -2187,23 +2155,21 @@ void ModelExpression::emit_python_calculate_outputs(ostringstream& buffer,
                                                     bool has_softmax,
                                                     const ExportNames& names) const
 {
-    const vector<string>& input_names = names.inputs;
+    const vector<string>& fixed_input_names = names.fixed_inputs;
     const vector<string>& output_names = names.outputs;
     const vector<string>& fixed_output_names = names.fixed_outputs;
 
     buffer << "\tdef calculate_outputs(self, inputs):\n";
 
-    const vector<string> python_mapped = fix_names(input_names, "input_");
-
-    for (size_t i = 0; i < input_names.size(); ++i)
-        buffer << "\t\t" << python_mapped[i] << " = inputs[" << i << "]\n";
+    for (size_t i = 0; i < fixed_input_names.size(); ++i)
+        buffer << "\t\t" << fixed_input_names[i] << " = inputs[" << i << "]\n";
 
     buffer << "\n";
 
     emit_body_lines(buffer, lines, language_syntax(ProgrammingLanguage::Python),
         [&](const string& l)
         {
-            string processed_line = process_body_line(l, input_names, python_mapped);
+            string processed_line = l;
 
             for (const ActivationFunction activation : activation_table() | views::keys)
             {
@@ -2437,10 +2403,12 @@ vector<string> ModelExpression::fix_names(const vector<string>& names, const str
             ? format("{}{}", default_prefix, i)
             : replace_reserved_keywords(names[i]);
 
+        // The suffixed name can itself be another variable's name.
         if (!emitted.insert(candidate).second)
         {
             candidate = format("{}_{}", candidate, i);
-            emitted.insert(candidate);
+            while (!emitted.insert(candidate).second)
+                candidate += "_";
         }
 
         fixed[i] = std::move(candidate);

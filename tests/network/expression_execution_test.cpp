@@ -613,6 +613,33 @@ TEST(ExpressionExecution, RenamedLayersAndInternalNameCollisionsMatchNetwork)
     if (!ran) GTEST_SKIP() << "No export runtime available.";
 }
 
+// One-hot inputs are named after their categories, so two categorical variables
+// that share a level (a solvent and a co-solvent that can both be MeOH) give two
+// inputs the same name. Each must still read its own value, also when the
+// suffix that tells them apart is already another input's name.
+TEST(ExpressionExecution, RepeatedInputNamesKeepTheirOwnValues)
+{
+    Configuration::instance().set(Device::CPU, Type::FP32);
+    auto network = build_network();
+    const MatrixR inputs = sample_inputs();
+    for (const vector<string>& names : {vector<string>{"MeOH", "water", "MeOH", "none"},
+                                        vector<string>{"MeOH", "MeOH_2", "MeOH", "water"}})
+    {
+        network->set_input_names(names);
+        const MatrixR expected = network->calculate_outputs(inputs);
+        bool ran = false;
+        for (const Target target : {Target::Python, Target::C, Target::CEmbedded,
+                                    Target::JavaScript, Target::CSharp, Target::PHP})
+        {
+            if (!target_available(target)) continue;
+            ran = true;
+            SCOPED_TRACE(string(target_name(target)) + ": " + names[1]);
+            expect_export_matches(target, "opennn_repeated_input_names", *network, inputs, expected);
+        }
+        if (!ran) GTEST_SKIP() << "No export runtime available.";
+    }
+}
+
 TEST(ExpressionExecution, PhpHandlesSharedNamesSanitizedCollisionsAndScientificLiterals)
 {
     if (!target_available(Target::PHP)) GTEST_SKIP() << target_missing(Target::PHP);

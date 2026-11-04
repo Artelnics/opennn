@@ -84,8 +84,6 @@ private:
     static vector<string> prepare_body_lines(const string&);
     static vector<string> fix_names(const vector<string>&, const string&);
     static vector<string> fix_output_names(const string&, const vector<string>&, const ProgrammingLanguage&);
-    static void apply_name_mapping(string&, const vector<string>&, const vector<string>&);
-    static string process_body_line(const string&, const vector<string>&, const vector<string>&);
     static string replace_reserved_keywords(const string&);
 
     struct LanguageSyntax
