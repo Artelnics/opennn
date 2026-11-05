@@ -27,6 +27,9 @@ void categorical_cross_entropy(const TensorView&, const TensorView&, float&, flo
 void cross_entropy(const TensorView&, const TensorView&, float&, float*, bool);
 void cross_entropy_gradient(const TensorView&, const TensorView&, const TensorView&, bool);
 
+void weighted_cross_entropy(const TensorView&, const TensorView&, const TensorView&, float&, float*);
+void weighted_cross_entropy_gradient(const TensorView&, const TensorView&, const TensorView&, const TensorView&);
+
 void minkowski_error(const TensorView&, const TensorView&, float, float&, float*);
 void minkowski_error_gradient(const TensorView&, const TensorView&, float, const TensorView&, bool on_gpu = false);
 

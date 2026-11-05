@@ -36,10 +36,14 @@ template<typename T>
 void binary_cross_entropy_gradient_cuda(const Index, T*, const float*, const T*, const float, const float);
 
 template<typename T>
-void categorical_cross_entropy_cuda(const Index, float*, const float*, const T*, const float);
+void categorical_cross_entropy_cuda(const Index, float*, const float*, const T*, const float,
+                                    const float* class_weights = nullptr, const int classes = 1);
 
 template<typename T>
 void categorical_cross_entropy_gradient_cuda(const Index, T*, const float*, const T*, const float);
+
+template<typename T>
+void weighted_cross_entropy_gradient_cuda(const Index, T*, const float*, const T*, const float*, const int, const float);
 
 template<typename T>
 void weighted_squared_error_cuda(const Index, float*, const float*, const T*, const float, const float);

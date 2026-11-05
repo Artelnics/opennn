@@ -45,6 +45,8 @@ inline void expect_cuda_augmentation(opennn::Dataset& dataset, float tolerance)
             staged.fill(indices, features, mode);
             EXPECT_EQ(staged.image_transform.has_value(), mode == FillMode::Training);
             staged.upload_to_device_batch_async(destination, device::get_transfer_stream());
+            // Untransformed uploads only record their completion on the transfer stream.
+            staged.wait_h2d_on_compute_stream();
             std::vector<float> values(size_t(host.input.shape.size() + host.target.shape.size()));
             copy_device_to_host_float(destination.input.buffer.data(), destination.input.type,
                                       host.input.shape.size(), values.data(), device::get_compute_stream());

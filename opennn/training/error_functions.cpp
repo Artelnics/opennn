@@ -90,6 +90,7 @@ OPENNN_CUDA_TEMPLATE_STUB(binary_cross_entropy_logits_gradient_cuda)
 OPENNN_CUDA_TEMPLATE_STUB(binary_cross_entropy_gradient_cuda)
 OPENNN_CUDA_TEMPLATE_STUB(categorical_cross_entropy_cuda)
 OPENNN_CUDA_TEMPLATE_STUB(categorical_cross_entropy_gradient_cuda)
+OPENNN_CUDA_TEMPLATE_STUB(weighted_cross_entropy_gradient_cuda)
 OPENNN_CUDA_TEMPLATE_STUB(cross_entropy_3d_multiple_forward_cuda)
 OPENNN_CUDA_TEMPLATE_STUB(cross_entropy_3d_multiple_backward_cuda)
 
@@ -356,6 +357,54 @@ void cross_entropy_gradient(const TensorView& input, const TensorView& target, c
                             / to_type(samples_number);
     else
         gradients = (outputs - targets) / to_type(samples_number);
+}
+
+void weighted_cross_entropy(const TensorView& input, const TensorView& target, const TensorView& class_weights,
+                            float& error, [[maybe_unused]] float* workspace_device)
+{
+    const Index samples_number = input.get_shape()[0];
+
+    if (input.is_cuda()) {
+        input.dispatch([&]<typename T>() {
+            categorical_cross_entropy_cuda<T>(input.size(), workspace_device, target.as<float>(), input.as<T>(), EPSILON,
+                                              class_weights.as<float>(), to_int(class_weights.size()));
+        });
+
+        error = sum_abs_cuda(workspace_device, input.size()) / samples_number;
+        return;
+    }
+
+    const MatrixMap outputs = input.as_matrix();
+    const MatrixMap targets = target.as_matrix();
+    const VectorMap weights = class_weights.as_vector();
+
+    error = (targets.array().rowwise() * weights.transpose().array() * (outputs.array() + EPSILON).log()).sum()
+            / to_type(-samples_number);
+}
+
+// Softmax outputs: the derivative with respect to the logits is (sum_k w_k y_k) p - w y.
+void weighted_cross_entropy_gradient(const TensorView& input, const TensorView& target, const TensorView& class_weights,
+                                     const TensorView& input_delta)
+{
+    const Index samples_number = input.get_shape()[0];
+    const float scale = 1.0f / to_type(samples_number);
+
+    if (input.is_cuda()) {
+        input.dispatch([&]<typename T>() {
+            weighted_cross_entropy_gradient_cuda<T>(samples_number, input_delta.as<T>(), target.as<float>(), input.as<T>(),
+                                                    class_weights.as<float>(), to_int(class_weights.size()), scale);
+        });
+        return;
+    }
+
+    const MatrixMap outputs = input.as_matrix();
+    const MatrixMap targets = target.as_matrix();
+    const VectorMap weights = class_weights.as_vector();
+    const VectorR sample_weights = targets * weights;
+    MatrixMap gradients = input_delta.as_matrix();
+
+    gradients.array() = (outputs.array().colwise() * sample_weights.array()
+                         - targets.array().rowwise() * weights.transpose().array()) * scale;
 }
 
 void minkowski_error(const TensorView& input, const TensorView& target, float power, float& error, float* workspace_device)
