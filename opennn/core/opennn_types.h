@@ -337,9 +337,13 @@ using VectorI = Eigen::Matrix<Index, Eigen::Dynamic, 1>;
 using VectorB = Eigen::Matrix<bool, Eigen::Dynamic, 1>;
 
 using VectorMap = Eigen::Map<VectorR, Eigen::AlignedMax>;
+using UnalignedVectorMap = Eigen::Map<VectorR>;
+
 using ConstVectorMap = Eigen::Map<const VectorR, Eigen::AlignedMax>;
 using ConstUnalignedVectorMap = Eigen::Map<const VectorR>;
+
 using MatrixMap = Eigen::Map<MatrixR, Eigen::AlignedMax>;
+using UnalignedMatrixMap = Eigen::Map<MatrixR>;
 
 inline ConstUnalignedVectorMap as_vector_map(const span<const float> values)
 {
