@@ -27,7 +27,8 @@ public:
                      CrossEntropy,
                      CrossEntropy3d,
                      MinkowskiError,
-                     Yolo};
+                     Yolo,
+                     WeightedCrossEntropy};
 
     enum class Regularization{L1, L2, NoRegularization};
 
@@ -155,6 +156,8 @@ protected:
     float positives_weight = 1.0f;
     float negatives_weight = 1.0f;
     Index weighted_samples_number = 0;
+    VectorR class_weights;
+    mutable Buffer class_weights_device{Device::CUDA};
     float minkowski_parameter = 1.5f;
 
     float yolo_lambda_giou     = 5.0f;
@@ -195,6 +198,7 @@ private:
 
     Index error_workspace_floats(const TensorView&) const;
     bool uses_binary_cross_entropy(const TensorView&) const;
+    TensorView get_class_weights(const TensorView&) const;
     float* ensure_error_workspace(Buffer&, const TensorView&,
                                   Index batch_samples,
                                   Index reduction_floats = 0) const;

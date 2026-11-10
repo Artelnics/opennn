@@ -103,20 +103,23 @@ void binary_cross_entropy_gradient_cuda(const Index n, T* deltas, const float* t
     launch_elementwise(n, binary_cross_entropy_gradient_kernel<T>, deltas, targets, outputs, epsilon, scaling_factor);
 }
 
+// Without class weights every class weighs one.
 template<typename T>
-__global__ void categorical_cross_entropy_kernel(const int n, float* __restrict__ term_results, const float* __restrict__ targets, const T* __restrict__ outputs, const float epsilon)
+__global__ void categorical_cross_entropy_kernel(const int n, float* __restrict__ term_results, const float* __restrict__ targets, const T* __restrict__ outputs, const float epsilon,
+                                                 const float* __restrict__ class_weights, const int classes)
 {
     for (Index i = Index(blockIdx.x) * blockDim.x + threadIdx.x; i < n; i += Index(blockDim.x) * gridDim.x)
     {
-        const float tgt = targets[i];
+        const float tgt = class_weights ? class_weights[i % classes] * targets[i] : targets[i];
         term_results[i] = (tgt > 0.0f) ? tgt * logf(static_cast<float>(outputs[i]) + epsilon) : 0.0f;
     }
 }
 
 template<typename T>
-void categorical_cross_entropy_cuda(const Index n, float* term_results, const float* targets, const T* outputs, const float epsilon)
+void categorical_cross_entropy_cuda(const Index n, float* term_results, const float* targets, const T* outputs, const float epsilon,
+                                    const float* class_weights, const int classes)
 {
-    launch_elementwise(n, categorical_cross_entropy_kernel<T>, term_results, targets, outputs, epsilon);
+    launch_elementwise(n, categorical_cross_entropy_kernel<T>, term_results, targets, outputs, epsilon, class_weights, classes);
 }
 
 template<typename T>
@@ -135,6 +138,38 @@ template<typename T>
 void categorical_cross_entropy_gradient_cuda(const Index n, T* deltas, const float* targets, const T* outputs, const float scaling_factor)
 {
     launch_elementwise(n, categorical_cross_entropy_gradient_kernel<T>, deltas, targets, outputs, scaling_factor);
+}
+
+// One thread per sample: the row needs its weight sum_k w_k y_k before any delta is written.
+template<typename T>
+__global__ void weighted_cross_entropy_gradient_kernel(
+    const int rows,
+    T* __restrict__ deltas,
+    const float* __restrict__ targets,
+    const T* __restrict__ outputs,
+    const float* __restrict__ class_weights,
+    const int classes,
+    const float scaling_factor)
+{
+    for (Index row = Index(blockIdx.x) * blockDim.x + threadIdx.x; row < rows; row += Index(blockDim.x) * gridDim.x)
+    {
+        const Index offset = row * classes;
+
+        float sample_weight = 0.0f;
+        for (int j = 0; j < classes; ++j)
+            sample_weight = fmaf(class_weights[j], targets[offset + j], sample_weight);
+
+        for (int j = 0; j < classes; ++j)
+            deltas[offset + j] = static_cast<T>((sample_weight * static_cast<float>(outputs[offset + j])
+                                                 - class_weights[j] * targets[offset + j]) * scaling_factor);
+    }
+}
+
+template<typename T>
+void weighted_cross_entropy_gradient_cuda(const Index rows, T* deltas, const float* targets, const T* outputs,
+                                          const float* class_weights, const int classes, const float scaling_factor)
+{
+    launch_elementwise(rows, weighted_cross_entropy_gradient_kernel<T>, deltas, targets, outputs, class_weights, classes, scaling_factor);
 }
 
 template<typename T>
@@ -914,8 +949,9 @@ void yolo_gradient_cuda(const float* output, const float* target, float* delta,
     template void binary_cross_entropy_cuda<T>(const Index, float*, const float*, const T*, const float); \
     template void binary_cross_entropy_logits_cuda<T>(const Index, float*, const float*, const T*); \
     template void binary_cross_entropy_gradient_cuda<T>(const Index, T*, const float*, const T*, const float, const float); \
-    template void categorical_cross_entropy_cuda<T>(const Index, float*, const float*, const T*, const float); \
+    template void categorical_cross_entropy_cuda<T>(const Index, float*, const float*, const T*, const float, const float*, const int); \
     template void categorical_cross_entropy_gradient_cuda<T>(const Index, T*, const float*, const T*, const float); \
+    template void weighted_cross_entropy_gradient_cuda<T>(const Index, T*, const float*, const T*, const float*, const int, const float); \
     template void weighted_squared_error_cuda<T>(const Index, float*, const float*, const T*, const float, const float); \
     template void weighted_squared_error_gradient_cuda<T>(const Index, T*, const float*, const T*, const float, const float, const float); \
     template void cross_entropy_3d_multiple_forward_cuda<T>(const Index, const int, const T*, const float*, float*, float*, float*); \

@@ -1261,12 +1261,30 @@ vector<Index> Loss::get_output_delta_layer_indices() const
     return {network->get_last_trainable_layer_index()};
 }
 
+// Balanced weights N / (K n_k), as in the weighted squared error: every class present in
+// training carries the same total weight and the mean weight per training sample is one.
+static VectorR calculate_class_weights(const Dataset& dataset)
+{
+    const vector<Index> training_indices = dataset.get_sample_indices(SampleRole::Training);
+    const vector<Index> target_indices = dataset.get_feature_indices(VariableRole::Target);
+
+    MatrixR targets(ssize(training_indices), ssize(target_indices));
+    dataset.fill_targets(training_indices, target_indices, targets.data(), FillMode::Inference);
+
+    const VectorR counts = targets.colwise().sum().transpose();
+    const auto present = counts.array() > 0.0f;
+
+    return present.select(float(training_indices.size()) / (float(present.count()) * counts.array()), 1.0f).matrix();
+}
+
 void Loss::set_normalization_coefficient()
 {
     normalization_coefficient = 1.0f;
     positives_weight = 1.0f;
     negatives_weight = 1.0f;
     weighted_samples_number = 0;
+    class_weights.resize(0);
+    class_weights_device.resize_bytes(0, Device::CUDA);
 
     if (!dataset || dataset->get_samples_number() == 0)
         return;
@@ -1324,6 +1342,17 @@ void Loss::set_normalization_coefficient()
         const ActivationFunction activation = layers[last_trainable]->get_output_activation();
         throw_if(activation != ActivationFunction::Softmax && activation != ActivationFunction::Sigmoid,
                  "Cross-entropy error with multiple target features requires a softmax or sigmoid output layer.");
+    }
+
+    if (error == Error::WeightedCrossEntropy)
+    {
+        throw_if(dataset->get_features_number(VariableRole::Target) < 2
+                 || (network && network->get_layers()[network->get_last_trainable_layer_index()]->get_output_activation()
+                                != ActivationFunction::Softmax),
+                 "Weighted cross-entropy error requires one-hot targets and a softmax output layer; "
+                 "use the weighted squared error for a single binary target.");
+
+        class_weights = calculate_class_weights(*dataset);
     }
 }
 
@@ -1420,6 +1449,30 @@ bool Loss::uses_binary_cross_entropy(const TensorView& input) const
            == ActivationFunction::Sigmoid;
 }
 
+TensorView Loss::get_class_weights(const TensorView& input) const
+{
+    const Index classes_number = input.get_shape().back();
+
+    throw_if(class_weights.size() != classes_number,
+             "Weighted cross-entropy error has {} class weights for {} outputs: "
+             "call set_normalization_coefficient() first.",
+             class_weights.size(), classes_number);
+
+    if (!input.is_cuda())
+        return TensorView(const_cast<float*>(class_weights.data()), {classes_number});
+
+    // Uploaded on first use, which is an eager warmup step before any CUDA graph capture.
+    if (class_weights_device.empty())
+    {
+        const Index bytes = classes_number * Index(sizeof(float));
+        class_weights_device.resize_bytes(bytes, Device::CUDA);
+        device::copy_async(class_weights_device.data(), class_weights.data(), bytes,
+                           device::CopyKind::HostToDevice, device::get_compute_stream());
+    }
+
+    return TensorView(class_weights_device.data(), {classes_number}, Type::FP32, Device::CUDA);
+}
+
 Index Loss::error_workspace_floats(const TensorView& input) const
 {
     return (error == Error::CrossEntropy3d)
@@ -1499,6 +1552,9 @@ Loss::EvaluationResult Loss::calculate_error(const Batch& batch,
         if (!forward_propagation.binary_logits.empty())
             binary_cross_entropy_logits(forward_propagation.binary_logits, target, result.error, workspace_device);
         else cross_entropy(input, target, result.error, workspace_device, uses_binary_cross_entropy(input));
+        break;
+    case WeightedCrossEntropy:
+        weighted_cross_entropy(input, target, get_class_weights(input), result.error, workspace_device);
         break;
     case CrossEntropy3d:
     {
@@ -1596,6 +1652,7 @@ bool Loss::calculate_error_device_metrics(const Batch& batch,
         return true;
 
     case CrossEntropy:
+    case WeightedCrossEntropy:
         if (!forward_propagation.binary_logits.empty())
         {
             const TensorView logits = forward_propagation.binary_logits;
@@ -1607,10 +1664,12 @@ bool Loss::calculate_error_device_metrics(const Batch& batch,
         }
         input.dispatch([&]<typename T>()
         {
-            if (uses_binary_cross_entropy(input))
+            const float* weights = error == WeightedCrossEntropy ? get_class_weights(input).as<float>() : nullptr;
+            if (!weights && uses_binary_cross_entropy(input))
                 binary_cross_entropy_cuda<T>(input.size(), workspace, target.as<float>(), input.as<T>(), EPSILON);
             else
-                categorical_cross_entropy_cuda<T>(input.size(), workspace, target.as<float>(), input.as<T>(), EPSILON);
+                categorical_cross_entropy_cuda<T>(input.size(), workspace, target.as<float>(), input.as<T>(), EPSILON,
+                                                  weights, to_int(input.get_shape().back()));
         });
         reduce_and_accumulate(1.0f / static_cast<float>(input.get_shape()[0]));
         return true;
@@ -1788,6 +1847,9 @@ void Loss::calculate_output_deltas(const Batch& batch, const ForwardPropagation&
             binary_cross_entropy_logits_gradient(forward_propagation.binary_logits, target, input_delta);
         else cross_entropy_gradient(input, target, input_delta, uses_binary_cross_entropy(input));
         break;
+    case WeightedCrossEntropy:
+        weighted_cross_entropy_gradient(input, target, get_class_weights(input), input_delta);
+        break;
     case CrossEntropy3d:
         cross_entropy_3d_gradient(input, target, input_delta, back_propagation.metrics.active_tokens_count);
         break;
@@ -1879,6 +1941,7 @@ static const EnumMap<Loss::Error> error_map{
     {Loss::Error::NormalizedSquaredError, "NormalizedSquaredError"},
     {Loss::Error::WeightedSquaredError,   "WeightedSquaredError"},
     {Loss::Error::CrossEntropy,           "CrossEntropy"},
+    {Loss::Error::WeightedCrossEntropy,   "WeightedCrossEntropy"},
     {Loss::Error::CrossEntropy3d,         "CrossEntropyError3d"},
     {Loss::Error::MinkowskiError,         "MinkowskiError"},
     {Loss::Error::Yolo,                   "Yolo"},
@@ -1987,6 +2050,9 @@ void Loss::to_JSON(JsonWriter& printer) const
             {"NegativesWeight", negatives_weight}
         });
 
+    if (error == Error::WeightedCrossEntropy)
+        add_json_field(printer, "ClassWeights", vector_to_string(class_weights));
+
     if (error == Error::MinkowskiError)
         add_json_field(printer, "MinkowskiParameter", minkowski_parameter);
 
@@ -2013,6 +2079,12 @@ void Loss::from_JSON(const JsonDocument& document)
     if (root->find("PositivesWeight")) {
         positives_weight = read_json_float(root, "PositivesWeight");
         negatives_weight = read_json_float(root, "NegativesWeight");
+    }
+
+    if (root->find("ClassWeights"))
+    {
+        string_to_vector(read_json_string(root, "ClassWeights"), class_weights);
+        class_weights_device.resize_bytes(0, Device::CUDA);
     }
 
     if (root->find("MinkowskiParameter"))

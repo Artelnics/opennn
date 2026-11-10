@@ -103,7 +103,8 @@ TEST(LossDeviceMetricsTest, MatchesHostMetricsAndAccumulatesAcrossBatches)
     const vector<Loss::Error> errors{
         Loss::Error::MeanAbsoluteError, Loss::Error::MeanSquaredError,
         Loss::Error::NormalizedSquaredError, Loss::Error::WeightedSquaredError,
-        Loss::Error::CrossEntropy, Loss::Error::MinkowskiError};
+        Loss::Error::CrossEntropy, Loss::Error::MinkowskiError,
+        Loss::Error::WeightedCrossEntropy};
     const vector<vector<Index>> sample_batches{{0, 3, 1}, {2, 4}};
 
     for (const Type precision : {Type::FP32, Type::BF16})
@@ -143,6 +144,8 @@ TEST(LossDeviceMetricsTest, MatchesHostMetricsAndAccumulatesAcrossBatches)
 
             for (const Loss::Error error : errors)
             {
+                // Weighted cross-entropy needs one-hot targets and a softmax output.
+                if (error == Loss::Error::WeightedCrossEntropy && targets_number == 1) continue;
                 loss.set_error(error);
                 SCOPED_TRACE(loss.get_name());
                 // Five training rows versus batches of three and two exercise

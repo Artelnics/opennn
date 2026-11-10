@@ -234,7 +234,7 @@ TrainingResult LevenbergMarquardt::train()
     const string loss_name = loss->get_name();
     throw_if(loss_name == "MinkowskiError",
              "Levenberg-Marquardt algorithm cannot work with Minkowski error.");
-    throw_if(loss_name == "CrossEntropy",
+    throw_if(loss_name == "CrossEntropy" || loss_name == "WeightedCrossEntropy",
              "Levenberg-Marquardt algorithm cannot work with cross-entropy error.");
     throw_if(loss_name == "WeightedSquaredError",
              "Levenberg-Marquardt algorithm is not implemented with weighted squared error.");
