@@ -1420,6 +1420,33 @@ TEST_P(ResponseDriver, CategoricalSearchMatchesAScanOverCategories)
 }
 
 
+TEST_P(ResponseDriver, ClassifierOptimumMeetsProbabilityAndPredictedClassConstraints)
+{
+    QualityClassifier setup;
+
+    const unique_ptr<ResponseOptimization> optimization = make_driver(GetParam(), setup.network.get());
+
+    optimization->add_objective("x1 + x2", Sense::Minimize);
+    optimization->add_constraint("ok", Condition::GreaterEqual, {0.4f});
+    optimization->add_constraint("quality.ok - max(rework, defective)", Condition::GreaterEqual, {0.0f});
+
+    const MatrixR results = optimization->perform_response_optimization();
+
+    ASSERT_EQ(results.rows(), 1);
+    ASSERT_EQ(results.cols(), 5);
+
+    const VectorR probabilities = results.row(0).tail(3).transpose();
+
+    EXPECT_TRUE(probabilities.isApprox(
+        setup.network->calculate_outputs(MatrixR(results.leftCols(2))).row(0).transpose(), 1e-6f));
+    EXPECT_GE(probabilities(0), 0.4f - 1e-6f);
+    EXPECT_GE(probabilities(0), max(probabilities(1), probabilities(2)) - 1e-6f);
+    EXPECT_NEAR(results(0, 0) + results(0, 1), 5.0f, 1e-2f)
+        << "ok becomes the predicted class at x1 = 5, and x2 = 0 costs least; found x1 = "
+        << results(0, 0) << ", x2 = " << results(0, 1);
+}
+
+
 TEST_P(ResponseDriver, RejectsUndefinedAndOverflowedConstraints)
 {
     for (const bool overflow : {false, true})

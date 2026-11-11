@@ -337,7 +337,13 @@ void FeasibilityRepairSystem::update_closest_failure()
 
 static bool calculate_activation_derivatives(const ActivationFunction activation, VectorR& values, VectorR& derivatives)
 {
-    if (activation == ActivationFunction::Softmax) return false;
+    if (activation == ActivationFunction::Softmax)
+    {
+        values = (values.array() - values.maxCoeff()).exp();
+        values /= values.sum();
+        derivatives = values;
+        return true;
+    }
 
     derivatives.resize(values.size());
     for (Index i = 0; i < values.size(); i++)
@@ -443,6 +449,7 @@ MatrixR FeasibilityRepairSystem::calculate_network_jacobian(const VectorR& point
     const auto& layers = network->get_layers();
     vector<VectorR> derivatives(layers.size());
     vector<const CombinationOperator*> combinations(layers.size(), nullptr);
+    vector<char> softmax_layers(layers.size(), 0);
     VectorR values = point;
 
     for (size_t i = 0; i < layers.size(); i++)
@@ -458,6 +465,7 @@ MatrixR FeasibilityRepairSystem::calculate_network_jacobian(const VectorR& point
                 values = (combinations[i]->weights.as_matrix().transpose()*values).eval();
                 if (combinations[i]->use_bias) values += combinations[i]->bias.as_vector();
             }
+            softmax_layers[i] = layer.get_output_activation() == ActivationFunction::Softmax;
             if (!calculate_activation_derivatives(layer.get_output_activation(), values, derivatives[i])) return {};
         }
         else if (is_one_of(type, LayerType::Scaling, LayerType::Unscaling))
@@ -478,7 +486,15 @@ MatrixR FeasibilityRepairSystem::calculate_network_jacobian(const VectorR& point
     MatrixR jacobian = MatrixR::Identity(output.size(), output.size());
     for (size_t i = layers.size(); i-- > 0;)
     {
-        jacobian.array().rowwise() *= derivatives[i].transpose().array();
+        if (softmax_layers[i])
+        {
+            const VectorR& probabilities = derivatives[i];
+            const VectorR weighted = jacobian*probabilities;
+            jacobian.array().rowwise() *= probabilities.transpose().array();
+            jacobian.noalias() -= weighted*probabilities.transpose();
+        }
+        else
+            jacobian.array().rowwise() *= derivatives[i].transpose().array();
         if (combinations[i]) jacobian = (jacobian*combinations[i]->weights.as_matrix().transpose()).eval();
     }
     return jacobian.allFinite() ? jacobian : MatrixR{};

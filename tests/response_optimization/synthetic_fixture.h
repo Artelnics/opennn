@@ -8,6 +8,7 @@
 #include "opennn/core/random_utilities.h"
 #include "opennn/network/network.h"
 #include "opennn/network/standard_networks.h"
+#include "opennn/network/layers/clamping_layer.h"
 #include "opennn/network/layers/scaling_layer.h"
 #include "opennn/network/layers/unscaling_layer.h"
 #include "opennn/response_optimization/response_optimization.h"
@@ -136,6 +137,35 @@ struct CategoricalApproximation
 
         static_cast<Unscaling*>(network->get_first("Unscaling"))
             ->set_descriptives(make_descriptives(outputs_number, -1.0f, 1.0f));
+    }
+};
+
+
+struct QualityClassifier
+{
+    unique_ptr<ClassificationNetwork> network;
+
+    explicit QualityClassifier(const bool clamped = false)
+    {
+        network = make_unique<ClassificationNetwork>(Shape{2}, Shape{2}, Shape{3});
+
+        if (clamped)
+        {
+            network->add_layer(make_unique<Clamping>(Shape{3}));
+            network->compile(Device::CPU);
+        }
+
+        network->set_input_variables({Variable("x1", "Input"), Variable("x2", "Input")});
+
+        network->set_output_variables({Variable("quality", "Target", VariableType::Categorical, "None",
+                                                {"ok", "rework", "defective"})});
+
+        static_cast<Scaling*>(network->get_first("Scaling"))->set_descriptives(make_descriptives(2, 0.0f, 10.0f));
+
+        network->set_parameters(VectorR::Zero(network->get_parameters_buffer_size()));
+        network->get_layer(1)->get_parameter_views()[1].as_matrix() << 1, 0, 0, 1;
+        network->get_layer(2)->get_parameter_views()[1].as_matrix() << 2, 0, 0, 0, 2, 0;
+        network->mark_parameters_changed();
     }
 };
 

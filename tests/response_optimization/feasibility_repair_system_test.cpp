@@ -408,6 +408,38 @@ TEST_P(FeasibilitySolver, RepairsThroughNonlinearDenseActivations)
 }
 
 
+TEST_P(FeasibilitySolver, RepairsThroughASoftmaxOutputWithoutProbingTheNetwork)
+{
+    QualityClassifier analytic;
+    QualityClassifier probed(true);
+    open_clamping(*probed.network);
+
+    VectorR start(2); start << 6.0f, 5.0f;
+    pair<VectorR, VectorR> repaired[2];
+    long passes[2] = {};
+
+    for (const bool probing : {false, true})
+    {
+        SCOPED_TRACE(probing);
+        Network& network = *(probing ? probed : analytic).network;
+        const vector<Constraint> constraints{{compile_expression("ok", &network), Condition::GreaterEqual, {0.6f}}};
+        Repair repair(&network, constraints, {VectorR::Zero(2), VectorR::Constant(2, 10.0f)});
+        repair.set_solver(GetParam());
+        passes[probing] = count_forward_passes([&] { repaired[probing] = repair.solve(start); });
+        const auto& [input, output] = repaired[probing];
+        ASSERT_EQ(input.size(), 2);
+        ASSERT_EQ(output.size(), 3);
+        EXPECT_GE(output(0), 0.6f - 1e-6f);
+        EXPECT_NEAR(output.sum(), 1.0f, 1e-6f);
+        EXPECT_TRUE(output.isApprox(network.calculate_outputs(input.transpose()).row(0).transpose(), 1e-6f));
+    }
+
+    EXPECT_TRUE(repaired[0].first.isApprox(repaired[1].first, 1e-2f))
+        << "analytic " << repaired[0].first.transpose() << ", finite differences " << repaired[1].first.transpose();
+    EXPECT_LT(passes[0], passes[1]) << "the open clamping layer leaves the outputs alone but sends the repair to finite differences";
+}
+
+
 TEST_P(FeasibilitySolver, FallsBackForLogarithmicScaling)
 {
     Network network;
