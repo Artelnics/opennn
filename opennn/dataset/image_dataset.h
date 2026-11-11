@@ -22,6 +22,8 @@ struct ImageAugmentationPolicy
     float horizontal_translation_maximum = 0.0f;
     float vertical_translation_minimum = 0.0f;
     float vertical_translation_maximum = 0.0f;
+    // Augmented copies per training image, in [1, Dataset::MAX_AUGMENTATION_FACTOR].
+    Index factor = 1;
 };
 
 class ImageDataset : public Dataset
@@ -36,6 +38,7 @@ public:
     Index get_channels_number() const { return input_shape[2]; }
 
     void set_augmentation_policy(const ImageAugmentationPolicy&);
+    Index get_augmentation_factor() const override;
     void set_input_scaling(const vector<Descriptives>&,
                            const vector<ScalerMethod>&,
                            float,
@@ -82,7 +85,8 @@ public:
 
 private:
 
-    void augment_inputs(span<float>, Index, span<const Index>) const;
+    vector<ImageAffineTransform> sample_augmentation_transforms(const AugmentedSamples&) const;
+    void apply_augmentation_transforms(span<float>, span<const ImageAffineTransform>) const;
     void fill_augmented_batch(Batch&, const vector<Index>&, const FeatureSelection&) const;
     void write_image_cache(const vector<filesystem::path>&, const string& trailer) const;
 

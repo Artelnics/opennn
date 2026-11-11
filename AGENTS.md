@@ -78,18 +78,28 @@ in automatic batch sizing. Measure end-to-end cost.
 
 ### Augmentation contract
 
+Augmentation is disabled by default. An enabled policy trains every Training
+sample plus `factor` augmented copies per epoch, shuffled together: copy c of
+sample s is index `s + c * samples`, copy 0 is the untouched original, and
+`get_augmented_sample_indices` lists them. Copies are redrawn each epoch and
+repeat neither the original nor each other while the policy can; setters reject
+factors above its distinct transforms (Mosaic/Cutout layouts are unbounded), and
+a policy without transforms adds no copies.
+
 Use only the active Training partition, including folds and Mosaic companions.
 Validation/inference must not augment. Local RNG streams derive from global
-`set_seed`, epoch and sample ID without consuming global RNG draws, independent
+`set_seed`, epoch, sample ID and copy without consuming global RNG draws, independent
 of worker scheduling and batch order. Adam/SGD reset epoch to zero per train call
 and advance it; manual readers use `set_augmentation_epoch`. Full-batch optimizers
-retain their prepared batch. Epoch is runtime state, not a resume checkpoint;
-raw-buffer ImageDataset augmentation uses row IDs. Set configuration before
-concurrent fills. This does not promise bit-identical training across backends.
+retain their prepared batch, copies included. Epoch is runtime state, not a resume
+checkpoint; raw-buffer `augment_inputs` gives each row its first copy. Set
+configuration before concurrent fills. This does not promise bit-identical
+training across backends.
 
 YOLO applies source color, Mosaic, shared image/box jitter and flip, then Cutout.
 Clip boxes and discard degenerate ones; Cutout preserves annotations. Keep old
-JSON compatible: absent Cutout fields mean disabled. Setters and JSON loading
+JSON compatible: absent Cutout and `AugEnabled` fields mean disabled, an absent
+factor means 1. Setters and JSON loading
 must reject invalid policies before changing policy/device residency, even disabled.
 YOLOv8 sizes targets for the largest source box count (four sources with Mosaic),
 keeping 100 slots as the compatibility minimum. Mosaic caches Training indices
@@ -97,6 +107,7 @@ until roles, folds or data change.
 
 | Parameter | Accepted domain |
 | --- | --- |
+| Augmentation factor | Integer `[1, 10]`, at most the policy's distinct transforms. |
 | Classification rotation | Finite ordered degrees; reduce modulo 360. |
 | Classification translation | Finite ordered signed pixels strictly within ±2^(Index bits−1). |
 | YOLO jitter / hue | Finite `[0, 0.5)` / `[0, 0.5]`. |

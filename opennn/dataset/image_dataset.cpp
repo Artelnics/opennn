@@ -55,10 +55,8 @@ static Index sample_augmentation_shift(RandomStream& random, float minimum, floa
     return static_cast<Index>(llround(sample_augmentation_value(random, minimum, maximum)));
 }
 
-static ImageAffineTransform sample_image_transform(uint64_t seed, Index sample,
-                                                   const ImageAugmentationPolicy& policy)
+static ImageAffineTransform draw_image_transform(RandomStream& random, const ImageAugmentationPolicy& policy)
 {
-    RandomStream random(derive_random_seed(seed, uint64_t(sample)));
     ImageAffineTransform transform;
     transform.flip_x = policy.reflection_axis_x && random.uniform() < 0.5f;
     transform.flip_y = policy.reflection_axis_y && random.uniform() < 0.5f;
@@ -77,6 +75,49 @@ static ImageAffineTransform sample_image_transform(uint64_t seed, Index sample,
         transform.shift_y = sample_augmentation_shift(random, policy.vertical_translation_minimum,
                                                        policy.vertical_translation_maximum);
     return transform;
+}
+
+// Pixel shifts that the rounded uniform draw reaches with positive probability.
+static double count_augmentation_shifts(float minimum, float maximum)
+{
+    return minimum == maximum
+        ? 1.0
+        : ceil(double(maximum) + 0.5) - floor(double(minimum) - 0.5) - 1.0;
+}
+
+static bool reaches_zero_shift(float minimum, float maximum)
+{
+    return minimum == maximum
+        ? llround(minimum) == 0
+        : minimum < 0.5f && maximum > -0.5f;
+}
+
+// Distinct non-identity transformations the policy draws; a rotation range is unbounded.
+static double count_augmentation_variants(const ImageAugmentationPolicy& policy)
+{
+    if (policy.rotation_minimum < policy.rotation_maximum)
+        return numeric_limits<double>::infinity();
+
+    const bool reaches_identity = remainder(policy.rotation_minimum, 360.0f) == 0.0f
+        && reaches_zero_shift(policy.horizontal_translation_minimum, policy.horizontal_translation_maximum)
+        && reaches_zero_shift(policy.vertical_translation_minimum, policy.vertical_translation_maximum);
+
+    return (policy.reflection_axis_x ? 2.0 : 1.0)
+         * (policy.reflection_axis_y ? 2.0 : 1.0)
+         * count_augmentation_shifts(policy.horizontal_translation_minimum, policy.horizontal_translation_maximum)
+         * count_augmentation_shifts(policy.vertical_translation_minimum, policy.vertical_translation_maximum)
+         - (reaches_identity ? 1.0 : 0.0);
+}
+
+// Copy 0 is the original image; later copies draw from the sample's epoch stream
+// and repeat neither the original nor each other while the policy allows.
+static ImageAffineTransform sample_image_transform(uint64_t seed, Index sample, Index copy,
+                                                   const ImageAugmentationPolicy& policy)
+{
+    RandomStream random(derive_random_seed(seed, uint64_t(sample)));
+
+    return draw_distinct(random, ImageAffineTransform{}, copy, count_augmentation_variants(policy),
+                         [&policy](RandomStream& stream) { return draw_image_transform(stream, policy); });
 }
 
 static string image_cache_signature(Index samples, Index height, Index width, Index channels,
@@ -114,9 +155,17 @@ void ImageDataset::set_augmentation_policy(const ImageAugmentationPolicy& new_po
                                 new_policy.horizontal_translation_maximum, shift_limit);
     validate_augmentation_range("vertical translation", new_policy.vertical_translation_minimum,
                                 new_policy.vertical_translation_maximum, shift_limit);
+    validate_augmentation_factor(new_policy.factor, count_augmentation_variants(new_policy));
     if (is_device_resident()) disable_device_residency();
 
     augmentation_policy = new_policy;
+}
+
+Index ImageDataset::get_augmentation_factor() const
+{
+    return augmentation_policy.enabled && count_augmentation_variants(augmentation_policy) > 0.0
+        ? augmentation_policy.factor
+        : 0;
 }
 
 void ImageDataset::enable_device_residency()
@@ -198,6 +247,7 @@ void ImageDataset::to_JSON(JsonWriter& printer) const
         {"RandomHorizontalTranslationMaximum", to_string(augmentation_policy.horizontal_translation_maximum)},
         {"RandomVerticalTranslationMinimum", to_string(augmentation_policy.vertical_translation_minimum)},
         {"RandomVerticalTranslationMaximum", to_string(augmentation_policy.vertical_translation_maximum)},
+        {"AugmentationFactor", to_string(augmentation_policy.factor)},
         {"Codification", get_codification_string()},
         {"StorageMode", get_storage_mode_string()}
     });
@@ -207,12 +257,31 @@ void ImageDataset::to_JSON(JsonWriter& printer) const
 
 void ImageDataset::augment_inputs(const span<float> input_data, Index batch_size) const
 {
-    augment_inputs(input_data, batch_size, {});
+    if (!augmentation_policy.enabled || batch_size <= 0) return;
+
+    // Without sample identities, each image takes the first copy of its position.
+    AugmentedSamples samples{vector<Index>(size_t(batch_size)), vector<Index>(size_t(batch_size), 1)};
+    iota(samples.sources.begin(), samples.sources.end(), Index(0));
+
+    apply_augmentation_transforms(input_data, sample_augmentation_transforms(samples));
 }
 
-void ImageDataset::augment_inputs(span<float> input_data, Index batch_size, span<const Index> indices) const
+vector<ImageAffineTransform> ImageDataset::sample_augmentation_transforms(const AugmentedSamples& samples) const
 {
-    if (!augmentation_policy.enabled || batch_size <= 0) return;
+    const uint64_t seed = get_augmentation_seed();
+
+    vector<ImageAffineTransform> transforms(samples.sources.size());
+
+    for (size_t i = 0; i < transforms.size(); ++i)
+        transforms[i] = sample_image_transform(seed, samples.sources[i], samples.copies[i], augmentation_policy);
+
+    return transforms;
+}
+
+void ImageDataset::apply_augmentation_transforms(span<float> input_data,
+                                                 span<const ImageAffineTransform> transforms) const
+{
+    const Index batch_size = ssize(transforms);
 
     const Index height = input_shape[0];
     const Index width = input_shape[1];
@@ -224,14 +293,14 @@ void ImageDataset::augment_inputs(span<float> input_data, Index batch_size, span
              ssize(input_data), batch_size, pixels, batch_size * pixels);
 
     float* const input_values = input_data.data();
-    const uint64_t epoch_seed = get_augmentation_seed();
 
     const bool use_rotation = augmentation_policy.rotation_minimum != 0.0f
                            || augmentation_policy.rotation_maximum != 0.0f;
     const auto augment_sample = [&](Index i, Tensor3& scratch_storage)
     {
-        const Index sample_index = indices.empty() ? i : indices[size_t(i)];
-        const auto transform = sample_image_transform(epoch_seed, sample_index, augmentation_policy);
+        const ImageAffineTransform& transform = transforms[size_t(i)];
+        if (transform == ImageAffineTransform{}) return;
+
         float* sample = input_values + i * pixels;
         TensorMap3 image(sample, height, width, channels);
 
@@ -300,6 +369,7 @@ void ImageDataset::from_JSON(const JsonDocument& data_set_document)
     parsed_policy.horizontal_translation_maximum = read_json_float(data_source_element, "RandomHorizontalTranslationMaximum");
     parsed_policy.vertical_translation_minimum = read_json_float(data_source_element, "RandomVerticalTranslationMinimum");
     parsed_policy.vertical_translation_maximum = read_json_float(data_source_element, "RandomVerticalTranslationMaximum");
+    parsed_policy.factor = read_json_index(data_source_element, "AugmentationFactor", 1);
     parsed_policy.enabled = data_source_element->has("RandomAugmentation")
                           ? read_json_bool(data_source_element, "RandomAugmentation")
                           : has_configured_augmentation(parsed_policy);
@@ -592,26 +662,26 @@ void ImageDataset::fill_augmented_batch(Batch& batch, const vector<Index>& sampl
 {
     throw_if(ssize(sample_indices) != batch.batch_size,
              "fill_batch sample count does not match the batch size.");
-    validate_augmentation_samples(sample_indices);
+    const AugmentedSamples samples = resolve_augmented_samples(sample_indices);
+    const vector<ImageAffineTransform> transforms = sample_augmentation_transforms(samples);
     const auto transform = *get_gpu_image_transform(batch.batch_size);
     const auto parameters = batch.prepare_image_transform(transform);
     const auto scales = batch.image_channel_scales();
     if (ssize(input_scale) == transform.channels && ssize(input_offset) == transform.channels)
         for (Index c = 0; c < transform.channels; ++c)
             scales[size_t(c)] = {input_scale[size_t(c)], input_offset[size_t(c)]};
-    const uint64_t seed = get_augmentation_seed();
     for (Index i = 0; i < batch.batch_size; ++i)
     {
         auto& affine = parameters[size_t(i)].affine;
-        affine = sample_image_transform(seed, sample_indices[size_t(i)], augmentation_policy);
+        affine = transforms[size_t(i)];
         affine.shift_x = clamp(affine.shift_x, -transform.width, transform.width);
         affine.shift_y = clamp(affine.shift_y, -transform.height, transform.height);
         if (!transform.float_input)
             cache_reader.read_at(span(batch.input.host.as<uint8_t>() + size_t(i) * pixel_number,
-                                      size_t(pixel_number)), uint64_t(sample_indices[size_t(i)]) * pixel_number);
+                                      size_t(pixel_number)), uint64_t(samples.sources[size_t(i)]) * pixel_number);
     }
     if (transform.float_input)
-        fill_tensor_data(data, sample_indices, features.inputs,
+        fill_tensor_data(data, samples.sources, features.inputs,
                           span(batch.input.host.as<float>(), size_t(batch.batch_size * input_shape.size())),
                           classify_column_contiguity(features.inputs));
     fill_targets(sample_indices, features.targets, batch.target.host.as<float>(), FillMode::Training);
@@ -671,7 +741,9 @@ void ImageDataset::fill_inputs(const vector<Index>& sample_indices,
     const bool has_scaling = ssize(input_scale) == channels
                           && ssize(input_offset) == channels;
     const bool apply_augmentation = mode == FillMode::Training && augmentation_policy.enabled;
-    if (apply_augmentation) validate_augmentation_samples(sample_indices);
+    const AugmentedSamples samples = apply_augmentation
+        ? resolve_augmented_samples(sample_indices)
+        : AugmentedSamples{sample_indices, {}};
 
     const auto scale_sample = [&](float* sample)
     {
@@ -695,7 +767,7 @@ void ImageDataset::fill_inputs(const vector<Index>& sample_indices,
 
     if (storage_mode == StorageMode::Matrix)
     {
-        fill_tensor_data(data, sample_indices, input_indices, input_span, column_contiguity);
+        fill_tensor_data(data, samples.sources, input_indices, input_span, column_contiguity);
     }
     else
     {
@@ -712,7 +784,7 @@ void ImageDataset::fill_inputs(const vector<Index>& sample_indices,
             {
                 try
                 {
-                    const Index sample_index = sample_indices[size_t(i)];
+                    const Index sample_index = samples.sources[size_t(i)];
                     throw_if(sample_index < 0 || sample_index >= ssize(sample_labels),
                              "ImageDataset input sample index is out of range.");
 
@@ -740,7 +812,7 @@ void ImageDataset::fill_inputs(const vector<Index>& sample_indices,
     }
 
     if (apply_augmentation)
-        augment_inputs(input_span, batch_size, sample_indices);
+        apply_augmentation_transforms(input_span, sample_augmentation_transforms(samples));
 
     if (!scale_in_fill)
     {
@@ -753,7 +825,7 @@ void ImageDataset::fill_inputs(const vector<Index>& sample_indices,
 void ImageDataset::fill_targets(const vector<Index>& sample_indices,
                                 const vector<Index>& target_indices,
                                 float* target_data,
-                                FillMode,
+                                FillMode mode,
                                 ColumnContiguity) const
 {
     const Index batch_size = ssize(sample_indices);
@@ -761,12 +833,17 @@ void ImageDataset::fill_targets(const vector<Index>& sample_indices,
 
     if (targets_number == 0) return;
 
-    for (const Index sample_index : sample_indices)
+    // Augmented copies share the label of their source image.
+    const vector<Index> sources = mode == FillMode::Training && augmentation_policy.enabled
+        ? resolve_augmented_samples(sample_indices).sources
+        : sample_indices;
+
+    for (const Index sample_index : sources)
         throw_if(sample_index < 0 || sample_index >= ssize(sample_labels),
                  "ImageDataset target sample index is out of range.");
 
     if (targets_number > 1)
-        for (const Index sample_index : sample_indices)
+        for (const Index sample_index : sources)
         {
             const int32_t label = sample_labels[size_t(sample_index)];
             throw_if(label < 0 || label >= targets_number,
@@ -775,7 +852,7 @@ void ImageDataset::fill_targets(const vector<Index>& sample_indices,
 
     if (targets_number == 1)
     {
-        ranges::transform(sample_indices, target_data,
+        ranges::transform(sources, target_data,
                           [this](Index sample_index) { return float(sample_labels[size_t(sample_index)]); });
     }
     else
@@ -785,7 +862,7 @@ void ImageDataset::fill_targets(const vector<Index>& sample_indices,
         #pragma omp parallel for
         for (Index i = 0; i < batch_size; ++i)
         {
-            const int32_t label = sample_labels[size_t(sample_indices[i])];
+            const int32_t label = sample_labels[size_t(sources[size_t(i)])];
             target_data[i * targets_number + label] = 1.0f;
         }
     }

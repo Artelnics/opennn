@@ -138,14 +138,17 @@ public:
         float saturation = 1.5f;
         float hue = 0.1f;
         bool flip = true;
-        bool enabled = true;
+        bool enabled = false;
         bool mosaic = false;
         int cutout_count = 0;
         float cutout_max_size_ratio = 0.04f;
+        // Augmented copies per training image, in [1, Dataset::MAX_AUGMENTATION_FACTOR].
+        Index factor = 1;
     };
 
     void set_augmentation_policy(const AugmentationPolicy&);
     const AugmentationPolicy& get_augmentation_policy() const noexcept { return augmentation_policy; }
+    Index get_augmentation_factor() const override;
 
     static Index convert_voc_to_yolo(const filesystem::path&,
                                      const string&,

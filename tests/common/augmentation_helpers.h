@@ -27,12 +27,25 @@ inline void add_image_pattern(const std::filesystem::path& path)
     image.write(pixels.data(), std::streamsize(pixels.size()));
 }
 
+// Training fills address augmented copies; other modes read their source samples.
+inline std::vector<opennn::Index> fill_mode_samples(const opennn::Dataset& dataset,
+                                                    std::vector<opennn::Index> indices,
+                                                    opennn::FillMode mode)
+{
+    if (mode != opennn::FillMode::Training)
+        for (opennn::Index& index : indices) index %= dataset.get_samples_number();
+    return indices;
+}
+
 inline void expect_cuda_augmentation(opennn::Dataset& dataset, float tolerance)
 {
     using namespace opennn;
-    auto indices = dataset.get_sample_indices(SampleRole::Training);
-    ASSERT_FALSE(indices.empty());
-    indices.resize(std::min<size_t>(indices.size(), 3));
+    ASSERT_GT(dataset.get_augmentation_factor(), 0);
+    const auto augmented = dataset.get_augmented_sample_indices();
+    const size_t training_samples = size_t(dataset.get_samples_number(SampleRole::Training));
+    ASSERT_GT(training_samples, 0u);
+    // An original sample followed by two augmented copies.
+    std::vector<Index> indices{augmented.front(), augmented[training_samples], augmented.back()};
     const auto features = dataset.get_feature_selection();
     for (Type type : {Type::FP32, Type::BF16})
     {
@@ -40,9 +53,9 @@ inline void expect_cuda_augmentation(opennn::Dataset& dataset, float tolerance)
         Batch host(ssize(indices), &dataset, {Device::CPU, Type::FP32, 0});
         Batch staged(ssize(indices), &dataset, {Device::CUDA, type, 0}, BatchStorage::HostOnly);
         Batch destination(ssize(indices), &dataset, {Device::CUDA, type, 0}, BatchStorage::DeviceOnly);
-        const auto read = [&](FillMode mode)
+        const auto read = [&](const std::vector<Index>& samples, FillMode mode)
         {
-            staged.fill(indices, features, mode);
+            staged.fill(samples, features, mode);
             EXPECT_EQ(staged.image_transform.has_value(), mode == FillMode::Training);
             staged.upload_to_device_batch_async(destination, device::get_transfer_stream());
             // Untransformed uploads only record their completion on the transfer stream.
@@ -62,9 +75,10 @@ inline void expect_cuda_augmentation(opennn::Dataset& dataset, float tolerance)
             std::reverse(indices.begin(), indices.end());
             for (FillMode mode : {FillMode::Training, FillMode::Validation, FillMode::Inference})
             {
-                host.fill(indices, features, mode);
-                const auto actual = read(mode);
-                EXPECT_EQ(read(mode), actual);
+                const auto samples = fill_mode_samples(dataset, indices, mode);
+                host.fill(samples, features, mode);
+                const auto actual = read(samples, mode);
+                EXPECT_EQ(read(samples, mode), actual);
                 float maximum_error = 0.0f;
                 for (Index i = 0; i < host.input.shape.size(); ++i)
                 {
@@ -99,7 +113,8 @@ inline void expect_augmentation_replay(opennn::Dataset& dataset, bool augmented_
     const int previous_threads = omp_get_max_threads();
     ScopeExit restore_threads([&] { omp_set_num_threads(previous_threads); });
     omp_set_num_threads(1);
-    const auto indices = dataset.get_sample_indices(SampleRole::Training);
+    ASSERT_GT(dataset.get_augmentation_factor(), 0);
+    const auto indices = dataset.get_augmented_sample_indices();
     const auto features = dataset.get_feature_selection();
     const size_t input_size = size_t(dataset.get_input_shape().size());
     const size_t target_size = size_t(dataset.get_target_shape().size());

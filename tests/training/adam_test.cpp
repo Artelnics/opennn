@@ -247,8 +247,9 @@ static void expect_training_augmentation_replay(Device device)
         optimizer->post_epoch_callback = [&](Index epoch, float, float, Network*)
         {
             EXPECT_EQ(dataset.get_augmentation_epoch(), epoch);
+            // The first augmented copy of sample 0 changes with every epoch.
             auto& inputs = epochs.emplace_back(size_t(dataset.get_input_shape().size()));
-            dataset.fill_inputs({0}, features, inputs.data(), FillMode::Training);
+            dataset.fill_inputs({dataset.get_samples_number()}, features, inputs.data(), FillMode::Training);
         };
         EXPECT_TRUE(isfinite(training.train().get_training_error()));
         if (graph) EXPECT_FALSE(optimizer->get_cuda_graph_capture_failed());
@@ -267,6 +268,35 @@ static void expect_training_augmentation_replay(Device device)
 TEST_F(AdamTest, AugmentationEpochsReplayCPU)
 {
     expect_training_augmentation_replay(Device::CPU);
+}
+
+TEST_F(AdamTest, AugmentationFactorAddsCopiesToEveryEpoch)
+{
+    Configuration::instance().set(Device::CPU, Type::FP32);
+    const filesystem::path root = write_image_classification_dataset();
+    ScopeExit cleanup([&] { remove_image_classification_dataset(root); });
+    ImageDataset dataset(root);
+    dataset.set_sample_roles(SampleRole::Training);
+    ImageAugmentationPolicy policy;
+    policy.enabled = true;
+    policy.rotation_minimum = -25.0f;
+    policy.rotation_maximum = 25.0f;
+    policy.factor = 2;
+    dataset.set_augmentation_policy(policy);
+
+    ImageClassificationNetwork network(dataset.get_input_shape(), {4, 8, 4}, dataset.get_target_shape());
+    Training training(&network, &dataset);
+    auto* optimizer = training.get_optimization_algorithm();
+    optimizer->set_batch_size(4);
+    optimizer->set_maximum_epochs(1);
+    optimizer->set_loss_goal(-1.0f);
+    optimizer->set_display(false);
+    Index batches = 0;
+    optimizer->post_batch_callback = [&](Network*) { ++batches; };
+
+    EXPECT_TRUE(isfinite(training.train().get_training_error()));
+    // Each epoch trains the originals plus two copies of every image.
+    EXPECT_EQ(batches * 4, 3 * dataset.get_samples_number(SampleRole::Training));
 }
 
 #ifdef OPENNN_HAS_CUDA

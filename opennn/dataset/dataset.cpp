@@ -62,16 +62,54 @@ vector<Index> Dataset::get_sample_indices(SampleRole role_type) const
                           [role_type](SampleRole role) { return role == role_type; });
 }
 
-void Dataset::validate_augmentation_samples(span<const Index> indices) const
+vector<Index> Dataset::get_augmented_sample_indices() const
+{
+    const vector<Index> training_indices = get_sample_indices(SampleRole::Training);
+    const Index samples_number = get_samples_number();
+    const Index copies_number = 1 + get_augmentation_factor();
+
+    vector<Index> indices;
+    indices.reserve(training_indices.size() * size_t(copies_number));
+
+    for (Index copy = 0; copy < copies_number; ++copy)
+        for (const Index sample : training_indices)
+            indices.push_back(sample + copy * samples_number);
+
+    return indices;
+}
+
+void Dataset::validate_augmentation_factor(Index factor, double variants)
+{
+    throw_if(factor < 1 || factor > MAX_AUGMENTATION_FACTOR,
+             "Augmentation factor must be an integer in [1, {}].", MAX_AUGMENTATION_FACTOR);
+    throw_if(variants > 0.0 && variants < double(factor),
+             "The augmentation policy can draw only {} distinct transformations; factor {} needs one per copy.",
+             variants, factor);
+}
+
+Dataset::AugmentedSamples Dataset::resolve_augmented_samples(span<const Index> indices) const
 {
     const auto& roles = active_sample_roles();
-    for (const Index index : indices)
+    const Index samples_number = get_samples_number();
+    const Index copies_number = 1 + get_augmentation_factor();
+
+    AugmentedSamples samples{vector<Index>(indices.size()), vector<Index>(indices.size())};
+
+    for (size_t i = 0; i < indices.size(); ++i)
     {
-        throw_if(index < 0 || index >= ssize(roles),
+        const Index index = indices[i];
+        throw_if(index < 0 || index >= samples_number * copies_number,
                  "Augmentation sample index {} is out of range.", index);
-        throw_if(roles[size_t(index)] != SampleRole::Training,
-                 "Augmentation requires training samples; sample {} is not in the active training partition.", index);
+
+        samples.sources[i] = index % samples_number;
+        samples.copies[i] = index / samples_number;
+
+        throw_if(samples.sources[i] >= ssize(roles) || roles[size_t(samples.sources[i])] != SampleRole::Training,
+                 "Augmentation requires training samples; sample {} is not in the active training partition.",
+                 samples.sources[i]);
     }
+
+    return samples;
 }
 
 void Dataset::set_augmentation_epoch(Index epoch)
