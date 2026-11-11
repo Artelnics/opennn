@@ -37,11 +37,9 @@ void validate_augmentation_scale(string_view name, float value)
              "YOLO augmentation {} is too extreme for finite FP32 log-space sampling and reciprocals.", name);
 }
 
-AugmentationTransform sample_augmentation_transform(uint64_t epoch_seed,
-                                                    uint64_t sample_index,
-                                                    const YoloDataset::AugmentationPolicy& policy)
+AugmentationTransform draw_augmentation_transform(RandomStream& random,
+                                                  const YoloDataset::AugmentationPolicy& policy)
 {
-    RandomStream random(derive_random_seed(epoch_seed, sample_index));
     const auto rand_scale = [&](float max_scale) -> float
     {
         return exp(random.uniform(-1.0f, 1.0f) * log(max_scale));
@@ -57,6 +55,47 @@ AugmentationTransform sample_augmentation_transform(uint64_t epoch_seed,
     transform.saturation_mul = rand_scale(policy.saturation);
     transform.hue_shift = random.uniform(-policy.hue, policy.hue);
     return transform;
+}
+
+// Distinct non-identity transforms the policy draws; continuous parameters are unbounded.
+double count_transform_variants(const YoloDataset::AugmentationPolicy& policy)
+{
+    if (policy.jitter > 0.0f || policy.exposure != 1.0f || policy.saturation != 1.0f || policy.hue > 0.0f)
+        return numeric_limits<double>::infinity();
+
+    return policy.flip ? 1.0 : 0.0;
+}
+
+// Mosaic layouts and Cutout regions are redrawn for every copy, keeping copies distinct.
+double count_copy_variants(const YoloDataset::AugmentationPolicy& policy)
+{
+    const bool redraws_layout = policy.mosaic
+        || (policy.cutout_count > 0 && policy.cutout_max_size_ratio > 0.0f);
+
+    return redraws_layout ? numeric_limits<double>::infinity() : count_transform_variants(policy);
+}
+
+// Copy 0 is the original image; later copies draw from the sample's epoch stream
+// and repeat neither the original nor each other while the policy allows.
+AugmentationTransform sample_augmentation_transform(uint64_t epoch_seed, Index sample, Index copy,
+                                                    const YoloDataset::AugmentationPolicy& policy)
+{
+    RandomStream random(derive_random_seed(epoch_seed, uint64_t(sample)));
+
+    return draw_distinct(random, AugmentationTransform{}, copy, count_transform_variants(policy),
+                         [&policy](RandomStream& stream) { return draw_augmentation_transform(stream, policy); });
+}
+
+// A Mosaic tile keeps the colour of its source image, whichever copy it fills.
+AugmentationTransform sample_source_color(uint64_t epoch_seed, Index source,
+                                          const YoloDataset::AugmentationPolicy& policy)
+{
+    YoloDataset::AugmentationPolicy color_policy = policy;
+    color_policy.jitter = 0.0f;
+    color_policy.flip = false;
+
+    RandomStream random(derive_random_seed(epoch_seed, uint64_t(source)));
+    return draw_augmentation_transform(random, color_policy);
 }
 
 void rgb_to_hsv(float r, float g, float b, float& h, float& s, float& v)
@@ -102,14 +141,20 @@ ImageRegion sample_cutout(RandomStream& random, Index width, Index height, Index
             Index(random.next() % uint64_t(height - ph + 1)), pw, ph};
 }
 
+// Cutout regions of one augmented copy, keyed by its augmented index.
+RandomStream cutout_stream(uint64_t epoch_seed, Index augmented_index)
+{
+    return RandomStream(derive_random_seed(derive_random_seed(epoch_seed, uint64_t(augmented_index)),
+                                           0x4355544F5554ull));
+}
+
 static const uint8_t* apply_cutout(uint8_t* img, const Shape& shape,
                                    const YoloDataset::AugmentationPolicy& policy,
-                                   uint64_t epoch_seed, Index sample_index)
+                                   uint64_t epoch_seed, Index augmented_index)
 {
     if (policy.cutout_count == 0 || policy.cutout_max_size_ratio == 0.0f) return img;
     const Index h = shape[0], w = shape[1], ch = shape[2];
-    RandomStream random(derive_random_seed(derive_random_seed(epoch_seed, uint64_t(sample_index)),
-                                           0x4355544F5554ull));
+    RandomStream random = cutout_stream(epoch_seed, augmented_index);
     const Index max_side = max<Index>(1, Index(double(max(h, w)) * policy.cutout_max_size_ratio));
     for (int n = 0; n < policy.cutout_count; ++n)
     {
@@ -561,10 +606,18 @@ void YoloDataset::set_augmentation_policy(const AugmentationPolicy& new_policy)
     throw_if(!isfinite(new_policy.cutout_max_size_ratio)
              || new_policy.cutout_max_size_ratio < 0.0f || new_policy.cutout_max_size_ratio > 1.0f,
              "Cutout maximum size ratio must be finite and in [0, 1].");
+    validate_augmentation_factor(new_policy.factor, count_copy_variants(new_policy));
     if (is_device_resident()) disable_device_residency();
 
     augmentation_policy = new_policy;
     if (v8_mode) update_target_layout();
+}
+
+Index YoloDataset::get_augmentation_factor() const
+{
+    return augmentation_policy.enabled && count_copy_variants(augmentation_policy) > 0.0
+        ? augmentation_policy.factor
+        : 0;
 }
 
 
@@ -621,12 +674,12 @@ struct MosaicParams
     float cy_frac;
 };
 
-MosaicParams derive_mosaic_params(uint64_t epoch_seed, uint64_t sample_index,
+MosaicParams derive_mosaic_params(uint64_t epoch_seed, Index augmented_index,
                                   span<const Index> training_indices)
 {
-    // Salted re-mix of the per-sample seed: the mosaic draws from its own stream,
-    // independent of the one sample_augmentation_transform consumes.
-    RandomStream random(derive_random_seed(derive_random_seed(epoch_seed, sample_index),
+    // Salted re-mix keyed by the augmented copy: every copy draws its own layout,
+    // independent of the stream sample_augmentation_transform consumes.
+    RandomStream random(derive_random_seed(derive_random_seed(epoch_seed, uint64_t(augmented_index)),
                                            0xCAFEBABEDEADBEEFull));
 
     MosaicParams params{};
@@ -646,15 +699,15 @@ struct MosaicQuad
     Index dst_x, dst_y, qw, qh;
 };
 
-array<MosaicQuad, 4> compute_mosaic_layout(uint64_t epoch_seed, Index sample_index,
+array<MosaicQuad, 4> compute_mosaic_layout(uint64_t epoch_seed, Index augmented_index, Index source,
                                            span<const Index> training_indices, Index height, Index width)
 {
-    const MosaicParams mp = derive_mosaic_params(epoch_seed, uint64_t(sample_index), training_indices);
+    const MosaicParams mp = derive_mosaic_params(epoch_seed, augmented_index, training_indices);
     const Index cut_x = max<Index>(1, min(width - 1, Index(mp.cx_frac * float(width))));
     const Index cut_y = max<Index>(1, min(height - 1, Index(mp.cy_frac * float(height))));
 
     return {{
-        {sample_index,         0,     0,         cut_x,          cut_y},
+        {source,               0,     0,         cut_x,          cut_y},
         {mp.companions[0], cut_x,     0, width - cut_x,          cut_y},
         {mp.companions[1],     0, cut_y,         cut_x, height - cut_y},
         {mp.companions[2], cut_x, cut_y, width - cut_x, height - cut_y},
@@ -666,6 +719,10 @@ struct YoloDataset::AugmentationBatch
     AugmentationPolicy policy;
     uint64_t seed;
     span<const Index> training_indices;
+    AugmentedSamples samples;
+
+    // Originals (copy 0) and fills without augmentation keep their image and boxes.
+    bool augments(Index i) const { return policy.enabled && samples.copies[size_t(i)] > 0; }
 };
 
 span<const Index> YoloDataset::get_mosaic_training_indices() const
@@ -685,9 +742,12 @@ YoloDataset::AugmentationBatch YoloDataset::prepare_augmentation_batch(
     AugmentationPolicy policy = augmentation_policy;
     policy.enabled = mode == FillMode::Training && policy.enabled;
     policy.mosaic = policy.enabled && policy.mosaic;
-    if (policy.enabled) validate_augmentation_samples(sample_indices);
+    AugmentedSamples samples = policy.enabled
+        ? resolve_augmented_samples(sample_indices)
+        : AugmentedSamples{sample_indices, vector<Index>(sample_indices.size(), 0)};
     return {policy, get_augmentation_seed(),
-            policy.mosaic ? get_mosaic_training_indices() : span<const Index>{}};
+            policy.mosaic ? get_mosaic_training_indices() : span<const Index>{},
+            std::move(samples)};
 }
 
 void YoloDataset::read_image_record(Index sample, uint8_t* destination) const
@@ -741,37 +801,46 @@ void YoloDataset::fill_batch(Batch& batch, const vector<Index>& sample_indices,
         if (added) sources.push_back(sample);
         return entry->second;
     };
-    auto color_policy = augmentation.policy;
-    color_policy.jitter = 0.0f;
-    color_policy.flip = false;
+    const Index max_side = max<Index>(1, Index(double(max(transform.height, transform.width))
+                                               * augmentation.policy.cutout_max_size_ratio));
     for (Index i = 0; i < batch.batch_size; ++i)
     {
         auto& parameter = parameters[size_t(i)];
-        const Index sample = sample_indices[size_t(i)];
-        if (transform.enabled)
-            parameter.crop = sample_augmentation_transform(augmentation.seed, uint64_t(sample), augmentation.policy);
+        const Index index = sample_indices[size_t(i)];
+        const Index sample = augmentation.samples.sources[size_t(i)];
+        const auto regions = cutouts.subspan(size_t(i * transform.cutouts), size_t(transform.cutouts));
+
+        if (!augmentation.augments(i))
+        {
+            // Identity parameters; under Mosaic the first tile covers the whole image.
+            parameter.sources[0] = source_slot(sample);
+            parameter.cut_x = transform.width;
+            parameter.cut_y = transform.height;
+            ranges::fill(regions, ImageRegion{});
+            continue;
+        }
+
+        parameter.crop = sample_augmentation_transform(augmentation.seed, sample,
+                                                       augmentation.samples.copies[size_t(i)], augmentation.policy);
         if (transform.mosaic)
         {
-            const auto quads = compute_mosaic_layout(augmentation.seed, sample, augmentation.training_indices,
+            const auto quads = compute_mosaic_layout(augmentation.seed, index, sample, augmentation.training_indices,
                                                      transform.height, transform.width);
             parameter.cut_x = quads[0].qw;
             parameter.cut_y = quads[0].qh;
             for (size_t q = 0; q < quads.size(); ++q)
             {
                 parameter.sources[q] = source_slot(quads[q].si);
-                const auto color = sample_augmentation_transform(augmentation.seed, uint64_t(quads[q].si), color_policy);
+                const auto color = sample_source_color(augmentation.seed, quads[q].si, augmentation.policy);
                 parameter.colors[q] = {color.exposure_mul, color.saturation_mul, color.hue_shift};
             }
         }
         else
             parameter.sources[0] = source_slot(sample);
-        RandomStream random(derive_random_seed(derive_random_seed(augmentation.seed, uint64_t(sample)),
-                                               0x4355544F5554ull));
-        const Index max_side = max<Index>(1, Index(double(max(transform.height, transform.width))
-                                                   * augmentation.policy.cutout_max_size_ratio));
-        for (Index n = 0; n < transform.cutouts; ++n)
-            cutouts[size_t(i * transform.cutouts + n)] =
-                sample_cutout(random, transform.width, transform.height, max_side);
+
+        RandomStream random = cutout_stream(augmentation.seed, index);
+        for (ImageRegion& region : regions)
+            region = sample_cutout(random, transform.width, transform.height, max_side);
     }
     batch.image_transform->sources = ssize(sources);
     for (size_t i = 0; i < sources.size(); ++i)
@@ -810,29 +879,26 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
         {
             try
             {
-                const Index sample_index = sample_indices[size_t(i)];
+                const Index sample_index = augmentation.samples.sources[size_t(i)];
                 throw_if(sample_index < 0 || sample_index >= samples_number,
                          "YoloDataset input sample index is out of range.");
 
-                if (policy.mosaic)
+                const bool augments = augmentation.augments(i);
+
+                if (augments && policy.mosaic)
                 {
                     const Index H = cache_input_shape[0];
                     const Index W = cache_input_shape[1];
                     const Index C = cache_input_shape[2];
-                    const array<MosaicQuad, 4> quads =
-                        compute_mosaic_layout(augmentation.seed, sample_index, augmentation.training_indices, H, W);
-
-                    AugmentationPolicy color_policy = policy;
-                    color_policy.jitter = 0.0f;
-                    color_policy.flip = false;
+                    const array<MosaicQuad, 4> quads = compute_mosaic_layout(
+                        augmentation.seed, sample_indices[size_t(i)], sample_index, augmentation.training_indices, H, W);
 
                     for (const MosaicQuad& q : quads)
                     {
                         read_image_record(q.si, mosaic_source.data());
 
-                        const AugmentationTransform transform = sample_augmentation_transform(
-                            augmentation.seed, uint64_t(q.si), color_policy);
-                        apply_color_jitter(mosaic_source.data(), H, W, C, transform);
+                        apply_color_jitter(mosaic_source.data(), H, W, C,
+                                           sample_source_color(augmentation.seed, q.si, policy));
 
                         resize_bilinear_into(mosaic_source.data(), H, W,
                                              pixels.data(), W,
@@ -843,10 +909,10 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
                     read_image_record(sample_index, pixels.data());
 
                 const uint8_t* image_bytes = pixels.data();
-                if (policy.enabled)
+                if (augments)
                 {
                     const AugmentationTransform transform = sample_augmentation_transform(
-                        augmentation.seed, uint64_t(sample_index), policy);
+                        augmentation.seed, sample_index, augmentation.samples.copies[size_t(i)], policy);
 
                     apply_geometric_to_image(pixels.data(), augmented.data(),
                                              cache_input_shape[0], cache_input_shape[1],
@@ -855,7 +921,8 @@ void YoloDataset::fill_inputs(const vector<Index>& sample_indices,
                         apply_color_jitter(augmented.data(),
                                            cache_input_shape[0], cache_input_shape[1],
                                            cache_input_shape[2], transform);
-                    image_bytes = apply_cutout(augmented.data(), cache_input_shape, policy, augmentation.seed, sample_index);
+                    image_bytes = apply_cutout(augmented.data(), cache_input_shape, policy, augmentation.seed,
+                                               sample_indices[size_t(i)]);
                 }
 
                 if (resize_needed)
@@ -937,20 +1004,22 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
         {
             try
             {
-                const Index sample_index = sample_indices[size_t(i)];
+                const Index sample_index = augmentation.samples.sources[size_t(i)];
                 throw_if(sample_index < 0 || sample_index >= samples_number,
                          "YoloDataset target sample index is out of range.");
+
+                const bool augments = augmentation.augments(i);
 
                 if (reencode)
                 {
                     float* const target_ptr = target_data + i * target_record_floats;
 
-                    if (policy.mosaic)
+                    if (augments && policy.mosaic)
                     {
                         const Index H = cache_input_shape[0];
                         const Index W = cache_input_shape[1];
-                        const array<MosaicQuad, 4> quads =
-                            compute_mosaic_layout(augmentation.seed, sample_index, augmentation.training_indices, H, W);
+                        const array<MosaicQuad, 4> quads = compute_mosaic_layout(
+                            augmentation.seed, sample_indices[size_t(i)], sample_index, augmentation.training_indices, H, W);
 
                         boxes.clear();
                         for (const MosaicQuad& q : quads)
@@ -964,12 +1033,9 @@ void YoloDataset::fill_targets(const vector<Index>& sample_indices,
                     else
                         read_sample_boxes(sample_index, boxes, box_records);
 
-                    if (policy.enabled)
-                    {
-                        const AugmentationTransform transform = sample_augmentation_transform(
-                            augmentation.seed, uint64_t(sample_index), policy);
-                        apply_geometric_to_boxes(boxes, transform);
-                    }
+                    if (augments)
+                        apply_geometric_to_boxes(boxes, sample_augmentation_transform(
+                            augmentation.seed, sample_index, augmentation.samples.copies[size_t(i)], policy));
 
                     if (v8_mode)
                         make_target_v8_gtlist(boxes, classes_number, target_ptr, target_record_floats / 5);

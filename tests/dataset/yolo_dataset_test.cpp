@@ -51,6 +51,7 @@ struct YoloAugmentationFixture
         dataset.set_storage_mode(storage);
         dataset.set_sample_roles({"Validation", "Testing", "Training", "None", "Validation"});
         YoloDataset::AugmentationPolicy policy;
+        policy.enabled = true;
         policy.jitter = 0.0f;
         policy.exposure = policy.saturation = 1.0f;
         policy.hue = 0.0f;
@@ -60,14 +61,16 @@ struct YoloAugmentationFixture
     }
 };
 
+// Training reads the first augmented copy of sample 2; other modes read sample 2.
 pair<vector<float>, vector<float>> read_augmented_sample(
     const YoloDataset& dataset, FillMode mode = FillMode::Training)
 {
+    const Index index = mode == FillMode::Training ? 2 + dataset.get_samples_number() : 2;
     pair<vector<float>, vector<float>> result{
         vector<float>(size_t(dataset.get_input_shape().size())),
         vector<float>(size_t(dataset.get_target_shape().size()))};
-    dataset.fill_inputs({2}, {}, result.first.data(), mode);
-    dataset.fill_targets({2}, {}, result.second.data(), mode);
+    dataset.fill_inputs({index}, {}, result.first.data(), mode);
+    dataset.fill_targets({index}, {}, result.second.data(), mode);
     return result;
 }
 
@@ -101,9 +104,10 @@ void expect_mosaic_pixels_match_boxes(const pair<vector<float>, vector<float>>& 
 
 void expect_mosaic_sources(YoloDataset& dataset, Index primary, Index only_source = -1)
 {
+    const Index copy = primary + dataset.get_samples_number();
     vector<float> inputs(16 * 16 * 3), targets(size_t(dataset.get_target_shape().size()));
-    dataset.fill_inputs({primary}, {}, inputs.data(), FillMode::Training);
-    dataset.fill_targets({primary}, {}, targets.data(), FillMode::Training);
+    dataset.fill_inputs({copy}, {}, inputs.data(), FillMode::Training);
+    dataset.fill_targets({copy}, {}, targets.data(), FillMode::Training);
     for (size_t box = 0; box < 4; ++box)
     {
         const float* target = targets.data() + box * 5;
@@ -183,9 +187,11 @@ TEST(YoloDataset, V8PreservesAllBoxesWithAndWithoutMosaic)
                     ASSERT_EQ(dataset.get_target_shape().size(), capacity * 5);
                     for (FillMode mode : {FillMode::Training, FillMode::Validation})
                     {
+                        const bool augmented = enabled && mosaic && mode == FillMode::Training;
+                        const Index index = augmented ? 2 + dataset.get_samples_number() : 2;
                         vector<float> targets(size_t(capacity * 10 + 1), -99.0f);
-                        dataset.fill_targets({2, 2}, {}, targets.data(), mode);
-                        const Index expected = count * (enabled && mosaic && mode == FillMode::Training ? 4 : 1);
+                        dataset.fill_targets({index, index}, {}, targets.data(), mode);
+                        const Index expected = count * (augmented ? 4 : 1);
                         for (Index row = 0; row < 2; ++row)
                             for (Index box = 0; box < capacity; ++box)
                                 EXPECT_EQ(targets[size_t((row * capacity + box) * 5 + 4)],
@@ -237,6 +243,7 @@ TEST(YoloDataset, AugmentationReplaysImagesAndBoxesAcrossWorkersBatchesAndEpochs
         dataset.set_sample_roles(SampleRole::Training);
         dataset.set_v8_mode(mosaic);
         YoloDataset::AugmentationPolicy policy;
+        policy.enabled = true;
         policy.mosaic = mosaic;
         policy.cutout_count = 2;
         policy.cutout_max_size_ratio = 0.2f;
@@ -260,6 +267,7 @@ TEST(YoloDataset, CudaAugmentationMatchesHostImagesAndBoxes)
             dataset.set_sample_roles({"Validation", "Training", "Training", "Training", "Testing"});
             dataset.set_v8_mode(mosaic);
             YoloDataset::AugmentationPolicy policy;
+            policy.enabled = true;
             policy.mosaic = mosaic;
             policy.cutout_count = 3;
             policy.cutout_max_size_ratio = 0.3f;
@@ -277,6 +285,7 @@ TEST(YoloDataset, AugmentationJsonRoundTripsAndRejectsInvalidPolicies)
     auto policy = source.get_augmentation_policy();
     policy.cutout_count = 3;
     policy.cutout_max_size_ratio = 0.75f;
+    policy.factor = 4;
     source.set_augmentation_policy(policy);
     JsonDocument document;
     document.set_root(Json::parse(augmentation_json(source)));
@@ -285,18 +294,25 @@ TEST(YoloDataset, AugmentationJsonRoundTripsAndRejectsInvalidPolicies)
     restored.from_JSON(document);
     EXPECT_EQ(restored.get_augmentation_policy().cutout_count, 3);
     EXPECT_EQ(restored.get_augmentation_policy().cutout_max_size_ratio, 0.75f);
+    EXPECT_EQ(restored.get_augmentation_policy().factor, 4);
+    EXPECT_EQ(restored.get_augmentation_factor(), 4);
     EXPECT_EQ(read_augmented_sample(restored), read_augmented_sample(source));
     auto& json_source = document.get_root()["YoloDataset"]["DataSource"];
     erase_if(json_source.as_object(), [](const auto& field)
-    { return field.first == "AugCutoutCount" || field.first == "AugCutoutMaxSizeRatio"; });
+    {
+        return field.first == "AugCutoutCount" || field.first == "AugCutoutMaxSizeRatio"
+            || field.first == "AugFactor" || field.first == "AugEnabled";
+    });
     restored.from_JSON(document);
     EXPECT_EQ(restored.get_augmentation_policy().cutout_count, 0);
     EXPECT_EQ(restored.get_augmentation_policy().cutout_max_size_ratio, 0.04f);
+    EXPECT_EQ(restored.get_augmentation_policy().factor, 1);
+    EXPECT_FALSE(restored.get_augmentation_policy().enabled);
     const Json valid = json_source;
     for (const auto& [field, value] : vector<pair<string, double>>{
         {"AugCutoutCount", -1}, {"AugCutoutCount", 1.5}, {"AugCutoutCount", 2147483648.0},
         {"AugCutoutMaxSizeRatio", 1.1}, {"AugJitter", 0.5}, {"AugExposure", 0},
-        {"AugSaturation", -1}, {"AugHue", 0.6}})
+        {"AugSaturation", -1}, {"AugHue", 0.6}, {"AugFactor", 0}, {"AugFactor", 11}})
     {
         json_source = valid;
         json_source.set(field, value);
@@ -355,6 +371,49 @@ TEST(YoloDataset, AugmentationPolicyValidationIsAtomic)
     }
 }
 
+TEST(YoloDataset, AugmentedCopiesKeepTheOriginalAndDifferFromEachOther)
+{
+    EXPECT_FALSE(YoloDataset::AugmentationPolicy{}.enabled);
+
+    YoloAugmentationFixture fixture(Dataset::StorageMode::BinaryFile);
+    auto& dataset = fixture.dataset;
+    dataset.set_sample_roles(SampleRole::Training);
+    dataset.set_v8_mode(true);
+    const Index samples = dataset.get_samples_number();
+
+    // Flip alone yields one distinct copy; Mosaic redraws a layout for every copy.
+    auto policy = dataset.get_augmentation_policy();
+    policy.mosaic = false;
+    policy.flip = true;
+    policy.factor = 2;
+    EXPECT_THROW(dataset.set_augmentation_policy(policy), runtime_error);
+    policy.mosaic = true;
+    EXPECT_NO_THROW(dataset.set_augmentation_policy(policy));
+
+    policy.mosaic = false;
+    policy.flip = false;
+    policy.jitter = 0.3f;
+    policy.factor = 3;
+    dataset.set_augmentation_policy(policy);
+    EXPECT_EQ(dataset.get_augmentation_factor(), 3);
+    EXPECT_EQ(dataset.get_augmented_samples_number(), 4 * samples);
+
+    const auto read_targets = [&](Index index, FillMode mode)
+    {
+        vector<float> targets(size_t(dataset.get_target_shape().size()));
+        dataset.fill_targets({index}, {}, targets.data(), mode);
+        return targets;
+    };
+    vector<vector<float>> copies;
+    for (Index copy = 0; copy <= 3; ++copy)
+        copies.push_back(read_targets(2 + copy * samples, FillMode::Training));
+    EXPECT_EQ(copies[0], read_targets(2, FillMode::Validation));
+    for (size_t a = 0; a < copies.size(); ++a)
+        for (size_t b = a + 1; b < copies.size(); ++b)
+            EXPECT_NE(copies[a], copies[b]);
+    EXPECT_THROW(read_targets(2 + 4 * samples, FillMode::Training), runtime_error);
+}
+
 TEST(YoloDataset, CutoutIsBoundedOnRectangularAndSinglePixelImagesAndReachesBorders)
 {
     set_seed(37);
@@ -366,11 +425,13 @@ TEST(YoloDataset, CutoutIsBoundedOnRectangularAndSinglePixelImagesAndReachesBord
         auto policy = dataset.get_augmentation_policy();
         policy.mosaic = false;
         dataset.set_augmentation_policy(policy);
-        const auto original = read_augmented_sample(dataset);
+        // Without transformations or effective Cutout there is nothing to copy.
+        EXPECT_EQ(dataset.get_augmentation_factor(), 0);
+        const auto original = read_augmented_sample(dataset, FillMode::Validation);
         policy.cutout_count = 1;
         policy.cutout_max_size_ratio = 0.0f;
         dataset.set_augmentation_policy(policy);
-        EXPECT_EQ(read_augmented_sample(dataset), original);
+        EXPECT_EQ(dataset.get_augmentation_factor(), 0);
         policy.cutout_max_size_ratio = 1.0f;
         dataset.set_augmentation_policy(policy);
         bool bottom = false, right = false;
@@ -403,7 +464,7 @@ TEST(YoloDataset, CutoutIsBoundedOnRectangularAndSinglePixelImagesAndReachesBord
             EXPECT_EQ(read_augmented_sample(dataset, mode), original);
         policy.cutout_count = 0;
         dataset.set_augmentation_policy(policy);
-        EXPECT_EQ(read_augmented_sample(dataset), original);
+        EXPECT_EQ(dataset.get_augmentation_factor(), 0);
     }
 }
 
@@ -624,12 +685,16 @@ TEST(YoloDataset, AugmentationControlsDeviceResidency)
     dataset.set(images_dir, labels_dir, Shape{8, 8, 3}, 2, 1,
                 {{0.2f, 0.2f}});
     dataset.set_storage_mode(Dataset::StorageMode::GPUPersistantData);
+    EXPECT_FALSE(dataset.get_augmentation_policy().enabled);
+
+    YoloDataset::AugmentationPolicy policy;
+    policy.enabled = true;
+    dataset.set_augmentation_policy(policy);
 
     Dataset& base_dataset = dataset;
     base_dataset.enable_device_residency();
     EXPECT_FALSE(dataset.is_device_resident());
 
-    YoloDataset::AugmentationPolicy policy;
     policy.enabled = false;
     dataset.set_augmentation_policy(policy);
 
@@ -981,6 +1046,7 @@ TEST(YoloDataset, RepeatedMosaicBatchesKeepWorkerScratchIndependent)
     dataset.set_sample_roles(SampleRole::Training);
 
     YoloDataset::AugmentationPolicy policy;
+    policy.enabled = true;
     policy.jitter = 0.0f;
     policy.exposure = 1.0f;
     policy.saturation = 1.0f;
@@ -989,7 +1055,8 @@ TEST(YoloDataset, RepeatedMosaicBatchesKeepWorkerScratchIndependent)
     policy.mosaic = true;
     dataset.set_augmentation_policy(policy);
 
-    const vector<Index> sample_indices = {0, 1, 2, 3};
+    // The first augmented copy of every sample.
+    const vector<Index> sample_indices = {4, 5, 6, 7};
     constexpr Index input_values = samples * height * width * 3;
     constexpr Index target_values = samples * 2 * 2 * (5 + 1);
 

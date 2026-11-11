@@ -295,7 +295,7 @@ void Optimizer::TrainingSession::prepare_eager_batches(Index batch_size, Dataset
     // Eager slots only receive uploads, so they keep no pinned host staging.
     pipelines[0].slots[0] = make_unique<Batch>(batch_size, &dataset, config, BatchStorage::DeviceOnly);
     if (batch_size <= 0) return;
-    const Index slots = min(Index(capacity), dataset.get_samples_number(SampleRole::Training) / batch_size);
+    const Index slots = min(Index(capacity), dataset.get_augmented_samples_number() / batch_size);
     for (Index slot = 1; slot < slots; ++slot)
         transfer_batches.push_back(make_unique<Batch>(batch_size, &dataset, config, BatchStorage::DeviceOnly));
     if (dataset.supports_byte_inputs() && !dataset.get_gpu_image_transform(batch_size))
@@ -350,7 +350,7 @@ void Optimizer::setup_batch_pools(BatchPools& pools,
             training_session.pipelines[0].slots[0] = make_unique<Batch>(training_batch_size, &dataset, config);
 
             const Index training_batches = training_batch_size > 0
-                ? dataset.get_samples_number(SampleRole::Training) / training_batch_size
+                ? dataset.get_augmented_samples_number() / training_batch_size
                 : 0;
             const Index graph_group_size = recurrent_graph_group_size(
                 &network, training_batch_size);
@@ -486,8 +486,7 @@ Index Optimizer::get_maximum_batch_size() const
     throw_if(!network,
              "Optimizer::get_maximum_batch_size: neural network is not set.");
 
-    const Index training_samples_number =
-        dataset->get_samples_number(SampleRole::Training);
+    const Index training_samples_number = dataset->get_augmented_samples_number();
 
     if(training_samples_number <= 0) return 0;
 
@@ -937,10 +936,11 @@ TrainingResult Optimizer::train()
 
     const FeatureSelection features = dataset->get_feature_selection();
 
-    const vector<Index> training_sample_indices = dataset->get_sample_indices(SampleRole::Training);
+    // Each epoch shuffles the Training samples together with their augmented copies.
+    const vector<Index> training_sample_indices = dataset->get_augmented_sample_indices();
     const vector<Index> validation_sample_indices = dataset->get_sample_indices(SampleRole::Validation);
 
-    const Index training_samples_number = dataset->get_samples_number(SampleRole::Training);
+    const Index training_samples_number = ssize(training_sample_indices);
     const Index validation_samples_number = dataset->get_samples_number(SampleRole::Validation);
 
     const Index effective_batch_size = batch_size <= 0
@@ -1170,12 +1170,14 @@ void Optimizer::prepare_full_batch_training(FullBatchContext& context, const cha
     Dataset* dataset = loss->get_dataset();
     Network* network = loss->get_network();
 
-    context.network = network;
-    context.training_samples_number = dataset->get_samples_number(SampleRole::Training);
-    context.validation_samples_number = dataset->get_samples_number(SampleRole::Validation);
-
-    const vector<Index> training_sample_indices = dataset->get_sample_indices(SampleRole::Training);
+    // The full batch is filled once, so its augmented copies stay fixed and the
+    // objective that second-order methods minimise does not change between epochs.
+    const vector<Index> training_sample_indices = dataset->get_augmented_sample_indices();
     const vector<Index> validation_sample_indices = dataset->get_sample_indices(SampleRole::Validation);
+
+    context.network = network;
+    context.training_samples_number = ssize(training_sample_indices);
+    context.validation_samples_number = dataset->get_samples_number(SampleRole::Validation);
 
     const FeatureSelection features = dataset->get_feature_selection();
 

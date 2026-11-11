@@ -548,12 +548,13 @@ TEST(ImageDataset, AugmentationRequiresTheActiveTrainingPartition)
     dataset.set_augmentation_policy(policy);
     const auto features = dataset.get_feature_indices(VariableRole::Input);
     vector<float> input(size_t(2 * dataset.get_input_shape().size()), -99.0f);
-    for (Index excluded : {0, 2, 3, -1, 4})
+    // Indices 4 and 6 address copies of samples 0 and 2; 9 exceeds the factor.
+    for (Index excluded : {0, 2, 3, -1, 4, 6, 9})
     {
         EXPECT_THROW(dataset.fill_inputs({1, excluded}, features, input.data(), FillMode::Training), runtime_error);
         EXPECT_TRUE(ranges::all_of(input, [](float value) { return value == -99.0f; }));
     }
-    dataset.fill_inputs({1}, features, input.data(), FillMode::Training);
+    dataset.fill_inputs({1 + dataset.get_samples_number()}, features, input.data(), FillMode::Training);
     EXPECT_FLOAT_EQ(input[0], 0.0f);
     for (FillMode mode : {FillMode::Validation, FillMode::Inference})
     {
@@ -610,6 +611,116 @@ TEST(ImageDataset, AugmentationPolicyValidationIsAtomicAndAppliesToJson)
         document.get_root()["Dataset"]["DataSource"].set(field, 1.0f);
         EXPECT_THROW(dataset.from_JSON(document), runtime_error);
     }
+}
+
+TEST(ImageDataset, AugmentationFactorIsBoundedByDistinctTransformations)
+{
+    ImageFixture fixture(4, 3, 2);
+    ImageDataset dataset(fixture.root);
+    const string original = augmentation_json(dataset);
+    ImageAugmentationPolicy policy;
+    for (Index factor : {Index(-1), Index(0), Dataset::MAX_AUGMENTATION_FACTOR + 1})
+    {
+        policy.factor = factor;
+        EXPECT_THROW(dataset.set_augmentation_policy(policy), runtime_error);
+        EXPECT_EQ(augmentation_json(dataset), original);
+    }
+
+    // One reflection axis yields one copy; integer shifts in [-1, 1] yield two.
+    policy.reflection_axis_x = true;
+    policy.factor = 1;
+    EXPECT_NO_THROW(dataset.set_augmentation_policy(policy));
+    policy.factor = 2;
+    EXPECT_THROW(dataset.set_augmentation_policy(policy), runtime_error);
+    policy.reflection_axis_x = false;
+    policy.horizontal_translation_minimum = -1.0f;
+    policy.horizontal_translation_maximum = 1.0f;
+    EXPECT_NO_THROW(dataset.set_augmentation_policy(policy));
+    policy.factor = 3;
+    EXPECT_THROW(dataset.set_augmentation_policy(policy), runtime_error);
+
+    policy.enabled = true;
+    policy.rotation_minimum = -5.0f;
+    policy.rotation_maximum = 5.0f;
+    policy.factor = Dataset::MAX_AUGMENTATION_FACTOR;
+    dataset.set_augmentation_policy(policy);
+    EXPECT_EQ(dataset.get_augmentation_factor(), Dataset::MAX_AUGMENTATION_FACTOR);
+
+    JsonDocument document;
+    document.set_root(Json::parse(augmentation_json(dataset)));
+    dataset.set_augmentation_policy({});
+    EXPECT_EQ(dataset.get_augmentation_factor(), 0);
+    dataset.from_JSON(document);
+    EXPECT_EQ(dataset.get_augmentation_factor(), Dataset::MAX_AUGMENTATION_FACTOR);
+    document.get_root()["Dataset"]["DataSource"].set("AugmentationFactor", Dataset::MAX_AUGMENTATION_FACTOR + 1);
+    EXPECT_THROW(dataset.from_JSON(document), runtime_error);
+}
+
+TEST(ImageDataset, AugmentedSampleIndicesFollowTrainingSamplesWithTheirCopies)
+{
+    ImageFixture fixture(4, 3, 2);
+    ImageDataset dataset(fixture.root);
+    dataset.set_sample_roles({"Validation", "Training", "Testing", "Training"});
+    const Index samples = dataset.get_samples_number();
+    EXPECT_EQ(dataset.get_augmented_sample_indices(), (vector<Index>{1, 3}));
+
+    ImageAugmentationPolicy policy;
+    policy.rotation_minimum = -10.0f;
+    policy.rotation_maximum = 10.0f;
+    policy.factor = 2;
+    dataset.set_augmentation_policy(policy);
+    EXPECT_EQ(dataset.get_augmentation_factor(), 0);
+
+    policy.enabled = true;
+    dataset.set_augmentation_policy(policy);
+    EXPECT_EQ(dataset.get_augmentation_factor(), 2);
+    EXPECT_EQ(dataset.get_augmented_samples_number(), 6);
+    EXPECT_EQ(dataset.get_augmented_sample_indices(),
+              (vector<Index>{1, 3, 1 + samples, 3 + samples, 1 + 2 * samples, 3 + 2 * samples}));
+
+    // An enabled policy without transformations has nothing to copy.
+    dataset.set_augmentation_policy({.enabled = true, .factor = 2});
+    EXPECT_EQ(dataset.get_augmentation_factor(), 0);
+    EXPECT_EQ(dataset.get_augmented_sample_indices(), (vector<Index>{1, 3}));
+}
+
+TEST(ImageDataset, AugmentedCopiesKeepTheOriginalAndDifferFromEachOther)
+{
+    ImageFixture fixture(9, 7, 2);
+    for (const auto& entry : filesystem::recursive_directory_iterator(fixture.root))
+        if (entry.path().extension() == ".bmp") add_image_pattern(entry.path());
+    ImageDataset dataset(fixture.root);
+    dataset.set_sample_roles(SampleRole::Training);
+
+    // The reflections give exactly three images besides the original.
+    ImageAugmentationPolicy policy;
+    policy.enabled = policy.reflection_axis_x = policy.reflection_axis_y = true;
+    policy.factor = 4;
+    EXPECT_THROW(dataset.set_augmentation_policy(policy), runtime_error);
+    policy.factor = 3;
+    dataset.set_augmentation_policy(policy);
+
+    const Index samples = dataset.get_samples_number();
+    const auto features = dataset.get_feature_indices(VariableRole::Input);
+    const size_t image_size = size_t(dataset.get_input_shape().size());
+    for (Index epoch : {0, 1})
+    {
+        dataset.set_augmentation_epoch(epoch);
+        for (Index sample = 0; sample < samples; ++sample)
+        {
+            vector<float> original(image_size);
+            vector<float> copies(4 * image_size);
+            dataset.fill_inputs({sample}, features, original.data(), FillMode::Validation);
+            dataset.fill_inputs({sample, sample + samples, sample + 2 * samples, sample + 3 * samples},
+                                features, copies.data(), FillMode::Training);
+            EXPECT_TRUE(equal(original.begin(), original.end(), copies.begin()));
+            for (size_t a = 0; a < 4; ++a)
+                for (size_t b = a + 1; b < 4; ++b)
+                    EXPECT_FALSE(equal(copies.begin() + a * image_size, copies.begin() + (a + 1) * image_size,
+                                       copies.begin() + b * image_size));
+        }
+    }
+    dataset.set_augmentation_epoch(0);
 }
 
 TEST(ImageDataset, AugmentationAcceptsFiniteAnglesAndSafePixelShifts)

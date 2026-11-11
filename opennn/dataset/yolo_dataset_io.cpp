@@ -1122,7 +1122,8 @@ void YoloDataset::to_JSON(JsonWriter& printer) const
         {"AugFlip",       augmentation_policy.flip    ? 1 : 0},
         {"AugMosaic",     augmentation_policy.mosaic  ? 1 : 0},
         {"AugCutoutCount", augmentation_policy.cutout_count},
-        {"AugCutoutMaxSizeRatio", augmentation_policy.cutout_max_size_ratio}
+        {"AugCutoutMaxSizeRatio", augmentation_policy.cutout_max_size_ratio},
+        {"AugFactor",     augmentation_policy.factor}
     });
     printer.begin_array("MultiScaleHeads");
     for (size_t head = 0; head < head_grid_sizes.size(); ++head)
@@ -1174,7 +1175,7 @@ void YoloDataset::from_JSON(const JsonDocument& document)
         display_confidence_threshold = read_json_float(source, "DisplayConfidenceThreshold");
 
     AugmentationPolicy parsed_policy;
-    parsed_policy.enabled    = source->has("AugEnabled")    ? (read_json_index(source, "AugEnabled")    != 0) : true;
+    parsed_policy.enabled    = source->has("AugEnabled")    ? (read_json_index(source, "AugEnabled")    != 0) : false;
     parsed_policy.jitter     = source->has("AugJitter")     ? read_json_float(source, "AugJitter")     : 0.2f;
     parsed_policy.exposure   = source->has("AugExposure")   ? read_json_float(source, "AugExposure")   : 1.5f;
     parsed_policy.saturation = source->has("AugSaturation") ? read_json_float(source, "AugSaturation") : 1.5f;
@@ -1183,6 +1184,7 @@ void YoloDataset::from_JSON(const JsonDocument& document)
     parsed_policy.mosaic     = source->has("AugMosaic")     ? (read_json_index(source, "AugMosaic")    != 0) : false;
     parsed_policy.cutout_count = cutout_count_from_json(source);
     parsed_policy.cutout_max_size_ratio = read_json_float(source, "AugCutoutMaxSizeRatio", 0.04f);
+    parsed_policy.factor = read_json_index(source, "AugFactor", 1);
     set_augmentation_policy(parsed_policy);
 
     const Json* samples_element = yolo_element->find("Samples");

@@ -25,6 +25,8 @@ struct ImageCropTransform
     float exposure_mul = 1.0f;
     float saturation_mul = 1.0f;
     float hue_shift = 0.0f;
+
+    bool operator==(const ImageCropTransform&) const = default;
 };
 
 struct ImageAffineTransform
@@ -36,6 +38,8 @@ struct ImageAffineTransform
     Index shift_y = 0;
     bool flip_x = false;
     bool flip_y = false;
+
+    bool operator==(const ImageAffineTransform&) const = default;
 };
 
 struct ImageRegion

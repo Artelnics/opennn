@@ -23,6 +23,33 @@ namespace opennn
         uint64_t state;
     };
 
+    // Element `position` of the sequence `first, draw(random), draw(random), ...`
+    // that skips repeated values while fewer than `distinct` new values were kept.
+    // A long run of repeats is accepted instead of looping on a degenerate draw.
+    template<typename Value, typename Draw>
+    Value draw_distinct(RandomStream& random, Value first, Index position, double distinct, Draw&& draw)
+    {
+        constexpr Index maximum_repeats = 1024;
+
+        vector<Value> values{std::move(first)};
+
+        for (Index repeats = 0; ssize(values) <= position;)
+        {
+            Value value = draw(random);
+
+            if (double(ssize(values)) > distinct || repeats == maximum_repeats
+                || ranges::find(values, value) == values.end())
+            {
+                values.push_back(std::move(value));
+                repeats = 0;
+            }
+            else
+                ++repeats;
+        }
+
+        return values.back();
+    }
+
     float random_uniform(float = -1, float = 1);
     float random_normal(float = 0, float = 1);
     Index random_integer(Index, Index);

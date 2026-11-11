@@ -73,8 +73,21 @@ public:
     void set_fold_split(const vector<Index>& training, const vector<Index>& validation);
     void clear_fold_split() noexcept { on_sample_roles_changed(); fold_split_roles.reset(); }
 
+    static constexpr Index MAX_AUGMENTATION_FACTOR = 10;
+
     void set_augmentation_epoch(Index);
     Index get_augmentation_epoch() const noexcept { return augmentation_epoch; }
+
+    // Augmented copies trained per Training sample and epoch; 0 without augmentation.
+    virtual Index get_augmentation_factor() const { return 0; }
+
+    // Training samples followed by their augmented copies. Copy c of sample s is
+    // addressed as s + c * get_samples_number(); copy 0 is the original sample.
+    vector<Index> get_augmented_sample_indices() const;
+    Index get_augmented_samples_number() const
+    {
+        return get_samples_number(SampleRole::Training) * (1 + get_augmentation_factor());
+    }
 
     Index get_variables_number() const noexcept { return variables.size(); }
     Index get_variables_number(VariableRole) const;
@@ -336,7 +349,18 @@ protected:
 
     Dataset() = default;
 
-    void validate_augmentation_samples(span<const Index>) const;
+    struct AugmentedSamples
+    {
+        vector<Index> sources;
+        vector<Index> copies;
+    };
+
+    // Rejects factors outside [1, MAX_AUGMENTATION_FACTOR] and factors larger than
+    // the distinct transformations a policy can draw; 0 variants adds no copies.
+    static void validate_augmentation_factor(Index factor, double variants);
+
+    // Validates augmented Training indices and splits them into sources and copies.
+    AugmentedSamples resolve_augmented_samples(span<const Index>) const;
     uint64_t get_augmentation_seed() const noexcept;
 
     void fill_batch_host(Batch&,
