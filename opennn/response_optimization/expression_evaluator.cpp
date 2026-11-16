@@ -39,6 +39,12 @@ string abbreviate(const string& expression)
 }
 
 
+bool has_column(const vector<pair<string, Index>>& columns, const string& name)
+{
+    return ranges::any_of(columns, [&](const auto& column) { return column.first == name; });
+}
+
+
 struct ExpressionNode
 {
     ExpressionOp::Kind kind = ExpressionOp::Kind::PushConst;
@@ -244,7 +250,8 @@ const FunctionEntry* find_function(const string& name)
 
 struct Token
 {
-    enum class Kind { Number, Identifier, QuotedIdentifier, Operator, LeftParen, RightParen, Comma, Semicolon, End };
+    enum class Kind { Number, Identifier, QuotedIdentifier, Operator, LeftParen, RightParen, LeftBracket, RightBracket,
+                      Comma, Semicolon, End };
 
     Kind kind = Kind::End;
     string text;
@@ -354,6 +361,8 @@ struct Lexer
             {
             case '(': token.kind = Token::Kind::LeftParen;  token.text = "("; break;
             case ')': token.kind = Token::Kind::RightParen; token.text = ")"; break;
+            case '[': token.kind = Token::Kind::LeftBracket;  token.text = "["; break;
+            case ']': token.kind = Token::Kind::RightBracket; token.text = "]"; break;
             case ',': token.kind = Token::Kind::Comma;      token.text = ","; break;
             case ';': token.kind = Token::Kind::Semicolon;  token.text = ";"; break;
             case '+': case '-': case '*': case '/': case '^':
@@ -514,21 +523,65 @@ struct Parser
             if (token.kind == Token::Kind::Identifier && lexer.peek().kind == Token::Kind::LeftParen)
                 return parse_call(token.text);
 
+            const string name = lexer.peek().kind == Token::Kind::LeftBracket ? parse_time_index(token.text) : token.text;
+
             for (const auto& named_column : input_columns)
-                if (named_column.first == token.text)
+                if (named_column.first == name)
                     return make_variable(ExpressionOp::Kind::PushInput, named_column.second);
 
             for (const auto& named_column : output_columns)
-                if (named_column.first == token.text)
+                if (named_column.first == name)
                     return make_variable(ExpressionOp::Kind::PushOutput, named_column.second);
 
             throw runtime_error(format("ExpressionParser: unknown identifier '{}' "
                                        "(not a registered input, output, or supported function)",
-                                       token.text));
+                                       name));
         }
 
         throw runtime_error(format("ExpressionParser: unexpected token '{}' at position {}",
                                    token.text, token.position));
+    }
+
+    // x[t] is the newest step of input x in a forecasting window (x_lag<p-1>) and x[t-k] the one k steps
+    // before it; y[t+k] is target y forecast k steps ahead (y_ahead_t<k>).
+    string parse_time_index(const string& name)
+    {
+        lexer.consume();
+
+        const Token& time = lexer.consume();
+
+        throw_if(time.kind != Token::Kind::Identifier || time.text != "t",
+                 format("ExpressionParser: the time index of '{}' must start with t, as in {}[t-1]", name, name));
+
+        Index offset = 0;
+
+        if (const Token& sign = lexer.peek(); sign.kind == Token::Kind::Operator && (sign.text == "+" || sign.text == "-"))
+        {
+            lexer.consume();
+
+            const Token& steps = lexer.consume();
+
+            throw_if(steps.kind != Token::Kind::Number || steps.number < 1.0f || steps.number != floor(steps.number)
+                  || steps.number > float(numeric_limits<int>::max()),
+                     format("ExpressionParser: the time index of '{}' needs a whole number of steps", name));
+
+            offset = sign.text == "+" ? Index(steps.number) : -Index(steps.number);
+        }
+
+        throw_if(lexer.consume().kind != Token::Kind::RightBracket,
+                 format("ExpressionParser: expected ']' after the time index of '{}'", name));
+
+        if (offset > 0) return name + "_ahead_t" + to_string(offset);
+
+        Index newest_lag = -1;
+
+        while (has_column(input_columns, name + "_lag" + to_string(newest_lag + 1)))
+            newest_lag++;
+
+        throw_if(newest_lag + offset < 0,
+                 format("ExpressionParser: '{}[t{}]' is not in the input window", name, offset == 0 ? "" : to_string(offset)));
+
+        return name + "_lag" + to_string(newest_lag + offset);
     }
 
     ExpressionNodePtr parse_call(const string& name)
@@ -1292,6 +1345,73 @@ vector<string> split_expression_list(const string& expression)
             start = token.position + 1;
         }
     return members;
+}
+
+
+// A bare target forecast at several steps (y for y_ahead_t1 ... y_ahead_tf) gives one expression per
+// step, y[t+1] ... y[t+f]. Nothing is returned when no such target appears, or when the expression
+// cannot be read, which compile_expression then reports.
+vector<string> expand_forecast_steps(const string& expression, const Network* network)
+{
+    throw_if(!network, "The neural network has not been set.");
+
+    vector<Token> tokens;
+
+    try
+    {
+        tokens = Lexer(expression).tokens;
+    }
+    catch (const runtime_error&)
+    {
+        return {};
+    }
+
+    const vector<pair<string, Index>> inputs = get_variable_columns(network->get_input_variables());
+    const vector<pair<string, Index>> outputs = get_variable_columns(network->get_output_variables());
+
+    vector<size_t> insertions;
+    Index steps = 0;
+
+    for (size_t i = 0; i + 1 < tokens.size(); i++)
+    {
+        const Token& token = tokens[i];
+        const Token& next = tokens[i + 1];
+
+        if ((token.kind != Token::Kind::Identifier && token.kind != Token::Kind::QuotedIdentifier)
+         || next.kind == Token::Kind::LeftParen || next.kind == Token::Kind::LeftBracket
+         || has_column(inputs, token.text) || has_column(outputs, token.text))
+            continue;
+
+        Index token_steps = 0;
+
+        while (has_column(outputs, token.text + "_ahead_t" + to_string(token_steps + 1)))
+            token_steps++;
+
+        if (token_steps == 0) continue;
+
+        steps = max(steps, token_steps);
+
+        size_t end = next.position;
+
+        while (end > token.position && isspace(static_cast<unsigned char>(expression[end - 1])))
+            end--;
+
+        insertions.push_back(end);
+    }
+
+    vector<string> expanded;
+
+    for (Index step = 1; step <= steps; step++)
+    {
+        string text = expression;
+
+        for (const size_t position : views::reverse(insertions))
+            text.insert(position, "[t+" + to_string(step) + "]");
+
+        expanded.push_back(move(text));
+    }
+
+    return expanded;
 }
 
 

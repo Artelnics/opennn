@@ -55,6 +55,24 @@ vector<Index> get_group_members(const string& expression, const Network* network
     return members;
 }
 
+
+// In a linear expression of several inputs, the inputs the domain fixes, such as the past steps of a
+// forecasting window, count as constants, so a rate limit like x[t] - x[t-1] bounds x[t].
+pair<vector<pair<Index, float>>, float> fold_fixed_inputs(const CompiledExpression& expression,
+                                                          const pair<VectorR, VectorR>& domain)
+{
+    vector<pair<Index, float>> free_terms;
+    float constant = expression.linear_constant;
+
+    for (const auto& [column, coefficient] : expression.linear_input_terms)
+        if (expression.linear_input_terms.size() > 1 && domain.first(column) == domain.second(column))
+            constant += coefficient*domain.first(column);
+        else
+            free_terms.emplace_back(column, coefficient);
+
+    return {free_terms, constant};
+}
+
 }
 
 
@@ -175,7 +193,9 @@ bool ResponseOptimization::is_within_bounds(const pair<float, float>& bounds, co
 
 pair<VectorR, VectorR> ResponseOptimization::calculate_domain()
 {
-    pair<VectorR, VectorR> domain = get_unconstrained_domain();
+    const pair<VectorR, VectorR> unconstrained_domain = get_unconstrained_domain();
+
+    pair<VectorR, VectorR> domain = unconstrained_domain;
 
     for (const Constraint& constraint : constraints)
     {
@@ -193,18 +213,20 @@ pair<VectorR, VectorR> ResponseOptimization::calculate_domain()
         }
         else if (constraint.condition != Condition::Integer && constraint.condition != Condition::AllowedSet
               && !is_output_coupled(expression)
-              && expression.linearity == ExpressionLinearity::Linear
-              && expression.linear_input_terms.size() == 1
-              && abs(expression.linear_input_terms.front().second) > EPSILON)
+              && expression.linearity == ExpressionLinearity::Linear)
         {
-            const float coefficient = expression.linear_input_terms.front().second;
+            const auto [free_terms, constant] = fold_fixed_inputs(expression, unconstrained_domain);
+
+            if (free_terms.size() != 1 || abs(free_terms.front().second) <= EPSILON) continue;
+
+            const float coefficient = free_terms.front().second;
 
             const auto [constraint_lower, constraint_upper] = constraint.get_bounds(numeric_tolerance, constraint_tolerance);
 
-            const float at_lower = (constraint_lower - expression.linear_constant)/coefficient;
-            const float at_upper = (constraint_upper - expression.linear_constant)/coefficient;
+            const float at_lower = (constraint_lower - constant)/coefficient;
+            const float at_upper = (constraint_upper - constant)/coefficient;
 
-            column = expression.linear_input_terms.front().first;
+            column = free_terms.front().first;
             lower = min(at_lower, at_upper);
             upper = max(at_lower, at_upper);
         }
@@ -310,6 +332,7 @@ void ResponseOptimization::set(Network* new_network)
     network = new_network;
     objectives.clear();
     constraints.clear();
+    past_inputs.resize(0);
     input_bounds = {};
     invalid_objective = -1;
     closest_failure = {numeric_limits<double>::infinity(), {}};
@@ -391,6 +414,20 @@ pair<VectorR, VectorR> ResponseOptimization::get_unconstrained_domain() const
     throw_if(!scaling_layer, "The neural network has no scaling layer to take the input domain from.");
 
     pair<VectorR, VectorR> domain{scaling_layer->get_minimums(), scaling_layer->get_maximums()};
+
+    const Shape window = scaling_layer->get_input_shape();
+
+    if (window.get_rank() == 2 && window[0] > 1)
+    {
+        throw_if(past_inputs.size() != (window[0] - 1)*window[1],
+                 "The network reads a window of " + to_string(window[0]) + " time steps. Set the "
+                 + to_string(window[0] - 1) + " steps before the present with set_past_inputs: "
+                 "the optimization changes only the present step.");
+
+        for (VectorR* bound : {&domain.first, &domain.second})
+            *bound = (VectorR(past_inputs.size() + bound->size()) << past_inputs, *bound).finished();
+    }
+
     throw_if(domain.first.size() != network->get_inputs_number() || domain.first.size() == 0
           || domain.second.size() != domain.first.size(), "The input domain has incompatible dimensions.");
     throw_if(!domain.first.allFinite() || !domain.second.allFinite()
@@ -445,6 +482,14 @@ void ResponseOptimization::add_constraint(const string& expression,
         return;
     }
 
+    if (const vector<string> steps = expand_forecast_steps(expression, network); !steps.empty())
+    {
+        for (const string& step : steps)
+            add_constraint(step, condition, values);
+
+        return;
+    }
+
     constraint.equation = compile_expression(expression, network, "Constraint");
     constraint.validate();
 
@@ -474,6 +519,26 @@ void ResponseOptimization::add_constraint(const string& expression,
     }
 
     constraints.push_back(move(constraint));
+}
+
+
+void ResponseOptimization::set_past_inputs(const MatrixR& new_past_inputs)
+{
+    throw_if(!network, "The neural network has not been set.");
+
+    const Layer* scaling_layer = network->get_first(LayerType::Scaling);
+    const Shape window = scaling_layer ? scaling_layer->get_input_shape() : Shape{};
+
+    throw_if(window.get_rank() != 2, "Past inputs apply to networks that read a window of time steps.");
+
+    throw_if(new_past_inputs.rows() != window[0] - 1 || new_past_inputs.cols() != window[1],
+             "The network reads " + to_string(window[0]) + " time steps of " + to_string(window[1])
+             + " inputs. The past inputs are the " + to_string(window[0] - 1)
+             + " steps before the present, oldest first: one row per step and one column per input.");
+
+    throw_if(!new_past_inputs.allFinite(), "The past inputs must be finite.");
+
+    past_inputs = Eigen::Map<const VectorR>(new_past_inputs.data(), new_past_inputs.size());
 }
 
 

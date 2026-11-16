@@ -1447,6 +1447,69 @@ TEST_P(ResponseDriver, ClassifierOptimumMeetsProbabilityAndPredictedClassConstra
 }
 
 
+TEST_P(ResponseDriver, ForecastOptimumMovesOnlyThePresentStep)
+{
+    LevelForecaster setup;
+    Network& network = *setup.network;
+
+    MatrixR falling(2, 2);
+    falling << 2.0f, 3.0f, 4.0f, 6.0f;
+    MatrixR rising(2, 2);
+    rising << 8.0f, 9.0f, 9.0f, 8.0f;
+
+    float optima[2] = {};
+
+    for (const bool is_rising : {false, true})
+    {
+        SCOPED_TRACE(is_rising ? "rising past" : "falling past");
+        const MatrixR& past = is_rising ? rising : falling;
+
+        const auto forecast = [&](const float temperature)
+        {
+            MatrixR window(1, 6);
+            window << past.row(0), past.row(1), 5.0f, temperature;
+            return network.calculate_outputs(window)(0, 0);
+        };
+
+        float low = 0.0f;
+        float high = 10.0f;
+        ASSERT_LT(forecast(low), 0.5f);
+        ASSERT_GT(forecast(high), 0.5f);
+
+        for (Index step = 0; step < 50; step++)
+        {
+            const float middle = 0.5f*(low + high);
+            (forecast(middle) < 0.5f ? low : high) = middle;
+        }
+
+        const unique_ptr<ResponseOptimization> optimization = make_driver(GetParam(), &network);
+
+        optimization->set_past_inputs(past);
+        optimization->add_objective("temp_lag2", Sense::Minimize);
+        optimization->add_constraint("level", Condition::GreaterEqual, {0.5f});
+        optimization->add_constraint("level_lag2", Condition::Equal, {5.0f});
+
+        const MatrixR results = optimization->perform_response_optimization();
+
+        ASSERT_EQ(results.rows(), 1);
+        ASSERT_EQ(results.cols(), 7);
+
+        for (Index j = 0; j < 4; j++)
+            EXPECT_EQ(results(0, j), past(j/2, j%2)) << "past input " << j << " moved";
+
+        EXPECT_EQ(results(0, 4), 5.0f);
+        EXPECT_NEAR(results(0, 5), high, 1e-2f)
+            << "the smallest present temperature that lifts the forecast to 0.5 is " << high;
+        EXPECT_GE(results(0, 6), 0.5f - 1e-6f);
+        EXPECT_NEAR(results(0, 6), network.calculate_outputs(MatrixR(results.leftCols(6)))(0, 0), 1e-6f);
+
+        optima[is_rising] = results(0, 5);
+    }
+
+    EXPECT_GT(optima[0] - optima[1], 1.0f) << "after a rising past the forecast needs less present temperature";
+}
+
+
 TEST_P(ResponseDriver, RejectsUndefinedAndOverflowedConstraints)
 {
     for (const bool overflow : {false, true})
@@ -1538,6 +1601,90 @@ TEST(ResponseOptimizationSetup, RebindingClearsCompiledObjectivesAndConstraints)
 
     optimization.set();
     EXPECT_THROW(optimization.perform_response_optimization(), runtime_error);
+}
+
+
+TEST(ResponseOptimizationSetup, ForecastingNetworksTakeThePastStepsAsAMatrix)
+{
+    LevelForecaster setup;
+    RepairProbe probe(setup.network.get());
+
+    EXPECT_THROW(probe.calculate_domain(), runtime_error) << "the past steps were never given";
+    EXPECT_THROW(probe.set_past_inputs(MatrixR::Zero(3, 2)), runtime_error) << "the whole window is not the past";
+    EXPECT_THROW(probe.set_past_inputs(MatrixR::Zero(2, 3)), runtime_error);
+    EXPECT_THROW(probe.set_past_inputs(MatrixR::Constant(2, 2, numeric_limits<float>::quiet_NaN())), runtime_error);
+
+    MatrixR past(2, 2);
+    past << 2.0f, 3.0f, 4.0f, 12.0f;
+    probe.set_past_inputs(past);
+
+    const auto [lower, upper] = probe.calculate_domain();
+
+    ASSERT_EQ(lower.size(), 6);
+
+    for (Index j = 0; j < 4; j++)
+    {
+        EXPECT_EQ(lower(j), past(j/2, j%2)) << "past values stay as given, even 12 above the training maximum of 10";
+        EXPECT_EQ(upper(j), lower(j));
+    }
+
+    EXPECT_TRUE(lower.tail(2).isZero());
+    EXPECT_TRUE((upper.tail(2).array() == 10.0f).all());
+
+    probe.set(setup.network.get());
+    EXPECT_THROW(probe.calculate_domain(), runtime_error) << "rebinding forgets the past";
+
+    MinimalApproximation approximation({"x1"}, {"y"});
+    probe.set(approximation.network.get());
+    EXPECT_THROW(probe.set_past_inputs(MatrixR::Zero(0, 1)), runtime_error);
+}
+
+
+TEST(ResponseOptimizationSetup, ConstraintsOnAMultiStepTargetCoverEveryStep)
+{
+    LevelForecaster setup({"level_ahead_t1", "level_ahead_t2"});
+    RepairProbe probe(setup.network.get());
+
+    probe.add_constraint("level - level[t]", Condition::LessEqual, {0.3f});
+    probe.add_constraint("level[t+2]", Condition::GreaterEqual, {0.1f});
+
+    ASSERT_EQ(probe.constraints.size(), 3u);
+    EXPECT_EQ(probe.constraints[0].equation.text, "level[t+1] - level[t]");
+    EXPECT_EQ(probe.constraints[1].equation.text, "level[t+2] - level[t]");
+    EXPECT_EQ(probe.constraints[0].equation.output_indices, vector<Index>({0}));
+    EXPECT_EQ(probe.constraints[1].equation.output_indices, vector<Index>({1}));
+    EXPECT_EQ(probe.constraints[1].equation.input_indices, vector<Index>({4}));
+    EXPECT_EQ(probe.constraints[2].equation.output_indices, vector<Index>({1}));
+
+    EXPECT_THROW(probe.add_objective("level", Sense::Minimize), runtime_error) << "an objective names one step";
+
+    LevelForecaster uneven({"level_ahead_t1", "level_ahead_t2", "flow_ahead_t1"});
+    RepairProbe uneven_probe(uneven.network.get());
+    EXPECT_THROW(uneven_probe.add_constraint("level + flow", Condition::LessEqual, {1.0f}), runtime_error);
+}
+
+
+TEST(ResponseOptimizationSetup, RateLimitsAgainstThePastNarrowThePresentRange)
+{
+    LevelForecaster setup;
+    RepairProbe probe(setup.network.get());
+
+    MatrixR past(2, 2);
+    past << 2.0f, 3.0f, 4.0f, 6.0f;
+    probe.set_past_inputs(past);
+
+    probe.add_constraint("temp[t] - temp[t-1]", Condition::Between, {-2.0f, 2.0f});
+    probe.add_constraint("level[t] + temp[t]", Condition::LessEqual, {12.0f});
+
+    const auto [lower, upper] = probe.calculate_domain();
+
+    EXPECT_FLOAT_EQ(lower(5), 4.0f) << "temp[t-1] is 6";
+    EXPECT_FLOAT_EQ(upper(5), 8.0f);
+    EXPECT_FLOAT_EQ(lower(4), 0.0f) << "a row with two free inputs is left to the repair";
+    EXPECT_FLOAT_EQ(upper(4), 10.0f);
+
+    probe.add_constraint("temp[t-1]", Condition::LessEqual, {5.0f});
+    EXPECT_THROW(probe.calculate_domain(), runtime_error) << "a bound the past breaks still empties its range";
 }
 
 

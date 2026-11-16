@@ -170,6 +170,36 @@ struct QualityClassifier
 };
 
 
+struct LevelForecaster
+{
+    unique_ptr<ForecastingNetwork> network;
+
+    explicit LevelForecaster(const vector<string>& output_names = {"level"})
+    {
+        network = make_unique<ForecastingNetwork>(Shape{3, 2}, Shape{1}, Shape{Index(output_names.size())});
+
+        network->set_input_variables({Variable("level_lag0", "Input"), Variable("temp_lag0", "Input"),
+                                      Variable("level_lag1", "Input"), Variable("temp_lag1", "Input"),
+                                      Variable("level_lag2", "Input"), Variable("temp_lag2", "Input")});
+
+        vector<Variable> output_variables;
+
+        for (const string& name : output_names)
+            output_variables.emplace_back(name, "Target");
+
+        network->set_output_variables(output_variables);
+
+        static_cast<Scaling*>(network->get_first("Scaling"))->set_descriptives(make_descriptives(2, 0.0f, 10.0f));
+
+        network->set_parameters(VectorR::Zero(network->get_parameters_buffer_size()));
+        network->get_layer(1)->get_parameter_views()[1].as_matrix() << 0.5f, 1.0f;
+        network->get_layer(1)->get_parameter_views()[2].as_matrix() << 0.8f;
+        network->get_layer(2)->get_parameter_views()[1].as_matrix().setOnes();
+        network->mark_parameters_changed();
+    }
+};
+
+
 inline vector<float> scan_categories(Network& network,
                                      const Index numeric_number,
                                      const Index categories_number,

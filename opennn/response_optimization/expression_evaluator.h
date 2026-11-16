@@ -69,6 +69,8 @@ struct CompiledExpression
 
 vector<string> split_expression_list(const string&);
 
+vector<string> expand_forecast_steps(const string&, const Network*);
+
 CompiledExpression compile_expression(const string&,
                                       const vector<pair<string, Index>>&,
                                       const vector<pair<string, Index>>&);

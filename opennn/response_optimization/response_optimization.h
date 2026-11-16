@@ -59,6 +59,8 @@ public:
     void add_objective(const string&, Objective::Sense, float value = 0.0f);
     void add_constraint(const string&, Constraint::Condition, const vector<float>& values = {});
 
+    void set_past_inputs(const MatrixR&);
+
     pair<Index, VectorR> get_advised_point(const MatrixR& results) const;
 
     void set_iterations_number(Index);
@@ -127,6 +129,8 @@ private:
     float get_bound_tolerance(float) const;
 
     bool is_within_bounds(const pair<float, float>&, double) const;
+
+    VectorR past_inputs;
 
     float numeric_tolerance = 1e-6f;
 

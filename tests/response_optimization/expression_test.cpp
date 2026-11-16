@@ -277,6 +277,26 @@ TEST(Expression, QuotedNamesPreservePunctuationAndRemainDistinct)
 }
 
 
+TEST(Expression, TimeIndicesNameTheWindowAndTheForecastSteps)
+{
+    const auto inputs = make_named_columns({"level_lag0", "temp_lag0", "level_lag1", "temp_lag1",
+                                            "level_lag2", "temp_lag2"});
+    const auto outputs = make_named_columns({"level_ahead_t1", "level_ahead_t2"});
+
+    const auto ramp = compile_expression("temp[t] - temp[ t - 1 ]", inputs, outputs);
+    EXPECT_EQ(ramp.linearity, ExpressionLinearity::Linear);
+    EXPECT_NEAR(lookup_coefficient(ramp.linear_input_terms, 5), 1.0f, 1e-6f);
+    EXPECT_NEAR(lookup_coefficient(ramp.linear_input_terms, 3), -1.0f, 1e-6f);
+
+    const auto change = compile_expression("level[t+2] - level[t]", inputs, outputs);
+    EXPECT_EQ(change.output_indices, vector<Index>({1}));
+    EXPECT_EQ(change.input_indices, vector<Index>({4}));
+
+    for (const string& text : {"temp[t-3]", "temp[t+1]", "temp[2]", "temp[t-1.5]", "temp[t+0]", "temp[t", "x[t]"})
+        EXPECT_THROW(compile_expression(text, inputs, outputs), runtime_error) << text;
+}
+
+
 TEST(ConstraintCompilation, CardinalityAcceptsQuotedNamesAndEmbeddedSeparators)
 {
     MinimalApproximation setup({"Flow (m3/s)", "a;b", "a`b"}, {"y"});
