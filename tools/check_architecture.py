@@ -42,7 +42,6 @@ EXCEPTIONS = {
     ("dataset/yolo_dataset.cpp", "network"),
     ("network/back_propagation.cpp", "training"),
     ("network/chat.cpp", "models"),
-    ("network/standard_networks.h", "models"),
 }
 
 

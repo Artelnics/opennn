@@ -6,6 +6,7 @@
 #include "opennn/core/json.h"
 #include "opennn/network/network.h"
 #include "opennn/models/models.h"
+#include "opennn/network/layers/convolutional_layer.h"
 #include "opennn/network/layers/dense_layer.h"
 #include "opennn/network/layers/embedding_layer.h"
 #include "opennn/network/layers/layer.h"
@@ -1388,6 +1389,71 @@ TEST(NetworkTest, ImageClassificationConstructor)
     EXPECT_EQ(network.get_layer(5)->get_name(), "Dense");
     EXPECT_EQ(network.get_layer(5)->get_label(), "classification_layer");
     EXPECT_EQ(network.get_task(), NetworkTask::ImageClassification);
+}
+
+TEST(NetworkTest, ResNet50Constructor)
+{
+    ResNet50 network;
+
+    EXPECT_EQ(network.get_task(), NetworkTask::ImageClassification);
+    EXPECT_EQ(network.get_input_shape(), Shape({224, 224, 3}));
+    EXPECT_EQ(network.get_output_shape(), Shape({1000}));
+
+    // Scaling, stem convolution and pooling, 16 bottleneck blocks of three
+    // convolutions, one projection skip per stage, average pool, flatten and
+    // classifier.
+    EXPECT_EQ(network.get_layers_number(), 58);
+
+    // The trainable parameter count of torchvision.models.resnet50.
+    EXPECT_EQ(network.get_parameters_number(), 25557032);
+
+    EXPECT_EQ(network.get_layer("stem_conv")->get_output_shape(), Shape({112, 112, 64}));
+    EXPECT_EQ(network.get_layer("stem_pool")->get_output_shape(), Shape({56, 56, 64}));
+    EXPECT_EQ(network.get_layer("s0b2_conv3")->get_output_shape(), Shape({56, 56, 256}));
+    EXPECT_EQ(network.get_layer("s1b3_conv3")->get_output_shape(), Shape({28, 28, 512}));
+    EXPECT_EQ(network.get_layer("s2b5_conv3")->get_output_shape(), Shape({14, 14, 1024}));
+    EXPECT_EQ(network.get_layer("s3b2_conv3")->get_output_shape(), Shape({7, 7, 2048}));
+    EXPECT_EQ(network.get_layer("global_avg_pool")->get_output_shape(), Shape({1, 1, 2048}));
+
+    // v1.5: a downsampling block strides its 3x3 convolution, not the 1x1
+    // reduction before it.
+    for (const string prefix : {"s1b0", "s2b0", "s3b0"})
+    {
+        const auto* reduction =
+            dynamic_cast<const Convolutional*>(network.get_layer(prefix + "_conv1").get());
+        const auto* spatial =
+            dynamic_cast<const Convolutional*>(network.get_layer(prefix + "_conv2").get());
+
+        ASSERT_NE(reduction, nullptr);
+        ASSERT_NE(spatial, nullptr);
+        EXPECT_EQ(reduction->get_kernel_height(), 1);
+        EXPECT_EQ(reduction->get_row_stride(), 1);
+        EXPECT_EQ(spatial->get_kernel_height(), 3);
+        EXPECT_EQ(spatial->get_row_stride(), 2);
+        EXPECT_EQ(spatial->get_column_stride(), 2);
+    }
+}
+
+TEST(NetworkTest, ResNet50ClassifiesOtherShapes)
+{
+    const Index classes_number = 10;
+
+    ResNet50 network({32, 32, 3}, {classes_number});
+
+    EXPECT_EQ(network.get_output_shape(), Shape({classes_number}));
+    EXPECT_EQ(network.get_parameters_number(), 25557032 - (1000 - classes_number) * (2048 + 1));
+
+    Tensor4 images(2, 32, 32, 3);
+    images.setRandom();
+
+    const MatrixR outputs = network.calculate_outputs(images);
+
+    ASSERT_EQ(outputs.rows(), 2);
+    ASSERT_EQ(outputs.cols(), classes_number);
+    EXPECT_TRUE(outputs.allFinite());
+
+    for (Index i = 0; i < outputs.rows(); ++i)
+        EXPECT_NEAR(outputs.row(i).sum(), 1.0f, 1.0e-4f);
 }
 
 TEST(NetworkTest, ForwardPropagate)

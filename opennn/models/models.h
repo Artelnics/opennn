@@ -89,6 +89,18 @@ public:
            bool use_bottleneck = false);
 };
 
+// ResNet-50 v1.5, the torchvision resnet50 topology: bottleneck stages
+// [3, 4, 6, 3] at widths [64, 128, 256, 512], each stage's first block
+// striding its 3x3 convolution. ImageNet-1k shapes by default.
+class ResNet50 final : public ResNet
+{
+
+public:
+
+    explicit ResNet50(const Shape& input_shape = {224, 224, 3},
+                      const Shape& output_shape = {1000});
+};
+
 class Yolo : public Network
 {
 public:

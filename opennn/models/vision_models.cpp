@@ -51,14 +51,18 @@ static void bias_v8_class_logits(Network& network)
 unique_ptr<ResNet> ResNet::from_pretrained(
     const filesystem::path& weights_path)
 {
-    auto model = make_unique<ResNet>(
-        Shape{224, 224, 3},
-        vector<Index>{3, 4, 6, 3},
-        Shape{64, 128, 256, 512},
-        Shape{1000},
-        true);
+    auto model = make_unique<ResNet50>();
     model->load_parameters_binary(weights_path);
     return model;
+}
+
+ResNet50::ResNet50(const Shape& input_shape, const Shape& output_shape)
+    : ResNet(input_shape,
+             vector<Index>{3, 4, 6, 3},
+             Shape{64, 128, 256, 512},
+             output_shape,
+             true)
+{
 }
 
 ImageClassificationNetwork::ImageClassificationNetwork(const Shape& input_shape,
