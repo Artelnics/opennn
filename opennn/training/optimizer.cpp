@@ -314,7 +314,6 @@ void Optimizer::setup_batch_pools(BatchPools& pools,
 {
     const int pool_size = get_batch_pool_size(network);
     const auto& config = network.get_config();
-    const bool packed_pool = network.is_gpu() && !can_use_cuda_graph();
 
     auto fill_pool = [&](ThreadSafeQueue<Batch*>& queue,
                          vector<unique_ptr<Batch>>& pool,
@@ -324,7 +323,7 @@ void Optimizer::setup_batch_pools(BatchPools& pools,
         for (int i = 0; i < pool_size; ++i)
         {
             pool.push_back(make_unique<Batch>(batch_size, &dataset, config, prefetch_only));
-            pool.back()->pack_image_input = packed_pool;
+            pool.back()->pack_image_input = network.is_gpu();
             queue.push(pool.back().get());
         }
     };
@@ -357,7 +356,8 @@ void Optimizer::setup_batch_pools(BatchPools& pools,
             const bool grouped_batches =
                 training_batches >= graph_group_size
                 && (dataset.uses_device_residency()
-                    || training_session.fixed_batch()->input.type != Type::BF16);
+                    || (training_session.fixed_batch()->input.type != Type::BF16
+                        && dataset.gpu_input_staging_bytes() == 0));
 
             if (training_batches > 0 && !grouped_batches)
                 training_session.pipelines[1].slots[0] = make_unique<Batch>(training_batch_size, &dataset, config);
@@ -1517,7 +1517,8 @@ struct Optimizer::GraphEpochContext
           device_metrics(training_session.device_metrics),
           compute(device::get_compute_stream()), transfer(device::get_transfer_stream()),
           profile_this(env_flag_enabled("OPENNN_PROFILE")),
-          staged_h2d(!optimizer.loss->get_dataset()->uses_gpu_image_augmentation()
+          // Byte images upload straight from their worker's pinned batch.
+          staged_h2d(optimizer.loss->get_dataset()->gpu_input_staging_bytes() == 0
                      && !optimizer.loss->get_dataset()->is_device_resident()
                      && training_session.fixed_batch()->input.type != Type::BF16),
           resident_gather(optimizer.loss->get_dataset()->can_device_gather(

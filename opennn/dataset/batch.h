@@ -155,8 +155,8 @@ struct Batch
     TensorView target_view_cache;
 
     optional<DeviceGather> device_gather;
-    // Only the eager training staging pool opts in; ordinary batches retain
-    // their FP32 host representation, including CUDA graph staging.
+    // Only CUDA training pools opt in; ordinary batches retain their FP32
+    // host representation.
     bool pack_image_input = false;
     optional<PackedImageInput> packed_image_input;
     Buffer packed_input_staging{Device::CUDA};

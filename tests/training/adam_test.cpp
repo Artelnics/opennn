@@ -599,6 +599,46 @@ TEST_F(AdamTest, PipelinedImageTransfersMatchSynchronizedTraining)
         VectorR(pipelined.get_parameters_map()), 2.0e-5f));
 }
 
+// Graph training uploads cached image bytes from the worker's pinned batch.
+TEST_F(AdamTest, CudaGraphByteImageTrainingMatchesEager)
+{
+    if (!device::has_cuda_device()) GTEST_SKIP() << "No CUDA device.";
+    const filesystem::path root = write_image_classification_dataset();
+    ScopeExit cleanup([&] { remove_image_classification_dataset(root); });
+
+    for (const Type dtype : {Type::FP32, Type::BF16})
+    {
+        if (dtype == Type::BF16 && device::cuda_compute_capability() < 80) continue;
+        SCOPED_TRACE(dtype == Type::BF16 ? "BF16" : "FP32");
+        Configuration::instance().set(Device::CUDA, dtype);
+        ImageDataset dataset(root);
+        dataset.set_sample_roles(SampleRole::Training);
+        ASSERT_TRUE(dataset.supports_byte_inputs());
+        set_seed(47);
+        ImageClassificationNetwork eager(dataset.get_input_shape(), {4, 8, 4}, dataset.get_target_shape());
+        ImageClassificationNetwork graph(dataset.get_input_shape(), {4, 8, 4}, dataset.get_target_shape());
+        graph.set_parameters(VectorR(eager.get_parameters_map()));
+        const auto train = [&](Network& network, bool use_graph)
+        {
+            Training training(&network, &dataset);
+            Optimizer* optimizer = training.get_optimization_algorithm();
+            optimizer->set_batch_size(2);
+            optimizer->set_maximum_epochs(3);
+            optimizer->set_display(false);
+            optimizer->set_shuffle(false);
+            optimizer->set_cuda_graph(use_graph);
+            return training.train();
+        };
+        const TrainingResult expected = train(eager, false);
+        const TrainingResult actual = train(graph, true);
+        ASSERT_EQ(actual.get_epochs_number(), expected.get_epochs_number());
+        EXPECT_TRUE(actual.training_error_history.isApprox(expected.training_error_history, 1.0e-4f));
+        EXPECT_TRUE(logical_parameters_are_approx(
+            eager.get_parameter_specs(), VectorR(eager.get_parameters_map()),
+            VectorR(graph.get_parameters_map()), dtype == Type::BF16 ? 2.0e-4f : 2.0e-5f));
+    }
+}
+
 // The encoder-decoder Transformer's training step must capture into a CUDA
 // graph: an exported valid-length record that took a host round trip
 // (compute_token_valid_lengths D2H + stream sync) once broke every capture
