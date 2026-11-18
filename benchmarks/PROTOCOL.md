@@ -32,7 +32,24 @@ used to calculate an engine ratio. Results from another GPU, CPU, operating
 system, driver or library stack form a new session, even if the benchmark
 arguments are identical.
 
-The families compare OpenNN with PyTorch.
+The families compare OpenNN with PyTorch and, when `--engines` includes it,
+TensorFlow. Every engine runs the same cell; ratios are taken against OpenNN
+within the session.
+
+TensorFlow runs as the Keras documentation runs a model, with no per-workload
+tuning: `model.compile()` with its defaults and `model.fit()` for training,
+the step `model.predict()` compiles for inference (without its host copy of
+every output, which no other engine performs). Keras's own `jit_compile="auto"`
+decides XLA: on for a GPU unless a layer opts out -- the LSTM does, to reach
+cuDNN -- and off on a CPU-only machine; the GPU is hidden for CPU cells. The
+workload stays identical to the other engines: the same topology and
+parameter count, the optimizer hyperparameters of the PyTorch driver, file
+order, whole batches, the same warm-up. GPU memory growth is enabled so the
+whole-device memory reading reflects the workload rather than TensorFlow's
+start-up reservation of the entire card. TensorFlow runs from its own Python
+environment, named by `OPENNN_BENCH_TF_PYTHON`. Record whether its wheel ships
+native kernels for the GPU (`tf_native_kernels`): kernels it lacks are compiled
+from PTX by the driver at start-up, outside any timed window.
 
 ## 2. Repository and results
 
@@ -198,12 +215,20 @@ minus the per-launch baseline.
 CPU memory is peak anonymous resident memory. File-backed pages are recorded
 separately so a memory-mapped dataset is not charged as if it were a private
 heap allocation.
+Every driver prints its anonymous resident memory as
+`baseline_anonymous_rss_mib` at the same point -- engine imported and
+configured, no data loaded, no model built -- and the workload figure is the
+peak minus that baseline. The whole-process peak, which includes the Python
+interpreter and framework where there is one, stays in the artifact.
 
 GPU energy is board power integrated over the engine's timed window. Prefer
 driver-timestamped NVML power samples. If only a slower averaged instrument is
 available, identify it explicitly. Energy is reported only when the timed
 window contains at least fifty 20 ms samples; otherwise it is `null` with an
 explanation, never zero.
+Choose `--epochs`, `--repeats` or `--train-data` so
+every engine's timed window lasts seconds: a window of tenths of a second has
+no energy figure and weighs fixed per-epoch costs above the computation.
 
 CPU energy uses a readable package-level RAPL counter where available. It is a
 different measurement domain from GPU board energy and must be labeled as such.

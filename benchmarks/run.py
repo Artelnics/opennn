@@ -68,18 +68,33 @@ FAMILIES = {
     },
 }
 
+# The Python engines, their driver suffix and the variable naming their
+# interpreter. Each framework may live in its own environment -- TensorFlow and
+# PyTorch pin different CUDA wheels -- so each can name its own interpreter;
+# by default both use the runner's.
+PYTHON_ENGINES = {
+    "pytorch": ("", "OPENNN_BENCH_PYTORCH_PYTHON"),
+    "tensorflow": ("_tf", "OPENNN_BENCH_TF_PYTHON"),
+}
+
+def engine_python(engine: str) -> str:
+    return os.environ.get(PYTHON_ENGINES[engine][1]) or sys.executable
+
 def engine_command(family: str, engine: str) -> list[str]:
-    """OpenNN is a compiled program, PyTorch a script; both take the same tail."""
+    """OpenNN is a compiled program, PyTorch and TensorFlow scripts; all take the same tail."""
     if engine == "opennn":
         path, found = find_binary(f"{family}_opennn")
         if not found:
             raise SystemExit(f"{family}_opennn not built (looked at {path})")
         return [path]
 
-    script = BENCHMARKS / "families" / f"{family}.py"
+    if engine not in PYTHON_ENGINES:
+        raise SystemExit(f"unknown engine {engine!r}: expected opennn, "
+                         + ", ".join(PYTHON_ENGINES))
+    script = BENCHMARKS / "families" / f"{family}{PYTHON_ENGINES[engine][0]}.py"
     if not script.exists():
         raise SystemExit(f"{script} does not exist")
-    return [sys.executable, str(script)]
+    return [engine_python(engine), str(script)]
 
 def engine_arguments(mode: str, data: dict, batch: int, args) -> list[str]:
     """The positional tail both engines share, so neither is special-cased."""
@@ -90,6 +105,48 @@ def engine_arguments(mode: str, data: dict, batch: int, args) -> list[str]:
                 str(batch), *options]
     return [mode, str(data["train"]), str(data.get("test", data["train"])),
             str(args.epochs), str(batch), *options]
+
+def engine_library_path(family: str, engine: str) -> str | None:
+    """Loader path an OpenNN launch needs for cuDNN's own libraries.
+
+    The executable finds libcudnn through its RUNPATH, but cuDNN 9 then loads
+    its engine libraries (libcudnn_engines_precompiled, ...) with dlopen,
+    which does not see the executable's RUNPATH. Without them convolutions
+    and attention find no execution plan at all. The directory the
+    executable's own libcudnn resolves from is therefore added, for OpenNN
+    launches only: the Python engines bring their own cuDNN wheels, and a
+    process-wide path would make them load OpenNN's instead.
+    OPENNN_BENCH_OPENNN_LIBRARY_PATH overrides it; an empty value disables it.
+    """
+    if engine != "opennn":
+        return None
+    explicit = os.environ.get("OPENNN_BENCH_OPENNN_LIBRARY_PATH")
+    if explicit is not None:
+        return explicit or None
+    path, found = find_binary(f"{family}_opennn")
+    if not found:
+        return None
+    try:
+        listing = subprocess.run(["ldd", path], capture_output=True, text=True,
+                                 timeout=30).stdout
+    except (OSError, subprocess.SubprocessError):
+        return None
+    match = re.search(r"libcudnn\.so\.\d+\s+=>\s+(\S+)", listing)
+    return str(Path(match.group(1)).parent) if match else None
+
+def engine_frameworks(engines: list[str]) -> dict:
+    """Framework provenance, each probed in the interpreter its engine actually ran."""
+    versions = framework_versions()
+    for engine in engines:
+        if engine not in PYTHON_ENGINES or engine_python(engine) == sys.executable:
+            continue
+        name = "torch" if engine == "pytorch" else engine
+        probed = framework_versions(engine_python(engine))
+        for key in [k for k in versions if k.startswith(name)]:
+            del versions[key]
+        versions.update({k: v for k, v in probed.items() if k.startswith(name)})
+        versions[f"{name}_python_executable"] = engine_python(engine)
+    return versions
 
 def rungs(spec: str) -> tuple[list[int], bool]:
     """`--batch` in its three forms. Returns the rungs and whether to sweep to OOM."""
@@ -105,7 +162,8 @@ def cpu_pinning(threads: int | None) -> tuple[list[str], dict[str, str], dict]:
     if threads:
         environment = {name: str(threads) for name in
                        ("OMP_NUM_THREADS", "MKL_NUM_THREADS",
-                        "OPENNN_THREADS", "TORCH_NUM_THREADS")}
+                        "OPENNN_THREADS", "TORCH_NUM_THREADS",
+                        "TF_NUM_INTRAOP_THREADS")}
         environment.update({
             "OMP_DYNAMIC": "FALSE",
             "MKL_DYNAMIC": "FALSE",
@@ -170,6 +228,7 @@ def failure_kind(returncode: int, stdout: str, stderr: str) -> str | None:
     allocation_error = re.search(
         r"CUDA out of memory|CUDA error: out of memory|cudaErrorMemoryAllocation|"
         r"CUDA_ERROR_OUT_OF_MEMORY|out of memory[^\n]*cudaMalloc|"
+        r"ResourceExhaustedError|RESOURCE_EXHAUSTED|OOM when allocating|"
         r"std::bad_alloc|bad allocation|DefaultCPUAllocator[^\n]*can't allocate memory|"
         r"(?:^|\n)MemoryError(?::|\s*$)", evidence, re.IGNORECASE)
     return "oom" if fields.get("RESULT") == "OOM" or allocation_error else "error"
@@ -189,7 +248,8 @@ def capacity_summary(launches: list[dict]) -> dict:
 
 def launch(command: list[str], quiet_wait: bool, device: str = "cuda",
            threads: int | None = None,
-           watched_cores: list[int] | None = None) -> dict:
+           watched_cores: list[int] | None = None,
+           library_path: str | None = None) -> dict:
     """One execution, fully instrumented.
 
     The monitor samples for the whole process; energy is integrated only
@@ -212,6 +272,11 @@ def launch(command: list[str], quiet_wait: bool, device: str = "cuda",
     if device != "cuda":
         prefix, extra, pinning = cpu_pinning(threads)
         environment.update(extra)
+
+    if library_path:
+        inherited = environment.get("LD_LIBRARY_PATH")
+        environment["LD_LIBRARY_PATH"] = (f"{library_path}:{inherited}" if inherited
+                                          else library_path)
 
     with Monitor(device=device) as monitor:
         started = time.perf_counter()
@@ -276,6 +341,7 @@ def launch(command: list[str], quiet_wait: bool, device: str = "cuda",
 
     return {
         "command": prefix + command,
+        "library_path": library_path,
         "pinning": pinning,
         "returncode": completed.returncode,
         "wall_seconds": round(wall, 3),
@@ -346,7 +412,8 @@ def main() -> int:
     parser.add_argument("--family", default="dense", choices=sorted(FAMILIES.keys() | SPECIALIZED_FAMILIES.keys()),
                         help="Specialized families expose their own options with --family NAME --help")
     parser.add_argument("--mode", default="train", choices=("train", "infer"))
-    parser.add_argument("--engines", default="opennn,pytorch")
+    parser.add_argument("--engines", default="opennn,pytorch",
+                        help="comma-separated: opennn, pytorch, tensorflow")
     parser.add_argument("--batch", default="8192",
                         help="8192 | 1024,8192 | 1024:OOM")
     parser.add_argument("--precision", default="bf16", choices=("fp32", "bf16", "strict"))
@@ -370,9 +437,16 @@ def main() -> int:
                         help="CPU threads; default is one per physical P-core")
     parser.add_argument("--no-wait", action="store_true",
                         help="skip the cooldown between launches")
+    parser.add_argument("--train-data", default=None,
+                        help="training input in place of the family's default -- e.g. the "
+                             "full HIGGS file, so a GPU dense epoch is long enough to amortize "
+                             "per-epoch work and to sample power. Every engine reads it, and "
+                             "the artifact records its identity")
     args = parser.parse_args()
 
     data = FAMILIES[args.family]["data"](BENCH_DATA)
+    if args.train_data:
+        data["train"] = Path(args.train_data).resolve()
     missing = [str(p) for p in data.values() if not Path(p).exists()]
     if missing:
         raise SystemExit("missing dataset:\n  " + "\n  ".join(missing)
@@ -406,7 +480,8 @@ def main() -> int:
                 outcome = launch(engine_command(args.family, engine)
                                  + engine_arguments(args.mode, data, batch, args),
                                  not args.no_wait, args.device, args.threads,
-                                 watched_cores)
+                                 watched_cores,
+                                 engine_library_path(args.family, engine))
                 outcome.update(engine=engine, batch=batch, round=1)
                 launches.append(outcome)
 
@@ -433,7 +508,8 @@ def main() -> int:
                     outcome = launch(engine_command(args.family, engine)
                                      + engine_arguments(args.mode, data, batch, args),
                                      not args.no_wait, args.device, args.threads,
-                                     watched_cores)
+                                     watched_cores,
+                                     engine_library_path(args.family, engine))
                     outcome.update(engine=engine, batch=batch, round=index + 1)
                     launches.append(outcome)
 
@@ -529,7 +605,7 @@ def main() -> int:
         "git": git,
         "machine": gpu_state(),
         "cpu": cpu_state(),
-        "frameworks": framework_versions(),
+        "frameworks": engine_frameworks(engines),
         "datasets": {name: file_info(Path(path)) for name, path in data.items()},
         "clocks_locked": clocks_locked(),
         "machine_quiet": {"busy_before": round(busy_before, 4),
@@ -564,11 +640,15 @@ def main() -> int:
                 line += " (capacity unknown; diagnostic only)"
         print(line)
 
-    if len(summary) == 2 and all("median_samples_per_sec" in stats for stats in summary.values()):
-        names = list(summary)
-        ratio = (summary[names[0]]["median_samples_per_sec"]
-                 / max(summary[names[1]]["median_samples_per_sec"], 1))
-        print(f"  {names[0]} / {names[1]} = {ratio:.3f}x")
+    # Every engine against the first one listed (OpenNN by default), so a
+    # three-engine cell prints both ratios rather than none.
+    measured = [name for name, stats in summary.items() if "median_samples_per_sec" in stats]
+    if len(measured) >= 2:
+        reference = measured[0]
+        for other in measured[1:]:
+            ratio = (summary[reference]["median_samples_per_sec"]
+                     / max(summary[other]["median_samples_per_sec"], 1))
+            print(f"  {reference} / {other} = {ratio:.3f}x")
 
     if not shape_agrees:
         print("\n  SHAPE GATE FAILED: engines report different tensor shapes --")

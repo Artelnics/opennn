@@ -20,7 +20,7 @@ import numpy as np
 import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
-from common import binary_metrics  # noqa: E402
+from common import binary_metrics, report_anonymous_baseline  # noqa: E402
 
 SEED = 42
 INFER_CAST = os.environ.get("PT_INFER_CAST", "weights")
@@ -151,10 +151,11 @@ def train_like(argv: list[str], mode: str) -> int:
     batches = batches_of(argv[5] if len(argv) > 5 else "1024")
     opts = parse_opts(argv, 6)
 
+    print(f"baseline_rss_mib={resident_mib():.1f}")
+    report_anonymous_baseline()
     x_np, y_np = load_csv(argv[2], "train")
     xt_np, yt_np = load_csv(argv[3], "test")
 
-    print(f"baseline_rss_mib={resident_mib():.1f}")
     print(f"engine=pytorch\nmode={mode}\ndevice={opts['device']}")
     report_blas()
 
@@ -236,8 +237,9 @@ def infer(argv: list[str]) -> int:
     batches = batches_of(argv[4] if len(argv) > 4 else "1024")
     opts = parse_opts(argv, 5)
 
-    x_np, _ = load_csv(argv[2], "test")
     print(f"baseline_rss_mib={resident_mib():.1f}")
+    report_anonymous_baseline()
+    x_np, _ = load_csv(argv[2], "test")
     print(f"engine=pytorch\nmode=infer\ndevice={opts['device']}")
     report_blas()
 
@@ -292,8 +294,9 @@ def capacity(argv: list[str]) -> int:
     batch = int(argv[3]) if len(argv) > 3 else 1024
     opts = parse_opts(argv, 4)
 
-    x_np, y_np = load_csv(argv[2])
     print(f"baseline_rss_mib={resident_mib():.1f}")
+    report_anonymous_baseline()
+    x_np, y_np = load_csv(argv[2])
     print(f"engine=pytorch\nmode=capacity\ndevice={opts['device']}\nbatch={batch}")
     report_blas()
 

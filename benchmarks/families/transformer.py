@@ -38,6 +38,8 @@ import torch
 from torch import nn
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
+from common import report_anonymous_baseline  # noqa: E402
 
 SEED = 42
 VOCAB_CAP = 20_000          # TextDataset's own cap, so both sides agree
@@ -223,6 +225,7 @@ def train_like(argv: list[str], mode: str) -> int:
     opts = parse_opts(argv, 6)
 
     print(f"baseline_rss_mib={resident_mib():.1f}")
+    report_anonymous_baseline()
     print(f"engine=pytorch\nmode={mode}\ndevice={opts['device']}")
     report_blas()
     source, target, vocab, sequence = load_corpus(argv[2])
@@ -282,6 +285,7 @@ def infer(argv: list[str]) -> int:
     opts = parse_opts(argv, 5)
 
     print(f"baseline_rss_mib={resident_mib():.1f}")
+    report_anonymous_baseline()
     print(f"engine=pytorch\nmode=infer\ndevice={opts['device']}")
     report_blas()
     source, target, vocab, sequence = load_corpus(argv[2])
@@ -330,6 +334,7 @@ def capacity(argv: list[str]) -> int:
     opts = parse_opts(argv, 4)
 
     print(f"baseline_rss_mib={resident_mib():.1f}")
+    report_anonymous_baseline()
     print(f"engine=pytorch\nmode=capacity\ndevice={opts['device']}\nbatch={batch}")
     report_blas()
 

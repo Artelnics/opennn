@@ -3,6 +3,9 @@
 
 """Linux/WSL startup protocol v2: launch -> first completed host prediction.
 
+OpenNN C++ against each configured Python baseline: PyTorch, and TensorFlow
+when the configuration has TensorFlow groups.
+
 Fresh processes, warmed filesystem cache, separate reused/empty application
 caches. No in-process inference warm-up. This is a local diagnostic protocol;
 the repository's reference-machine/environmental publication gates still apply.
@@ -15,6 +18,9 @@ from experiment import git_metadata, result_directory
 from application_tables import write_table
 
 FAMILIES = ["dense", "lstm", "cnn", "transformer"]
+PYTHON_ENGINES = ("pytorch", "tensorflow")
+STRIPPED_PREFIXES = ("OPENNN_", "CUDA_", "CUDNN_", "TORCH_", "TRITON_", "MKL_", "OMP_",
+                     "GOMP_", "TF_", "XLA_")
 EXPECTED = {
     "dense": (20353, 2),
     "lstm": (73857, 2),
@@ -71,22 +77,22 @@ def make_cases(config):
     for group in groups:
         if group["device"] not in ("cpu", "cuda") or group["engine"] not in (
             "opennn",
-            "pytorch",
+            *PYTHON_ENGINES,
         ):
             raise ValueError("Unsupported engine/device")
-        if group["engine"] == "pytorch" and not group.get("prefix_args"):
-            raise ValueError("PyTorch baseline must use the Python application")
+        if group["engine"] in PYTHON_ENGINES and not group.get("prefix_args"):
+            raise ValueError("Python baselines must use the Python application")
     for group in groups:
-        if (
-            group["engine"] == "opennn"
-            and sum(
-                g["engine"] == "pytorch" and g["device"] == group["device"]
-                for g in groups
-            )
-            != 1
-        ):
+        if group["engine"] != "opennn":
+            continue
+        baselines = {
+            engine: sum(g["engine"] == engine and g["device"] == group["device"] for g in groups)
+            for engine in PYTHON_ENGINES
+        }
+        if baselines["pytorch"] != 1 or baselines["tensorflow"] > 1:
             raise ValueError(
-                "Each OpenNN device needs exactly one PyTorch Python baseline"
+                "Each OpenNN device needs exactly one PyTorch Python baseline "
+                "and at most one TensorFlow Python baseline"
             )
     cases = []
     for group in config["groups"]:
@@ -118,9 +124,7 @@ def launch(case, out, label, timeout, trace=False):
     cache.mkdir(parents=True, exist_ok=True)
     env = os.environ.copy()
     for key in list(env):
-        if key.startswith(
-            ("OPENNN_", "CUDA_", "CUDNN_", "TORCH_", "TRITON_", "MKL_", "OMP_", "GOMP_")
-        ) or key in ["LD_DEBUG", "LD_PRELOAD"]:
+        if key.startswith(STRIPPED_PREFIXES) or key in ["LD_DEBUG", "LD_PRELOAD"]:
             env.pop(key, None)
     env.update(THREAD_ENV)
     env.update(case.get("env", {}))
@@ -191,9 +195,9 @@ def launch(case, out, label, timeout, trace=False):
             raise ValueError("Shape/parameter gate failed")
         if not math.isfinite(marker["first"]):
             raise ValueError("Nonfinite output")
-        if case["engine"] == "pytorch":
+        if case["engine"] in PYTHON_ENGINES:
             if marker.get("interface") != "python":
-                raise ValueError("Wrong PyTorch interface")
+                raise ValueError("Wrong Python interface")
             if Path(marker["python_prefix"]) != Path(case["binary"]).parent.parent:
                 raise ValueError("Wrong Python environment")
         record.update(
@@ -253,39 +257,45 @@ def summarize(records, cases):
 
 
 def comparisons(rows):
+    """OpenNN against every Python baseline measured on the same cell."""
     answer = []
     for row in rows:
         if row["engine"] != "opennn" or not row["count"]:
             continue
-        peer = next(
-            r
-            for r in rows
-            if r["engine"] == "pytorch"
-            and all(r[k] == row[k] for k in ["device", "family", "precision", "cache"])
-        )
-        if not peer["count"]:
-            continue
-        answer.append(
-            {k: row[k] for k in ["backend", "family", "precision", "cache"]}
-            | {
-                "opennn_ms": row["median_ms"],
-                "pytorch_python_ms": peer["median_ms"],
-                "opennn_percent_of_pytorch": 100 * row["median_ms"] / peer["median_ms"],
-                "pytorch_divided_by_opennn": peer["median_ms"] / row["median_ms"],
-                "opennn_cv_percent": row["cv_percent"],
-                "pytorch_cv_percent": peer["cv_percent"],
-                "opennn_min_ms": row["min_ms"],
-                "opennn_max_ms": row["max_ms"],
-                "pytorch_min_ms": peer["min_ms"],
-                "pytorch_max_ms": peer["max_ms"],
-                "opennn_n": row["count"],
-                "pytorch_n": peer["count"],
-                "variation_assessed": row["variation_assessed"]
-                and peer["variation_assessed"],
-                "variation_over_3_percent": row["variation_over_3_percent"]
-                or peer["variation_over_3_percent"],
-            }
-        )
+        for engine in PYTHON_ENGINES:
+            peer = next(
+                (
+                    r
+                    for r in rows
+                    if r["engine"] == engine
+                    and all(r[k] == row[k] for k in ["device", "family", "precision", "cache"])
+                ),
+                None,
+            )
+            if peer is None or not peer["count"]:
+                continue
+            answer.append(
+                {k: row[k] for k in ["backend", "family", "precision", "cache"]}
+                | {
+                    "baseline": engine,
+                    "opennn_ms": row["median_ms"],
+                    "baseline_python_ms": peer["median_ms"],
+                    "opennn_percent_of_baseline": 100 * row["median_ms"] / peer["median_ms"],
+                    "baseline_divided_by_opennn": peer["median_ms"] / row["median_ms"],
+                    "opennn_cv_percent": row["cv_percent"],
+                    "baseline_cv_percent": peer["cv_percent"],
+                    "opennn_min_ms": row["min_ms"],
+                    "opennn_max_ms": row["max_ms"],
+                    "baseline_min_ms": peer["min_ms"],
+                    "baseline_max_ms": peer["max_ms"],
+                    "opennn_n": row["count"],
+                    "baseline_n": peer["count"],
+                    "variation_assessed": row["variation_assessed"]
+                    and peer["variation_assessed"],
+                    "variation_over_3_percent": row["variation_over_3_percent"]
+                    or peer["variation_over_3_percent"],
+                }
+            )
     return answer
 
 
@@ -348,7 +358,9 @@ def main(argv=None):
         "gpu_before": gpu_snapshot(),
         "compiler": command_output(["g++", "--version"]),
         "between_launches_seconds": 0.2,
-        "interface": "PyTorch Python vs OpenNN C++",
+        "interface": "Python baselines ("
+        + ", ".join(sorted({c["engine"] for c in cases if c["engine"] != "opennn"}))
+        + ") vs OpenNN C++",
         "affinity": sorted(os.sched_getaffinity(0)),
         "threads": THREAD_ENV,
         "rounds": args.rounds,
@@ -433,9 +445,10 @@ def main(argv=None):
             row["family"],
             row["precision"],
             row["cache"],
+            row["baseline"],
             round(row["opennn_ms"], 2),
-            round(row["pytorch_python_ms"], 2),
-            round(row["pytorch_divided_by_opennn"], 2),
+            round(row["baseline_python_ms"], 2),
+            round(row["baseline_divided_by_opennn"], 2),
             flush=True,
         )
 

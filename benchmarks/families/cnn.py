@@ -44,6 +44,8 @@ from torchvision.datasets import ImageFolder
 from torchvision.models import resnet50
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
+from common import report_anonymous_baseline  # noqa: E402
 
 SEED = 42
 WORKERS = int(os.environ.get("PT_WORKERS", "8"))
@@ -206,6 +208,7 @@ def train_like(argv: list[str], mode: str) -> int:
     opts = parse_opts(argv, 6)
 
     print(f"baseline_rss_mib={resident_mib():.1f}")
+    report_anonymous_baseline()
     print(f"engine=pytorch\nmode={mode}\ndevice={opts['device']}")
     report_blas()
     warmup = 1 if mode == "train" else 0
@@ -264,6 +267,7 @@ def infer(argv: list[str]) -> int:
     opts = parse_opts(argv, 5)
 
     print(f"baseline_rss_mib={resident_mib():.1f}")
+    report_anonymous_baseline()
     print(f"engine=pytorch\nmode=infer\ndevice={opts['device']}")
     report_blas()
 
@@ -318,6 +322,7 @@ def capacity(argv: list[str]) -> int:
     opts = parse_opts(argv, 4)
 
     print(f"baseline_rss_mib={resident_mib():.1f}")
+    report_anonymous_baseline()
     print(f"engine=pytorch\nmode=capacity\ndevice={opts['device']}\nbatch={batch}")
     report_blas()
 

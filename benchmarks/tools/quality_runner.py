@@ -29,6 +29,10 @@ from common import BENCHMARKS, cpu_state, find_binary, gpu_state
 from experiment import git_metadata, result_directory
 from quality_data import MODELS, digest, read_array, validate_manifest
 
+ENGINES = ("opennn", "pytorch", "tensorflow")
+ENGINE_NAMES = {"opennn": "OpenNN", "pytorch": "PyTorch", "tensorflow": "TensorFlow"}
+DRIVERS = {"pytorch": "families/quality.py", "tensorflow": "families/quality_tf.py"}
+
 METRICS = {
     "dense": ("accuracy_percent", "higher"),
     "lstm": ("rmse", "lower"),
@@ -111,7 +115,7 @@ def summarize(records):
     rows = []
     for model in MODELS:
         metric, direction = METRICS[model]
-        for engine in ("opennn", "pytorch"):
+        for engine in ENGINES:
             values = [
                 r["metrics"][metric]
                 for r in records
@@ -136,6 +140,7 @@ def summarize(records):
 
 def write_results(out, provenance, records):
     rows = summarize(records)
+    measured = [e for e in ENGINES if any(r["engine"] == e for r in records)]
     result = {
         "schema": "quality-v1",
         "status": "diagnostic",
@@ -158,8 +163,8 @@ def write_results(out, provenance, records):
         "",
         "Diagnostic results. These do not automatically establish parity.",
         "",
-        "| Model | Metric | OpenNN | PyTorch |",
-        "|---|---|---:|---:|",
+        "| Model | Metric | " + " | ".join(ENGINE_NAMES[e] for e in measured) + " |",
+        "|---|---|" + "---:|" * len(measured),
     ]
     for model in MODELS:
         pair = {r["engine"]: r for r in rows if r["model"] == model}
@@ -176,7 +181,9 @@ def write_results(out, provenance, records):
             return f"{row['mean']:.4g}{spread}"
 
         lines.append(
-            f"| {model} | {METRICS[model][0]} | {cell('opennn')} | {cell('pytorch')} |"
+            f"| {model} | {METRICS[model][0]} | "
+            + " | ".join(cell(e) for e in measured)
+            + " |"
         )
     lines.extend(
         [
@@ -214,7 +221,17 @@ def main(argv=None):
     )
     parser.add_argument("--threads", type=int, default=2)
     parser.add_argument(
+        "--engines",
+        default="opennn,pytorch",
+        help="Comma-separated: opennn, pytorch, tensorflow",
+    )
+    parser.add_argument(
         "--python", default=sys.executable, help="PyTorch Python environment"
+    )
+    parser.add_argument(
+        "--tensorflow-python",
+        default=os.environ.get("OPENNN_BENCH_TF_PYTHON", sys.executable),
+        help="TensorFlow Python environment",
     )
     parser.add_argument("--opennn-binary", type=Path)
     parser.add_argument(
@@ -225,9 +242,17 @@ def main(argv=None):
         "--pytorch-library-path",
         help="Optional Linux LD_LIBRARY_PATH for the Python driver",
     )
+    parser.add_argument(
+        "--tensorflow-library-path",
+        help="Optional Linux LD_LIBRARY_PATH for the TensorFlow driver",
+    )
     parser.add_argument("--timeout", type=float, default=86400)
     parser.add_argument("--out", type=Path)
     args = parser.parse_args(argv)
+    engines = [e.strip() for e in args.engines.split(",") if e.strip()]
+    if len(engines) < 2 or len(set(engines)) != len(engines) or "opennn" not in engines \
+            or any(e not in ENGINES for e in engines):
+        parser.error("Engines: OpenNN plus at least one of pytorch, tensorflow, each once")
     seeds = [int(value) for value in args.seeds.split(",")]
     if not seeds or len(set(seeds)) != len(seeds) or min(seeds) < 0:
         parser.error("Seeds must be distinct nonnegative integers")
@@ -269,6 +294,7 @@ def main(argv=None):
             for key in (
                 "OMP_NUM_THREADS",
                 "TORCH_NUM_THREADS",
+                "TF_NUM_INTRAOP_THREADS",
                 "OPENNN_THREADS",
                 "MKL_NUM_THREADS",
             )
@@ -293,7 +319,9 @@ def main(argv=None):
             k: str(v) if isinstance(v, Path) else v for k, v in vars(args).items()
         },
         "opennn_binary_sha256": digest(binary),
+        "engines": engines,
         "pytorch_driver_sha256": digest(BENCHMARKS / "families/quality.py"),
+        "tensorflow_driver_sha256": digest(BENCHMARKS / "families/quality_tf.py"),
         "manifests": {
             m: {"path": str(p.resolve()), "sha256": digest(p), "data": parsed[m]}
             for m, p in manifests.items()
@@ -301,7 +329,7 @@ def main(argv=None):
         "controls": {
             k: env[k]
             for k in env
-            if k.startswith(("OPENNN_", "OMP_", "MKL_", "NVIDIA_", "TORCH_"))
+            if k.startswith(("OPENNN_", "OMP_", "MKL_", "NVIDIA_", "TORCH_", "TF_"))
         },
         "protocol": __doc__,
     }
@@ -309,18 +337,18 @@ def main(argv=None):
     for model in models:
         for round_index, seed in enumerate(seeds):
             pair = []
-            for engine in (
-                ("opennn", "pytorch") if round_index % 2 == 0 else ("pytorch", "opennn")
-            ):
+            shift = round_index % len(engines)
+            for engine in engines[shift:] + engines[:shift]:
                 folder = out / f"{model}-{engine}-seed{seed}"
                 folder.mkdir()
                 rate = args.learning_rate or (
                     0.0001 if model == "transformer" else 0.001
                 )
+                interpreter = args.tensorflow_python if engine == "tensorflow" else args.python
                 command = (
                     [str(binary)]
                     if engine == "opennn"
-                    else [args.python, str(BENCHMARKS / "families/quality.py")]
+                    else [interpreter, str(BENCHMARKS / DRIVERS[engine])]
                 )
                 command += [
                     str(manifests[model].resolve()),
@@ -343,11 +371,11 @@ def main(argv=None):
                 print(model, engine, "seed", seed, "->", folder, flush=True)
                 mark = time.monotonic()
                 child_env = env.copy()
-                library_path = (
-                    args.opennn_library_path
-                    if engine == "opennn"
-                    else args.pytorch_library_path
-                )
+                library_path = {
+                    "opennn": args.opennn_library_path,
+                    "pytorch": args.pytorch_library_path,
+                    "tensorflow": args.tensorflow_library_path,
+                }[engine]
                 if library_path is not None:
                     child_env["LD_LIBRARY_PATH"] = library_path
                 record["library_path"] = child_env.get("LD_LIBRARY_PATH", "")
@@ -383,8 +411,8 @@ def main(argv=None):
                         }.items()
                     ):
                         raise ValueError("Driver work gate failed")
-                    if engine == "pytorch" and driver.get("interface") != "python":
-                        raise ValueError("Wrong PyTorch interface")
+                    if engine != "opennn" and driver.get("interface") != "python":
+                        raise ValueError("Wrong Python interface")
                     record.update(
                         driver=driver,
                         metrics=score_predictions(
@@ -407,7 +435,7 @@ def main(argv=None):
                 write_results(out, provenance, records)
             if (
                 all(r["status"] == "ok" for r in pair)
-                and pair[0]["driver"]["parameters"] != pair[1]["driver"]["parameters"]
+                and len({r["driver"]["parameters"] for r in pair}) != 1
             ):
                 for record in pair:
                     record.update(

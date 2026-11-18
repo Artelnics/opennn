@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
-"""Deployment files for OpenNN applications and standard PyTorch Python installs.
+"""Deployment files for OpenNN applications and standard Python installs (PyTorch, TensorFlow).
 
 Primary: OpenNN executable + exercised native dependency closure; Python script
 + interpreter + complete installed dependency packages + standard library +
@@ -14,7 +14,7 @@ files under one consistent tracing method for both engines.
 import argparse, json, os, re, subprocess, sys, datetime, platform, csv
 import hashlib
 from pathlib import Path
-from application_startup import make_cases, THREAD_ENV, EXPECTED
+from application_startup import make_cases, THREAD_ENV, EXPECTED, PYTHON_ENGINES, STRIPPED_PREFIXES
 from common import cpu_state, gpu_state
 from experiment import git_metadata, result_directory
 from application_tables import write_table
@@ -94,9 +94,7 @@ def run_case(case, out):
     folder.mkdir()
     env = os.environ.copy()
     for key in list(env):
-        if key.startswith(
-            ("OPENNN_", "CUDA_", "CUDNN_", "TORCH_", "TRITON_", "MKL_", "OMP_", "GOMP_")
-        ) or key in ["LD_DEBUG", "LD_PRELOAD"]:
+        if key.startswith(STRIPPED_PREFIXES) or key in ["LD_DEBUG", "LD_PRELOAD"]:
             env.pop(key, None)
     env.update(THREAD_ENV)
     env.update(case.get("env", {}))
@@ -110,7 +108,8 @@ def run_case(case, out):
         case["device"],
         case["precision"],
     ]
-    if case["engine"] == "pytorch":
+    python = case["engine"] in PYTHON_ENGINES
+    if python:
         cmd.append(str(folder / "python-audit"))
     with (folder / "loader.log").open("w") as stream:
         p = subprocess.run(
@@ -127,11 +126,11 @@ def run_case(case, out):
     marker = markers[0]
     if any(marker.get(k) != case[k] for k in ("engine", "device", "precision")):
         raise RuntimeError("Engine/device/precision gate failed")
-    if case["engine"] == "pytorch" and (
+    if python and (
         marker.get("interface") != "python"
         or Path(marker["python_prefix"]) != binary.parent.parent
     ):
-        raise RuntimeError("Expected the configured PyTorch Python environment")
+        raise RuntimeError("Expected the configured Python environment")
     if (marker["parameters"], marker["output_values"]) != EXPECTED[case["family"]]:
         raise RuntimeError("Shape gate failed")
     paths = {binary.resolve()}
@@ -144,7 +143,7 @@ def run_case(case, out):
     installed_extra = set()
     python_runtime = set()
     package_files = set()
-    if case["engine"] == "pytorch":
+    if python:
         audit = folder / "python-audit"
         for line in (audit / "maps.txt").read_text().splitlines():
             parts = line.split(None, 5)
@@ -198,7 +197,7 @@ def run_case(case, out):
         command=cmd,
         executable_sha256=binary_sha256,
         application_sha256=hashlib.sha256(script.read_bytes()).hexdigest()
-        if case["engine"] == "pytorch"
+        if python
         else binary_sha256,
         marker=marker,
         observed_files=manifest(observed),
@@ -213,7 +212,7 @@ def run_case(case, out):
     )
     result["python_packages"] = (
         json.loads((folder / "python-audit/packages.json").read_text())
-        if case["engine"] == "pytorch"
+        if python
         else []
     )
     result["python_package_count"] = len(result["python_packages"])
@@ -268,24 +267,31 @@ def main(argv=None):
     for row in rows:
         if row["engine"] != "opennn":
             continue
-        peer = next(
-            r
-            for r in rows
-            if r["engine"] == "pytorch"
-            and all(r[k] == row[k] for k in ["family", "device", "precision"])
-        )
-        pairs.append(
-            {k: row[k] for k in ["backend", "family", "precision"]}
-            | {
-                "opennn_MB": row["deployment_bytes"] / 1e6,
-                "pytorch_python_MB": peer["deployment_bytes"] / 1e6,
-                "opennn_percent_of_pytorch": 100
-                * row["deployment_bytes"]
-                / peer["deployment_bytes"],
-                "opennn_observed_MB": row["observed_bytes"] / 1e6,
-                "pytorch_observed_MB": peer["observed_bytes"] / 1e6,
-            }
-        )
+        for engine in PYTHON_ENGINES:
+            peer = next(
+                (
+                    r
+                    for r in rows
+                    if r["engine"] == engine
+                    and all(r[k] == row[k] for k in ["family", "device", "precision"])
+                ),
+                None,
+            )
+            if peer is None:
+                continue
+            pairs.append(
+                {k: row[k] for k in ["backend", "family", "precision"]}
+                | {
+                    "baseline": engine,
+                    "opennn_MB": row["deployment_bytes"] / 1e6,
+                    "baseline_python_MB": peer["deployment_bytes"] / 1e6,
+                    "opennn_percent_of_baseline": 100
+                    * row["deployment_bytes"]
+                    / peer["deployment_bytes"],
+                    "opennn_observed_MB": row["observed_bytes"] / 1e6,
+                    "baseline_observed_MB": peer["observed_bytes"] / 1e6,
+                }
+            )
     with (out / "comparisons.csv").open("w", newline="") as stream:
         writer = csv.DictWriter(stream, list(pairs[0]))
         writer.writeheader()

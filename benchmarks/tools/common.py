@@ -569,6 +569,31 @@ HOST_MEMORY_METRIC = "process_peak_anonymous_rss"
 
 HOST_BASELINE_FIELD = "baseline_anonymous_rss_mib"
 
+def anonymous_rss_mib() -> float | None:
+    """This process's anonymous resident memory in MiB -- the reading
+    Monitor.watch_rss polls for a CPU launch -- or None where procfs lacks it."""
+    try:
+        with open("/proc/self/status") as handle:
+            for line in handle:
+                if line.startswith("RssAnon:"):
+                    return float(line.split()[1]) / 1024.0
+    except (OSError, ValueError, IndexError):
+        pass
+    return None
+
+def report_anonymous_baseline() -> None:
+    """Print HOST_BASELINE_FIELD for run.py to subtract from a CPU launch's peak.
+
+    Every driver calls it at the same point: the framework imported and
+    configured, no data loaded and no model built. The workload figure is then
+    the memory the data, model and run add, and the peak stays recorded whole.
+    Nothing is printed where the reading is unavailable, so run.py reports the
+    whole-process peak with its note rather than subtracting a made-up zero.
+    """
+    value = anonymous_rss_mib()
+    if value is not None:
+        print(f"{HOST_BASELINE_FIELD}={value:.1f}", flush=True)
+
 class Monitor:
     """Sample memory and power during the same execution as throughput."""
 

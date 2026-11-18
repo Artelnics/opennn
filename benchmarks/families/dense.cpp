@@ -33,6 +33,8 @@
 #include "opennn/training/adam.h"
 #include "opennn/training/training.h"
 
+#include "../tools/process_memory.h"
+
 using namespace opennn;
 using clock_type = chrono::steady_clock;
 
@@ -156,6 +158,7 @@ int main(int argc, char* argv[])
 
         Configuration::instance().set(options.device, options.precision);
         cout << "baseline_rss_mib=" << resident_mb() << "\n";
+        report_anonymous_baseline();
         cout << "engine=opennn\nmode=" << mode
              << "\ndevice=" << (options.device == Device::CPU ? "cpu" : "cuda") << "\n";
 
@@ -287,6 +290,7 @@ int main(int argc, char* argv[])
 
         Configuration::instance().set(options.device, options.precision);
         cout << "baseline_rss_mib=" << resident_mb() << "\n";
+        report_anonymous_baseline();
         cout << "engine=opennn\nmode=infer\ndevice="
              << (options.device == Device::CPU ? "cpu" : "cuda") << "\n";
 
@@ -482,6 +486,7 @@ int main(int argc, char* argv[])
 
         Configuration::instance().set(options.device, options.precision);
         cout << "baseline_rss_mib=" << resident_mb() << "\n";
+        report_anonymous_baseline();
         cout << "engine=opennn\nmode=capacity\ndevice="
              << (options.device == Device::CPU ? "cpu" : "cuda")
              << "\nbatch=" << batch << "\n";

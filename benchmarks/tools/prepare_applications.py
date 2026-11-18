@@ -1,7 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # Copyright (C) 2026 Artificial Intelligence Techniques, S.L. and Roberto López González
 
-"""Build application probes and isolated PyTorch environments on Linux/WSL.
+"""Build application probes and isolated Python environments on Linux/WSL.
+
+PyTorch environments always; TensorFlow environments too with
+--python-engines pytorch,tensorflow, each from its pinned manifest.
 
 Use Python 3.12 with venv support. Builds and downloaded packages stay in a new
 external work directory. The checkout being prepared supplies the native code.
@@ -43,7 +46,17 @@ def main(argv=None):
     parser.add_argument("--jobs", type=int, default=2)
     parser.add_argument("--eigen-source", type=Path)
     parser.add_argument("--cudnn-frontend-source", type=Path)
+    parser.add_argument(
+        "--python-engines",
+        default="pytorch",
+        help="Comma-separated Python baselines: pytorch, tensorflow",
+    )
     args = parser.parse_args(argv)
+    python_engines = args.python_engines.split(",")
+    if "pytorch" not in python_engines or any(
+        e not in ("pytorch", "tensorflow") for e in python_engines
+    ):
+        parser.error("Python engines: pytorch, optionally tensorflow")
     if not sys.platform.startswith("linux") or sys.version_info[:2] != (3, 12):
         parser.error("Use Python 3.12 inside Linux/WSL")
     backends = args.backends.split(",")
@@ -135,53 +148,49 @@ def main(argv=None):
             }
         )
     for device in sorted({g["device"] for g in groups}):
-        environment = work / f"python-{device}"
-        python = environment / "bin/python"
-        run([sys.executable, "-m", "venv", environment], work / f"{device}-venv.log")
-        requirements = (
-            ROOT / f"benchmarks/manifests/application-{device}-requirements.txt"
-        )
-        index = "cu130" if device == "cuda" else "cpu"
-        run(
-            [
-                python,
-                "-m",
-                "pip",
-                "install",
-                "--no-compile",
-                "--extra-index-url",
-                f"https://download.pytorch.org/whl/{index}",
-                "-r",
-                requirements,
-            ],
-            work / f"{device}-install.log",
-        )
-        run([python, "-m", "pip", "check"], work / f"{device}-check.log")
-        # This is a newly created, harness-owned environment; the installer is
-        # excluded from the deployed application's declared dependency closure.
-        run(
-            [python, "-m", "pip", "uninstall", "--yes", "pip"],
-            work / f"{device}-remove-installer.log",
-        )
-        groups.append(
-            {
-                "engine": "pytorch",
-                "backend": device,
-                "device": device,
-                "binary_pattern": str(python),
-                "prefix_args": [
-                    "-I",
-                    str(ROOT / "benchmarks/families/application.py"),
-                    "{family}",
-                ],
-                "env": {"LD_LIBRARY_PATH": "", "PYTHONNOUSERSITE": "1"},
-            }
-        )
+        for engine in python_engines:
+            tag = "" if engine == "pytorch" else "tf-"
+            environment = work / f"python-{tag}{device}"
+            python = environment / "bin/python"
+            run([sys.executable, "-m", "venv", environment], work / f"{tag}{device}-venv.log")
+            requirements = (
+                ROOT / f"benchmarks/manifests/application-{tag}{device}-requirements.txt"
+            )
+            install = [python, "-m", "pip", "install", "--no-compile"]
+            if engine == "pytorch":
+                index = "cu130" if device == "cuda" else "cpu"
+                install += ["--extra-index-url", f"https://download.pytorch.org/whl/{index}"]
+            run([*install, "-r", requirements], work / f"{tag}{device}-install.log")
+            run([python, "-m", "pip", "check"], work / f"{tag}{device}-check.log")
+            # This is a newly created, harness-owned environment; the installer is
+            # excluded from the deployed application's declared dependency closure.
+            run(
+                [python, "-m", "pip", "uninstall", "--yes", "pip"],
+                work / f"{tag}{device}-remove-installer.log",
+            )
+            application = "application.py" if engine == "pytorch" else "application_tf.py"
+            groups.append(
+                {
+                    "engine": engine,
+                    "backend": device,
+                    "device": device,
+                    "binary_pattern": str(python),
+                    "prefix_args": [
+                        "-I",
+                        str(ROOT / f"benchmarks/families/{application}"),
+                        "{family}",
+                    ],
+                    "env": {"LD_LIBRARY_PATH": "", "PYTHONNOUSERSITE": "1"},
+                }
+            )
     config = {
         "groups": groups,
-        "interface": "OpenNN C++ vs PyTorch Python API",
+        "interface": "OpenNN C++ vs Python APIs (" + ", ".join(python_engines) + ")",
         "source": git_metadata(),
         "application_sha256": digest(ROOT / "benchmarks/families/application.py"),
+        "tensorflow_application_sha256": digest(
+            ROOT / "benchmarks/families/application_tf.py"
+        ),
         "build_arguments": {
             k: str(v) if isinstance(v, Path) else v for k, v in vars(args).items()
         },
