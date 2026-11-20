@@ -12,6 +12,8 @@ endif()
 option(OpenNN_ENABLE_LTO "Enable interprocedural optimization/LTO for release builds"
     ${_opennn_lto_default})
 option(OpenNN_ENABLE_MKL "Use Intel MKL as Eigen BLAS/LAPACK backend" OFF)
+option(OpenNN_FETCH_MKL
+    "Download Intel's static MKL when OpenNN_ENABLE_MKL is ON and no installation is given (Linux x86-64)" ON)
 set(OpenNN_CPU_TARGET "NATIVE" CACHE STRING
     "CPU instruction target: NATIVE preserves maximum local throughput; PORTABLE builds distributable binaries")
 set_property(CACHE OpenNN_CPU_TARGET PROPERTY STRINGS NATIVE PORTABLE)
@@ -21,12 +23,14 @@ if(NOT OpenNN_CPU_TARGET STREQUAL "NATIVE" AND NOT OpenNN_CPU_TARGET STREQUAL "P
     message(FATAL_ERROR "OpenNN_CPU_TARGET must be NATIVE or PORTABLE, not '${OpenNN_CPU_TARGET}'")
 endif()
 set(OpenNN_MKL_ROOT "" CACHE PATH "Intel MKL root prefix (e.g. /opt/intel/oneapi/mkl/latest or extracted /usr prefix)")
-# AUTO enables optimized recurrent primitives when oneDNN is installed.
-# ON requires it; OFF uses the built-in implementation without searching.
+# AUTO uses an installed oneDNN, otherwise builds it from source where that is
+# supported (x86-64, not macOS), otherwise the built-in implementation.
+# ON fails instead of falling back; OFF uses the built-in implementation.
 set(OpenNN_ENABLE_ONEDNN "AUTO" CACHE STRING
     "Use oneDNN optimized CPU recurrent primitives: AUTO, ON or OFF")
 set_property(CACHE OpenNN_ENABLE_ONEDNN PROPERTY STRINGS AUTO ON OFF)
 set(OpenNN_ONEDNN_ROOT "" CACHE PATH "oneDNN prefix (for example /usr or an extracted package root/usr)")
+option(OpenNN_FETCH_ONEDNN "Download and build oneDNN when no installation is found" ON)
 option(OpenNN_DISABLE_CUDA "Disable CUDA even if the toolkit is found" OFF)
 option(OpenNN_REQUIRE_CUDA "Fail configuration unless CUDA is enabled" OFF)
 
@@ -278,6 +282,8 @@ else()
     endif()
 endif()
 
+set(_opennn_mkl_bundled OFF)
+
 if(OpenNN_ENABLE_MKL)
 
     if(NOT OpenNN_MKL_ROOT)
@@ -288,20 +294,46 @@ if(OpenNN_ENABLE_MKL)
         endif()
     endif()
 
-    if(NOT DEFINED MKL_LINK)
-        set(MKL_LINK sdl)
+    # Given no installation, Linux x86-64 downloads the static libraries; the
+    # MSVC and MinGW cases still need one (MKL has no MSVC OpenMP layer, and
+    # its Windows archives are MSVC-built).
+    if(NOT OpenNN_MKL_ROOT AND OpenNN_FETCH_MKL
+       AND CMAKE_SYSTEM_NAME STREQUAL "Linux"
+       AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|AMD64|amd64)$")
+        include(OpenNNFetchMKL)
+        target_compile_definitions(opennn PUBLIC EIGEN_USE_MKL_ALL)
+        target_link_libraries(opennn PUBLIC
+            $<BUILD_INTERFACE:opennn_mkl>
+            $<INSTALL_INTERFACE:OpenNN::mkl>)
+        set(_opennn_mkl_bundled ON)
+        message(STATUS
+            "OpenNN: MKL ${OpenNN_MKL_VERSION} backend, static with GNU OpenMP threading (downloaded)")
+    else()
+        if(NOT DEFINED MKL_LINK)
+            set(MKL_LINK sdl)
+        endif()
+        if(NOT DEFINED MKL_INTERFACE)
+            set(MKL_INTERFACE lp64)
+        endif()
+        find_package(MKL CONFIG REQUIRED
+            HINTS "${OpenNN_MKL_ROOT}" "${OpenNN_MKL_ROOT}/lib/cmake/mkl")
+        target_compile_definitions(opennn PUBLIC EIGEN_USE_MKL_ALL)
+        target_link_libraries(opennn PUBLIC MKL::MKL)
+        message(STATUS "OpenNN: MKL backend via MKLConfig.cmake (${MKL_ROOT})")
     endif()
-    if(NOT DEFINED MKL_INTERFACE)
-        set(MKL_INTERFACE lp64)
-    endif()
-    find_package(MKL CONFIG REQUIRED
-        HINTS "${OpenNN_MKL_ROOT}" "${OpenNN_MKL_ROOT}/lib/cmake/mkl")
-    target_compile_definitions(opennn PUBLIC EIGEN_USE_MKL_ALL)
-    target_link_libraries(opennn PUBLIC MKL::MKL)
-    message(STATUS "OpenNN: MKL backend via MKLConfig.cmake (${MKL_ROOT})")
 endif()
 
 set(OpenNN_ONEDNN_FOUND OFF CACHE INTERNAL "oneDNN was found and linked")
+set(_opennn_onednn_system OFF)
+set(_opennn_onednn_bundled OFF)
+
+# oneDNN builds and runs well on x86-64. macOS keeps the built-in path: its
+# OpenMP is a separate libomp and its CPUs are mostly ARM, where oneDNN's
+# recurrent kernels have not been measured.
+set(_opennn_onednn_fetchable OFF)
+if(NOT APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|AMD64|amd64|x64)$")
+    set(_opennn_onednn_fetchable ON)
+endif()
 
 if(NOT OpenNN_ENABLE_ONEDNN STREQUAL "OFF")
     find_package(OpenNNOneDNN QUIET)
@@ -311,6 +343,7 @@ if(NOT OpenNN_ENABLE_ONEDNN STREQUAL "OFF")
         target_include_directories(opennn SYSTEM PRIVATE "${OpenNN_ONEDNN_INCLUDE_DIR}")
         target_link_libraries(opennn PUBLIC OpenNN::oneDNN)
         set(OpenNN_ONEDNN_FOUND ON CACHE INTERNAL "oneDNN was found and linked")
+        set(_opennn_onednn_system ON)
         message(STATUS "OpenNN: oneDNN CPU recurrent backend (${OpenNN_ONEDNN_LIBRARY})")
 
         # Two OpenMP runtimes in one process is a different measurement, not a
@@ -330,10 +363,23 @@ if(NOT OpenNN_ENABLE_ONEDNN STREQUAL "OFF")
                     "OpenMP build of oneDNN, or set OpenNN_ONEDNN_ROOT to one.")
             endif()
         endif()
+    elseif(OpenNN_FETCH_ONEDNN AND _opennn_onednn_fetchable)
+        include(OpenNNFetchOneDNN)
+        target_compile_definitions(opennn PRIVATE OPENNN_HAS_ONEDNN)
+        target_include_directories(opennn SYSTEM PRIVATE "${_opennn_onednn_include_dir}")
+        add_dependencies(opennn opennn_onednn_ep)
+        target_link_libraries(opennn PUBLIC
+            $<BUILD_INTERFACE:opennn_onednn>
+            $<INSTALL_INTERFACE:OpenNN::dnnl>)
+        set(OpenNN_ONEDNN_FOUND ON CACHE INTERNAL "oneDNN was found and linked")
+        set(_opennn_onednn_bundled ON)
+        message(STATUS
+            "OpenNN: oneDNN ${OpenNN_ONEDNN_VERSION} CPU recurrent backend, built from source")
     elseif(OpenNN_ENABLE_ONEDNN STREQUAL "ON")
         message(FATAL_ERROR
-            "OpenNN_ENABLE_ONEDNN=ON but oneDNN headers or library were not found. "
-            "Set OpenNN_ONEDNN_ROOT to the oneDNN installation prefix.")
+            "OpenNN_ENABLE_ONEDNN=ON but oneDNN was not found and cannot be built here "
+            "(OpenNN_FETCH_ONEDNN=${OpenNN_FETCH_ONEDNN}, ${CMAKE_SYSTEM_NAME} "
+            "${CMAKE_SYSTEM_PROCESSOR}). Set OpenNN_ONEDNN_ROOT to the oneDNN installation prefix.")
     else()
         message(STATUS
             "OpenNN: oneDNN not found; CPU recurrent layers use the built-in path. "
@@ -532,8 +578,21 @@ if(OpenNN_INSTALL)
             ${cudnn_frontend_SOURCE_DIR}/THIRD_PARTY_LICENSES.txt
             DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/OpenNN/cudnn-frontend)
     endif()
+    # Which CPU backends the package carries: bundled, system or off.
+    set(_opennn_onednn_kind off)
+    if(_opennn_onednn_bundled)
+        set(_opennn_onednn_kind bundled)
+    elseif(_opennn_onednn_system)
+        set(_opennn_onednn_kind system)
+    endif()
+    set(_opennn_mkl_kind off)
+    if(_opennn_mkl_bundled)
+        set(_opennn_mkl_kind bundled)
+    elseif(OpenNN_ENABLE_MKL)
+        set(_opennn_mkl_kind system)
+    endif()
     file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/build-info-$<CONFIG>.json"
-        CONTENT "{\n  \"version\": \"${PROJECT_VERSION}\",\n  \"compiler\": \"${CMAKE_CXX_COMPILER_ID}\",\n  \"compiler_version\": \"${CMAKE_CXX_COMPILER_VERSION}\",\n  \"configuration\": \"$<CONFIG>\",\n  \"cpu_target\": \"${OpenNN_CPU_TARGET}\",\n  \"cuda\": \"${OPENNN_HAS_CUDA}\",\n  \"shared\": \"${OpenNN_BUILD_SHARED}\",\n  \"lto\": \"${OpenNN_ENABLE_LTO}\"\n}\n")
+        CONTENT "{\n  \"version\": \"${PROJECT_VERSION}\",\n  \"compiler\": \"${CMAKE_CXX_COMPILER_ID}\",\n  \"compiler_version\": \"${CMAKE_CXX_COMPILER_VERSION}\",\n  \"configuration\": \"$<CONFIG>\",\n  \"cpu_target\": \"${OpenNN_CPU_TARGET}\",\n  \"cuda\": \"${OPENNN_HAS_CUDA}\",\n  \"shared\": \"${OpenNN_BUILD_SHARED}\",\n  \"lto\": \"${OpenNN_ENABLE_LTO}\",\n  \"onednn\": \"${_opennn_onednn_kind}\",\n  \"mkl\": \"${_opennn_mkl_kind}\"\n}\n")
     install(FILES "${CMAKE_CURRENT_BINARY_DIR}/build-info-$<CONFIG>.json"
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/OpenNN RENAME build-info.json)
 
@@ -564,6 +623,34 @@ if(OpenNN_INSTALL)
     install(FILES ${_opennn_jpeg_library}
         DESTINATION ${CMAKE_INSTALL_LIBDIR})
     get_filename_component(_opennn_jpeg_filename "${_opennn_jpeg_library}" NAME)
+
+    # A static opennn carries the calls into the oneDNN it built, so the archive
+    # is installed too -- renamed, so it cannot shadow a system libdnnl.
+    set(_opennn_dnnl_filename
+        ${CMAKE_STATIC_LIBRARY_PREFIX}opennn_dnnl${CMAKE_STATIC_LIBRARY_SUFFIX})
+    if(_opennn_onednn_bundled)
+        install(FILES ${_opennn_onednn_library}
+            DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            RENAME ${_opennn_dnnl_filename})
+        install(FILES
+            ${_opennn_onednn_source_dir}/LICENSE
+            ${_opennn_onednn_source_dir}/THIRD-PARTY-PROGRAMS
+            DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/OpenNN/oneDNN)
+    endif()
+
+    # Downloaded MKL goes with a static opennn for the same reason, in its own
+    # directories so it cannot shadow an installed MKL. Its public headers are
+    # needed too: EIGEN_USE_MKL_ALL makes Eigen include mkl.h.
+    if(_opennn_mkl_bundled)
+        foreach(part ${_opennn_mkl_parts})
+            install(FILES ${_opennn_mkl_lib_dir}/libmkl_${part}.a
+                DESTINATION ${CMAKE_INSTALL_LIBDIR}/opennn-mkl)
+        endforeach()
+        install(DIRECTORY ${_opennn_mkl_include_dir}/
+            DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/opennn-mkl)
+        install(FILES ${_opennn_mkl_license}
+            DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/OpenNN/oneMKL)
+    endif()
 
     install(EXPORT OpenNNTargets
         FILE OpenNNTargets.cmake

@@ -50,7 +50,11 @@ prompt. OpenMP is required. Dependency versions/licences are in
   linkage and packaging. See [CMakeLists.txt](CMakeLists.txt) for all options.
 - Use `OpenNN_CPU_TARGET=PORTABLE` for distribution; it removes host ISA flags,
   not algorithm or thread settings. Disable LTO across incompatible toolchains.
-- MKL is opt-in; oneDNN is detected by default. Nonstandard installations use
+- MKL is opt-in (`OpenNN_ENABLE_MKL=ON`); given no installation, Linux x86-64
+  downloads Intel's static libraries (`OpenNN_FETCH_MKL=OFF` disables it).
+  oneDNN is detected by default and, when absent on x86-64 outside
+  macOS, built from source (`OpenNN_FETCH_ONEDNN=OFF` disables the download);
+  without it the CPU LSTM runs the much slower built-in path. Nonstandard installations use
   `OpenNN_MKL_ROOT`, `OpenNN_ONEDNN_ROOT`, `CMAKE_CUDA_COMPILER`,
   `CMAKE_CUDA_ARCHITECTURES`, `CUDNN_INCLUDE_DIR` and `CUDNN_LIBRARY`.
   CUDA/cuDNN runtime libraries must be on the runtime search path.

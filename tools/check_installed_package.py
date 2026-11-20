@@ -30,6 +30,10 @@ def main():
         raise ValueError("Installed binary package unexpectedly contains example assets")
     if (args.prefix / "include/eigen3/Eigen").exists():
         required += ["Eigen/" + name for name in ("COPYING.MPL2", "COPYING.APACHE", "COPYING.BSD", "COPYING.MINPACK", "COPYING.README")]
+    if metadata.get("onednn") == "bundled":
+        required += ["oneDNN/LICENSE", "oneDNN/THIRD-PARTY-PROGRAMS"]
+    if metadata.get("mkl") == "bundled":
+        required += ["oneMKL/LICENSE.txt"]
     if metadata["cuda"] == "ON":
         required += ["cudnn-frontend/" + name for name in ("LICENSE.txt", "LICENSE-MIT.txt", "LICENSING.md", "NOTICE", "THIRD_PARTY_LICENSES.txt")]
     missing = [name for name in required if not (docs / name).is_file() or (docs / name).stat().st_size == 0]

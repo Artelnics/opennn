@@ -17,13 +17,45 @@ if(NOT TARGET OpenNN::jpeg)
     unset(_opennn_jpeg_include)
 endif()
 
+if("@_opennn_onednn_bundled@" AND NOT TARGET OpenNN::dnnl)
+    set_and_check(_opennn_dnnl_library "@PACKAGE_CMAKE_INSTALL_LIBDIR@/@_opennn_dnnl_filename@")
+    add_library(OpenNN::dnnl STATIC IMPORTED)
+    set_target_properties(OpenNN::dnnl PROPERTIES
+        IMPORTED_LOCATION "${_opennn_dnnl_library}"
+        INTERFACE_LINK_LIBRARIES "Threads::Threads;${CMAKE_DL_LIBS}")
+    unset(_opennn_dnnl_library)
+    find_dependency(Threads)
+endif()
+
+if("@_opennn_mkl_bundled@" AND NOT TARGET OpenNN::mkl)
+    set_and_check(_opennn_mkl_dir "@PACKAGE_CMAKE_INSTALL_LIBDIR@/opennn-mkl")
+    set_and_check(_opennn_mkl_include "@PACKAGE_CMAKE_INSTALL_INCLUDEDIR@/opennn-mkl")
+    set(_opennn_mkl_group "")
+    foreach(_opennn_mkl_part intel_lp64 gnu_thread core)
+        add_library(OpenNN::mkl_${_opennn_mkl_part} STATIC IMPORTED)
+        set_target_properties(OpenNN::mkl_${_opennn_mkl_part} PROPERTIES
+            IMPORTED_LOCATION "${_opennn_mkl_dir}/libmkl_${_opennn_mkl_part}.a")
+        list(APPEND _opennn_mkl_group OpenNN::mkl_${_opennn_mkl_part})
+    endforeach()
+    list(JOIN _opennn_mkl_group "," _opennn_mkl_group)
+    add_library(OpenNN::mkl INTERFACE IMPORTED)
+    set_target_properties(OpenNN::mkl PROPERTIES
+        INTERFACE_INCLUDE_DIRECTORIES "${_opennn_mkl_include}"
+        INTERFACE_LINK_LIBRARIES
+            "$<LINK_GROUP:RESCAN,${_opennn_mkl_group}>;Threads::Threads;m;${CMAKE_DL_LIBS}")
+    unset(_opennn_mkl_dir)
+    unset(_opennn_mkl_include)
+    unset(_opennn_mkl_group)
+    find_dependency(Threads)
+endif()
+
 find_dependency(Eigen3 5.0)
 
 if(@APPLE@)
     find_dependency(OpenNNLibomp)
 endif()
 
-if(@OpenNN_ONEDNN_FOUND@)
+if(@_opennn_onednn_system@)
     find_dependency(OpenNNOneDNN)
 endif()
 

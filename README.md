@@ -88,10 +88,11 @@ The exported target supplies OpenNN's include paths and dependency linkage, and
 the package still works after moving the install prefix.
 [The package consumer](tools/package_smoke/) is a complete working example.
 
-Fetched Eigen and zlib are installed with the library. OpenMP, oneTBB, oneDNN,
-MKL and NVIDIA runtimes are not copied into the installation; supply those
-selected by the build. The installed package locates oneDNN and macOS libomp
-on the consuming machine; use `CMAKE_PREFIX_PATH`, `OpenNN_ONEDNN_ROOT`, or
+Fetched Eigen and zlib are installed with the library, and so are oneDNN and
+MKL when the build compiled or downloaded them itself. OpenMP, oneTBB, a system
+oneDNN or MKL and NVIDIA runtimes are not copied into the installation; supply
+those selected by the build. The installed package locates a system oneDNN and macOS libomp on the
+consuming machine; use `CMAKE_PREFIX_PATH`, `OpenNN_ONEDNN_ROOT`, or
 `LIBOMP_INCLUDE_DIR` and `LIBOMP_LIBRARY` for nonstandard installations.
 Use a compiler compatible with the one that built the package. Installation
 packages exclude example datasets and models.

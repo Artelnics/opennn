@@ -4,6 +4,19 @@
 # run.py depends on the <family>_opennn executable names.
 set(_benchmark_targets "")
 
+# The CPU LSTM cells compare oneDNN's recurrent primitive with PyTorch's. A build
+# without it measures the built-in path instead, at a third of the throughput.
+if(NOT OpenNN_ONEDNN_FOUND)
+    message(WARNING
+        "OpenNN benchmarks: oneDNN is not linked, so the CPU LSTM cells measure "
+        "the built-in recurrent path. Enable OpenNN_FETCH_ONEDNN or set OpenNN_ONEDNN_ROOT.")
+endif()
+if(NOT OpenNN_ENABLE_MKL)
+    message(WARNING
+        "OpenNN benchmarks: MKL is off, so the CPU cells run Eigen's BLAS, about 5% "
+        "slower on LSTM training. Configure with OpenNN_ENABLE_MKL=ON.")
+endif()
+
 foreach(family dense cnn transformer lstm quality)
     set(target "${family}_opennn")
     add_executable(${target} "families/${family}.cpp")

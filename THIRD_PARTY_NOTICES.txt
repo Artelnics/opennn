@@ -47,13 +47,18 @@ CUTLASS (user-provided; optional, OpenNN_CUTLASS_INCLUDE_DIR) - BSD-3-Clause
   https://github.com/NVIDIA/cutlass
   One narrow-contraction GEMM kernel; header-only, not redistributed.
 
-oneDNN (system; optional) - Apache-2.0
+oneDNN 3.11 (system, or fetched with SHA-256 pinned; optional) - Apache-2.0
   https://github.com/uxlfoundation/oneDNN
-  LSTM primitives on the CPU.
+  LSTM primitives on the CPU. When no installation is found on x86-64 outside
+  macOS, it is built from source as a static library and installed beside
+  OpenNN with its LICENSE and THIRD-PARTY-PROGRAMS files.
 
-Intel oneMKL (system; optional, OpenNN_ENABLE_MKL) - Intel Simplified Software License
+Intel oneMKL 2025.3.1 (system, or fetched with SHA-256 pinned; optional, OpenNN_ENABLE_MKL) - Intel Simplified Software License
   https://www.intel.com/content/www/us/en/developer/tools/oneapi/onemkl.html
-  BLAS on the CPU; linked, not redistributed.
+  BLAS on the CPU. A system installation is linked, not redistributed. Given
+  none, Linux x86-64 builds download Intel's static libraries from PyPI
+  (mkl-static, mkl-include), link them into the program and install them
+  beside OpenNN with Intel's LICENSE.txt.
 
 oneTBB (system; optional) - Apache-2.0
   https://github.com/uxlfoundation/oneTBB
