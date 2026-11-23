@@ -33,6 +33,10 @@
 #include <unistd.h>
 #endif
 
+#ifdef OPENNN_HAS_CUDA
+#include <cudnn.h>
+#endif
+
 #include "opennn/core/configuration.h"
 #include "opennn/core/memory_debug.h"
 #include "opennn/core/tensor_operations.h"
@@ -82,14 +86,35 @@ struct Options
     Index feed_forward() const { return 4 * d_model; }
 };
 
+// The cuDNN the process loaded, 92501 for 9.25.1; 0 without CUDA.
+size_t cudnn_runtime_version()
+{
+#ifdef OPENNN_HAS_CUDA
+    return cudnnGetVersion();
+#else
+    return 0;
+#endif
+}
+
+// cuDNN 9.25 runs the fused attention plan for these 130-token sequences;
+// older runtimes reject it or pick a poor engine. This asks the library that
+// is loaded, not the headers the driver was compiled against: as a CUDNN_VERSION
+// test it read cuDNN 9.20 headers that a toolkit placed ahead of a 9.25
+// CUDNN_INCLUDE_DIR, and every inference cell ran materialized, 26% slower.
 bool use_bf16_sdpa(const Options& options)
 {
-#if defined(OPENNN_HAS_CUDA) && CUDNN_VERSION >= 92500
-    return options.device == Device::CUDA && options.precision == Type::BF16;
-#else
-    (void)options;
-    return false;
-#endif
+    return options.device == Device::CUDA && options.precision == Type::BF16
+           && cudnn_runtime_version() >= 92500;
+}
+
+// Printed by every mode so each artifact records which attention it measured.
+void report_attention(const Options& options)
+{
+    cout << "cudnn_version=" << cudnn_runtime_version() << "\n"
+         << "attention=" << (use_bf16_sdpa(options) ? "fused" : "materialized") << "\n";
+    if (use_bf16_sdpa(options))
+        cout << "sdpa_min_sequence_length=" << BF16_SDPA_MIN_SEQUENCE << "\n";
+    cout << flush;
 }
 
 unique_ptr<Transformer> build(TextDataset& dataset, const Options& options)
@@ -224,11 +249,7 @@ int main(int argc, char* argv[])
             if (batch == batches.front())
             {
                 cout << "parameters=" << network->get_parameters_number() << "\n" << flush;
-                if (use_bf16_sdpa(options))
-                {
-                    cout << "sdpa_min_sequence_length="
-                         << BF16_SDPA_MIN_SEQUENCE << "\n" << flush;
-                }
+                report_attention(options);
             }
 
             const bool graph = options.device == Device::CUDA
@@ -309,7 +330,10 @@ int main(int argc, char* argv[])
         {
             auto network = build(dataset, options);
             if (batch == batches.front())
+            {
                 cout << "parameters=" << network->get_parameters_number() << "\n" << flush;
+                report_attention(options);
+            }
             const Index processed = (samples / batch) * batch;
 
             ForwardPropagation forward_propagation(batch, network.get(),
@@ -414,6 +438,7 @@ int main(int argc, char* argv[])
 
             auto network = build(dataset, options);
             cout << "parameters=" << network->get_parameters_number() << "\n" << flush;
+            report_attention(options);
 
             Training training(network.get(), &dataset);
             configure(training, batch)->set_maximum_epochs(1);
