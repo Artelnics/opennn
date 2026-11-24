@@ -460,6 +460,12 @@ def main() -> int:
     print(f"=== {args.family} {args.mode} {args.precision} {args.device} ===")
 
     watched_cores = core_layout()["performance"] if args.device != "cuda" else None
+    # The first second after start-up is this process's own work: the thread
+    # pool numpy starts on import keeps cores busy after the import returns.
+    # Read first, that second measured 7-12% on a machine whose next second
+    # read 3%, so every cell of two overnight sessions went to scratch with
+    # the timed windows at 0.5% or less. Discard it and read the next one.
+    cpu_busy_fraction(cores=watched_cores)
     busy_before = cpu_busy_fraction(cores=watched_cores)
     machine_busy = busy_before > BUSY_THRESHOLD
 
