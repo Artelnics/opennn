@@ -151,3 +151,4 @@ build-wrapper-dump.json
 # OneDrive leaves these when it syncs the repo between machines.
 *-DESKTOP-*.cpp
 *-DESKTOP-*.h
+PLAN_*.md

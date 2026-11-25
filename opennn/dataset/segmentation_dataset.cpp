@@ -219,6 +219,110 @@ void SegmentationDataset::fill_targets(const vector<Index>& sample_indices,
                      column_contiguity);
 }
 
+namespace
+{
+
+// Accumulate per-channel min/max/mean/std over `samples` rows of `mat`.
+// Layout: each row has H*W*C image values (HWC order) followed by mask values
+// (which are ignored here). Returns C descriptives.
+FeatureScaling channel_stats(const MatrixR& mat,
+                             const vector<Index>& samples,
+                             Index H, Index W, Index C,
+                             const FeatureScaling& reference)
+{
+    const Index pixels = H * W;
+    const Index n      = ssize(samples) * pixels;
+
+    vector<double> sum(size_t(C), 0.0), sum_sq(size_t(C), 0.0);
+    vector<float>  mn(size_t(C),  std::numeric_limits<float>::max());
+    vector<float>  mx(size_t(C), -std::numeric_limits<float>::max());
+
+    for (Index si : samples)
+    {
+        const float* row = mat.row(si).data();
+        for (Index p = 0; p < pixels; ++p)
+            for (Index c = 0; c < C; ++c)
+            {
+                const float v = row[p * C + c];
+                sum[size_t(c)]    += double(v);
+                sum_sq[size_t(c)] += double(v) * v;
+                if (v < mn[size_t(c)]) mn[size_t(c)] = v;
+                if (v > mx[size_t(c)]) mx[size_t(c)] = v;
+            }
+    }
+
+    const vector<ScalerMethod>& scalers_src =
+        (reference.scalers.size() == size_t(C))
+        ? reference.scalers
+        : vector<ScalerMethod>(size_t(C), ScalerMethod::None);
+
+    FeatureScaling fs;
+    fs.descriptives.resize(size_t(C));
+    fs.scalers      = scalers_src;
+    fs.min_range    = reference.min_range;
+    fs.max_range    = reference.max_range;
+
+    for (Index c = 0; c < C; ++c)
+    {
+        const double mean = (n > 0) ? sum[size_t(c)] / n : 0.0;
+        const double var  = (n > 0) ? sum_sq[size_t(c)] / n - mean * mean : 0.0;
+        fs.descriptives[size_t(c)] = Descriptives(
+            mn[size_t(c)],
+            mx[size_t(c)],
+            float(mean),
+            float(sqrt(max(0.0, var))));
+    }
+
+    return fs;
+}
+
+} // anonymous namespace
+
+FeatureScaling SegmentationDataset::prepare_training_scaling(
+    VariableRole role, const FeatureScaling& requested, Index expected_features)
+{
+    if (role == VariableRole::Target)
+        return requested;
+
+    throw_if(role != VariableRole::Input,
+             "SegmentationDataset::prepare_training_scaling: unsupported role.");
+    throw_if(expected_features != input_shape[2],
+             "SegmentationDataset::prepare_training_scaling: "
+             "expected {} feature descriptives (one per channel), got {}.",
+             input_shape[2], expected_features);
+
+    vector<Index> samples = get_sample_indices(SampleRole::Training);
+    if (samples.empty())
+        samples = get_used_sample_indices();
+
+    return channel_stats(data, samples,
+                         input_shape[0], input_shape[1], input_shape[2],
+                         requested);
+}
+
+FeatureScaling SegmentationDataset::calculate_used_feature_scaling(VariableRole role) const
+{
+    if (role == VariableRole::Target)
+    {
+        FeatureScaling fs;
+        fs.descriptives.assign(size_t(target_shape[2]), Descriptives(0.0f, 1.0f, 0.5f, 0.5f));
+        fs.scalers.assign(size_t(target_shape[2]), ScalerMethod::None);
+        return fs;
+    }
+
+    throw_if(role != VariableRole::Input,
+             "SegmentationDataset::calculate_used_feature_scaling: unsupported role.");
+
+    const vector<Index> samples = get_used_sample_indices();
+    FeatureScaling reference;
+    reference.scalers.assign(size_t(input_shape[2]),
+                             variables.empty() ? ScalerMethod::None
+                                               : variables[0].get_scaler_type());
+    return channel_stats(data, samples,
+                         input_shape[0], input_shape[1], input_shape[2],
+                         reference);
+}
+
 void SegmentationDataset::to_JSON(JsonWriter& printer) const
 {
     write_json_header(printer, {

@@ -3,6 +3,18 @@
 Target: a 2D binary/semantic segmentation U-Net following nnU-Net design
 choices, built out of OpenNN layers and operators.
 
+## Status (2026-10-05)
+
+| Step | Status |
+|------|--------|
+| Pre-fixes (LayerRegistryTest, GPU bias throw, bak file) | ✓ done |
+| 1: SegmentationDataset | ✓ done (9 tests pass) |
+| 2: TransposedConvolution | ✓ done (11 CPU tests pass) |
+| 3: InstanceNormalization | ✓ done (5 tests pass, 1188 total) |
+| 4: Dice + CE loss | ✓ done (5 tests pass, 1193 total) |
+| 5: UNet model | pending |
+| 6: Example | pending |
+
 ## 1. Inventory: exists vs. missing
 
 | nnU-Net 2D component | Status in OpenNN | Notes |

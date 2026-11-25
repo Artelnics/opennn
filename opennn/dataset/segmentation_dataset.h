@@ -48,6 +48,9 @@ public:
                       FillMode,
                       ColumnContiguity column_contiguity = ColumnContiguity::Unknown) const override;
 
+    FeatureScaling prepare_training_scaling(VariableRole, const FeatureScaling&, Index) override;
+    FeatureScaling calculate_used_feature_scaling(VariableRole) const override;
+
 private:
 
     filesystem::path masks_directory;

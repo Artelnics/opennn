@@ -258,6 +258,55 @@ TEST(SegmentationDataset, MissingMaskThrows)
     EXPECT_ANY_THROW({ SegmentationDataset dataset(fixture.images(), fixture.masks()); });
 }
 
+TEST(SegmentationDataset, PrepareTrainingScalingComputesRealStats)
+{
+    // Two solid-colour RGB images with known pixel values so we can compute
+    // expected per-channel mean and std analytically.
+    //
+    // Sample 0: R=100, G=150, B=200  →  [100/255, 150/255, 200/255]
+    // Sample 1: R= 50, G= 75, B=100  →  [ 50/255,  75/255, 100/255]
+    //
+    // All pixels in each sample are uniform, so for C images of size HxW:
+    //   mean_c = (v0_c + v1_c) / (2 * 255)
+    //   std_c  = |v0_c - v1_c| / (2 * 255)          (population std)
+
+    SegmentationFixture fixture(4, 4, 0);  // 0 samples — we add manually below
+    filesystem::create_directories(fixture.images());
+    filesystem::create_directories(fixture.masks());
+
+    write_bmp_24(fixture.images() / "s0.bmp", 4, 4, 100, 150, 200);
+    write_bmp_24(fixture.images() / "s1.bmp", 4, 4,  50,  75, 100);
+    write_mask_bmp(fixture.masks() / "s0.bmp", 4, 4);
+    write_mask_bmp(fixture.masks() / "s1.bmp", 4, 4);
+
+    SegmentationDataset dataset(fixture.images(), fixture.masks(), Shape{4, 4, 3});
+    dataset.set_display(false);
+    dataset.set_sample_roles(SampleRole::Training);  // all training
+
+    FeatureScaling requested;
+    requested.scalers.assign(3, ScalerMethod::MeanStandardDeviation);
+    requested.descriptives.assign(3, Descriptives(-1.f, 1.f, 0.f, 1.f));
+
+    const FeatureScaling fs = dataset.prepare_training_scaling(
+        VariableRole::Input, requested, 3);
+
+    ASSERT_EQ(fs.descriptives.size(), 3u);
+
+    constexpr float tol = 1e-4f;
+
+    // channel 0 (R): values 100/255 and 50/255
+    EXPECT_NEAR(fs.descriptives[0].mean,               150.f / (2.f * 255.f), tol);
+    EXPECT_NEAR(fs.descriptives[0].standard_deviation,  50.f / (2.f * 255.f), tol);
+
+    // channel 1 (G): 150/255 and 75/255
+    EXPECT_NEAR(fs.descriptives[1].mean,               225.f / (2.f * 255.f), tol);
+    EXPECT_NEAR(fs.descriptives[1].standard_deviation,  75.f / (2.f * 255.f), tol);
+
+    // channel 2 (B): 200/255 and 100/255
+    EXPECT_NEAR(fs.descriptives[2].mean,               300.f / (2.f * 255.f), tol);
+    EXPECT_NEAR(fs.descriptives[2].standard_deviation, 100.f / (2.f * 255.f), tol);
+}
+
 TEST(SegmentationDataset, JsonRoundTripRestoresShapes)
 {
     SegmentationFixture fixture(4, 2, 2);
