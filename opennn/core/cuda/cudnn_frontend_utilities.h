@@ -902,6 +902,9 @@ inline void autotune_now(bool& pending, graph::Graph& graph,
     pending = false;
     if (device::lanes_available() > 1) device::synchronize();
 
+    // Tuning buffers are used once; kept in the block cache they stayed resident for the
+    // whole cold-cache run (ResNet-50 inference: 1,358 MiB against 834 warm).
+    const device::CudaBlockCacheBypass release_tuning_buffers;
     Buffer tune_workspace{Device::CUDA};
     try
     {
@@ -936,6 +939,7 @@ inline void autotune_with_scratch(bool& pending, graph::Graph& graph,
     if (!pending) return;
     if (device::lanes_available() > 1) device::synchronize();
 
+    const device::CudaBlockCacheBypass release_scratch;  // as in autotune_now(); outlives buffers
     TensorMap scratch = tensors;
     vector<Buffer> buffers;
     buffers.reserve(scratch.size());
