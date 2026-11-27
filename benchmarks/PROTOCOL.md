@@ -157,6 +157,14 @@ the same shapes and important code paths as measurement, including compilation,
 kernel selection, graph capture and allocator initialization where applicable.
 Warm-up output is diagnostic and is not included in the timing summary.
 
+Engines also keep caches on disk between launches: OpenNN its cuDNN and
+cuBLASLt plans, PyTorch its compiled kernels. An empty cache makes round 1 tune
+while it is measured, and peak memory, the maximum over rounds, then reports
+the tuning rather than the workload. `--warmup-rounds 1` gives every engine one
+untimed launch first, at one epoch or pass with the measured shapes; those
+launches are kept in the artifact as `warmup_launches`, apart from the summary
+and the gates.
+
 The default comparison uses three independent rounds. Rotate engine order each
 round so startup temperature, boost state and background drift are not assigned
 systematically to one engine. Keep every raw launch and sample in the artifact;

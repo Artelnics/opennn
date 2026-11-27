@@ -423,6 +423,10 @@ def main() -> int:
     parser.add_argument("--epochs", type=int, default=5, help="timed epochs per launch")
     parser.add_argument("--repeats", type=int, default=5, help="timed passes, infer")
     parser.add_argument("--rounds", type=int, default=3, help="launches per engine, order rotated")
+    parser.add_argument("--warmup-rounds", type=int, default=0,
+                        help="untimed launches per engine first, at one epoch or pass, so "
+                             "on-disk plan and compile caches are filled before round 1; "
+                             "recorded apart and kept out of the summary and the gates")
     parser.add_argument("--hidden", type=int, default=1024, help="dense")
     parser.add_argument("--layers", type=int, default=2, help="dense")
     parser.add_argument("--activation", default="relu", choices=("relu", "tanh"))
@@ -476,6 +480,23 @@ def main() -> int:
               f"(threshold {BUSY_THRESHOLD:.1%}) -> results/scratch/")
 
     launches: list[dict] = []
+    warmup_launches: list[dict] = []
+
+    # The work is shortened, not the shapes: a cache entry is keyed by the
+    # graph, which epochs and passes do not change.
+    warmup_args = argparse.Namespace(**{**vars(args), "epochs": 1, "repeats": 1})
+    for index in range(args.warmup_rounds if not to_oom else 0):
+        print(f"  warm-up {index + 1} (untimed)")
+        for engine in engines:
+            for batch in start_batch:
+                outcome = launch(engine_command(args.family, engine)
+                                 + engine_arguments(args.mode, data, batch, warmup_args),
+                                 not args.no_wait, args.device, args.threads, watched_cores,
+                                 engine_library_path(args.family, engine))
+                outcome.update(engine=engine, batch=batch, round=0)
+                warmup_launches.append(outcome)
+                print(f"    {engine:<8} b{batch:<7} "
+                      + ("OK" if outcome["returncode"] == 0 else f"rc={outcome['returncode']}"))
 
     if to_oom:
         # Capacity: double until a launch fails, per engine. The last rung that
@@ -627,6 +648,7 @@ def main() -> int:
         "shape_gate": {"agrees": shape_agrees, "reported": shapes},
         "summary": summary,
         "launches": launches,
+        "warmup_launches": warmup_launches,
     }
 
     name = f"{artifact['benchmark_id']}{'-' + args.label if args.label else ''}-{run_id}.json"
