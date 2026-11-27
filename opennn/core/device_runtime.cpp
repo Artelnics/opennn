@@ -229,6 +229,12 @@ void Backend::ensure_cuda()
             return;
         }
 
+        // The context reserves the per-thread stack for every resident thread: the 1 KiB
+        // default is 105 MiB on a 70-SM card. The driver raises it for any kernel needing more.
+        const long long stack_bytes = env_int_or("OPENNN_CUDA_STACK_BYTES", 0);
+        if (cudaDeviceSetLimit(cudaLimitStackSize, size_t(max(stack_bytes, 0LL))) != cudaSuccess)
+            cudaGetLastError();
+
         lane_streams[0] = device::create_stream_handle(cudaStreamNonBlocking);
         transfer_stream = device::create_stream_handle(cudaStreamNonBlocking);
 
