@@ -23,7 +23,6 @@
 #include "opennn/core/random_utilities.h"
 #include "opennn/core/tensor_types.h"
 #include "opennn/dataset/batch.h"
-#include "opennn/dataset/kernel_gather.cuh"
 #include "opennn/dataset/dataset.h"
 #include "opennn/dataset/tabular_dataset.h"
 #include "opennn/network/forward_propagation.h"
@@ -297,12 +296,16 @@ int main(int argc, char* argv[])
         cout << "dataset_test=" << filesystem::absolute(argv[2]).string() << "\n" << flush;
         TabularDataset dataset(argv[2], ",", false, false);
 
-        if (options.device == Device::CUDA)
+        // Only the per-batch gather variant below reads the resident split.
+        const bool per_batch_gather = options.device == Device::CUDA
+                                      && getenv("OPENNN_DENSE_INFER_GATHER") != nullptr;
+
+        if (per_batch_gather)
             dataset.set_storage_mode(Dataset::StorageMode::GPUPersistantData);
 
         dataset.set_sample_roles("Testing");
 
-        if (options.device == Device::CUDA)
+        if (per_batch_gather)
             dataset.enable_device_residency();
 
         const MatrixR& data = dataset.get_data();
@@ -331,21 +334,19 @@ int main(int argc, char* argv[])
             // slices either way, differing only in which side of the bus they
             // are already on when the clock starts.
             //
-            // The CUDA split is resident in fp32 with the target beside the
-            // inputs (set_storage_mode above). The network wants the inputs
-            // alone, in its own precision, so they are gathered once here,
-            // outside the clock, into one buffer that every batch is a view
-            // into -- what the PyTorch driver does with x.to(bfloat16) and
-            // x[start:start + batch]. The alternative, kept behind
-            // OPENNN_DENSE_INFER_GATHER=1, is the training-style path: fill()
-            // stages a batch's row indices, upload_to_device_batch_async()
-            // copies them and gathers the rows into the batch's fixed buffer,
-            // and a CUDA graph replays the forward pass on that buffer. Fixed
-            // addresses are what a graph needs and the only thing this pass
-            // gets from it: an index copy and a gather kernel per batch, for
-            // three launches that a 0.2 ms GEMM hides anyway.
-            const bool per_batch_gather = getenv("OPENNN_DENSE_INFER_GATHER") != nullptr;
-            forward_propagation.set_cuda_graph(!on_cpu && per_batch_gather);
+            // On CUDA the inputs alone are uploaded once, outside the clock and
+            // in the network's own precision, into one buffer that every batch
+            // is a view into -- the one copy of the split the PyTorch driver
+            // holds as x[start:start + batch]. The alternative, kept behind
+            // OPENNN_DENSE_INFER_GATHER=1, is the training-style path on the
+            // resident split: fill() stages a batch's row indices,
+            // upload_to_device_batch_async() copies them and gathers the rows
+            // into the batch's fixed buffer, and a CUDA graph replays the
+            // forward pass on that buffer. Fixed addresses are what a graph
+            // needs and the only thing this pass gets from it: an index copy
+            // and a gather kernel per batch, for three launches that a 0.2 ms
+            // GEMM hides anyway.
+            forward_propagation.set_cuda_graph(per_batch_gather);
 
             Batch device_batch(batch, &dataset, network->get_config());
             vector<Index> indices(size_t(batch), Index(0));
@@ -372,23 +373,21 @@ int main(int argc, char* argv[])
                 network->calculate_outputs_resident(device_batch.get_inputs(),
                                                     forward_propagation, true);
 
-                const FeatureSelection features = dataset.get_feature_selection();
-                throw_if(!is_contiguous(features.inputs),
-                         "dense infer: the resident gather needs contiguous input columns.");
+                const Index values = samples * inputs_number;
+                vector<uint16_t> inputs_bf16;
+                const void* source = inputs.data();
 
-                vector<int> rows(static_cast<size_t>(samples), 0);
-                iota(rows.begin(), rows.end(), 0);
-                Buffer rows_device(Device::CUDA);
-                rows_device.resize_bytes(samples * Index(sizeof(int)), Device::CUDA);
+                if (input_type == Type::BF16)
+                {
+                    inputs_bf16.resize(size_t(values));
+                    float_2_bfloat16_host(values, inputs.data(), inputs_bf16.data());
+                    source = inputs_bf16.data();
+                }
+
                 resident.resize_bytes(samples * row_bytes, Device::CUDA);
-
-                const cudaStream_t stream = device::get_compute_stream();
-                device::copy_async(rows_device.data(), rows.data(), samples * Index(sizeof(int)),
+                const DeviceStream stream = device::get_compute_stream();
+                device::copy_async(resident.data(), source, samples * row_bytes,
                                    device::CopyKind::HostToDevice, stream);
-                gather_rows_cuda(dataset.get_device_data(), rows_device.as<int>(), resident.data(),
-                                 input_type == Type::BF16, samples, inputs_number,
-                                 dataset.get_device_data_columns(), features.inputs.front(),
-                                 stream);
                 device::synchronize(stream);
 #endif
             }
