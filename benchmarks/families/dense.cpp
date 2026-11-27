@@ -28,6 +28,7 @@
 #include "opennn/network/forward_propagation.h"
 #include "opennn/network/layers/dense_layer.h"
 #include "opennn/network/network.h"
+#include "opennn/network/onnx_export.h"
 #include "opennn/evaluation/evaluation.h"
 #include "opennn/training/adam.h"
 #include "opennn/training/training.h"
@@ -131,6 +132,7 @@ int usage()
             "       dense_opennn infer    <test_csv>             [reps]   [batch,...] [opts]\n"
             "       dense_opennn capacity <train_csv>            [batch]              [opts]\n"
             "       dense_opennn quality  <train_csv> <test_csv> [epochs] [batch]     [opts]\n"
+            "       dense_opennn export   <out_onnx>  <inputs>                        [opts]\n"
             "       opts: [hidden] [layers] [relu|tanh] [cpu|cuda] [fp32|bf16]\n";
     return 2;
 }
@@ -514,6 +516,22 @@ int main(int argc, char* argv[])
 
         cout << "fits=1\nRESULT=OK\n" << flush;
         return 0;
+    }
+    else if (mode == "export")
+    {
+        // The network infer runs, with the same seeded weights, written as ONNX
+        // for the ONNX Runtime engine (dense_ort.py): the deployment path a
+        // model trained in OpenNN takes to that runtime.
+        if (argc < 4) return usage();
+
+        const Index inputs_number = stoll(argv[3]);
+        Options options = parse_options(argc, argv, 4);
+        options.device = Device::CPU;
+
+        Configuration::instance().set(options.device, Type::FP32);
+        const auto network = build(Shape{inputs_number}, Shape{1}, options);
+        save_onnx_model(*network, argv[2]);
+        cout << "parameters=" << network->get_parameters_number() << "\n";
     }
     else
     {

@@ -97,6 +97,11 @@ def framework_versions(python: str | None = None) -> dict[str, Any]:
         "tensorflow": "import tensorflow as tf;b=tf.sysconfig.get_build_info();"
                       "print(tf.__version__);print(b.get('cuda_version'));"
                       "print(b.get('cudnn_version'))",
+        "onnxruntime": "import onnxruntime as o;from importlib import metadata as m;"
+                       "from onnxruntime.capi import build_and_package_info as b;"
+                       "print(o.__version__);print(getattr(b,'cuda_version',None));"
+                       "print(next((d.version for d in m.distributions()"
+                       " if d.metadata['Name'].startswith('nvidia-cudnn')),None))",
     }
 
     for name, script in probes.items():

@@ -30,7 +30,11 @@ Install PyTorch for your device (CPU or CUDA) in the Python environment you run
 the scripts with. To add TensorFlow, install it in its own environment (its
 CUDA wheels conflict with PyTorch's), for example
 `pip install "tensorflow[and-cuda]==2.21.0" pandas`, and point the runner at it
-with `OPENNN_BENCH_TF_PYTHON`. Then set the data folder and the driver to compare:
+with `OPENNN_BENCH_TF_PYTHON`. ONNX Runtime, an inference-only engine that runs the
+network OpenNN exports, goes in a third environment
+(`pip install "onnxruntime-gpu[cuda,cudnn]==1.32.0" pandas`) named by
+`OPENNN_BENCH_ORT_PYTHON`; so far only the dense family's infer cells have a driver.
+Then set the data folder and the driver to compare:
 
 ```sh
 export OPENNN_BENCH_DATA="$HOME/opennn-benchmark-data"
@@ -61,7 +65,7 @@ JSON file with every launch. Change `OPENNN_BIN` when you switch family.
 | `--device` | `cpu` or `cuda` |
 | `--precision` | `fp32`, `bf16` or `strict` |
 | `--batch` | `8192` for one size, `1024,8192,65536` for a curve, `1024:OOM` to double until memory runs out |
-| `--engines` | `opennn,pytorch` (default), or `opennn,pytorch,tensorflow` |
+| `--engines` | `opennn,pytorch` (default), `opennn,pytorch,tensorflow`, or add `onnxruntime` to dense infer cells |
 | `--epochs`, `--repeats` | timed epochs (train) or passes (infer) per launch; raise them until the timed window lasts seconds |
 | `--train-data` | a training file in place of the family default, read by every engine (e.g. the full `higgs/higgs_train.csv` for GPU dense) |
 
@@ -106,7 +110,7 @@ batch that fits gets smaller.
 | `run.py` | Runs a family on both engines |
 | `prepare.py` | Downloads and prepares the datasets |
 | `compare.py` | Compares two result files |
-| `families/` | The OpenNN (`.cpp`), PyTorch (`.py`) and TensorFlow (`_tf.py`) version of each family |
+| `families/` | The OpenNN (`.cpp`), PyTorch (`.py`) and TensorFlow (`_tf.py`) version of each family, and ONNX Runtime (`_ort.py`) for dense inference |
 | `tools/` | Shared helpers: monitoring, startup, deployment and quality runners |
 | `manifests/` | The pinned ImageNet subset and Python package versions |
 | [`PROTOCOL.md`](PROTOCOL.md) | The complete measurement rules |

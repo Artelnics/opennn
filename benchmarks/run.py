@@ -75,6 +75,8 @@ FAMILIES = {
 PYTHON_ENGINES = {
     "pytorch": ("", "OPENNN_BENCH_PYTORCH_PYTHON"),
     "tensorflow": ("_tf", "OPENNN_BENCH_TF_PYTHON"),
+    # Inference only, on the model OpenNN exports (families/<family>_ort.py).
+    "onnxruntime": ("_ort", "OPENNN_BENCH_ORT_PYTHON"),
 }
 
 def engine_python(engine: str) -> str:
